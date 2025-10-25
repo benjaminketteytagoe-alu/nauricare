@@ -8,47 +8,48 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* NauriCare Warm & Trustworthy Color System */
+    /* NauriCare Brand Color System */
     --background: 0 0% 100%;
-    --foreground: 340 30% 20%;
+    --foreground: 0 0% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 340 30% 20%;
+    --card-foreground: 0 0% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 340 30% 20%;
+    --popover-foreground: 0 0% 15%;
 
-    /* Soft coral-pink primary */
-    --primary: 345 75% 65%;
+    /* Orange primary from logo */
+    --primary: 38 91% 56%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 345 80% 85%;
-    --primary-glow: 345 85% 75%;
+    --primary-light: 38 95% 75%;
+    --primary-glow: 38 95% 65%;
 
-    /* Gentle lavender accent */
-    --secondary: 270 55% 75%;
-    --secondary-foreground: 270 40% 20%;
-    --secondary-light: 270 60% 90%;
+    /* Blue accent from logo */
+    --secondary: 207 71% 59%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-light: 207 75% 85%;
 
-    --muted: 340 20% 96%;
-    --muted-foreground: 340 15% 50%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 270 55% 75%;
-    --accent-foreground: 270 40% 20%;
+    --accent: 207 71% 59%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 75% 60%;
+    /* Red from logo for destructive actions */
+    --destructive: 355 98% 42%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 340 20% 90%;
-    --input: 340 15% 94%;
-    --ring: 345 75% 65%;
+    --border: 0 0% 90%;
+    --input: 0 0% 94%;
+    --ring: 38 91% 56%;
 
     --radius: 1rem;
     
     /* Custom design tokens */
-    --gradient-hero: linear-gradient(135deg, hsl(345, 75%, 65%), hsl(270, 55%, 75%));
-    --gradient-soft: linear-gradient(180deg, hsl(0, 0%, 100%), hsl(345, 80%, 98%));
-    --shadow-soft: 0 4px 20px -4px hsl(345 75% 65% / 0.15);
-    --shadow-medium: 0 8px 30px -6px hsl(345 75% 65% / 0.2);
+    --gradient-hero: linear-gradient(135deg, hsl(38, 91%, 56%), hsl(207, 71%, 59%));
+    --gradient-soft: linear-gradient(180deg, hsl(0, 0%, 100%), hsl(38, 95%, 98%));
+    --shadow-soft: 0 4px 20px -4px hsl(38 91% 56% / 0.15);
+    --shadow-medium: 0 8px 30px -6px hsl(38 91% 56% / 0.2);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
@@ -69,41 +70,41 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 340 20% 12%;
-    --foreground: 345 80% 95%;
+    --background: 0 0% 12%;
+    --foreground: 0 0% 95%;
 
-    --card: 340 20% 15%;
-    --card-foreground: 345 80% 95%;
+    --card: 0 0% 15%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 340 20% 15%;
-    --popover-foreground: 345 80% 95%;
+    --popover: 0 0% 15%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 345 75% 65%;
+    --primary: 38 91% 56%;
     --primary-foreground: 0 0% 100%;
-    --primary-light: 345 70% 45%;
-    --primary-glow: 345 75% 55%;
+    --primary-light: 38 85% 45%;
+    --primary-glow: 38 85% 50%;
 
-    --secondary: 270 50% 60%;
+    --secondary: 207 71% 59%;
     --secondary-foreground: 0 0% 100%;
-    --secondary-light: 270 50% 35%;
+    --secondary-light: 207 65% 45%;
 
-    --muted: 340 20% 20%;
-    --muted-foreground: 340 15% 65%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 270 50% 60%;
+    --accent: 207 71% 59%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 65% 55%;
+    --destructive: 355 90% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 340 20% 25%;
-    --input: 340 20% 20%;
-    --ring: 345 75% 65%;
+    --border: 0 0% 25%;
+    --input: 0 0% 20%;
+    --ring: 38 91% 56%;
     
-    --gradient-hero: linear-gradient(135deg, hsl(345, 75%, 55%), hsl(270, 50%, 60%));
-    --gradient-soft: linear-gradient(180deg, hsl(340, 20%, 12%), hsl(345, 30%, 18%));
-    --shadow-soft: 0 4px 20px -4px hsl(345 75% 35% / 0.3);
-    --shadow-medium: 0 8px 30px -6px hsl(345 75% 35% / 0.4);
+    --gradient-hero: linear-gradient(135deg, hsl(38, 85%, 45%), hsl(207, 65%, 55%));
+    --gradient-soft: linear-gradient(180deg, hsl(0, 0%, 12%), hsl(38, 30%, 18%));
+    --shadow-soft: 0 4px 20px -4px hsl(38 85% 35% / 0.3);
+    --shadow-medium: 0 8px 30px -6px hsl(38 85% 35% / 0.4);
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

@@ -1,6 +1,7 @@
-import { Heart, Mail, Twitter, Facebook, Instagram, Linkedin } from 'lucide-react';
+import { Mail, Twitter, Facebook, Instagram, Linkedin } from 'lucide-react';
 import { LanguageToggle } from './LanguageToggle';
 import { useLanguage } from '@/hooks/useLanguage';
+import logo from '@/assets/logo.png';
 
 export function Footer() {
   const { t } = useLanguage();
@@ -12,10 +13,7 @@ export function Footer() {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Heart className="h-6 w-6 text-primary fill-primary" />
-              <span className="text-xl font-bold">NauriCare</span>
-            </div>
+            <img src={logo} alt="NauriCare" className="h-8" />
             <p className="text-sm text-muted-foreground">
               {t.footer.tagline}
             </p>
