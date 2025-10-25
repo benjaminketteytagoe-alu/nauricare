@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Heart, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LanguageToggle } from './LanguageToggle';
 import { useLanguage } from '@/hooks/useLanguage';
+import logo from '@/assets/logo.png';
 
 export function Navigation() {
   const { t } = useLanguage();
@@ -38,10 +39,9 @@ export function Navigation() {
           {/* Logo */}
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            className="flex items-center hover:opacity-80 transition-opacity"
           >
-            <Heart className="h-6 w-6 md:h-8 md:w-8 text-primary fill-primary" />
-            <span className="text-xl md:text-2xl font-bold">NauriCare</span>
+            <img src={logo} alt="NauriCare" className="h-8 md:h-10" />
           </button>
 
           {/* Desktop Navigation */}
