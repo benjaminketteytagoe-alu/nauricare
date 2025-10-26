@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { useLanguage } from '@/hooks/useLanguage';
 import { CheckCircle2, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const formSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name too long"),
@@ -66,15 +67,17 @@ export function WaitlistForm() {
     }
 
     try {
-      // TODO: Replace with actual API endpoint
-      // const response = await fetch('/api/waitlist', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(data),
-      // });
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { error } = await supabase
+        .from('waitlist_signups')
+        .insert({
+          name: data.name,
+          email_or_phone: data.emailOrPhone,
+          country: data.country,
+          language: data.language,
+          role: data.role,
+        });
+
+      if (error) throw error;
       
       setShowSuccess(true);
       reset();

@@ -13,7 +13,7 @@ export function Footer() {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div className="space-y-4">
-            <img src={logo} alt="NauriCare" className="h-12 md:h-14" />
+            <img src={logo} alt="NauriCare" className="h-16 md:h-20" />
             <p className="text-sm text-muted-foreground">
               {t.footer.tagline}
             </p>
