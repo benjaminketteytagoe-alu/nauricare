@@ -41,7 +41,7 @@ export function Navigation() {
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="flex items-center hover:opacity-80 transition-opacity"
           >
-            <img src={logo} alt="NauriCare" className="h-8 md:h-10" />
+            <img src={logo} alt="NauriCare" className="h-12 md:h-16" />
           </button>
 
           {/* Desktop Navigation */}
