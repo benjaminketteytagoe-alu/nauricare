@@ -50,6 +50,20 @@ export interface Translations {
       test3: { quote: string; name: string; location: string };
     };
   };
+  healthStats: {
+    title: string;
+    subtitle: string;
+    stats: {
+      pcos: { number: string; label: string; fact: string };
+      fibroids: { number: string; label: string; fact: string };
+      undiagnosed: { number: string; label: string; fact: string };
+      treatment: { number: string; label: string; fact: string };
+    };
+    whyNauricare: {
+      title: string;
+      reasons: string[];
+    };
+  };
   partners: {
     title: string;
     description: string;
@@ -149,6 +163,43 @@ export const translations: Record<Language, Translations> = {
         },
       },
     },
+    healthStats: {
+      title: "The Silent Crisis Affecting Millions of Women",
+      subtitle: "PCOS and Fibroids are widespread but often go undiagnosed. Early detection and proper management can transform lives.",
+      stats: {
+        pcos: {
+          number: "1 in 10",
+          label: "women have PCOS",
+          fact: "Polycystic Ovary Syndrome affects 116 million women globally, yet 70% remain undiagnosed",
+        },
+        fibroids: {
+          number: "70-80%",
+          label: "of women develop fibroids",
+          fact: "By age 50, most women will develop uterine fibroids, with African women at highest risk",
+        },
+        undiagnosed: {
+          number: "60%",
+          label: "go undiagnosed",
+          fact: "Limited access to healthcare means most cases remain undetected until complications arise",
+        },
+        treatment: {
+          number: "5-7 years",
+          label: "average diagnosis delay",
+          fact: "Women wait years for proper diagnosis, during which conditions worsen and fertility risks increase",
+        },
+      },
+      whyNauricare: {
+        title: "Why NauriCare is Essential for Every Woman",
+        reasons: [
+          "Early symptom detection through AI-powered screening can prevent complications",
+          "Accessible healthcare guidance in your local language, breaking down barriers",
+          "Direct connection to specialists who understand PCOS and fibroid management",
+          "No smartphone needed — USSD access ensures no woman is left behind",
+          "Ongoing education helps you understand your body and advocate for your health",
+          "Teleconsultations provide expert care without expensive travel or time off work",
+        ],
+      },
+    },
     partners: {
       title: "Partner With Us",
       description: "Are you a healthcare provider, NGO, or donor? Join us in making women's health accessible across Africa.",
@@ -246,6 +297,43 @@ export const translations: Record<Language, Translations> = {
         },
       },
     },
+    healthStats: {
+      title: "Matatizo ya Kimya Yanayoathiri Mamilioni ya Wanawake",
+      subtitle: "PCOS na Fibroids ni ya kawaida lakini mara nyingi hazitambuliwi. Utambuzi wa mapema na usimamizi sahihi unaweza kubadilisha maisha.",
+      stats: {
+        pcos: {
+          number: "1 kati ya 10",
+          label: "wanawake wana PCOS",
+          fact: "Ugonjwa wa Ovari za Polycystic unaathiri wanawake milioni 116 ulimwenguni, lakini 70% hawajatambuliwa",
+        },
+        fibroids: {
+          number: "70-80%",
+          label: "ya wanawake hupata fibroids",
+          fact: "Kufikia umri wa miaka 50, wanawake wengi watakuwa na fibroids za kizazi, wanawake wa Kiafrika wakiwa katika hatari kubwa zaidi",
+        },
+        undiagnosed: {
+          number: "60%",
+          label: "hawajatambuliwa",
+          fact: "Ukosekanaji wa huduma za afya inamaanisha visa vingi vinabakia visivyotambuliwa mpaka matatizo yanapojitokeza",
+        },
+        treatment: {
+          number: "Miaka 5-7",
+          label: "ucheleweshwaji wa wastani wa utambuzi",
+          fact: "Wanawake husubiri miaka kwa utambuzi sahihi, wakati hali inazidi kuwa mbaya na hatari za uzazi zinaongezeka",
+        },
+      },
+      whyNauricare: {
+        title: "Kwa Nini NauriCare ni Muhimu kwa Kila Mwanamke",
+        reasons: [
+          "Utambuzi wa mapema wa dalili kupitia uchunguzi unaotumia AI unaweza kuzuia matatizo",
+          "Mwongozo wa huduma za afya unapatikana kwa lugha yako ya mitaa, ukivunja vikwazo",
+          "Muunganisho wa moja kwa moja na wataalam wanaoeelewa usimamizi wa PCOS na fibroids",
+          "Hakuna haja ya simu mahiri — ufikiaji wa USSD unahakikisha hakuna mwanamke anayeachwa nyuma",
+          "Elimu inayoendelea inakusaidia kuelewa mwili wako na kutetea afya yako",
+          "Mashauriano ya telemedicine hutoa huduma ya kitaalam bila usafiri wa gharama kubwa au mapumziko ya kazi",
+        ],
+      },
+    },
     partners: {
       title: "Shikamana Nasi",
       description: "Je, wewe ni mtoa huduma za afya, NGO, au mfadhili? Jiunge nasi katika kufanya afya ya wanawake ipatikane kote Afrika.",
@@ -341,6 +429,43 @@ export const translations: Record<Language, Translations> = {
           name: "Dr. Fatima S.",
           location: "Kigali, Rwanda",
         },
+      },
+    },
+    healthStats: {
+      title: "Ikibazo cy'Amahirwe Kigira Ingaruka ku Bagore Benshi",
+      subtitle: "PCOS na Fibroids bikunze cyane ariko bikenshi ntibimenyekane. Kuzimenyekanisha kare no kuzikurikirana neza bishobora guhindura ubuzima.",
+      stats: {
+        pcos: {
+          number: "1 muri 10",
+          label: "abagore bafite PCOS",
+          fact: "Indwara ya Polycystic Ovary igira ingaruka ku bagore miliyoni 116 ku isi, ariko 70% ntibamenyekana",
+        },
+        fibroids: {
+          number: "70-80%",
+          label: "by'abagore bakura fibroids",
+          fact: "Bageze ku myaka 50, abagore benshi bazaba bafite fibroids zo mu mura, abagore b'Abanyafurika bakaba ari bo bafite ibyago byinshi",
+        },
+        undiagnosed: {
+          number: "60%",
+          label: "ntibamenyekana",
+          fact: "Kubura ubuvuzi bihagije bitera ko ibibazo byinshi bibera bidasubizwa kugeza igihe ingorane zivutse",
+        },
+        treatment: {
+          number: "Imyaka 5-7",
+          label: "igihe cyo gutinda kuzimenyekanisha",
+          fact: "Abagore bategereza imyaka kugira ngo bamenye neza indwara, mugihe aho imiterere irushya kandi ingorane zo kubyara zirahura",
+        },
+      },
+      whyNauricare: {
+        title: "Impamvu NauriCare ari Ngombwa kuri Buri Mugore",
+        reasons: [
+          "Kuzimenyekanisha kare ibimenyetso binyuze mu gukoresha AI bishobora gukumira ingorane",
+          "Ubuyobozi bw'ubuvuzi buboroheye mu rurimi rwawe, bukuraho inzitizi",
+          "Guhuza na inzobere zishoboye kumenya imyitwarire ya PCOS na fibroids",
+          "Nta telefone mahitsi ikenewe — kubona USSD biratuma nta mugore usigara inyuma",
+          "Uburezi bukomeza bugufasha gusobanukirwa umubiri wawe no kurwanirira ubuzima bwawe",
+          "Inama za telemedicine zitanga ubuvuzi bw'inzobere nta ngendo ihenze cyangwa ikiruhuko cy'akazi",
+        ],
       },
     },
     partners: {

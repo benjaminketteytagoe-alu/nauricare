@@ -53,6 +53,7 @@ import { useEffect } from 'react';
 import { LanguageProvider } from '@/hooks/useLanguage';
 import { Navigation } from '@/components/Navigation';
 import { Hero } from '@/components/Hero';
+import { HealthStats } from '@/components/HealthStats';
 import { WaitlistForm } from '@/components/WaitlistForm';
 import { Features } from '@/components/Features';
 import { HowItWorks } from '@/components/HowItWorks';
@@ -79,6 +80,7 @@ const Index = () => {
         <Navigation />
         <main>
           <Hero />
+          <HealthStats />
           <Features />
           <HowItWorks />
           <Testimonials />
