@@ -67,6 +67,8 @@ export interface Translations {
   partners: {
     title: string;
     description: string;
+    recognition: string;
+    partnerships: string;
     cta: string;
   };
   footer: {
@@ -203,6 +205,8 @@ export const translations: Record<Language, Translations> = {
     partners: {
       title: "Partner With Us",
       description: "Are you a healthcare provider, NGO, or donor? Join us in making women's health accessible across Africa.",
+      recognition: "AfyaFest 2025 Finalist",
+      partnerships: "In partnership with Agahozo Shalom Youth Village",
       cta: "Become a Partner",
     },
     footer: {
@@ -337,6 +341,8 @@ export const translations: Record<Language, Translations> = {
     partners: {
       title: "Shikamana Nasi",
       description: "Je, wewe ni mtoa huduma za afya, NGO, au mfadhili? Jiunge nasi katika kufanya afya ya wanawake ipatikane kote Afrika.",
+      recognition: "Mshindi wa AfyaFest 2025",
+      partnerships: "Kwa ushirikiano na Agahozo Shalom Youth Village",
       cta: "Kuwa Mshirika",
     },
     footer: {
@@ -471,6 +477,8 @@ export const translations: Record<Language, Translations> = {
     partners: {
       title: "Dufatanye",
       description: "Uri umutanga serivisi z'ubuzima, umuryango udaharanira inyungu, cyangwa umuterankunga? Dufatanye mu gukora ubuzima bw'abagore buborohewe muri Afrika yose.",
+      recognition: "Uwatsindiye AfyaFest 2025",
+      partnerships: "Mu bufatanye na Agahozo Shalom Youth Village",
       cta: "Kuba Umufatanyabikorwa",
     },
     footer: {
