@@ -64,11 +64,11 @@ export function Footer() {
             <h3 className="font-semibold mb-4">{t.footer.contact}</h3>
             <div className="space-y-4">
               <a
-                href="mailto:hello@nauricare.com"
+                href="mailto:hello@nauricare.org"
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
               >
                 <Mail className="h-4 w-4" />
-                hello@nauricare.com
+                hello@nauricare.org
               </a>
               
               <div className="flex gap-3">
