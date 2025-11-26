@@ -58,6 +58,7 @@ import { WaitlistForm } from '@/components/WaitlistForm';
 import { Features } from '@/components/Features';
 import { HowItWorks } from '@/components/HowItWorks';
 import { Testimonials } from '@/components/Testimonials';
+import { Team } from '@/components/Team';
 import { Partners } from '@/components/Partners';
 import { Footer } from '@/components/Footer';
 
@@ -84,6 +85,7 @@ const Index = () => {
           <Features />
           <HowItWorks />
           <Testimonials />
+          <Team />
           <Partners />
           <WaitlistForm />
         </main>
