@@ -7,7 +7,6 @@ const teamMembers = [
     name: 'Benjamin Kettey-Tagoe',
     role: {
       en: 'Co-founder/CEO',
-      rw: 'Umushinzwe hamwe',
     },
     image: 'https://ibb.co/GQv6rDxR',
     linkedin: 'https://www.linkedin.com/in/benjamin-kettey-tagoe/',
@@ -16,7 +15,6 @@ const teamMembers = [
     name: 'Ondiro Oganga',
     role: {
       en: 'Co-founder',
-      rw: 'Umushinzwe hamwe',
     },
     image: 'https://ibb.co/d4C0bW5H',
     linkedin: 'https://www.linkedin.com/in/ondiro-oganga-9a3695b2/',
@@ -25,7 +23,6 @@ const teamMembers = [
     name: "Dr. Achieng Align'",
     role: {
       en: 'Gynecologist / Advisor',
-      rw: 'Muganga w\'ababyeyi / Umujyanama',
     },
     image: 'https://ibb.co/p6W9Rj91',
     linkedin: 'https://www.linkedin.com/in/achieng-aling/',
