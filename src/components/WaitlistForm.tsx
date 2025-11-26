@@ -55,7 +55,6 @@ export function WaitlistForm() {
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
 
-    // Analytics placeholder
     if (typeof window !== 'undefined' && (window as any).dataLayer) {
       (window as any).dataLayer.push({
         event: 'waitlist_signup',
@@ -67,23 +66,47 @@ export function WaitlistForm() {
     }
 
     try {
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from('waitlist_signups')
         .insert({
-          name: data.name,
-          email_or_phone: data.emailOrPhone,
-          country: data.country,
-          language: data.language,
+          name: data.name.trim(),
+          email_or_phone: data.emailOrPhone.trim(),
+          country: data.country.trim(),
+          language: data.language.trim(),
           role: data.role,
         });
 
-      if (error) throw error;
-      
+      if (insertError) {
+        console.error('Database insert error:', insertError);
+        throw new Error(insertError.message || 'Failed to save your information');
+      }
+
+      try {
+        const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-waitlist-email`;
+        await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email_or_phone: data.emailOrPhone.trim(),
+            name: data.name.trim(),
+            role: data.role,
+          }),
+        });
+      } catch (emailError) {
+        console.error('Email notification error:', emailError);
+      }
+
       setShowSuccess(true);
       reset();
     } catch (error) {
       console.error('Form submission error:', error);
-      alert('Something went wrong. Please try again.');
+      const errorMessage = error instanceof Error
+        ? error.message
+        : 'Something went wrong. Please try again.';
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
