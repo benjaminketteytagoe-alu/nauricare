@@ -6,11 +6,11 @@ const teamMembers = [
   {
     name: 'Benjamin Kettey-Tagoe',
     role: {
-      en: 'Co-founder',
+      en: 'Co-founder/CEO',
       rw: 'Umushinzwe hamwe',
     },
-    image: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=800',
-    linkedin: 'https://www.linkedin.com/in/benjamin-kettey-tagoe-456a10155/',
+    image: 'https://ibb.co/GQv6rDxR',
+    linkedin: 'https://www.linkedin.com/in/benjamin-kettey-tagoe/',
   },
   {
     name: 'Ondiro Oganga',
@@ -18,7 +18,7 @@ const teamMembers = [
       en: 'Co-founder',
       rw: 'Umushinzwe hamwe',
     },
-    image: 'https://images.pexels.com/photos/3756679/pexels-photo-3756679.jpeg?auto=compress&cs=tinysrgb&w=800',
+    image: 'https://ibb.co/d4C0bW5H',
     linkedin: 'https://www.linkedin.com/in/ondiro-oganga-9a3695b2/',
   },
   {
@@ -27,8 +27,8 @@ const teamMembers = [
       en: 'Gynecologist / Advisor',
       rw: 'Muganga w\'ababyeyi / Umujyanama',
     },
-    image: 'https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=800',
-    linkedin: '',
+    image: 'https://ibb.co/p6W9Rj91',
+    linkedin: 'https://www.linkedin.com/in/achieng-aling/',
   },
 ];
 
