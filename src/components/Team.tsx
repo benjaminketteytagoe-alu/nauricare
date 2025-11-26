@@ -9,7 +9,7 @@ const teamMembers = [
       en: 'Co-founder',
       rw: 'Umushinzwe hamwe',
     },
-    image: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=800',
+    image: 'https://i.ibb.co/chcBs9gQ/NIB-0387.jpg',
     linkedin: 'https://www.linkedin.com/in/benjamin-kettey-tagoe-456a10155/',
   },
   {
@@ -18,7 +18,7 @@ const teamMembers = [
       en: 'Co-founder',
       rw: 'Umushinzwe hamwe',
     },
-    image: 'https://images.pexels.com/photos/3756679/pexels-photo-3756679.jpeg?auto=compress&cs=tinysrgb&w=800',
+    image: 'https://i.ibb.co/whGNJ0z2/NIB-6017.jpg',
     linkedin: 'https://www.linkedin.com/in/ondiro-oganga-9a3695b2/',
   },
   {
@@ -27,7 +27,7 @@ const teamMembers = [
       en: 'Gynecologist / Advisor',
       rw: 'Muganga w\'ababyeyi / Umujyanama',
     },
-    image: 'https://images.pexels.com/photos/5327585/pexels-photo-5327585.jpeg?auto=compress&cs=tinysrgb&w=800',
+    image: 'https://i.ibb.co/zW807V0m/1741119372377.jpg',
     linkedin: '',
   },
 ];
