@@ -12,19 +12,24 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     // Check localStorage or default to English
-    const saved = localStorage.getItem('nauricare-language');
-    return (saved as Language) || 'en';
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('nauricare-language');
+      return (saved as Language) || 'en';
+    }
+    return 'en';
   });
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('nauricare-language', lang);
-    // Analytics placeholder
-    if (typeof window !== 'undefined' && (window as any).dataLayer) {
-      (window as any).dataLayer.push({
-        event: 'language_change',
-        language: lang,
-      });
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nauricare-language', lang);
+      // Analytics placeholder
+      if ((window as any).dataLayer) {
+        (window as any).dataLayer.push({
+          event: 'language_change',
+          language: lang,
+        });
+      }
     }
   };
 
