@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@nauricare/database": ["packages/database/index.ts"]
+    }
+  }
+}
