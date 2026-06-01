@@ -1,0 +1,34 @@
+name: NauriCare CI Pipeline
+
+# Trigger the pipeline on pushes to main/develop, and all Pull Requests
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build-and-test:
+    name: Build & Typecheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm' # Automatically caches dependencies to speed up runs
+
+      - name: Install Dependencies
+        run: npm install
+
+      # Generates the Prisma client so the Next.js build doesn't fail missing the DB types
+      - name: Generate Database Client
+        run: npx prisma generate --schema=packages/database/prisma/schema.prisma
+
+      # Runs the Turborepo build process which includes Next.js strict TypeScript checking
+      - name: Run Build Pipeline
+        run: npm run build
