@@ -2,6 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, Calendar, User, LogOut } from "lucide-react";
@@ -93,9 +94,11 @@ export default function DashboardPage() {
           <p className="text-gray-500 max-w-lg mx-auto leading-relaxed">
             In our next phase, this is where you will log your daily symptoms, track patterns for PCOS or fibroids, and view your personalized health insights.
           </p>
-          <Button className="bg-teal-600 hover:bg-teal-700 text-white h-11 px-8 mt-4">
-            Start Symptom Log (Coming Soon)
-          </Button>
+          <Link href="/dashboard/symptoms">
+            <Button className="bg-teal-600 hover:bg-teal-700 text-white h-11 px-8 mt-4">
+              Start Symptom Log
+            </Button>
+          </Link>
         </div>
 
       </div>

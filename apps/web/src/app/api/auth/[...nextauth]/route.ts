@@ -21,7 +21,6 @@ export const authOptions: AuthOptions = {
           throw new Error("Invalid email or password");
         }
 
-        // 1. Find the user in the Neon Database
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
@@ -30,14 +29,12 @@ export const authOptions: AuthOptions = {
           throw new Error("No user found with this email");
         }
 
-        // 2. Verify the password
         const isValidPassword = await bcrypt.compare(credentials.password, user.passwordHash);
 
         if (!isValidPassword) {
           throw new Error("Incorrect password");
         }
 
-        // 3. Return the user object (including the newly added role)
         return {
           id: user.id,
           name: user.name,
@@ -48,7 +45,25 @@ export const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
-    // 4. Inject the database role into the encrypted JWT
+    async signIn({ user, account }) {
+      if (account?.provider === "google" && user.email) {
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email },
+        });
+        
+        if (!existingUser) {
+          await prisma.user.create({
+            data: {
+              email: user.email,
+              name: user.name || "Google User",
+              // We pass a dummy string to satisfy your database schema's strict requirements
+              passwordHash: "", 
+            },
+          });
+        }
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
@@ -56,7 +71,6 @@ export const authOptions: AuthOptions = {
       }
       return token;
     },
-    // 5. Expose that token data to the frontend session
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
