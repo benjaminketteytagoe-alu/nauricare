@@ -56,7 +56,6 @@ export const authOptions: AuthOptions = {
             data: {
               email: user.email,
               name: user.name || "Google User",
-              // We pass a dummy string to satisfy your database schema's strict requirements
               passwordHash: "", 
             },
           });
@@ -64,10 +63,19 @@ export const authOptions: AuthOptions = {
       }
       return true;
     },
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = user.role;
+    async jwt({ token }) {
+      // 1. Every time a token is touched, look up the REAL user in the Neon database
+      if (token.email) {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: token.email },
+          select: { id: true, role: true }
+        });
+        
+        // 2. Inject the true database ID and Role into the token
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+        }
       }
       return token;
     },

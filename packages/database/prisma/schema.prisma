@@ -103,12 +103,17 @@ model Appointment {
   practitionerId String
   practitioner   PractitionerProfile @relation("DoctorAppointments", fields: [practitionerId], references: [id])
 
-  date      DateTime
-  type      String // "Virtual" or "In-Person"
-  status    AppointmentStatus @default(SCHEDULED)
-  notes     String? // Post-consult notes
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  date     DateTime
+  duration Int               @default(30) // Duration in minutes
+  type     String
+  status   AppointmentStatus @default(SCHEDULED)
+
+  videoUrl  String?
+  meetingId String?
+
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model HealthRecord {
