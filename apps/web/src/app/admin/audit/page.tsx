@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { ShieldAlert, Download, Clock } from "lucide-react";
 import { Download, Clock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
