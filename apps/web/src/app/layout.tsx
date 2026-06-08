@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { Providers } from "@/components/Providers";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "NauriCare | Women's Health & Specialist Guidance",
@@ -18,8 +15,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} min-h-screen bg-gray-50 flex flex-col`}>
-        <Providers> {/* Added wrapper */}
+      {/* We removed inter.className and added font-sans */}
+      <body className="font-sans min-h-screen bg-gray-50 flex flex-col">
+        <Providers>
           <Navbar />
           <main className="flex-grow">
             {children}

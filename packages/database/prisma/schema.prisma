@@ -52,10 +52,7 @@ model User {
   patientProfile      PatientProfile?
   practitionerProfile PractitionerProfile?
   symptomChecks       SymptomCheck[]
-  healthRecords       HealthRecord[]
   notifications       Notification[]
-
-  patientAppointments Appointment[] @relation("PatientAppointments")
 
   // Messaging Relations
   sentMessages     Message[] @relation("SentMessages")
@@ -68,22 +65,32 @@ model PatientProfile {
   user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   country          String
   menstrualCycle   String?
-  emergencyContact String? // Supports emergency escalation (SR 3)
+  emergencyContact String?
+
+  healthGoals String[] @default([])
+
+  // Relations
+  cycleLogs     CycleLog[]
+  habitLogs     HabitLog[]
+  healthRecords HealthRecord[] @relation("PatientHealthRecords")
+  appointments  Appointment[]  @relation("PatientAppointments")
 }
 
 model PractitionerProfile {
   id         String  @id @default(cuid())
   userId     String  @unique
   user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  specialty  String
+  location   String?
+  clinicName String
+  specialty  String // e.g., "Endocrinologist", "Gynecologist"
   bio        String?
-  clinicName String?
-  location   String
-  isVerified Boolean @default(false)
-  price      String?
+  isVerified Boolean @default(false) // Admin approval flag
 
   appointments  Appointment[]  @relation("DoctorAppointments")
   healthRecords HealthRecord[] @relation("ProviderHealthRecords")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // --- Healthcare Feature Models ---
@@ -91,43 +98,59 @@ model SymptomCheck {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  answers   Json // Stores the questionnaire responses
-  riskLevel String // e.g., "High", "Low", "Medium"
+  answers   Json
+  riskLevel String
   createdAt DateTime @default(now())
 }
 
 model Appointment {
-  id             String              @id @default(cuid())
-  patientId      String
-  patient        User                @relation("PatientAppointments", fields: [patientId], references: [id])
-  practitionerId String
-  practitioner   PractitionerProfile @relation("DoctorAppointments", fields: [practitionerId], references: [id])
+  id String @id @default(cuid())
 
-  date     DateTime
-  duration Int               @default(30) // Duration in minutes
-  type     String
-  status   AppointmentStatus @default(SCHEDULED)
+  // Relations mapped to your explicit names
+  patientProfileId String
+  patient          PatientProfile @relation("PatientAppointments", fields: [patientProfileId], references: [id], onDelete: Cascade)
 
-  videoUrl  String?
-  meetingId String?
+  practitionerProfileId String
+  practitioner          PractitionerProfile @relation("DoctorAppointments", fields: [practitionerProfileId], references: [id], onDelete: Cascade)
 
-  notes     String?
+  // Scheduling details
+  startTime DateTime
+  endTime   DateTime
+  status    String   @default("PENDING")
+
+  // Telehealth & clinical data
+  meetingLink String?
+  notes       String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([patientProfileId])
+  @@index([practitionerProfileId])
+  @@index([startTime])
 }
 
 model HealthRecord {
-  id         String               @id @default(cuid())
-  patientId  String
-  patient    User                 @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  providerId String? // Optional: If a specific provider uploaded it
-  provider   PractitionerProfile? @relation("ProviderHealthRecords", fields: [providerId], references: [id])
+  id String @id @default(cuid())
 
-  title       String
-  description String?
-  documentUrl String? // URL to securely stored encrypted file
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  // Relations mapped to your explicit names
+  patientProfileId String
+  patient          PatientProfile @relation("PatientHealthRecords", fields: [patientProfileId], references: [id], onDelete: Cascade)
+
+  practitionerProfileId String
+  practitioner          PractitionerProfile @relation("ProviderHealthRecords", fields: [practitionerProfileId], references: [id], onDelete: Cascade)
+
+  // Record Details
+  type        String
+  documentUrl String?
+  notes       String?
+content               String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientProfileId])
+  @@index([practitionerProfileId])
 }
 
 // --- Communication Models ---
@@ -138,7 +161,7 @@ model Message {
   receiverId String
   receiver   User   @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
 
-  content   String // Must be encrypted at the application layer
+  content   String
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 }
@@ -160,7 +183,7 @@ model Pharmacy {
   name        String
   location    String
   contactInfo String?
-  tags        String[] // Array of tags e.g. ["PCOS Meds", "Supplements"]
+  tags        String[]
   createdAt   DateTime @default(now())
 }
 
@@ -178,7 +201,39 @@ model Article {
 model AuditEvent {
   id        String   @id @default(cuid())
   userId    String?
-  action    String // e.g., "LOGIN", "APPOINTMENT_BOOKED"
+  action    String
   details   Json?
   createdAt DateTime @default(now())
+}
+
+model CycleLog {
+  id               String         @id @default(cuid())
+  patientProfileId String
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+
+  startDate   DateTime
+  endDate     DateTime?
+  cycleLength Int?
+  notes       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientProfileId])
+}
+
+model HabitLog {
+  id               String         @id @default(cuid())
+  patientProfileId String
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+
+  habitId   Int
+  date      DateTime @db.Date
+  completed Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([patientProfileId, habitId, date])
+  @@index([patientProfileId, date])
 }

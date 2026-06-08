@@ -1,3 +1,4 @@
+// apps/web/src/app/dashboard/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,66 +6,128 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { 
   Activity, Calendar, CheckCircle2, Circle, 
-  Droplet, Flame, Newspaper, HeartPulse, Edit2, X, BarChart3, Video
+  Newspaper, HeartPulse, Edit2, X, BarChart3, Video
 } from "lucide-react";
+import { CycleLogModal } from "@/components/CycleLogModal";
 
 export default function PatientDashboardPage() {
   const { data: session } = useSession();
   const [appointments, setAppointments] = useState<any[]>([]);
-
-  // --- FETCH APPOINTMENTS FROM DATABASE ---
-  useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const res = await fetch("/api/appointments"); // We can make a simple helper fetch or read directly
-        // For rapid integration, we pull active records for this patient
-        const response = await fetch(`/api/providers`); // Fallback safely or fetch endpoint
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    
-    // Quick inline fetch for appointments assigned to me
-    if (session?.user?.id) {
-      fetch("/api/admin/providers") // Reusing our data pool securely
-        .then(res => res.json())
-        .then(data => {
-          // Simulation of active live lookup or fetching direct endpoint
-        }).catch(err => {});
-    }
-  }, [session]);
+  
+  // NEW: Store the next upcoming appointment
+  const [nextAppointment, setNextAppointment] = useState<any>(null);
 
   // --- INTERACTIVE HABIT TRACKER STATE ---
   const [activeTab, setActiveTab] = useState<'today' | 'analytics'>('today');
   const [chartPeriod, setChartPeriod] = useState<'week' | 'month' | 'year'>('week');
 
-  const [habits, setHabits] = useState([
-    { id: 1, title: "Take Supplements (Inositol/Vitamin D)", desc: "Helps improve insulin sensitivity.", done: false },
-    { id: 2, title: "Eat a High-Fiber, Low-GI Breakfast", desc: "Crucial for managing PCOS blood sugar spikes.", done: false },
-    { id: 3, title: "Drink 2.5L of Water", desc: "Supports liver function to clear excess estrogen.", done: false },
-    { id: 4, title: "30 Mins of Gentle Movement", desc: "Reduces cortisol levels without over-stressing the body.", done: false },
-  ]);
+  // Dynamic States for Personalization
+  const [habits, setHabits] = useState<any[]>([]);
+  const [articles, setArticles] = useState<any[]>([]);
 
-  const toggleHabit = (id: number) => {
-    setHabits(habits.map(h => h.id === id ? { ...h, done: !h.done } : h));
-  };
-
-  const completedHabits = habits.filter(h => h.done).length;
-  const progressPercentage = (completedHabits / habits.length) * 100;
+  const [analyticsData, setAnalyticsData] = useState({
+    week: [
+      { label: 'Mon', value: 0 }, { label: 'Tue', value: 0 }, { label: 'Wed', value: 0 },
+      { label: 'Thu', value: 0 }, { label: 'Fri', value: 0 }, { label: 'Sat', value: 0 }, { label: 'Sun', value: 0 }
+    ],
+    month: [
+      { label: 'Wk 1', value: 0 }, { label: 'Wk 2', value: 0 }, { label: 'Wk 3', value: 0 }, { label: 'Wk 4', value: 0 }
+    ],
+    year: [
+      { label: 'Jan', value: 0 }, { label: 'Feb', value: 0 }, { label: 'Mar', value: 0 },
+      { label: 'Apr', value: 0 }, { label: 'May', value: 0 }, { label: 'Jun', value: 0 },
+      { label: 'Jul', value: 0 }, { label: 'Aug', value: 0 }, { label: 'Sep', value: 0 },
+      { label: 'Oct', value: 0 }, { label: 'Nov', value: 0 }, { label: 'Dec', value: 0 }
+    ]
+  });
 
   // --- INTERACTIVE CYCLE TRACKER STATE ---
   const [isEditingCycle, setIsEditingCycle] = useState(false);
-  const defaultPastDate = new Date();
-  defaultPastDate.setDate(defaultPastDate.getDate() - 14);
-  const [lastPeriodDate, setLastPeriodDate] = useState(defaultPastDate.toISOString().split('T')[0]);
+  const [lastPeriodDate, setLastPeriodDate] = useState<string | null>(null);
   const [cycleLength, setCycleLength] = useState(28);
 
+  // --- DATA FETCHING (HYDRATION) ---
+  const fetchAnalytics = async () => {
+    try {
+      const res = await fetch("/api/habits/analytics");
+      if (res.ok) {
+        const data = await res.json();
+        setAnalyticsData(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch analytics", err);
+    }
+  };
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      // 1. Fetch Habit Analytics
+      fetchAnalytics();
+
+      // 2. Fetch Latest Cycle Log
+      fetch("/api/cycles/latest")
+        .then((res) => res.json())
+        .then((data) => {
+          setCycleLength(data.cycleLength || 28);
+          if (data.lastPeriodDate) {
+            setLastPeriodDate(new Date(data.lastPeriodDate).toISOString().split('T')[0]);
+          }
+        })
+        .catch((err) => console.error("Failed to fetch cycle data", err));
+
+      // 3. Fetch Personalized Goals (Habits & Articles)
+      fetch("/api/personalization")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.habits) setHabits(data.habits);
+          if (data.articles) setArticles(data.articles);
+        })
+        .catch((err) => console.error("Failed to fetch personalization", err));
+
+      // 4. Fetch Upcoming Appointments
+      fetch("/api/appointments")
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data) && data.length > 0) {
+            // Grab the closest upcoming appointment
+            setNextAppointment(data[0]); 
+          }
+        })
+        .catch((err) => console.error("Failed to fetch appointments", err));
+    }
+  }, [session]);
+
+  // --- MUTATIONS ---
+  const toggleHabit = async (id: number) => {
+    const habitToToggle = habits.find(h => h.id === id);
+    const newStatus = !habitToToggle?.done;
+    setHabits(habits.map(h => h.id === id ? { ...h, done: newStatus } : h));
+
+    try {
+      await fetch("/api/habits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          habitId: id,
+          completed: newStatus,
+          date: new Date().toISOString().split('T')[0]
+        })
+      });
+      fetchAnalytics();
+    } catch (error) {
+      console.error("Failed to save habit", error);
+      setHabits(habits.map(h => h.id === id ? { ...h, done: !newStatus } : h));
+    }
+  };
+
+  // --- RENDER LOGIC & MATH ---
   const today = new Date();
-  const lastP = new Date(lastPeriodDate);
-  const diffTime = Math.abs(today.getTime() - lastP.getTime());
+  const lastP = lastPeriodDate ? new Date(lastPeriodDate) : new Date();
+  
+  const diffTime = lastPeriodDate ? Math.abs(today.getTime() - lastP.getTime()) : 0;
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   
-  const currentCycleDay = (diffDays % cycleLength) || 1;
+  const currentCycleDay = lastPeriodDate ? ((diffDays % cycleLength) || 1) : 1;
   const daysUntilNextPeriod = cycleLength - currentCycleDay;
 
   let phaseInfo = "Follicular Phase";
@@ -82,23 +145,6 @@ export default function PatientDashboardPage() {
 
   const ringCircumference = 283;
   const ringOffset = ringCircumference - ((currentCycleDay / cycleLength) * ringCircumference);
-
-  const analyticsData = {
-    week: [
-      { label: 'Mon', value: 75 }, { label: 'Tue', value: 100 }, { label: 'Wed', value: 50 },
-      { label: 'Thu', value: 100 }, { label: 'Fri', value: 25 }, { label: 'Sat', value: 0 }, { label: 'Sun', value: progressPercentage }
-    ],
-    month: [
-      { label: 'Week 1', value: 80 }, { label: 'Week 2', value: 65 }, 
-      { label: 'Week 3', value: 90 }, { label: 'This Week', value: 60 }
-    ],
-    year: [
-      { label: 'Jan', value: 45 }, { label: 'Feb', value: 60 }, { label: 'Mar', value: 85 },
-      { label: 'Apr', value: 70 }, { label: 'May', value: 90 }, { label: 'Jun', value: 75 },
-      { label: 'Jul', value: 0 }, { label: 'Aug', value: 0 }, { label: 'Sep', value: 0 },
-      { label: 'Oct', value: 0 }, { label: 'Nov', value: 0 }, { label: 'Dec', value: 0 }
-    ]
-  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
@@ -118,7 +164,9 @@ export default function PatientDashboardPage() {
         <div className="lg:col-span-8 space-y-8">
           {/* Cycle Ring */}
           <div className="bg-white rounded-2xl p-8 border border-teal-100 shadow-sm relative overflow-hidden">
-            <button onClick={() => setIsEditingCycle(!isEditingCycle)} className="absolute top-4 right-4 text-gray-400 p-2 rounded-full hover:bg-teal-50"><Edit2 className="w-4 h-4" /></button>
+            <button onClick={() => setIsEditingCycle(true)} className="absolute top-4 right-4 text-gray-400 p-2 rounded-full hover:bg-teal-50">
+              <Edit2 className="w-4 h-4" />
+            </button>
             <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
               <div className="relative w-40 h-40 flex items-center justify-center shrink-0">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
@@ -134,7 +182,9 @@ export default function PatientDashboardPage() {
                 <span className="px-3 py-1 rounded-full bg-rose-50 text-rose-600 text-xs font-bold uppercase">{phaseInfo}</span>
                 <h2 className="text-xl font-bold text-gray-900">Your Body Today</h2>
                 <p className="text-sm text-gray-600">{phaseDesc}</p>
-                <div className="text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1.5 rounded-lg inline-flex">Next period in {daysUntilNextPeriod} days</div>
+                <div className="text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1.5 rounded-lg inline-flex">
+                  {lastPeriodDate ? `Next period in ${daysUntilNextPeriod} days` : "Log a period to begin tracking"}
+                </div>
               </div>
             </div>
           </div>
@@ -145,22 +195,42 @@ export default function PatientDashboardPage() {
               <button onClick={() => setActiveTab('today')} className={`flex-1 py-4 text-sm font-bold ${activeTab === 'today' ? 'text-teal-700 border-b-2 border-teal-600 bg-white' : 'text-gray-500'}`}>Today's Plan</button>
               <button onClick={() => setActiveTab('analytics')} className={`flex-1 py-4 text-sm font-bold ${activeTab === 'analytics' ? 'text-teal-700 border-b-2 border-teal-600 bg-white' : 'text-gray-500'}`}>Habit Analytics</button>
             </div>
+            
+            {activeTab === 'analytics' && (
+               <div className="flex justify-center gap-2 pt-4 px-6">
+                 {['week', 'month', 'year'].map(period => (
+                   <button 
+                     key={period} 
+                     onClick={() => setChartPeriod(period as any)}
+                     className={`px-3 py-1 text-xs font-bold rounded-full capitalize transition-colors ${chartPeriod === period ? 'bg-teal-100 text-teal-800' : 'text-gray-500 hover:bg-gray-100'}`}
+                   >
+                     {period}
+                   </button>
+                 ))}
+               </div>
+            )}
+
             {activeTab === 'today' ? (
               <div className="p-6 space-y-4">
-                {habits.map(habit => (
-                  <div key={habit.id} onClick={() => toggleHabit(habit.id)} className="flex items-center gap-4 p-3 rounded-xl cursor-pointer hover:bg-gray-50">
-                    {habit.done ? <CheckCircle2 className="w-5 h-5 text-teal-500" /> : <Circle className="w-5 h-5 text-gray-300" />}
-                    <div>
-                      <p className={`text-sm font-medium ${habit.done ? 'line-through text-gray-400' : 'text-gray-900'}`}>{habit.title}</p>
+                {habits.length > 0 ? (
+                  habits.map(habit => (
+                    <div key={habit.id} onClick={() => toggleHabit(habit.id)} className="flex items-center gap-4 p-3 rounded-xl cursor-pointer hover:bg-gray-50">
+                      {habit.done ? <CheckCircle2 className="w-5 h-5 text-teal-500" /> : <Circle className="w-5 h-5 text-gray-300" />}
+                      <div>
+                        <p className={`text-sm font-medium ${habit.done ? 'line-through text-gray-400' : 'text-gray-900'}`}>{habit.title}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{habit.desc}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <div className="text-sm text-gray-500 py-4 text-center">Loading your personalized plan...</div>
+                )}
               </div>
             ) : (
-              <div className="p-6 h-48 flex items-end justify-between gap-2">
-                {analyticsData[chartPeriod].map((data, i) => (
+              <div className="p-6 h-48 flex items-end justify-between gap-2 mt-4">
+                {analyticsData[chartPeriod as keyof typeof analyticsData]?.map((data, i) => (
                   <div key={i} className="flex flex-col items-center flex-1">
-                    <div className="w-full bg-teal-500 rounded-t-sm" style={{ height: `${data.value}%`, minHeight: '4px' }}></div>
+                    <div className="w-full bg-teal-500 rounded-t-sm transition-all duration-500" style={{ height: `${Math.max(data.value, 4)}%` }}></div>
                     <span className="text-[9px] text-gray-400 mt-2 uppercase font-semibold">{data.label}</span>
                   </div>
                 ))}
@@ -169,36 +239,77 @@ export default function PatientDashboardPage() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Real-Time Appointments Alert Callout */}
+        {/* RIGHT COLUMN */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-gradient-to-br from-teal-800 to-teal-900 rounded-2xl p-6 text-white shadow-md space-y-4">
-            <div className="flex justify-between items-center">
-              <Calendar className="w-5 h-5 text-teal-300" />
-              <span className="bg-teal-500/30 text-teal-200 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full">Live Connection</span>
+          
+          {/* RIGHT COLUMN: Dynamic Telehealth Card */}
+          {nextAppointment ? (
+            <div className="bg-gradient-to-br from-teal-800 to-teal-900 rounded-2xl p-6 text-white shadow-md space-y-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+              <div className="flex justify-between items-center relative z-10">
+                <Calendar className="w-5 h-5 text-teal-300" />
+                <span className="bg-teal-500/30 text-teal-100 text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
+                  {nextAppointment.status}
+                </span>
+              </div>
+              <div className="relative z-10">
+                <h3 className="text-lg font-bold">Dr. {nextAppointment.practitioner?.user?.name || "Specialist"}</h3>
+                <p className="text-sm text-teal-100 mt-1 font-medium">
+                  {new Date(nextAppointment.startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                </p>
+                <p className="text-xs text-teal-200 mt-0.5">
+                  {new Date(nextAppointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+              <Link href={`/dashboard/telehealth/${nextAppointment.id}`} className="block relative z-10">
+                <button className="w-full bg-white text-teal-900 text-sm font-bold py-3 rounded-xl hover:bg-teal-50 transition-all shadow-sm flex justify-center items-center gap-2">
+                  <Video className="w-4 h-4" /> Join Video Room
+                </button>
+              </Link>
             </div>
-            <div>
-              <h3 className="text-lg font-bold">Your Telehealth Session</h3>
-              <p className="text-xs text-teal-100 mt-1">When an appointment is confirmed, you can launch the secure workspace directly from here.</p>
+          ) : (
+            <div className="bg-gradient-to-br from-teal-800 to-teal-900 rounded-2xl p-6 text-white shadow-md space-y-4">
+              <div className="flex justify-between items-center">
+                <Calendar className="w-5 h-5 text-teal-300" />
+                <span className="bg-teal-500/30 text-teal-200 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full">Available Now</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold">Telehealth Session</h3>
+                <p className="text-xs text-teal-100 mt-1">Book a secure consultation with a verified specialist to discuss your health goals.</p>
+              </div>
+              <Link href="/dashboard/providers" className="block">
+                <button className="w-full bg-white text-teal-900 text-xs font-bold py-2.5 rounded-xl hover:bg-teal-50 transition-colors">
+                  Find a Specialist
+                </button>
+              </Link>
             </div>
-            <Link href="/dashboard/providers" className="block">
-              <button className="w-full bg-white text-teal-900 text-xs font-bold py-2.5 rounded-xl hover:bg-teal-50 transition-colors">
-                Book Consultation
-              </button>
-            </Link>
-          </div>
+          )}
 
-          {/* Curated Feed */}
+          {/* Curated Feed (Dynamic) */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
             <div className="flex justify-between items-center border-b pb-3">
               <h3 className="font-bold text-gray-900 flex items-center gap-2"><Newspaper className="w-4 h-4 text-blue-500" /> Today's Insights</h3>
             </div>
             <div className="space-y-3">
-              <div className="text-xs font-bold text-gray-800 hover:text-teal-600 cursor-pointer">The Link Between Insulin Resistance and PCOS</div>
-              <div className="text-xs font-bold text-gray-800 hover:text-teal-600 cursor-pointer">How to Manage Fibroid Pain Naturally at Home</div>
+              {articles.length > 0 ? (
+                articles.map((article, idx) => (
+                  <Link key={idx} href={article.url} className="block text-xs font-bold text-gray-800 hover:text-teal-600 cursor-pointer">
+                    {article.title}
+                  </Link>
+                ))
+              ) : (
+                <div className="text-xs text-gray-500">Curating articles for you...</div>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      <CycleLogModal 
+        isOpen={isEditingCycle} 
+        onClose={() => setIsEditingCycle(false)} 
+      />
     </div>
   );
 }

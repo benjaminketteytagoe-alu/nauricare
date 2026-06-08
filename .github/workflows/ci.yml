@@ -1,6 +1,5 @@
-name: NauriCare CI Pipeline
+name: NauriCare Enterprise Pipeline
 
-# Trigger the pipeline on pushes to main/develop, and all Pull Requests
 on:
   push:
     branches: [ "main", "develop" ]
@@ -8,10 +7,12 @@ on:
     branches: [ "main", "develop" ]
 
 jobs:
+  # ==========================================
+  # PHASE 1: CONTINUOUS INTEGRATION (TURBOREPO)
+  # ==========================================
   build-and-test:
     name: Build & Typecheck
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -20,15 +21,89 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: 'npm' # Automatically caches dependencies to speed up runs
+          cache: 'npm'
 
       - name: Install Dependencies
         run: npm install
 
-      # Generates the Prisma client so the Next.js build doesn't fail missing the DB types
       - name: Generate Database Client
         run: npx prisma generate --schema=packages/database/prisma/schema.prisma
 
-      # Runs the Turborepo build process which includes Next.js strict TypeScript checking
+      # Turborepo handles parallel execution of linting, typechecking, and building
       - name: Run Build Pipeline
         run: npm run build
+
+  # ==========================================
+  # PHASE 2: IMMUTABLE ARTIFACT GENERATION
+  # ==========================================
+  build-artifact:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name == 'push' # Only build container on merges/pushes
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Monorepo Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/nauricare:latest
+            ghcr.io/${{ github.repository }}/nauricare:${{ github.sha }}
+
+  # ==========================================
+  # PHASE 3: STAGING DEPLOYMENT (DEVELOP BRANCH)
+  # ==========================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build-artifact
+    if: github.ref == 'refs/heads/develop' # Triggers ONLY on develop branch
+    environment: staging
+    steps:
+      - name: Deploy to Staging Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            docker pull ghcr.io/${{ github.repository }}/nauricare:${{ github.sha }}
+            docker stop nauricare-staging || true
+            docker rm nauricare-staging || true
+            docker run -d --name nauricare-staging -p 3001:3000 --env-file .env.staging ghcr.io/${{ github.repository }}/nauricare:${{ github.sha }}
+            # Run migrations explicitly from the separated database package
+            docker exec nauricare-staging npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma
+
+  # ==========================================
+  # PHASE 4: PRODUCTION DEPLOYMENT (MAIN BRANCH)
+  # ==========================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-artifact
+    if: github.ref == 'refs/heads/main' # Triggers ONLY on main branch
+    environment: production
+    steps:
+      - name: Deploy to Production Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            docker pull ghcr.io/${{ github.repository }}/nauricare:${{ github.sha }}
+            docker stop nauricare-prod || true
+            docker rm nauricare-prod || true
+            docker run -d --name nauricare-prod -p 3000:3000 --env-file .env.production ghcr.io/${{ github.repository }}/nauricare:${{ github.sha }}
+            docker exec nauricare-prod npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma

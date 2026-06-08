@@ -1,22 +1,31 @@
+// apps/web/src/app/api/providers/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth"; 
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    
-    // Allow any authenticated user (Patient or otherwise) to view the directory
+
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch only providers and their public profiles
-    const providers = await prisma.user.findMany({
-      where: { role: "PROVIDER" },
-      include: { practitionerProfile: true },
-      orderBy: { name: "asc" },
+    // Securely fetch ONLY verified practitioner profiles
+    const providers = await prisma.practitionerProfile.findMany({
+      where: { 
+        isVerified: true 
+      },
+      include: {
+        // Attach the user's name and email for the directory cards
+        user: {
+          select: {
+            name: true,
+            email: true
+          }
+        }
+      }
     });
 
     return NextResponse.json(providers, { status: 200 });

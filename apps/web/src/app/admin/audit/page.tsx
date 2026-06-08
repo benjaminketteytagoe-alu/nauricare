@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { ShieldAlert, Download, Clock } from "lucide-react";
+export const dynamic = "force-dynamic";
 
 // This is a Server Component - it fetches data securely on the backend
 export default async function AdminAuditPage() {
-  // Fetch the latest 50 events, ordered by newest first
+  // Fetch the latest 100 events, ordered by newest first
   const logs = await prisma.auditEvent.findMany({
     orderBy: { createdAt: "desc" },
-    take: 50,
+    take: 100,
   });
 
   return (

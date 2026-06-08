@@ -1,3 +1,4 @@
+// apps/web/src/app/dashboard/symptoms/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -5,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Activity, Brain, AlertCircle, Heart } from "lucide-react";
+import { ArrowLeft, Activity, Brain, AlertCircle, Heart, Video } from "lucide-react";
 
 const COMMON_SYMPTOMS = [
   "Cramps", "Bloating", "Headache", "Fatigue", 
@@ -36,7 +37,7 @@ export default function SymptomLoggerPage() {
       return;
     }
 
-    setLoading(true);
+    loading || setLoading(true);
     setError("");
     setAiResponse(null);
 
@@ -154,16 +155,29 @@ export default function SymptomLoggerPage() {
         {aiResponse && (
           <div className="bg-white rounded-xl shadow-sm border border-teal-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className={`p-4 border-b flex items-center gap-2 font-semibold ${
-              aiResponse.riskLevel === 'High' ? 'bg-rose-50 text-rose-800 border-rose-100' : 
-              aiResponse.riskLevel === 'Medium' ? 'bg-amber-50 text-amber-800 border-amber-100' : 
+              aiResponse.riskLevel?.toLowerCase() === 'high' ? 'bg-rose-50 text-rose-800 border-rose-100' : 
+              aiResponse.riskLevel?.toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-800 border-amber-100' : 
               'bg-teal-50 text-teal-800 border-teal-100'
             }`}>
-              {aiResponse.riskLevel === 'High' ? <AlertCircle className="w-5 h-5" /> : <Heart className="w-5 h-5" />}
+              {aiResponse.riskLevel?.toLowerCase() === 'high' ? <AlertCircle className="w-5 h-5" /> : <Heart className="w-5 h-5" />}
               NauriCare AI Insight (Risk Level: {aiResponse.riskLevel})
             </div>
-            <div className="p-6 flex gap-4 text-gray-700 leading-relaxed">
-              <Brain className="w-6 h-6 text-teal-600 shrink-0 mt-1" />
-              <p>{aiResponse.insight}</p>
+            <div className="p-6 space-y-5">
+              <div className="flex gap-4 text-gray-700 leading-relaxed">
+                <Brain className="w-6 h-6 text-teal-600 shrink-0 mt-1" />
+                <p>{aiResponse.insight}</p>
+              </div>
+
+              {/* Dynamic Escalation Action Button */}
+              {(aiResponse.riskLevel?.toLowerCase() === 'high' || aiResponse.riskLevel?.toLowerCase() === 'medium') && (
+                <div className="pt-2 sm:pl-10">
+                  <Link href="/dashboard/providers">
+                    <Button className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm">
+                      <Video className="w-4 h-4" /> Consult a Verified Specialist Now
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )}
