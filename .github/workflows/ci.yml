@@ -58,8 +58,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/nauricare:latest
-            ghcr.io/${{ github.repository }}/nauricare:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
 
   # ==========================================
   # PHASE 3: STAGING DEPLOYMENT (DEVELOP BRANCH)
@@ -78,10 +78,10 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            docker pull ghcr.io/${{ github.repository }}/nauricare:${{ github.sha }}
+            docker pull ghcr.io/${{ github.repository }}:${{ github.sha }}
             docker stop nauricare-staging || true
             docker rm nauricare-staging || true
-            docker run -d --name nauricare-staging -p 3001:3000 --env-file .env.staging ghcr.io/${{ github.repository }}/nauricare:${{ github.sha }}
+            docker run -d --name nauricare-staging -p 3001:3000 --env-file .env.staging ghcr.io/${{ github.repository }}:${{ github.sha }}
             # Run migrations explicitly from the separated database package
             docker exec nauricare-staging npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma
 
@@ -102,8 +102,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            docker pull ghcr.io/${{ github.repository }}/nauricare:${{ github.sha }}
+            docker pull ghcr.io/${{ github.repository }}:${{ github.sha }}
             docker stop nauricare-prod || true
             docker rm nauricare-prod || true
-            docker run -d --name nauricare-prod -p 3000:3000 --env-file .env.production ghcr.io/${{ github.repository }}/nauricare:${{ github.sha }}
+            docker run -d --name nauricare-prod -p 3000:3000 --env-file .env.production ghcr.io/${{ github.repository }}:${{ github.sha }}
             docker exec nauricare-prod npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma
