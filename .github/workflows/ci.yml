@@ -29,7 +29,6 @@ jobs:
       - name: Generate Database Client
         run: npx prisma generate --schema=packages/database/prisma/schema.prisma
 
-      # Turborepo handles parallel execution of linting, typechecking, and building
       - name: Run Build Pipeline
         run: npm run build
 
@@ -40,7 +39,7 @@ jobs:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
     needs: build-and-test
-    if: github.event_name == 'push' # Only build container on merges/pushes
+    if: github.event_name == 'push'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -50,7 +49,8 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          # UPDATED: Using explicit Personal Access Token for write permissions
+          password: ${{ secrets.GHCR_PAT }}
 
       - name: Build and Push Monorepo Image
         uses: docker/build-push-action@v5
@@ -68,7 +68,7 @@ jobs:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     needs: build-artifact
-    if: github.ref == 'refs/heads/develop' # Triggers ONLY on develop branch
+    if: github.ref == 'refs/heads/develop'
     environment: staging
     steps:
       - name: Deploy to Staging Server
@@ -82,7 +82,6 @@ jobs:
             docker stop nauricare-staging || true
             docker rm nauricare-staging || true
             docker run -d --name nauricare-staging -p 3001:3000 --env-file .env.staging ghcr.io/${{ github.repository }}:${{ github.sha }}
-            # Run migrations explicitly from the separated database package
             docker exec nauricare-staging npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma
 
   # ==========================================
@@ -92,7 +91,7 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: build-artifact
-    if: github.ref == 'refs/heads/main' # Triggers ONLY on main branch
+    if: github.ref == 'refs/heads/main'
     environment: production
     steps:
       - name: Deploy to Production Server
