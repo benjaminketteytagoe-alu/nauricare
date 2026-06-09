@@ -110,8 +110,9 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            echo "$GHCR_PAT" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
             docker pull ghcr.io/${{ github.repository }}:${{ github.sha }}
-            docker stop nauricare-prod || true
-            docker rm nauricare-prod || true
-            docker run -d --name nauricare-prod -p 3000:3000 --env-file .env.production ghcr.io/${{ github.repository }}:${{ github.sha }}
-            docker exec nauricare-prod npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma
+            docker stop nauricare-staging || true
+            docker rm nauricare-staging || true
+            docker run -d --name nauricare-staging -p 3001:3000 --env-file .env.staging ghcr.io/${{ github.repository }}:${{ github.sha }}
+            docker exec nauricare-staging npx prisma@6.19.3 migrate deploy --schema=packages/database/prisma/schema.prisma
