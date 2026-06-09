@@ -49,7 +49,6 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          # UPDATED: Using explicit Personal Access Token for write permissions
           password: ${{ secrets.GHCR_PAT }}
 
       - name: Build and Push Monorepo Image
@@ -77,18 +76,15 @@ jobs:
           host: ${{ secrets.STAGING_SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          # Pass the secrets into the SSH environment context
           envs: GHCR_PAT, GITHUB_ACTOR
           script: |
-            # Log into GHCR inside the AWS server using the passed environment variables
             echo "$GHCR_PAT" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-            
-            # Pull and run the container
             docker pull ghcr.io/${{ github.repository }}:${{ github.sha }}
             docker stop nauricare-staging || true
             docker rm nauricare-staging || true
             docker run -d --name nauricare-staging -p 3001:3000 --env-file .env.staging ghcr.io/${{ github.repository }}:${{ github.sha }}
-            docker exec nauricare-staging npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma
+            # FIXED: Added explicit Prisma version to Staging
+            docker exec nauricare-staging npx --yes --package prisma@6.19.3 prisma migrate deploy --schema=packages/database/prisma/schema.prisma
         env:
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
           GITHUB_ACTOR: ${{ github.actor }}
@@ -109,10 +105,16 @@ jobs:
           host: ${{ secrets.PROD_SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          # FIXED: Added missing envs context for GHCR login
+          envs: GHCR_PAT, GITHUB_ACTOR
           script: |
             echo "$GHCR_PAT" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
             docker pull ghcr.io/${{ github.repository }}:${{ github.sha }}
-            docker stop nauricare-staging || true
-            docker rm nauricare-staging || true
-            docker run -d --name nauricare-staging -p 3001:3000 --env-file .env.staging ghcr.io/${{ github.repository }}:${{ github.sha }}
-            docker exec nauricare-staging npx prisma@6.19.3 migrate deploy --schema=packages/database/prisma/schema.prisma
+            # FIXED: Target nauricare-prod instead of staging containers
+            docker stop nauricare-prod || true
+            docker rm nauricare-prod || true
+            docker run -d --name nauricare-prod -p 3000:3000 --env-file .env.production ghcr.io/${{ github.repository }}:${{ github.sha }}
+            docker exec nauricare-prod npx --yes --package prisma@6.19.3 prisma migrate deploy --schema=packages/database/prisma/schema.prisma
+        env:
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          GITHUB_ACTOR: ${{ github.actor }}
