@@ -34,6 +34,23 @@ enum NotificationStatus {
   FAILED
 }
 
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum AuditAction {
+  USER_LOGIN
+  USER_LOGOUT
+  PROVIDER_REGISTER
+  PROVIDER_VERIFY
+  PROVIDER_SUSPEND
+  RECORD_ACCESS
+  ADMIN_SETTINGS_UPDATE
+}
+
 // --- Core Models ---
 model User {
   id             String    @id @default(cuid())
@@ -53,6 +70,8 @@ model User {
   practitionerProfile PractitionerProfile?
   symptomChecks       SymptomCheck[]
   notifications       Notification[]
+  providerProfile     ProviderProfile?
+  auditLogs           AuditLog[]
 
   // Messaging Relations
   sentMessages     Message[] @relation("SentMessages")
@@ -106,7 +125,6 @@ model SymptomCheck {
 model Appointment {
   id String @id @default(cuid())
 
-  // Relations mapped to your explicit names
   patientProfileId String
   patient          PatientProfile @relation("PatientAppointments", fields: [patientProfileId], references: [id], onDelete: Cascade)
 
@@ -133,7 +151,6 @@ model Appointment {
 model HealthRecord {
   id String @id @default(cuid())
 
-  // Relations mapped to your explicit names
   patientProfileId String
   patient          PatientProfile @relation("PatientHealthRecords", fields: [patientProfileId], references: [id], onDelete: Cascade)
 
@@ -144,7 +161,7 @@ model HealthRecord {
   type        String
   documentUrl String?
   notes       String?
-content               String
+  content     String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -236,4 +253,33 @@ model HabitLog {
 
   @@unique([patientProfileId, habitId, date])
   @@index([patientProfileId, date])
+}
+
+model ProviderProfile {
+  id                 String             @id @default(uuid())
+  userId             String             @unique
+  specialty          String
+  licenseNumber      String             @unique
+  verificationStatus VerificationStatus @default(PENDING)
+
+  verifiedAt   DateTime?
+  verifiedById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String      @id @default(uuid())
+  action    AuditAction
+  actorId   String
+  targetId  String?
+  details   Json?
+  ipAddress String?
+  createdAt DateTime    @default(now())
+
+  // Relations
+  actor User @relation(fields: [actorId], references: [id], onDelete: Cascade)
 }

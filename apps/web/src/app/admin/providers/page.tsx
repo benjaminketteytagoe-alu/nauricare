@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Search, X, Stethoscope } from "lucide-react";
+import { UserPlus, Search, X, Stethoscope, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export default function AdminProvidersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -119,12 +120,14 @@ export default function AdminProvidersPage() {
                 <th className="px-6 py-4 font-medium">ID & Contact</th>
                 <th className="px-6 py-4 font-medium">Specialty</th>
                 <th className="px-6 py-4 font-medium">Clinic & Location</th>
+                <th className="px-6 py-4 font-medium">Status</th> {/* Added */}
+                <th className="px-6 py-4 font-medium text-right">Actions</th> {/* Added */}
               </tr>
             </thead>
             <tbody>
               {filteredProviders.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-gray-500">
+                  <td colSpan={6} className="p-8 text-center text-gray-500"> {/* Increased colSpan to 6 */}
                     <Stethoscope className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <h3 className="text-lg font-medium text-gray-900">No Providers Found</h3>
                     <p className="text-sm mt-1">Try adjusting your search query or onboard a new provider.</p>
@@ -146,6 +149,27 @@ export default function AdminProvidersPage() {
                     <td className="px-6 py-4 text-gray-600">
                       <div className="font-medium text-gray-900">{provider.practitionerProfile?.clinicName || "Independent"}</div>
                       <div className="text-xs">{provider.practitionerProfile?.location || "N/A"}</div>
+                    </td>
+                    {/* Render status badge dynamically based on relationship parameters */}
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        provider.practitionerProfile?.verificationStatus === "APPROVED"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : provider.practitionerProfile?.verificationStatus === "REJECTED"
+                          ? "bg-rose-50 text-rose-700 border border-rose-200"
+                          : "bg-amber-50 text-amber-700 border border-amber-200"
+                      }`}>
+                        {provider.practitionerProfile?.verificationStatus || "PENDING"}
+                      </span>
+                    </td>
+                    {/* Render action review anchor link */}
+                    <td className="px-6 py-4 text-right">
+                      <Link
+                        href={`/admin/providers/${provider.id}`}
+                        className="inline-flex items-center text-xs font-semibold text-teal-600 hover:text-teal-800 hover:underline gap-1"
+                      >
+                        Review <ArrowRight className="w-3 h-3" />
+                      </Link>
                     </td>
                   </tr>
                 ))
