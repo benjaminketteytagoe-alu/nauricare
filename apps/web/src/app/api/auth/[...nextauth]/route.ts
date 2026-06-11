@@ -18,21 +18,23 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid email or password");
+          throw new Error("Please fill in both email and password fields.");
         }
 
+        const cleanEmail = credentials.email.trim().toLowerCase();
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email: cleanEmail },
         });
 
         if (!user || !user.passwordHash) {
-          throw new Error("No user found with this email");
+          throw new Error("No user records correspond with this address.");
         }
 
         const isValidPassword = await bcrypt.compare(credentials.password, user.passwordHash);
 
         if (!isValidPassword) {
-          throw new Error("Incorrect password");
+          throw new Error("Invalid password submission.");
         }
 
         return {
@@ -46,37 +48,62 @@ export const authOptions: AuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === "google" && user.email) {
-        const existingUser = await prisma.user.findUnique({
-          where: { email: user.email },
-        });
-        
-        if (!existingUser) {
-          await prisma.user.create({
-            data: {
-              email: user.email,
-              name: user.name || "Google User",
-              passwordHash: "", 
-            },
+      if (!account) {
+        return true; // Pass through credentials logins safely
+      }
+
+      if (account.provider === "google" && user.email) {
+        try {
+          const cleanEmail = user.email.trim().toLowerCase();
+          const existingUser = await prisma.user.findUnique({
+            where: { email: cleanEmail },
           });
+          
+          if (!existingUser) {
+            await prisma.user.create({
+              data: {
+                email: cleanEmail,
+                name: user.name || "Google User",
+                passwordHash: "", 
+                role: "PATIENT",
+              },
+            });
+          }
+        } catch (dbError) {
+          console.error("Error provisioning Google User in DB:", dbError);
+          return false; // Reject sign in if DB creation fails completely
         }
       }
       return true;
     },
-    async jwt({ token }) {
-      // 1. Every time a token is touched, look up the REAL user in the Neon database
-      if (token.email) {
+    async jwt({ token, user }) {
+      // 1. Initial execution on successful login
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+        return token;
+      }
+
+      // 2. Background session syncs safety boundary checks
+      if (!token || !token.email) {
+        return token;
+      }
+
+      try {
+        const cleanEmail = token.email.trim().toLowerCase();
         const dbUser = await prisma.user.findUnique({
-          where: { email: token.email },
+          where: { email: cleanEmail },
           select: { id: true, role: true }
         });
         
-        // 2. Inject the true database ID and Role into the token
         if (dbUser) {
           token.id = dbUser.id;
           token.role = dbUser.role;
         }
+      } catch (dbError) {
+        console.error("NextAuth JWT Database Lookup Error:", dbError);
       }
+
       return token;
     },
     async session({ session, token }) {
@@ -89,11 +116,12 @@ export const authOptions: AuthOptions = {
   },
   pages: {
     signIn: "/login",
+    error: "/login", 
   },
   session: {
     strategy: "jwt",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || "nauricare_local_development_fallback_secret_key_2026",
 };
 
 const handler = NextAuth(authOptions);

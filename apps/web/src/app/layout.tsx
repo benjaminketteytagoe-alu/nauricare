@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
 import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
@@ -15,16 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      {/* We removed inter.className and added font-sans */}
-      <body className="font-sans min-h-screen bg-gray-50 flex flex-col">
+      <body className="font-sans min-h-screen bg-gray-50 flex flex-col" suppressHydrationWarning>
         <Providers>
-          <Navbar />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <footer className="bg-white border-t border-gray-200 py-8 mt-auto text-center text-sm text-gray-500">
-            <p>© {new Date().getFullYear()} NauriCare. Built for women in Africa.</p>
-          </footer>
+          {/* Global clean workspace canvas container */}
+          {children}
         </Providers>
       </body>
     </html>

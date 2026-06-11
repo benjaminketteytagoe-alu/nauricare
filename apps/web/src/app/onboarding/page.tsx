@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ShieldAlert, HeartPulse } from "lucide-react";
 
 export default function OnboardingPage() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -15,9 +13,14 @@ export default function OnboardingPage() {
     setError("");
 
     const formData = new FormData(event.currentTarget);
+    
+    // FIX 1: Explicitly parse the cycle string into a strict integer for the Prisma backend
+    const cycleInput = formData.get("menstrualCycle");
+    const parsedCycle = cycleInput ? parseInt(cycleInput.toString(), 10) : null;
+
     const data = {
       country: formData.get("country"),
-      menstrualCycle: formData.get("menstrualCycle"),
+      menstrualCycle: parsedCycle,
       emergencyContact: formData.get("emergencyContact"),
     };
 
@@ -29,12 +32,15 @@ export default function OnboardingPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save profile. Please try again.");
+        // Attempt to parse the exact backend error message for better debugging
+        const errData = await response.json().catch(() => null);
+        throw new Error(errData?.error || errData?.message || "Failed to save profile. Please try again.");
       }
 
-      // Success! Refresh the router to pass the layout gatekeeper and go to dashboard
-      router.refresh();
-      router.push("/dashboard");
+      // FIX 2: Force a hard browser navigation. This completely destroys the Next.js 
+      // client-side cache and forces the server to evaluate your new database profile.
+      window.location.href = "/dashboard";
+      
     } catch (err: any) {
       setError(err.message);
       setIsLoading(false);
@@ -60,8 +66,8 @@ export default function OnboardingPage() {
           <form className="space-y-6" onSubmit={onSubmit}>
             {error && (
               <div className="p-3 bg-red-50 text-red-600 text-sm rounded-md flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4" />
-                {error}
+                <ShieldAlert className="w-4 h-4 flex-shrink-0" />
+                <span>{error}</span>
               </div>
             )}
 

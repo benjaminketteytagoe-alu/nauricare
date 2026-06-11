@@ -14,7 +14,7 @@ export default withAuth(
       if (token?.role === "PROVIDER") {
         return NextResponse.redirect(new URL("/provider", req.url));
       }
-      // If role is PATIENT, they simply stay on /dashboard
+      // If role is PATIENT, they stay on /dashboard
     }
 
     // 2. Lock down the Admin dashboard
