@@ -32,7 +32,7 @@ export default async function ProviderSchedulePage() {
       // Filter for upcoming dates if desired, e.g., startTime: { gte: new Date() }
     },
     include: {
-      patientProfile: {
+      patient: {
         include: {
           user: { select: { name: true, email: true } }
         }
@@ -92,7 +92,7 @@ export default async function ProviderSchedulePage() {
                 
                 <div>
                   <h4 className="text-lg font-bold text-slate-900">
-                    {appt.patientProfile?.user?.name || "Unknown Patient"}
+                    {appt.patient?.user?.name || "Unknown Patient"}
                   </h4>
                   <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-slate-600">
                     <span className="flex items-center gap-1.5 font-medium text-slate-800">
@@ -100,8 +100,8 @@ export default async function ProviderSchedulePage() {
                       {new Date(appt.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                     <span className="flex items-center gap-1.5">
-                      {appt.type === "VIRTUAL" ? <Video className="w-4 h-4 text-slate-400" /> : <MapPin className="w-4 h-4 text-slate-400" />}
-                      {appt.type || "Virtual Consultation"}
+                      {appt.meetingLink ? <Video className="w-4 h-4 text-slate-400" /> : <MapPin className="w-4 h-4 text-slate-400" />}
+                      {appt.meetingLink ? "Virtual Consultation" : "In-person Consultation"}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <CheckCircle className="w-4 h-4 text-emerald-500" />
