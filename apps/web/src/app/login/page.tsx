@@ -48,9 +48,9 @@ export default function LoginPage() {
 
         // Route dynamically based on RBAC
         if (role === "PROVIDER") {
-          router.push("/provider-dashboard");
+          router.push("/provider");
         } else if (role === "ADMIN") {
-          router.push("/admin-dashboard");
+          router.push("/admin");
         } else {
           router.push("/dashboard"); // Default Patient route
         }
