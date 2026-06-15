@@ -31,7 +31,8 @@ const FEATURES = [
     description:
       "Connect face-to-face with verified gynecologists and women's health specialists from the comfort of your home — securely, on your schedule.",
     Icon: Video,
-    imageSrc: "https://res.cloudinary.com/dl2fjmhft/image/upload/f_auto,q_auto/vvvvv_ybkkyk",
+    // Generic Unsplash placeholder — woman in a telehealth video consultation
+    imageSrc: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80",
     accent: "from-teal-500 to-teal-700",
     badge: "bg-teal-100 text-teal-700",
   },
@@ -40,7 +41,8 @@ const FEATURES = [
     description:
       "Your complete health timeline — lab results, clinical notes, prescriptions — encrypted, organized, and always in your hands.",
     Icon: FileText,
-    imageSrc: "https://res.cloudinary.com/dl2fjmhft/image/upload/vvvvv_1_kn3e6u",
+    // Generic Unsplash placeholder — healthcare professional reviewing records on tablet
+    imageSrc: "https://images.unsplash.com/photo-1585435557343-3b092031a831?auto=format&fit=crop&w=800&q=80",
     accent: "from-violet-500 to-violet-700",
     badge: "bg-violet-100 text-violet-700",
   },
@@ -79,11 +81,10 @@ export default function LandingPageClient() {
           <source src="/hero-loop.mp4" type="video/mp4" />
         </video>
 
-        {/* Layered gradient overlay for legibility and brand feel */}
-        <div className="absolute inset-0 bg-gradient-to-b from-teal-950/80 via-teal-900/60 to-black/90 pointer-events-none" />
-
-        {/* Subtle radial accent */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(20,184,166,0.18)_0%,_transparent_65%)] pointer-events-none" />
+        {/* Base dark layer — brings video into background without hiding texture */}
+        <div className="absolute inset-0 bg-black/50 pointer-events-none" />
+        {/* Directional gradient — heaviest at top and bottom for headline + CTA legibility */}
+        <div className="absolute inset-0 bg-gradient-to-b from-teal-950/90 via-teal-950/80 to-black/90 pointer-events-none" />
 
         {/* Hero copy */}
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center text-white">
@@ -102,7 +103,7 @@ export default function LandingPageClient() {
 
             <motion.h1
               variants={fadeUp}
-              className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-[-0.02em] leading-[1.06]"
+              className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-[-0.02em] leading-[1.06] drop-shadow-2xl"
             >
               Your body,{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-cyan-300">
@@ -117,7 +118,7 @@ export default function LandingPageClient() {
 
             <motion.p
               variants={fadeUp}
-              className="text-lg md:text-xl text-teal-100/85 max-w-2xl mx-auto leading-relaxed"
+              className="text-lg md:text-xl text-teal-100/85 max-w-2xl mx-auto leading-relaxed drop-shadow-lg"
             >
               Compassionate, evidence-based care for PCOS, fibroids, and women&apos;s reproductive
               health — always private, always yours.
