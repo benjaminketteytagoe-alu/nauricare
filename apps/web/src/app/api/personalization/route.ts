@@ -43,36 +43,55 @@ export async function GET() {
 
     const profile = await prisma.patientProfile.findUnique({
       where: { userId: session.user.id },
-      select: { healthGoals: true }
+      select: { healthGoals: true },
     });
 
     if (!profile) return new NextResponse("Profile not found", { status: 404 });
 
-    const goals = profile.healthGoals.length > 0 ? profile.healthGoals : ["General"];
-    
-    // Dynamically compile the lists based on the user's tags
-    let tailoredHabits: any[] = [];
-    let tailoredArticles: any[] = [];
+    const goals = profile.healthGoals;
 
-    goals.forEach(goal => {
+    // --- Habits: still driven by the local content map (no Habit content model in schema) ---
+    const activeGoals = goals.length > 0 ? goals : ["General"];
+    let tailoredHabits: any[] = [];
+
+    activeGoals.forEach((goal) => {
       const content = CONTENT_DB[goal as keyof typeof CONTENT_DB] || CONTENT_DB["General"];
       tailoredHabits = [...tailoredHabits, ...content.habits];
-      tailoredArticles.push(content.article);
     });
 
-    // Ensure we always provide at least a general baseline if they only selected 1 goal
     if (tailoredHabits.length < 4) {
       tailoredHabits = [...tailoredHabits, ...CONTENT_DB["General"].habits];
-      tailoredArticles.push(CONTENT_DB["General"].article);
     }
 
-    // Slice to ensure the UI stays clean (max 4 habits, max 2 articles)
+    // --- Articles: fetched from the database ---
+    // Primary: articles whose tags intersect with the patient's health goals
+    let dbArticles = goals.length > 0
+      ? await prisma.article.findMany({
+          where: { isPublished: true, tags: { hasSome: goals } },
+          orderBy: { createdAt: "desc" },
+          take: 3,
+          select: { id: true, title: true },
+        })
+      : [];
+
+    // Fallback: if no goal-matched articles exist, surface the 3 most recent published articles
+    if (dbArticles.length === 0) {
+      dbArticles = await prisma.article.findMany({
+        where: { isPublished: true },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+        select: { id: true, title: true },
+      });
+    }
+
     return NextResponse.json({
       healthGoals: profile.healthGoals,
-      habits: tailoredHabits.slice(0, 4).map(h => ({ ...h, done: false })), // Add the 'done' state for UI
-      articles: tailoredArticles.slice(0, 2)
+      habits: tailoredHabits.slice(0, 4).map((h) => ({ ...h, done: false })),
+      articles: dbArticles.map((a) => ({
+        title: a.title,
+        url: `/dashboard/articles/${a.id}`,
+      })),
     });
-
   } catch (error) {
     console.error("[GET_PERSONALIZATION_ERROR]", error);
     return new NextResponse("Internal Server Error", { status: 500 });
