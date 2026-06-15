@@ -1,3 +1,4 @@
+import { Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
 export const revalidate = 0; // Force dynamic rendering so every single system log shows instantly
@@ -16,11 +17,22 @@ export default async function AdminAuditLogsPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header Panel */}
-      <div className="border-b pb-4">
-        <h1 className="text-3xl font-bold text-gray-900">Security & Compliance Audit Logs</h1>
-        <p className="text-gray-500 mt-1">
-          Immutable historic ledger capturing platform administrative transactions and validation adjustments.
-        </p>
+      <div className="border-b pb-4 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Security & Compliance Audit Logs</h1>
+          <p className="text-gray-500 mt-1">
+            Immutable historic ledger capturing platform administrative transactions and validation adjustments.
+          </p>
+        </div>
+        {/* Plain <a> tag — Content-Disposition: attachment on the API response
+            triggers the browser download without any client-side JavaScript. */}
+        <a
+          href="/api/admin/audit-logs/export"
+          className="shrink-0 inline-flex items-center gap-2 bg-white border border-gray-200 hover:border-gray-300 text-gray-700 text-sm font-medium px-4 py-2.5 rounded-xl shadow-sm hover:shadow transition-all"
+        >
+          <Download className="w-4 h-4" />
+          Export CSV
+        </a>
       </div>
 
       {/* Main Logs Table Container */}

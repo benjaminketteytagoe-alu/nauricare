@@ -76,6 +76,12 @@ model User {
   // Messaging Relations
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+
+  // Community Relations
+  communityPosts    CommunityPost[]    @relation("PostAuthor")
+  communityComments CommunityComment[] @relation("CommentAuthor")
+  communityLikes    CommunityLike[]
+  communityStories  CommunityStory[]   @relation("StoryAuthor")
 }
 
 model PatientProfile {
@@ -282,4 +288,68 @@ model AuditLog {
 
   // Relations
   actor User @relation(fields: [actorId], references: [id], onDelete: Cascade)
+}
+
+// --- Community Models ---
+
+model CommunityPost {
+  id       String  @id @default(cuid())
+  content  String
+  imageUrl String?
+  authorId String
+  author   User    @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Self-referential repost relation
+  repostOfId String?
+  repostOf   CommunityPost?  @relation("Reposts", fields: [repostOfId], references: [id], onDelete: SetNull)
+  reposts    CommunityPost[] @relation("Reposts")
+
+  comments CommunityComment[]
+  likes    CommunityLike[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([authorId])
+  @@index([createdAt])
+}
+
+model CommunityComment {
+  id       String        @id @default(cuid())
+  content  String
+  postId   String
+  post     CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User          @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([postId])
+}
+
+model CommunityLike {
+  id     String        @id @default(cuid())
+  postId String
+  post   CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId String
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+  @@index([postId])
+}
+
+model CommunityStory {
+  id        String  @id @default(cuid())
+  content   String?
+  imageUrl  String?
+  authorId  String
+  author    User    @relation("StoryAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([authorId])
+  @@index([expiresAt])
 }

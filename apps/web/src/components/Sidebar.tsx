@@ -4,8 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { 
-  LayoutDashboard, Activity, Calendar, FileText, Settings, LogOut 
+import {
+  LayoutDashboard, Activity, Calendar, FileText, Settings, LogOut, Users,
 } from "lucide-react";
 
 export function Sidebar() {
@@ -16,6 +16,7 @@ export function Sidebar() {
     { name: "Symptom Log", href: "/dashboard/symptoms", icon: Activity },
     { name: "Consultations", href: "/dashboard/providers", icon: Calendar },
     { name: "My Records", href: "/dashboard/records", icon: FileText },
+    { name: "Community", href: "/dashboard/community", icon: Users },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ];
 
