@@ -4,10 +4,11 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { 
-  Activity, Calendar, CheckCircle2, Circle, 
+import {
+  Activity, Calendar, CheckCircle2, Circle,
   Newspaper, HeartPulse, Edit2, X, BarChart3, Video
 } from "lucide-react";
+import { CalendarButtons } from "@/components/CalendarButtons";
 // Remove this import temporarily if you don't have the CycleLogModal component built yet to prevent a crash
 // import { CycleLogModal } from "@/components/CycleLogModal";
 
@@ -258,6 +259,18 @@ export default function PatientDashboardPage() {
                 <p className="text-xs text-teal-200 mt-0.5">
                   {new Date(nextAppointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
+              </div>
+              <div className="relative z-10">
+                <CalendarButtons
+                  appointment={{
+                    id: nextAppointment.id,
+                    startTime: new Date(nextAppointment.startTime).toISOString(),
+                    endTime: new Date(nextAppointment.endTime).toISOString(),
+                    meetingLink: nextAppointment.meetingLink,
+                  }}
+                  title={`NauriCare — Dr. ${nextAppointment.practitioner?.user?.name || "Specialist"}`}
+                  variant="teal"
+                />
               </div>
               <Link href={`/dashboard/telehealth/${nextAppointment.id}`} className="block relative z-10">
                 <button className="w-full bg-white text-teal-900 text-sm font-bold py-3 rounded-xl hover:bg-teal-50 transition-all shadow-sm flex justify-center items-center gap-2">

@@ -25,20 +25,58 @@ export async function POST(req: Request) {
     if (!patientProfile) return new NextResponse("Patient profile not found.", { status: 404 });
 
     const practitioner = await prisma.practitionerProfile.findUnique({
-      where: { id: practitionerProfileId }
+      where: { id: practitionerProfileId },
     });
 
     if (!practitioner) return new NextResponse("Practitioner not found.", { status: 404 });
 
-    const appointment = await prisma.appointment.create({
-      data: {
-        patientProfileId: patientProfile.id,
-        practitionerProfileId: practitioner.id,
-        startTime: new Date(startTime),
-        endTime: new Date(endTime),
-        notes: notes || null,
-        status: "PENDING",
-      },
+    const start = new Date(startTime);
+    const dateLabel =
+      start.toDateString() +
+      " at " +
+      start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    // Atomic booking: create appointment → derive meetingLink → notify both parties.
+    // All four writes succeed together or none do.
+    const appointment = await prisma.$transaction(async (tx) => {
+      const created = await tx.appointment.create({
+        data: {
+          patientProfileId: patientProfile.id,
+          practitionerProfileId: practitioner.id,
+          startTime: start,
+          endTime: new Date(endTime),
+          notes: notes || null,
+          status: "PENDING",
+        },
+      });
+
+      // Deterministic room name: both patient and provider resolve to the same Jitsi URL.
+      const meetingLink = `https://meet.jit.si/nauricare-${created.id}`;
+
+      const [updated] = await Promise.all([
+        tx.appointment.update({
+          where: { id: created.id },
+          data: { meetingLink },
+        }),
+        tx.notification.create({
+          data: {
+            userId: session.user.id,
+            type: "EMAIL",
+            status: "PENDING",
+            message: `Your NauriCare telehealth appointment is confirmed for ${dateLabel}. Join here: ${meetingLink}`,
+          },
+        }),
+        tx.notification.create({
+          data: {
+            userId: practitioner.userId,
+            type: "PUSH",
+            status: "PENDING",
+            message: `New appointment booked for ${dateLabel}. Video consultation: ${meetingLink}`,
+          },
+        }),
+      ]);
+
+      return updated;
     });
 
     return NextResponse.json(appointment, { status: 201 });

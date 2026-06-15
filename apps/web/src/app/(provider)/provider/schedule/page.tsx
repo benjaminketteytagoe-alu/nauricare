@@ -2,8 +2,9 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { Calendar, Search, Clock, Video, MapPin, CheckCircle, ChevronRight } from "lucide-react";
+import { Calendar, Search, Clock, Video, MapPin, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { CalendarButtons } from "@/components/CalendarButtons";
 
 export default async function ProviderSchedulePage() {
   const session = await getServerSession(authOptions);
@@ -111,17 +112,36 @@ export default async function ProviderSchedulePage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                <CalendarButtons
+                  appointment={{
+                    id: appt.id,
+                    startTime: appt.startTime.toISOString(),
+                    endTime: appt.endTime.toISOString(),
+                    meetingLink: appt.meetingLink,
+                  }}
+                  title={`NauriCare — ${appt.patient?.user?.name || "Patient"}`}
+                  variant="slate"
+                />
                 <Link href={`/provider/roster/${appt.patientProfileId}`} className="flex-1 sm:flex-none">
                   <button className="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
                     Patient File
                   </button>
                 </Link>
-                <Link href={`/dashboard/telehealth/${appt.id}`} className="flex-1 sm:flex-none">
-                  <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
+                {appt.meetingLink ? (
+                  <a
+                    href={appt.meetingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+                  >
                     <Video className="w-4 h-4" /> Join Room
+                  </a>
+                ) : (
+                  <button disabled className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-200 text-slate-400 rounded-xl text-sm font-medium cursor-not-allowed">
+                    <Video className="w-4 h-4" /> No Link
                   </button>
-                </Link>
+                )}
               </div>
 
             </div>
