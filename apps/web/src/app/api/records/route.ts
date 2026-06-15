@@ -7,8 +7,29 @@ import { logAdministrativeAction } from "@/lib/audit";
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.role !== "PROVIDER") {
-      return new NextResponse("Unauthorized", { status: 401 });
+    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+
+    // ── PATIENT path: patients can read their own records without a URL param ──
+    if (session.user.role === "PATIENT") {
+      const profile = await prisma.patientProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+      if (!profile) return new NextResponse("Patient profile not found", { status: 404 });
+
+      const records = await prisma.healthRecord.findMany({
+        where: { patientProfileId: profile.id },
+        include: {
+          practitioner: { include: { user: { select: { name: true } } } },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      return NextResponse.json(records);
+    }
+
+    // ── PROVIDER path: relationship-gated access to a specific patient ──
+    if (session.user.role !== "PROVIDER") {
+      return new NextResponse("Forbidden", { status: 403 });
     }
 
     const patientProfileId = new URL(req.url).searchParams.get("patientProfileId");
@@ -36,6 +57,9 @@ export async function GET(req: Request) {
 
     const records = await prisma.healthRecord.findMany({
       where: { patientProfileId },
+      include: {
+        practitioner: { include: { user: { select: { name: true } } } },
+      },
       orderBy: { createdAt: "desc" },
     });
 
