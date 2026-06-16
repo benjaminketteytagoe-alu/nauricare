@@ -68,14 +68,13 @@ export default function LandingPageClient() {
           ════════════════════════════════════════════════════════════════ */}
       <section className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden">
 
-        {/* HTML5 video background — file lives at apps/web/public/hero-loop.mp4
-            Source video: https://youtu.be/pI1bd_1MxyM              */}
+        {/* HTML5 video background — raw file at apps/web/public/hero-loop.mp4 (YouTube URLs cannot be used as a <video> source) */}
         <video
           autoPlay
           loop
           muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover -z-10"
           aria-hidden="true"
         >
           <source src="/hero-loop.mp4" type="video/mp4" />
