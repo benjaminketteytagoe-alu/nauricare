@@ -68,7 +68,7 @@ export default function LandingPageClient() {
           ════════════════════════════════════════════════════════════════ */}
       <section className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden">
 
-        {/* HTML5 video background — raw file at apps/web/public/hero-loop.mp4 (YouTube URLs cannot be used as a <video> source) */}
+        {/* HTML5 video background — served from Cloudinary CDN, not bundled in the Docker image */}
         <video
           autoPlay
           loop
@@ -77,7 +77,7 @@ export default function LandingPageClient() {
           className="absolute inset-0 w-full h-full object-cover -z-10"
           aria-hidden="true"
         >
-          <source src="/hero-loop.mp4" type="video/mp4" />
+          <source src="https://res.cloudinary.com/dl2fjmhft/video/upload/v1781604133/Nauricare_App_Demo_itl2vz.mp4" type="video/mp4" />
         </video>
 
         {/* Base dark layer — brings video into background without hiding texture */}
