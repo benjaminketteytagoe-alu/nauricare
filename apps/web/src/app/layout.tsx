@@ -5,6 +5,10 @@ import { Providers } from "@/components/Providers";
 export const metadata: Metadata = {
   title: "NauriCare | Women's Health & Specialist Guidance",
   description: "Your trusted companion for women’s health, providing guidance for PCOS, fibroids, and related conditions.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({

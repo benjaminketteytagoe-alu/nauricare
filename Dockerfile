@@ -63,6 +63,8 @@ COPY --from=installer --chown=nextjs:nodejs /app/packages/database/prisma ./pack
 
 EXPOSE 3000
 ENV PORT=3000
+# Required: standalone server must bind to 0.0.0.0, not 127.0.0.1, inside Docker
+ENV HOSTNAME=0.0.0.0
 
 # Start the standalone Node server
 CMD ["node", "apps/web/server.js"]

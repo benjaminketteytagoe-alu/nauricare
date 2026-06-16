@@ -6,10 +6,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
-import { ShieldCheck, Lock, Globe } from "lucide-react";
+import { ShieldCheck, Stethoscope, Users } from "lucide-react";
 
 // ─── Trust panel data ─────────────────────────────────────────────────────────
 
@@ -17,24 +16,24 @@ const TRUST_SLIDES: AuthVisualSlide[] = [
   {
     src: "https://res.cloudinary.com/dl2fjmhft/image/upload/f_auto,q_auto/vvvvv_ybkkyk",
     tag: "Secure Telehealth",
-    caption: "Connect face-to-face with verified specialists — securely, on your schedule.",
+    caption: "Hold consultations and manage your schedule from one trusted workspace.",
   },
   {
     src: "https://res.cloudinary.com/dl2fjmhft/image/upload/vvvvv_1_kn3e6u",
-    tag: "Protected Health Records",
-    caption: "Your complete health timeline, encrypted and always in your hands.",
+    tag: "Verified Clinical Records",
+    caption: "Document care securely, with full audit trails built in.",
   },
 ];
 
 const TRUST_CHIPS = [
-  { Icon: ShieldCheck, label: "HIPAA Compliant" },
-  { Icon: Lock,        label: "End-to-End Encrypted" },
-  { Icon: Globe,       label: "Built for Africa" },
+  { Icon: ShieldCheck, label: "Licensed Verification" },
+  { Icon: Stethoscope, label: "Built for Clinicians" },
+  { Icon: Users,       label: "Pan-African Network" },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function SignUpPage() {
+export default function ProviderSignUpPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
@@ -49,13 +48,19 @@ export default function SignUpPage() {
     const email          = formData.get("email") as string;
     const password       = formData.get("password") as string;
     const dateOfBirth    = formData.get("dateOfBirth") as string;
+    const specialty      = formData.get("specialty") as string;
+    const clinicName     = formData.get("clinicName") as string;
+    const location       = formData.get("location") as string;
     const privacyConsent = formData.get("privacyConsent") === "on";
 
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name, dateOfBirth, privacyConsent, role: "PATIENT" }),
+        body: JSON.stringify({
+          email, password, name, dateOfBirth, privacyConsent,
+          role: "PROVIDER", specialty, clinicName, location,
+        }),
       });
 
       const data = await res.json();
@@ -76,19 +81,8 @@ export default function SignUpPage() {
         <div className="w-full max-w-md space-y-6 my-8">
 
           <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-teal-900">Join NauriCare</h2>
-            <p className="text-gray-500 mt-2 text-sm">Create your free patient account.</p>
-          </div>
-
-          <GoogleSignInButton text="Sign up with Google" />
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-3 bg-white text-gray-400">Or register with email</span>
-            </div>
+            <h2 className="text-3xl font-extrabold text-teal-900">Join as a Provider</h2>
+            <p className="text-gray-500 mt-2 text-sm">Register your clinical practice on NauriCare.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -102,7 +96,7 @@ export default function SignUpPage() {
               <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name" name="name" required
-                placeholder="Jane Doe"
+                placeholder="Dr. Jane Doe"
                 className="h-11 focus-visible:ring-teal-500 rounded-xl"
               />
             </div>
@@ -111,7 +105,7 @@ export default function SignUpPage() {
               <Label htmlFor="email">Email Address</Label>
               <Input
                 id="email" name="email" type="email" required
-                placeholder="jane@example.com"
+                placeholder="jane@clinic.com"
                 className="h-11 focus-visible:ring-teal-500 rounded-xl"
               />
             </div>
@@ -134,18 +128,46 @@ export default function SignUpPage() {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="specialty">Specialty</Label>
+                <Input
+                  id="specialty" name="specialty" required
+                  placeholder="Gynecologist"
+                  className="h-11 focus-visible:ring-teal-500 rounded-xl"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="clinicName">Clinic Name</Label>
+                <Input
+                  id="clinicName" name="clinicName" required
+                  placeholder="NauriCare Clinic"
+                  className="h-11 focus-visible:ring-teal-500 rounded-xl"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="location">Practice Location</Label>
+              <Input
+                id="location" name="location" required
+                placeholder="Kigali, Rwanda"
+                className="h-11 focus-visible:ring-teal-500 rounded-xl"
+              />
+            </div>
+
             <div className="flex items-start gap-3 py-1">
               <input
                 type="checkbox" id="privacyConsent" name="privacyConsent" required
                 className="mt-1 w-4 h-4 accent-teal-600 cursor-pointer shrink-0"
               />
               <Label htmlFor="privacyConsent" className="text-xs text-gray-600 font-normal leading-relaxed cursor-pointer">
-                I consent to the collection and processing of my personal health information in
+                I consent to the collection and processing of my professional information in
                 accordance with the{" "}
                 <Link href="/privacy" className="text-teal-600 hover:underline">
                   Privacy Policy.
                 </Link>{" "}
-                I confirm I am of legal age to provide this consent.
+                I confirm the details above are accurate and verifiable.
               </Label>
             </div>
 
@@ -154,8 +176,12 @@ export default function SignUpPage() {
               disabled={loading}
               className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
             >
-              {loading ? "Creating account…" : "Create Account"}
+              {loading ? "Submitting application…" : "Register as Provider"}
             </Button>
+
+            <p className="text-xs text-center text-gray-400">
+              Your account will be reviewed and verified by our compliance team before activation.
+            </p>
           </form>
 
           <p className="text-center text-sm text-gray-500">
@@ -165,8 +191,8 @@ export default function SignUpPage() {
             </Link>
           </p>
           <p className="text-center text-sm text-gray-500">
-            Registering as a provider?{" "}
-            <Link href="/signup/provider" className="text-teal-600 hover:underline font-semibold">
+            Registering as a patient?{" "}
+            <Link href="/signup" className="text-teal-600 hover:underline font-semibold">
               Sign up here
             </Link>
           </p>
@@ -176,7 +202,7 @@ export default function SignUpPage() {
       {/* ── RIGHT — Sticky visual trust panel (desktop only) ── */}
       <AuthVisualPanel
         slides={TRUST_SLIDES}
-        quote="Join thousands of women taking control of their reproductive health."
+        quote="Join a network transforming women's healthcare."
         chips={TRUST_CHIPS}
         intervalMs={5000}
       />
