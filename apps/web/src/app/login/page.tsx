@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -94,7 +95,7 @@ export default function LoginPage() {
                 <Label htmlFor="password">Password</Label>
                 <Link href="/forgot-password" className="text-xs text-teal-600 hover:underline">Forgot password?</Link>
               </div>
-              <Input id="password" name="password" type="password" required className="h-11 focus-visible:ring-teal-600" />
+              <PasswordInput id="password" name="password" required className="h-11 focus-visible:ring-teal-600" />
             </div>
 
             <Button type="submit" className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white" disabled={loading}>
@@ -104,6 +105,9 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-gray-600">
             Don't have an account? <Link href="/signup" className="text-teal-600 hover:underline font-semibold">Sign up</Link>
+          </p>
+          <p className="text-center text-sm text-gray-600">
+            Are you a provider? <Link href="/signup/provider" className="text-teal-600 hover:underline font-semibold">Register your practice</Link>
           </p>
         </div>
       </div>
