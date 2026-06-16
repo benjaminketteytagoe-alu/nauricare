@@ -66,7 +66,8 @@ export default function LandingPageClient() {
       {/* ════════════════════════════════════════════════════════════════
           §1  HERO — live video background
           ════════════════════════════════════════════════════════════════ */}
-      <section className="relative min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden">
+      {/* dvh (not vh) so iOS Safari's collapsing address bar doesn't clip the CTA row */}
+      <section className="relative min-h-[calc(100dvh-4rem)] flex items-center justify-center overflow-hidden">
 
         {/* HTML5 video background — served from Cloudinary CDN, not bundled in the Docker image */}
         <video
@@ -86,7 +87,7 @@ export default function LandingPageClient() {
         <div className="absolute inset-0 bg-gradient-to-b from-teal-950/90 via-teal-950/80 to-black/90 pointer-events-none" />
 
         {/* Hero copy */}
-        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center text-white">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 text-center text-white">
           <motion.div
             initial="hidden"
             animate="visible"
@@ -102,7 +103,7 @@ export default function LandingPageClient() {
 
             <motion.h1
               variants={fadeUp}
-              className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-[-0.02em] leading-[1.06] drop-shadow-2xl"
+              className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-[-0.02em] leading-[1.06] drop-shadow-2xl text-balance"
             >
               Your body,{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-cyan-300">
@@ -117,7 +118,7 @@ export default function LandingPageClient() {
 
             <motion.p
               variants={fadeUp}
-              className="text-lg md:text-xl text-teal-100/85 max-w-2xl mx-auto leading-relaxed drop-shadow-lg"
+              className="text-lg md:text-xl text-teal-100/85 max-w-2xl mx-auto leading-relaxed drop-shadow-lg text-pretty"
             >
               Compassionate, evidence-based care for PCOS, fibroids, and women&apos;s reproductive
               health — always private, always yours.
@@ -127,14 +128,14 @@ export default function LandingPageClient() {
               variants={fadeUp}
               className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2"
             >
-              <Link href="/signup">
-                <button className="group flex items-center gap-2.5 bg-teal-500 hover:bg-teal-400 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all duration-200 shadow-lg shadow-teal-900/50 hover:shadow-teal-500/30 hover:-translate-y-0.5 active:scale-[0.97]">
+              <Link href="/signup" className="w-full sm:w-auto">
+                <button className="group flex w-full sm:w-auto items-center justify-center gap-2.5 bg-teal-500 hover:bg-teal-400 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all duration-200 shadow-lg shadow-teal-900/50 hover:shadow-teal-500/30 hover:-translate-y-0.5 active:scale-[0.97]">
                   Patient Portal
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
               </Link>
-              <Link href="/login">
-                <button className="flex items-center gap-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all duration-200 active:scale-[0.97]">
+              <Link href="/login" className="w-full sm:w-auto">
+                <button className="flex w-full sm:w-auto items-center justify-center gap-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all duration-200 active:scale-[0.97]">
                   Provider Portal
                 </button>
               </Link>
@@ -157,7 +158,7 @@ export default function LandingPageClient() {
       {/* ════════════════════════════════════════════════════════════════
           §2  NAURI AI SECTION
           ════════════════════════════════════════════════════════════════ */}
-      <section className="py-28 px-6 bg-gradient-to-b from-teal-950 via-teal-900 to-teal-950 relative overflow-hidden">
+      <section className="py-20 sm:py-28 px-4 sm:px-6 bg-gradient-to-b from-teal-950 via-teal-900 to-teal-950 relative overflow-hidden">
         {/* Decorative blob */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-teal-700/10 rounded-full -mr-48 -mt-48 blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/5 rounded-full -ml-32 -mb-32 blur-2xl pointer-events-none" />
@@ -176,7 +177,7 @@ export default function LandingPageClient() {
                 AI-Powered Care
               </span>
 
-              <h2 className="text-4xl md:text-5xl font-extrabold leading-tight tracking-[-0.02em]">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight tracking-[-0.02em] text-balance">
                 Meet{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-cyan-300">
                   Nauri,
@@ -217,7 +218,7 @@ export default function LandingPageClient() {
       {/* ════════════════════════════════════════════════════════════════
           §3  FEATURE GRID
           ════════════════════════════════════════════════════════════════ */}
-      <section className="py-28 px-6 bg-teal-50 relative">
+      <section className="py-20 sm:py-28 px-4 sm:px-6 bg-teal-50 relative">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
@@ -228,7 +229,7 @@ export default function LandingPageClient() {
           >
             {/* Section header */}
             <motion.div variants={fadeUp} className="text-center space-y-4 max-w-2xl mx-auto">
-              <h2 className="text-4xl md:text-5xl font-extrabold text-teal-900 tracking-[-0.02em]">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-teal-900 tracking-[-0.02em] text-balance">
                 Everything you need.
                 <br />
                 <span className="text-teal-600">Nothing you don&apos;t.</span>
@@ -286,7 +287,7 @@ export default function LandingPageClient() {
       {/* ════════════════════════════════════════════════════════════════
           §4  ASYV PARTNERSHIP SECTION
           ════════════════════════════════════════════════════════════════ */}
-      <section className="py-28 px-6 bg-white">
+      <section className="py-20 sm:py-28 px-4 sm:px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial="hidden"
@@ -319,13 +320,13 @@ export default function LandingPageClient() {
               {/* ── Text side ── */}
               <motion.div
                 variants={fadeUp}
-                className="flex flex-col justify-center px-8 py-12 lg:px-12 text-white space-y-6"
+                className="flex flex-col justify-center px-6 sm:px-8 py-10 sm:py-12 lg:px-12 text-white space-y-6"
               >
                 <span className="inline-flex items-center gap-2 self-start bg-teal-700/40 border border-teal-600/50 text-teal-300 text-xs font-bold tracking-[0.18em] uppercase px-4 py-2 rounded-full">
                   Community Partnership
                 </span>
 
-                <h2 className="text-3xl md:text-4xl font-extrabold leading-tight tracking-[-0.02em]">
+                <h2 className="text-3xl md:text-4xl font-extrabold leading-tight tracking-[-0.02em] text-balance">
                   Empowering Community:{" "}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-cyan-300">
                     Our Partnership with Agahozo-Shalom Youth Village.
@@ -376,7 +377,7 @@ export default function LandingPageClient() {
       {/* ════════════════════════════════════════════════════════════════
           §5  TRUST STRIP
           ════════════════════════════════════════════════════════════════ */}
-      <section className="py-16 px-6 bg-teal-50 border-t border-teal-100">
+      <section className="py-16 px-4 sm:px-6 bg-teal-50 border-t border-teal-100">
         <motion.div
           initial="hidden"
           whileInView="visible"
