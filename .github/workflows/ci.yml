@@ -83,9 +83,10 @@ jobs:
           envs: GHCR_PAT, GITHUB_ACTOR
           script: |
             echo "$GHCR_PAT" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-            docker pull ghcr.io/${{ github.repository }}:${{ github.sha }}
             docker stop nauricare-staging || true
             docker rm nauricare-staging || true
+            docker image prune -af || true
+            docker pull ghcr.io/${{ github.repository }}:${{ github.sha }}
             docker run -d --name nauricare-staging -p 3001:3000 --env-file .env.staging ghcr.io/${{ github.repository }}:${{ github.sha }}
             # FIXED: Added explicit Prisma version to Staging
             docker exec nauricare-staging npx --yes --package prisma@6.19.3 prisma migrate deploy --schema=packages/database/prisma/schema.prisma
