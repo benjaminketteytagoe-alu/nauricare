@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -14,13 +14,11 @@ export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.search.includes("registered=true")) {
-      setSuccessMsg("Account created successfully! Please log in.");
-    }
-  }, []);
+  const [successMsg, setSuccessMsg] = useState(() =>
+    typeof window !== "undefined" && window.location.search.includes("registered=true")
+      ? "Account created successfully! Please log in."
+      : ""
+  );
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -56,15 +54,15 @@ export default function LoginPage() {
           router.push("/dashboard"); // Default Patient route
         }
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred.");
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-[90vh] flex">
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
+    <div className="min-h-[100dvh] flex">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 py-8 bg-white">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-teal-900">Welcome Back</h2>
@@ -104,7 +102,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-sm text-gray-600">
-            Don't have an account? <Link href="/signup" className="text-teal-600 hover:underline font-semibold">Sign up</Link>
+            Don&apos;t have an account? <Link href="/signup" className="text-teal-600 hover:underline font-semibold">Sign up</Link>
           </p>
           <p className="text-center text-sm text-gray-600">
             Are you a provider? <Link href="/signup/provider" className="text-teal-600 hover:underline font-semibold">Register your practice</Link>

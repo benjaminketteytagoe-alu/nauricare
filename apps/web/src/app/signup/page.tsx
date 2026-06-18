@@ -69,10 +69,10 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-[90vh] flex">
+    <div className="min-h-[100dvh] flex">
 
       {/* ── LEFT — Registration form ── */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 bg-white overflow-y-auto">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 py-6 sm:py-8 bg-white overflow-y-auto">
         <div className="w-full max-w-md space-y-6 my-8">
 
           <div className="text-center">

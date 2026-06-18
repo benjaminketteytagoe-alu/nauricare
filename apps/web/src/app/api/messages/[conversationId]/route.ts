@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 // and the user identified by conversationId (their userId).
 export async function GET(
   req: Request,
-  { params }: { params: Promise<{ conversationId: string }> | any }
+  { params }: { params: Promise<{ conversationId: string }> | { conversationId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);

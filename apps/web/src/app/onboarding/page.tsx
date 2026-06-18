@@ -41,8 +41,8 @@ export default function OnboardingPage() {
       // client-side cache and forces the server to evaluate your new database profile.
       window.location.href = "/dashboard";
       
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save profile. Please try again.");
       setIsLoading(false);
     }
   }
@@ -57,7 +57,7 @@ export default function OnboardingPage() {
           Welcome to NauriCare
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Let's set up your health profile to get started.
+          Let&apos;s set up your health profile to get started.
         </p>
       </div>
 

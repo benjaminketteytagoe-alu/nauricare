@@ -6,24 +6,37 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
   Activity, Calendar, CheckCircle2, Circle,
-  Newspaper, HeartPulse, Edit2, X, BarChart3, Video
+  Newspaper, Edit2, Video
 } from "lucide-react";
 import { CalendarButtons } from "@/components/CalendarButtons";
-// Remove this import temporarily if you don't have the CycleLogModal component built yet to prevent a crash
-// import { CycleLogModal } from "@/components/CycleLogModal";
+
+interface HabitItem {
+  id: number;
+  done: boolean;
+  title: string;
+  desc: string;
+}
+
+interface AppointmentData {
+  id: string;
+  status?: string;
+  startTime: string;
+  endTime: string;
+  meetingLink?: string;
+  practitioner?: { user?: { name?: string } };
+}
 
 export default function PatientDashboardPage() {
   const { data: session } = useSession();
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [nextAppointment, setNextAppointment] = useState<any>(null);
+  const [nextAppointment, setNextAppointment] = useState<AppointmentData | null>(null);
 
   // --- INTERACTIVE HABIT TRACKER STATE ---
   const [activeTab, setActiveTab] = useState<'today' | 'analytics'>('today');
   const [chartPeriod, setChartPeriod] = useState<'week' | 'month' | 'year'>('week');
 
   // Dynamic States for Personalization
-  const [habits, setHabits] = useState<any[]>([]);
-  const [articles, setArticles] = useState<any[]>([]);
+  const [habits, setHabits] = useState<HabitItem[]>([]);
+  const [articles, setArticles] = useState<{ id: string; title: string; url?: string }[]>([]);
 
   const [analyticsData, setAnalyticsData] = useState({
     week: [
@@ -42,27 +55,26 @@ export default function PatientDashboardPage() {
   });
 
   // --- INTERACTIVE CYCLE TRACKER STATE ---
-  const [isEditingCycle, setIsEditingCycle] = useState(false);
+  const [, setIsEditingCycle] = useState(false);
   const [lastPeriodDate, setLastPeriodDate] = useState<string | null>(null);
   const [cycleLength, setCycleLength] = useState(28);
 
   // --- DATA FETCHING (HYDRATION) ---
-  // Added safe try/catch wrappers around all fetches so the UI renders even if the APIs aren't built yet
   const fetchAnalytics = async () => {
     try {
       const res = await fetch("/api/habits/analytics");
-      if (res.ok) {
-        const data = await res.json();
-        setAnalyticsData(data);
-      }
-    } catch (err) {
+      if (res.ok) setAnalyticsData(await res.json());
+    } catch {
       console.log("Analytics API not ready yet.");
     }
   };
 
   useEffect(() => {
     if (session?.user?.id) {
-      fetchAnalytics();
+      fetch("/api/habits/analytics")
+        .then(res => res.ok ? res.json() : Promise.reject(new Error()))
+        .then(data => setAnalyticsData(data))
+        .catch(() => {});
 
       fetch("/api/cycles/latest")
         .then((res) => { if (res.ok) return res.json(); throw new Error(); })
@@ -113,7 +125,7 @@ export default function PatientDashboardPage() {
         })
       });
       fetchAnalytics();
-    } catch (error) {
+    } catch {
       setHabits(habits.map(h => h.id === id ? { ...h, done: !newStatus } : h));
     }
   };
@@ -153,7 +165,7 @@ export default function PatientDashboardPage() {
         </div>
         <Link href="/dashboard/symptoms">
           <button className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-full font-medium shadow-sm flex items-center gap-2">
-            <Activity className="w-4 h-4" /> Log Today's Symptoms
+            <Activity className="w-4 h-4" /> Log Today&apos;s Symptoms
           </button>
         </Link>
       </div>
@@ -190,7 +202,7 @@ export default function PatientDashboardPage() {
           {/* Daily Action Plan & Tabs */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
             <div className="flex border-b border-gray-100 bg-gray-50/50">
-              <button onClick={() => setActiveTab('today')} className={`flex-1 py-4 text-sm font-bold ${activeTab === 'today' ? 'text-teal-700 border-b-2 border-teal-600 bg-white' : 'text-gray-500'}`}>Today's Plan</button>
+              <button onClick={() => setActiveTab('today')} className={`flex-1 py-4 text-sm font-bold ${activeTab === 'today' ? 'text-teal-700 border-b-2 border-teal-600 bg-white' : 'text-gray-500'}`}>Today&apos;s Plan</button>
               <button onClick={() => setActiveTab('analytics')} className={`flex-1 py-4 text-sm font-bold ${activeTab === 'analytics' ? 'text-teal-700 border-b-2 border-teal-600 bg-white' : 'text-gray-500'}`}>Habit Analytics</button>
             </div>
             
@@ -199,7 +211,7 @@ export default function PatientDashboardPage() {
                  {['week', 'month', 'year'].map(period => (
                    <button 
                      key={period} 
-                     onClick={() => setChartPeriod(period as any)}
+                     onClick={() => setChartPeriod(period as 'week' | 'month' | 'year')}
                      className={`px-3 py-1 text-xs font-bold rounded-full capitalize transition-colors ${chartPeriod === period ? 'bg-teal-100 text-teal-800' : 'text-gray-500 hover:bg-gray-100'}`}
                    >
                      {period}
@@ -299,12 +311,12 @@ export default function PatientDashboardPage() {
           {/* Curated Feed (Dynamic) */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
             <div className="flex justify-between items-center border-b pb-3">
-              <h3 className="font-bold text-gray-900 flex items-center gap-2"><Newspaper className="w-4 h-4 text-blue-500" /> Today's Insights</h3>
+              <h3 className="font-bold text-gray-900 flex items-center gap-2"><Newspaper className="w-4 h-4 text-blue-500" /> Today&apos;s Insights</h3>
             </div>
             <div className="space-y-3">
               {articles.length > 0 ? (
                 articles.map((article, idx) => (
-                  <Link key={idx} href={article.url} className="block text-xs font-bold text-gray-800 hover:text-teal-600 cursor-pointer">
+                  <Link key={idx} href={article.url ?? "#"} className="block text-xs font-bold text-gray-800 hover:text-teal-600 cursor-pointer">
                     {article.title}
                   </Link>
                 ))

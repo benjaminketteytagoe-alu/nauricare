@@ -5,10 +5,24 @@ import { Button } from "@/components/ui/button";
 import { UserPlus, Search, X, Stethoscope, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
+interface PractitionerProfile {
+  specialty?: string;
+  clinicName?: string;
+  location?: string;
+  verificationStatus?: string;
+}
+
+interface ProviderRow {
+  id: string;
+  name: string;
+  email: string;
+  practitionerProfile?: PractitionerProfile;
+}
+
 export default function AdminProvidersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [providers, setProviders] = useState<any[]>([]);
+  const [providers, setProviders] = useState<ProviderRow[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   const WOMEN_HEALTH_SPECIALTIES = [
@@ -34,17 +48,17 @@ export default function AdminProvidersPage() {
   const fetchProviders = async () => {
     try {
       const res = await fetch("/api/admin/providers");
-      if (res.ok) {
-        const data = await res.json();
-        setProviders(data);
-      }
-    } catch (err) {
+      if (res.ok) setProviders(await res.json() as ProviderRow[]);
+    } catch {
       console.error("Failed to fetch providers");
     }
   };
 
   useEffect(() => {
-    fetchProviders();
+    fetch("/api/admin/providers")
+      .then(res => res.ok ? res.json() : Promise.reject(new Error()))
+      .then((data: ProviderRow[]) => setProviders(data))
+      .catch(() => console.error("Failed to fetch providers"));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,7 +81,7 @@ export default function AdminProvidersPage() {
         const error = await res.json();
         alert(`Error: ${error.error}`);
       }
-    } catch (err) {
+    } catch {
       alert("A network error occurred.");
     } finally {
       setIsLoading(false);

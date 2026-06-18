@@ -37,7 +37,7 @@ export default function SymptomLoggerPage() {
       return;
     }
 
-    loading || setLoading(true);
+    if (!loading) setLoading(true);
     setError("");
     setAiResponse(null);
 
@@ -60,8 +60,8 @@ export default function SymptomLoggerPage() {
         riskLevel: data.log.riskLevel,
       });
       
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to log symptoms.");
     } finally {
       setLoading(false);
     }

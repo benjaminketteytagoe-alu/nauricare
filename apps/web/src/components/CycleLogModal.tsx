@@ -36,8 +36,8 @@ export function CycleLogModal({ isOpen, onClose }: CycleLogModalProps) {
       // Refresh the server components to fetch the new date, then close modal
       router.refresh();
       onClose();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save. Please try again.");
     } finally {
       setIsLoading(false);
     }

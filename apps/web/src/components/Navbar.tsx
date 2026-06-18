@@ -24,7 +24,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center h-11 shrink-0">
           <Image
-            src="/logo-horizontal.jpg"
+            src="https://res.cloudinary.com/dl2fjmhft/image/upload/v1781560429/logo-horizontal_imresizer_zaxbeu.jpg"
             alt="NauriCare Logo"
             width={150}
             height={40}

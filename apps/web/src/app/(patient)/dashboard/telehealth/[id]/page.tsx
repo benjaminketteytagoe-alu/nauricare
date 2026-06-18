@@ -5,10 +5,20 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Shield, ArrowLeft, Loader2, Clock, CheckCircle2 } from "lucide-react";
 
+interface AppointmentDetail {
+  id: string;
+  status?: string;
+  startTime: string;
+  endTime: string;
+  meetingLink?: string;
+  practitioner?: { user?: { name?: string }; specialty?: string };
+  patient?: { user?: { name?: string } };
+}
+
 export default function TelehealthRoomPage() {
   const params = useParams();
   const router = useRouter();
-  const [appointment, setAppointment] = useState<any>(null);
+  const [appointment, setAppointment] = useState<AppointmentDetail | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -59,6 +69,8 @@ export default function TelehealthRoomPage() {
     );
   }
 
+  if (!appointment) return null;
+
   // The unique room ID guarantees no clashes between different appointments
   const roomName = `NauriCare_SecureRoom_${appointment.id}`;
   const meetingUrl = `https://meet.jit.si/${roomName}`;
@@ -82,7 +94,7 @@ export default function TelehealthRoomPage() {
             </span>
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Dr. {appointment.practitioner.user.name} & {appointment.patient.user.name}
+            Dr. {appointment.practitioner?.user?.name ?? "Specialist"} &amp; {appointment.patient?.user?.name ?? "Patient"}
           </p>
         </div>
 

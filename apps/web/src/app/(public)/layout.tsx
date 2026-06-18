@@ -1,4 +1,13 @@
+import type { Viewport } from "next";
 import Navbar from "@/components/Navbar";
+
+// viewportFit "cover" scoped to public pages only — prevents admin/provider
+// h-screen+overflow-hidden layouts from losing bottom content under the iOS home indicator.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export default function PublicLayout({
   children,

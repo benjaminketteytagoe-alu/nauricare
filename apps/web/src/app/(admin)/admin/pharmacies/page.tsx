@@ -4,33 +4,41 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Store, Plus, Search, X, MapPin, Phone } from "lucide-react";
 
+interface Pharmacy {
+  id: string;
+  name: string;
+  location: string;
+  contactInfo?: string;
+  tags: string[];
+}
+
 export default function AdminPharmaciesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [pharmacies, setPharmacies] = useState<any[]>([]);
+  const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
     location: "",
     contactInfo: "",
-    tagsString: "" // We will split this by comma before sending to the backend
+    tagsString: ""
   });
 
   const fetchPharmacies = async () => {
     try {
       const res = await fetch("/api/admin/pharmacies");
-      if (res.ok) {
-        const data = await res.json();
-        setPharmacies(data);
-      }
-    } catch (err) {
+      if (res.ok) setPharmacies(await res.json() as Pharmacy[]);
+    } catch {
       console.error("Failed to fetch pharmacies");
     }
   };
 
   useEffect(() => {
-    fetchPharmacies();
+    fetch("/api/admin/pharmacies")
+      .then(res => res.ok ? res.json() : Promise.reject(new Error()))
+      .then((data: Pharmacy[]) => setPharmacies(data))
+      .catch(() => console.error("Failed to fetch pharmacies"));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,7 +72,7 @@ export default function AdminPharmaciesPage() {
         const error = await res.json();
         alert(`Error: ${error.error}`);
       }
-    } catch (err) {
+    } catch {
       alert("A network error occurred.");
     } finally {
       setIsLoading(false);

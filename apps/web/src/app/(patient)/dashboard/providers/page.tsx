@@ -5,13 +5,20 @@ import { useState, useEffect } from "react";
 import { Stethoscope, Calendar, Clock, X, CheckCircle2, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+interface ProviderListing {
+  id: string;
+  specialty: string;
+  bio?: string;
+  user: { name: string };
+}
+
 export default function ProvidersDirectoryPage() {
   const router = useRouter();
-  const [providers, setProviders] = useState<any[]>([]);
+  const [providers, setProviders] = useState<ProviderListing[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Booking Modal State
-  const [selectedProvider, setSelectedProvider] = useState<any | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<ProviderListing | null>(null);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("09:00");
   const [notes, setNotes] = useState("");
@@ -41,6 +48,7 @@ export default function ProvidersDirectoryPage() {
 
   const handleBookAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedProvider) return;
     setIsBooking(true);
     setError("");
 
@@ -77,8 +85,8 @@ export default function ProvidersDirectoryPage() {
         router.refresh(); // Refresh the layout to show the new appointment
       }, 2000);
 
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to book appointment.");
     } finally {
       setIsBooking(false);
     }

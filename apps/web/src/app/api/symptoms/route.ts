@@ -77,8 +77,8 @@ export async function POST(req: Request) {
       { status: 201 }
     );
 
-  } catch (error: any) {
-    console.error("Detailed Backend Error:", error.message || error);
+  } catch (error) {
+    console.error("Detailed Backend Error:", error instanceof Error ? error.message : error);
     return NextResponse.json(
       { error: "Failed to process symptoms. Check terminal for details." },
       { status: 500 }

@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { 
-  Settings, Save, CheckCircle2, Target, Droplet, 
-  BellRing, Shield, User, Smartphone 
+import {
+  Settings, Save, CheckCircle2, Target, Droplet,
+  BellRing, User, Smartphone
 } from "lucide-react";
 
 const AVAILABLE_GOALS = [
@@ -14,9 +13,56 @@ const AVAILABLE_GOALS = [
   { id: "General", label: "General Hormonal Health", desc: "Baseline wellness, cycle syncing, and energy." }
 ];
 
+type TabId = 'goals' | 'cycle' | 'reminders' | 'account';
+
+interface TabButtonProps {
+  id: TabId;
+  icon: React.ElementType;
+  label: string;
+  activeTab: TabId;
+  onSelect: (id: TabId) => void;
+}
+
+function TabButton({ id, icon: Icon, label, activeTab, onSelect }: TabButtonProps) {
+  return (
+    <button
+      onClick={() => onSelect(id)}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+        activeTab === id ? 'bg-teal-50 text-teal-700' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+      }`}
+    >
+      <Icon className="w-5 h-5" />
+      {label}
+    </button>
+  );
+}
+
+interface ToggleSwitchProps {
+  label: string;
+  desc: string;
+  checked: boolean;
+  onChange: () => void;
+}
+
+function ToggleSwitch({ label, desc, checked, onChange }: ToggleSwitchProps) {
+  return (
+    <div className="flex items-center justify-between py-4 border-b border-gray-50 last:border-0">
+      <div>
+        <p className="font-semibold text-gray-900">{label}</p>
+        <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+      </div>
+      <button
+        onClick={onChange}
+        className={`w-12 h-6 rounded-full relative transition-colors ${checked ? 'bg-teal-500' : 'bg-gray-200'}`}
+      >
+        <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${checked ? 'left-7' : 'left-1'}`} />
+      </button>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
-  const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState<'goals' | 'cycle' | 'reminders' | 'account'>('cycle');
+  const [activeTab, setActiveTab] = useState<TabId>('cycle');
   
   // Data States
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
@@ -74,34 +120,6 @@ export default function SettingsPage() {
     }
   };
 
-  // --- REUSABLE COMPONENTS ---
-  const TabButton = ({ id, icon: Icon, label }: any) => (
-    <button 
-      onClick={() => setActiveTab(id)}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
-        activeTab === id ? 'bg-teal-50 text-teal-700' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-      }`}
-    >
-      <Icon className="w-5 h-5" />
-      {label}
-    </button>
-  );
-
-  const ToggleSwitch = ({ label, desc, checked, onChange }: any) => (
-    <div className="flex items-center justify-between py-4 border-b border-gray-50 last:border-0">
-      <div>
-        <p className="font-semibold text-gray-900">{label}</p>
-        <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
-      </div>
-      <button 
-        onClick={onChange}
-        className={`w-12 h-6 rounded-full relative transition-colors ${checked ? 'bg-teal-500' : 'bg-gray-200'}`}
-      >
-        <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${checked ? 'left-7' : 'left-1'}`} />
-      </button>
-    </div>
-  );
-
   if (isLoading) return <div className="text-center py-12 text-gray-500">Loading your profile...</div>;
 
   return (
@@ -117,10 +135,10 @@ export default function SettingsPage() {
         
         {/* SIDEBAR NAVIGATION */}
         <div className="w-full md:w-64 space-y-2 shrink-0">
-          <TabButton id="cycle" icon={Droplet} label="My Cycle & Body" />
-          <TabButton id="goals" icon={Target} label="Health Goals" />
-          <TabButton id="reminders" icon={BellRing} label="Reminders" />
-          <TabButton id="account" icon={User} label="Account Details" />
+          <TabButton id="cycle" icon={Droplet} label="My Cycle & Body" activeTab={activeTab} onSelect={setActiveTab} />
+          <TabButton id="goals" icon={Target} label="Health Goals" activeTab={activeTab} onSelect={setActiveTab} />
+          <TabButton id="reminders" icon={BellRing} label="Reminders" activeTab={activeTab} onSelect={setActiveTab} />
+          <TabButton id="account" icon={User} label="Account Details" activeTab={activeTab} onSelect={setActiveTab} />
         </div>
 
         {/* MAIN CONTENT AREA */}

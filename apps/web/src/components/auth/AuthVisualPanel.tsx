@@ -41,7 +41,7 @@ export function AuthVisualPanel({ slides, quote, chips = [], intervalMs = 5000 }
   const active = slides[activeIdx];
 
   return (
-    <div className="hidden lg:block lg:w-1/2 sticky top-0 h-[100vh] overflow-hidden bg-teal-950">
+    <div className="hidden lg:block lg:w-1/2 sticky top-0 h-[100dvh] overflow-hidden bg-teal-950">
       <AnimatePresence>
         <motion.img
           key={active.src}

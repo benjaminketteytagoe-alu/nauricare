@@ -75,13 +75,13 @@ export default function ProviderMessagesPage() {
     if (!activeId) return;
 
     const loadThread = async () => {
+      setMessages([]);
       setIsLoadingThread(true);
       const res = await fetch(`/api/messages/${activeId}`);
       if (res.ok) setMessages(await res.json());
       setIsLoadingThread(false);
     };
 
-    setMessages([]);
     loadThread();
 
     const interval = setInterval(loadThread, 10_000);

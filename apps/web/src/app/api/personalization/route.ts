@@ -52,7 +52,7 @@ export async function GET() {
 
     // --- Habits: still driven by the local content map (no Habit content model in schema) ---
     const activeGoals = goals.length > 0 ? goals : ["General"];
-    let tailoredHabits: any[] = [];
+    let tailoredHabits: { id: number; title: string; desc: string; done?: boolean }[] = [];
 
     activeGoals.forEach((goal) => {
       const content = CONTENT_DB[goal as keyof typeof CONTENT_DB] || CONTENT_DB["General"];

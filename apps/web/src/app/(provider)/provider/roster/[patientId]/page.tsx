@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, FileText, Plus, Save, FlaskConical, Pill } from "lucide-react";
 
@@ -8,8 +8,8 @@ export default function PatientMedicalRecordPage() {
   const params = useParams();
   const router = useRouter();
   
-  const [patient, setPatient] = useState<any>(null);
-  const [records, setRecords] = useState<any[]>([]);
+  const [, setPatient] = useState<Record<string, unknown> | null>(null);
+  const [records, setRecords] = useState<{ type: string; content: string }[]>([]);
   
   const [isAdding, setIsAdding] = useState(false);
   const [newRecordType, setNewRecordType] = useState("NOTE");

@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { Video, FileText, Users, ShieldCheck, ArrowRight } from "lucide-react";
@@ -22,6 +23,15 @@ const scaleIn = {
   hidden:  { opacity: 0, scale: 0.94 },
   visible: { opacity: 1, scale: 1, transition: { duration: 0.7, ease: "easeOut" as const } },
 };
+
+// ─── Hero carousel slides (mixed media) ──────────────────────────────────────
+
+type HeroSlide = { type: "image" | "video"; src: string };
+
+const HERO_SLIDES: HeroSlide[] = [
+  { type: "image", src: "https://res.cloudinary.com/dl2fjmhft/image/upload/v1781560519/vvvvv_ybkkyk.jpg" },
+  { type: "video", src: "https://res.cloudinary.com/dl2fjmhft/video/upload/v1781604133/Nauricare_App_Demo_itl2vz.mp4" },
+];
 
 // ─── Feature data ─────────────────────────────────────────────────────────────
 
@@ -57,6 +67,56 @@ const FEATURES = [
   },
 ];
 
+// ─── Hero carousel ────────────────────────────────────────────────────────────
+// Module-level constant avoids re-creating this object on every render tick.
+const CAROUSEL_MEDIA_PROPS = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit:    { opacity: 0 },
+  transition: { duration: 2.5, ease: "easeInOut" as const },
+  className: "absolute inset-0 w-full h-full object-cover -z-10",
+};
+
+// Isolated into its own component so the 5s setInterval re-render is scoped
+// to this small subtree, not the entire LandingPageClient (AgentChat + §2-§5).
+function HeroCarousel() {
+  const [heroIdx, setHeroIdx] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setHeroIdx((i) => (i + 1) % HERO_SLIDES.length), 5000);
+    return () => clearInterval(t);
+  }, []);
+
+  const slide = HERO_SLIDES[heroIdx];
+
+  return (
+    <AnimatePresence mode="sync">
+      {slide.type === "video" ? (
+        <motion.video
+          key={slide.src}
+          autoPlay
+          loop
+          muted
+          playsInline
+          aria-hidden="true"
+          {...CAROUSEL_MEDIA_PROPS}
+        >
+          <source src={slide.src} type="video/mp4" />
+        </motion.video>
+      ) : (
+        <motion.img
+          key={slide.src}
+          src={slide.src}
+          alt=""
+          aria-hidden="true"
+          onError={(e) => { e.currentTarget.style.display = "none"; }}
+          {...CAROUSEL_MEDIA_PROPS}
+        />
+      )}
+    </AnimatePresence>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function LandingPageClient() {
@@ -66,25 +126,14 @@ export default function LandingPageClient() {
       {/* ════════════════════════════════════════════════════════════════
           §1  HERO — live video background
           ════════════════════════════════════════════════════════════════ */}
-      {/* dvh (not vh) so iOS Safari's collapsing address bar doesn't clip the CTA row */}
-      <section className="relative min-h-[calc(100dvh-4rem)] flex items-center justify-center overflow-hidden">
+      {/* dvh minus navbar height (4rem) and the variable notch inset so the hero never overflows */}
+      <section className="relative min-h-[calc(100dvh-4rem-env(safe-area-inset-top))] flex items-center justify-center overflow-hidden">
 
-        {/* HTML5 video background — served from Cloudinary CDN, not bundled in the Docker image */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover -z-10"
-          aria-hidden="true"
-        >
-          <source src="https://res.cloudinary.com/dl2fjmhft/video/upload/v1781604133/Nauricare_App_Demo_itl2vz.mp4" type="video/mp4" />
-        </video>
+        {/* Crossfade hero background — isolated component, re-renders only this subtree */}
+        <HeroCarousel />
 
-        {/* Base dark layer — brings video into background without hiding texture */}
-        <div className="absolute inset-0 bg-black/50 pointer-events-none" />
-        {/* Directional gradient — heaviest at top and bottom for headline + CTA legibility */}
-        <div className="absolute inset-0 bg-gradient-to-b from-teal-950/90 via-teal-950/80 to-black/90 pointer-events-none" />
+        {/* Single gradient overlay — light enough to reveal the carousel, dark enough for text legibility */}
+        <div className="absolute inset-0 bg-gradient-to-b from-teal-950/50 via-black/40 to-black/70 pointer-events-none" />
 
         {/* Hero copy */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 text-center text-white">
@@ -128,16 +177,18 @@ export default function LandingPageClient() {
               variants={fadeUp}
               className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2"
             >
-              <Link href="/signup" className="w-full sm:w-auto">
-                <button className="group flex w-full sm:w-auto items-center justify-center gap-2.5 bg-teal-500 hover:bg-teal-400 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all duration-200 shadow-lg shadow-teal-900/50 hover:shadow-teal-500/30 hover:-translate-y-0.5 active:scale-[0.97]">
-                  Patient Portal
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
+              <Link
+                href="/signup"
+                className="group flex w-full sm:w-auto items-center justify-center gap-2.5 bg-teal-500 hover:bg-teal-400 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all duration-200 shadow-lg shadow-teal-900/50 hover:shadow-teal-500/30 hover:-translate-y-0.5 active:scale-[0.97]"
+              >
+                Patient Portal
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link href="/login" className="w-full sm:w-auto">
-                <button className="flex w-full sm:w-auto items-center justify-center gap-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all duration-200 active:scale-[0.97]">
-                  Provider Portal
-                </button>
+              <Link
+                href="/login"
+                className="flex w-full sm:w-auto items-center justify-center gap-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all duration-200 active:scale-[0.97]"
+              >
+                Provider Portal
               </Link>
             </motion.div>
           </motion.div>
@@ -361,11 +412,12 @@ export default function LandingPageClient() {
                 </div>
 
                 <div className="pt-2">
-                  <Link href="/signup">
-                    <button className="group inline-flex items-center gap-2.5 bg-teal-500 hover:bg-teal-400 text-white font-bold px-7 py-3.5 rounded-2xl text-sm transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.97]">
-                      Join the movement
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </button>
+                  <Link
+                    href="/signup"
+                    className="group inline-flex items-center gap-2.5 bg-teal-500 hover:bg-teal-400 text-white font-bold px-7 py-3.5 rounded-2xl text-sm transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.97]"
+                  >
+                    Join the movement
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
               </motion.div>
