@@ -2,7 +2,7 @@ import { Resend } from "resend";
 import { PatientBookingConfirmation, type PatientBookingConfirmationProps } from "@/emails/PatientBookingConfirmation";
 import { ProviderNewAppointmentAlert, type ProviderNewAppointmentAlertProps } from "@/emails/ProviderNewAppointmentAlert";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
 
 // Use the verified domain in production; fall back to Resend's test sender in dev.
 const FROM_ADDRESS =
