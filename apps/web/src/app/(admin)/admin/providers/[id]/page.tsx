@@ -1,12 +1,19 @@
+import { redirect, notFound } from "next/navigation";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
 import { VerifyButton } from "./VerifyButton";
+
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function ProviderDetailPage({ params }: PageProps) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user || session.user.role !== "ADMIN") redirect("/login");
+
   const resolvedParams = await params;
   const { id } = resolvedParams;
 

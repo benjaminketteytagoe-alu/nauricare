@@ -33,6 +33,11 @@ COPY --from=builder /app/out/full/ .
 # Generate the Prisma client using your specific monorepo path
 RUN npx prisma generate --schema=packages/database/prisma/schema.prisma
 
+# Cloudflare Turnstile public site key — must be baked in at build time
+# so Next.js can embed it in the client bundle via process.env.NEXT_PUBLIC_*
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
+ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
+
 # Build the Next.js application
 RUN npx turbo run build --filter=web
 

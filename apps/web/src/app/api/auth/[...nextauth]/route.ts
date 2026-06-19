@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -15,10 +16,16 @@ export const authOptions: AuthOptions = {
       credentials: {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
+        turnstileToken: { label: "Turnstile Token", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Please fill in both email and password fields.");
+        }
+
+        const isHuman = await verifyTurnstileToken(credentials.turnstileToken ?? "");
+        if (!isHuman) {
+          throw new Error("Security verification failed. Please try again.");
         }
 
         const cleanEmail = credentials.email.trim().toLowerCase();

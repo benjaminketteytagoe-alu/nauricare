@@ -1,84 +1,123 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
+import { verifyTurnstileToken } from "@/lib/turnstile";
+import { getClientIp } from "@/lib/getClientIp";
+
+const PASSWORD_REGEX = /^(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/;
+
+const privacyField = z.boolean().refine((v) => v === true, {
+  message: "You must consent to the privacy policy",
+});
+
+const passwordField = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(PASSWORD_REGEX, "Password must contain at least one number and one special character");
+
+const patientSchema = z.object({
+  name: z.string().min(2).max(100),
+  email: z.string().email(),
+  password: passwordField,
+  dateOfBirth: z.string().min(1, "Date of birth is required"),
+  privacyConsent: privacyField,
+  role: z.literal("PATIENT"),
+  country: z.string().optional(),
+});
+
+const providerSchema = z.object({
+  name: z.string().min(2).max(100),
+  email: z.string().email(),
+  password: passwordField,
+  dateOfBirth: z.string().min(1, "Date of birth is required"),
+  privacyConsent: privacyField,
+  role: z.literal("PROVIDER"),
+  specialty: z.string().min(2).max(100),
+  clinicName: z.string().min(2).max(150),
+  location: z.string().min(2).max(200),
+});
+
+const registerSchema = z.discriminatedUnion("role", [patientSchema, providerSchema]);
 
 export async function POST(req: Request) {
   try {
-    // 1. Extract ALL necessary fields, including the new provider-specific ones
-    const { 
-      email, password, name, dateOfBirth, privacyConsent, role, 
-      country, specialty, location, clinicName 
-    } = await req.json();
+    const body = await req.json();
 
-    // 2. Basic Validation (Logic remains the same)
-    if (!email || !password || !name) {
-      return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
+    const isHuman = await verifyTurnstileToken(
+      body?.turnstileToken ?? "",
+      getClientIp(req.headers as Headers),
+    );
+    if (!isHuman) {
+      return NextResponse.json(
+        { error: "Security verification failed. Please try again." },
+        { status: 403 },
+      );
     }
 
-    if (password.length < 8) {
-      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
+    const parsed = registerSchema.safeParse(body);
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0];
+      return NextResponse.json({ error: firstError.message }, { status: 400 });
     }
 
-    if (!privacyConsent) {
-      return NextResponse.json({ error: "You must consent to the privacy policy to register." }, { status: 403 });
+    const data = parsed.data;
+
+    const dobDate = new Date(data.dateOfBirth);
+    if (isNaN(dobDate.getTime())) {
+      return NextResponse.json({ error: "Invalid date of birth" }, { status: 400 });
     }
 
-    if (!dateOfBirth) {
-      return NextResponse.json({ error: "Date of Birth is required for legal age verification." }, { status: 400 });
-    }
-
-    const dobDate = new Date(dateOfBirth);
     const ageDifMs = Date.now() - dobDate.getTime();
-    const ageDate = new Date(ageDifMs);
-    const age = Math.abs(ageDate.getUTCFullYear() - 1970);
-    
+    const age = Math.floor(ageDifMs / (1000 * 60 * 60 * 24 * 365.25));
     if (age < 18) {
       return NextResponse.json({ error: "You must be at least 18 years old to register." }, { status: 403 });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
     if (existingUser) {
       return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
     }
 
-    // 3. Hash password
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-    const assignedRole = role === "PROVIDER" ? "PROVIDER" : "PATIENT";
+    const passwordHash = await bcrypt.hash(data.password, 12);
 
-    // 4. Atomic Transaction: Ensures User and Profile are created together or not at all
     const userWithoutPassword = await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
-          email,
-          name,
+          email: data.email,
+          name: data.name,
           passwordHash,
           dateOfBirth: dobDate,
-          privacyConsent,
-          role: assignedRole,
+          privacyConsent: true,
+          role: data.role,
         },
       });
 
-      if (assignedRole === "PATIENT") {
+      if (data.role === "PATIENT") {
         await tx.patientProfile.create({
           data: {
             userId: newUser.id,
-            country: country || "Unknown", // Handle missing country
-          }
+            country: ("country" in data && data.country) ? data.country : "Unknown",
+          },
         });
-      } else if (assignedRole === "PROVIDER") {
+      } else {
         await tx.practitionerProfile.create({
           data: {
             userId: newUser.id,
-            specialty: specialty || "General Practice",
-            location: location || "Rwanda",
-            clinicName: clinicName || "NauriCare Clinic",
-          }
+            specialty: data.specialty,
+            location: data.location,
+            clinicName: data.clinicName,
+          },
         });
       }
 
-      const { passwordHash: _, ...rest } = newUser;
-      return rest;
+      return {
+        id: newUser.id,
+        email: newUser.email,
+        name: newUser.name,
+        role: newUser.role,
+        createdAt: newUser.createdAt,
+      };
     });
 
     return NextResponse.json(

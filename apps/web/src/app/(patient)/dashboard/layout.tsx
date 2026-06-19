@@ -1,15 +1,18 @@
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // Updated to target your primary active configuration
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers";
 import { Sidebar } from "@/components/Sidebar";
 
-export default async function DashboardLayout({ 
-  children 
-}: { 
-  children: React.ReactNode 
+export const dynamic = "force-dynamic";
+
+export default async function DashboardLayout({
+  children
+}: {
+  children: React.ReactNode
 }) {
-  // 1. Retrieve the current authenticated session securely
+  await cookies(); // forces dynamic rendering — prevents cross-user cache leak
   const session = await getServerSession(authOptions);
 
   // 2. Explicit Security Gate: Ensure a valid user session exists

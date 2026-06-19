@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
   const [successMsg, setSuccessMsg] = useState(() =>
     typeof window !== "undefined" && window.location.search.includes("registered=true")
       ? "Account created successfully! Please log in."
@@ -26,6 +28,12 @@ export default function LoginPage() {
     setError("");
     setSuccessMsg("");
 
+    if (!turnstileToken) {
+      setError("Please complete the security check before logging in.");
+      setLoading(false);
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
@@ -35,6 +43,7 @@ export default function LoginPage() {
         redirect: false,
         email,
         password,
+        turnstileToken,
       });
 
       if (res?.error) {
@@ -95,6 +104,13 @@ export default function LoginPage() {
               </div>
               <PasswordInput id="password" name="password" required className="h-11 focus-visible:ring-teal-600" />
             </div>
+
+            <Turnstile
+              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+              onSuccess={setTurnstileToken}
+              onExpire={() => setTurnstileToken("")}
+              onError={() => setTurnstileToken("")}
+            />
 
             <Button type="submit" className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white" disabled={loading}>
               {loading ? "Logging in..." : "Log In"}

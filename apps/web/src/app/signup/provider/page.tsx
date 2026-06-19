@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,11 +38,18 @@ export default function ProviderSignUpPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    if (!turnstileToken) {
+      setError("Please complete the security check before registering.");
+      setLoading(false);
+      return;
+    }
 
     const formData = new FormData(e.currentTarget);
     const name           = formData.get("name") as string;
@@ -59,7 +67,7 @@ export default function ProviderSignUpPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email, password, name, dateOfBirth, privacyConsent,
-          role: "PROVIDER", specialty, clinicName, location,
+          role: "PROVIDER", specialty, clinicName, location, turnstileToken,
         }),
       });
 
@@ -170,6 +178,13 @@ export default function ProviderSignUpPage() {
                 I confirm the details above are accurate and verifiable.
               </Label>
             </div>
+
+            <Turnstile
+              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+              onSuccess={setTurnstileToken}
+              onExpire={() => setTurnstileToken("")}
+              onError={() => setTurnstileToken("")}
+            />
 
             <Button
               type="submit"

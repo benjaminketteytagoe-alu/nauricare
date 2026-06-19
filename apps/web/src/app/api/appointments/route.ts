@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendPatientConfirmationEmail, sendProviderAlertEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
   try {
@@ -26,6 +27,7 @@ export async function POST(req: Request) {
 
     const practitioner = await prisma.practitionerProfile.findUnique({
       where: { id: practitionerProfileId },
+      include: { user: { select: { name: true, email: true } } },
     });
 
     if (!practitioner) return new NextResponse("Practitioner not found.", { status: 404 });
@@ -78,6 +80,43 @@ export async function POST(req: Request) {
 
       return updated;
     });
+
+    // Derive human-readable date/time strings for the email templates
+    const apptDate = start.toLocaleDateString("en-GB", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    const apptTime = start.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    // Fire both emails concurrently after the DB transaction succeeds.
+    // Wrapped in try-catch so a delivery failure never blocks or rolls back a confirmed booking.
+    try {
+      await Promise.all([
+        sendPatientConfirmationEmail({
+          to: session.user.email!,
+          patientName: session.user.name ?? "Patient",
+          providerName: practitioner.user.name ?? "Your Provider",
+          date: apptDate,
+          time: apptTime,
+          meetingLink: appointment.meetingLink ?? "",
+        }),
+        sendProviderAlertEmail({
+          to: practitioner.user.email,
+          providerName: practitioner.user.name ?? "Provider",
+          patientName: session.user.name ?? "Patient",
+          date: apptDate,
+          time: apptTime,
+          meetingLink: appointment.meetingLink ?? "",
+        }),
+      ]);
+    } catch (emailErr) {
+      console.error("[APPOINTMENT_EMAIL_ERROR]", emailErr);
+    }
 
     return NextResponse.json(appointment, { status: 201 });
   } catch (error) {

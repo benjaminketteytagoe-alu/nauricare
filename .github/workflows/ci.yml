@@ -63,6 +63,8 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
 
   # ==========================================
   # PHASE 3: STAGING DEPLOYMENT (DEVELOP BRANCH)
@@ -86,7 +88,7 @@ jobs:
             docker pull ghcr.io/${{ github.repository }}:${{ github.sha }}
             docker stop nauricare-staging || true
             docker rm nauricare-staging || true
-            docker run -d --name nauricare-staging -p 3001:3000 --env-file .env.staging ghcr.io/${{ github.repository }}:${{ github.sha }}
+            docker run -d --name nauricare-staging -p 3001:3000 --env-file .env.staging -e TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }} -e RESEND_API_KEY=${{ secrets.RESEND_API_KEY }} -e EMAIL_FROM=${{ secrets.EMAIL_FROM }} ghcr.io/${{ github.repository }}:${{ github.sha }}
             # FIXED: Added explicit Prisma version to Staging
             docker exec nauricare-staging npx --yes --package prisma@6.19.3 prisma migrate deploy --schema=packages/database/prisma/schema.prisma
         env:
@@ -117,7 +119,7 @@ jobs:
             # FIXED: Target nauricare-prod instead of staging containers
             docker stop nauricare-prod || true
             docker rm nauricare-prod || true
-            docker run -d --name nauricare-prod -p 3000:3000 --env-file .env.production ghcr.io/${{ github.repository }}:${{ github.sha }}
+            docker run -d --name nauricare-prod -p 3000:3000 --env-file .env.production -e TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }} -e RESEND_API_KEY=${{ secrets.RESEND_API_KEY }} -e EMAIL_FROM=${{ secrets.EMAIL_FROM }} ghcr.io/${{ github.repository }}:${{ github.sha }}
             docker exec nauricare-prod npx --yes --package prisma@6.19.3 prisma migrate deploy --schema=packages/database/prisma/schema.prisma
         env:
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
