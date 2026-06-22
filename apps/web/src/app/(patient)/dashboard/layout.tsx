@@ -42,8 +42,9 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen flex bg-[#f8fafc]">
       <Sidebar />
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-8">
+      <main className="flex-1 flex flex-col min-h-screen md:h-screen overflow-hidden">
+        {/* pt-20 clears the fixed mobile top bar (h-16) with breathing room */}
+        <div className="flex-1 overflow-y-auto p-4 pt-20 md:p-8">
           {children}
         </div>
       </main>

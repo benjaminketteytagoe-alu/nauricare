@@ -10,6 +10,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { PasswordInput } from "@/components/auth/PasswordInput";
+import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
+import { ShieldCheck, Lock } from "lucide-react";
+
+// ─── Trust panel data ─────────────────────────────────────────────────────────
+
+const TRUST_SLIDES: AuthVisualSlide[] = [
+  {
+    src: "https://res.cloudinary.com/dl2fjmhft/image/upload/f_auto,q_auto/vvvvv_ybkkyk",
+    tag: "Secure Telehealth",
+    caption: "Access your appointments and care team in one secure place.",
+  },
+  {
+    src: "https://res.cloudinary.com/dl2fjmhft/image/upload/vvvvv_1_kn3e6u",
+    tag: "Your Health Records",
+    caption: "Pick up right where you left off — your full health timeline awaits.",
+  },
+];
+
+const TRUST_CHIPS = [
+  { Icon: ShieldCheck, label: "HIPAA Compliant" },
+  { Icon: Lock,        label: "End-to-End Encrypted" },
+];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -126,13 +148,12 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="hidden lg:flex lg:w-1/2 bg-teal-900 text-white p-12 flex-col justify-between relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-teal-400 via-teal-900 to-teal-900"></div>
-        <div className="relative z-10 space-y-8 mt-10">
-          <h3 className="text-3xl font-bold">Secure, Private, and Yours.</h3>
-          <p className="text-teal-100">Access your health records and specialist appointments.</p>
-        </div>
-      </div>
+      <AuthVisualPanel
+        slides={TRUST_SLIDES}
+        quote="Secure, private, and yours."
+        chips={TRUST_CHIPS}
+        intervalMs={5000}
+      />
     </div>
   );
 }

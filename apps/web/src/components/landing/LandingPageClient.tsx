@@ -74,7 +74,7 @@ const CAROUSEL_MEDIA_PROPS = {
   animate: { opacity: 1 },
   exit:    { opacity: 0 },
   transition: { duration: 2.5, ease: "easeInOut" as const },
-  className: "absolute inset-0 w-full h-full object-cover -z-10",
+  className: "absolute inset-0 w-full h-full object-cover",
 };
 
 // Isolated into its own component so the 5s setInterval re-render is scoped
@@ -132,8 +132,8 @@ export default function LandingPageClient() {
         {/* Crossfade hero background — isolated component, re-renders only this subtree */}
         <HeroCarousel />
 
-        {/* Single gradient overlay — light enough to reveal the carousel, dark enough for text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-b from-teal-950/50 via-black/40 to-black/70 pointer-events-none" />
+        {/* Rich warm overlay — ensures WCAG-compliant contrast against the crossfading imagery */}
+        <div className="absolute inset-0 bg-gradient-to-b from-stone-900/75 via-stone-900/55 to-stone-950/85 pointer-events-none" />
 
         {/* Hero copy */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 text-center text-white">
@@ -143,31 +143,24 @@ export default function LandingPageClient() {
             variants={stagger}
             className="space-y-8"
           >
-            <motion.div variants={fadeUp}>
-              <span className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-teal-200 text-xs font-bold tracking-[0.18em] uppercase px-5 py-2 rounded-full">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                Built for women, by women
-              </span>
-            </motion.div>
-
             <motion.h1
               variants={fadeUp}
               className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-[-0.02em] leading-[1.06] drop-shadow-2xl text-balance"
             >
               Your body,{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-cyan-300">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-300 to-amber-300">
                 understood.
               </span>
               <br />
               Your health,{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-cyan-300">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-300 to-amber-300">
                 connected.
               </span>
             </motion.h1>
 
             <motion.p
               variants={fadeUp}
-              className="text-lg md:text-xl text-teal-100/85 max-w-2xl mx-auto leading-relaxed drop-shadow-lg text-pretty"
+              className="text-lg md:text-xl text-amber-50/90 max-w-2xl mx-auto leading-relaxed drop-shadow-lg text-pretty"
             >
               Compassionate, evidence-based care for PCOS, fibroids, and women&apos;s reproductive
               health — always private, always yours.
@@ -179,14 +172,14 @@ export default function LandingPageClient() {
             >
               <Link
                 href="/signup"
-                className="group flex w-full sm:w-auto items-center justify-center gap-2.5 bg-teal-500 hover:bg-teal-400 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all duration-200 shadow-lg shadow-teal-900/50 hover:shadow-teal-500/30 hover:-translate-y-0.5 active:scale-[0.97]"
+                className="group flex w-full sm:w-auto items-center justify-center gap-2.5 bg-[#701a2e] hover:bg-rose-800 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all duration-200 shadow-lg shadow-rose-950/60 hover:shadow-rose-900/40 hover:-translate-y-0.5 active:scale-[0.97]"
               >
                 Patient Portal
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
                 href="/login"
-                className="flex w-full sm:w-auto items-center justify-center gap-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all duration-200 active:scale-[0.97]"
+                className="flex w-full sm:w-auto items-center justify-center gap-2.5 bg-rose-950/30 hover:bg-rose-950/50 backdrop-blur-sm border border-rose-300/30 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all duration-200 active:scale-[0.97]"
               >
                 Provider Portal
               </Link>
