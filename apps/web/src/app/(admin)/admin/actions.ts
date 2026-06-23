@@ -36,6 +36,9 @@ export async function approveProviderProfile(providerUserId: string, adminId: st
     // 3. Reset the Next.js router cache for this route layout context
     revalidatePath("/admin/providers");
     revalidatePath(`/admin/providers/${providerUserId}`);
+    // Patient-facing specialist directory — ensures a newly-verified provider
+    // is never served from a stale cached entry for this route.
+    revalidatePath("/dashboard/providers");
 
     return { success: true, data: updatedUser };
   } catch (error) {

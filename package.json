@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "dev": "turbo run dev",
-    "build": "turbo run build"
+    "build": "turbo run build",
+    "make-admin": "npx tsx apps/web/scripts/make-admin.ts"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
