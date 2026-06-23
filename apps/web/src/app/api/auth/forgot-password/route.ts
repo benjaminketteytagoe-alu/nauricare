@@ -4,6 +4,7 @@ import { z } from "zod";
 import { randomBytes, createHash } from "crypto";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { getClientIp } from "@/lib/getClientIp";
+import { sendPasswordResetEmail } from "@/lib/email";
 
 const schema = z.object({
   email: z.string().email(),
@@ -45,16 +46,22 @@ export async function POST(req: Request) {
     // Generate a cryptographically secure token
     const rawToken = randomBytes(32).toString("hex");
     const tokenHash = createHash("sha256").update(rawToken).digest("hex");
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     await prisma.resetToken.create({
       data: { tokenHash, userId: user.id, expiresAt },
     });
 
-    // In production this would send an email via SendGrid/Resend/etc.
-    // The reset link would be: ${process.env.NEXTAUTH_URL}/reset-password?token=${rawToken}
-    console.log(`[PASSWORD RESET] Token for ${email}: ${rawToken}`);
-    console.log(`[PASSWORD RESET] Reset URL: ${process.env.NEXTAUTH_URL}/reset-password?token=${rawToken}`);
+    const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${rawToken}`;
+
+    // Never let a Resend failure change this route's response shape — doing so would
+    // let an attacker distinguish real accounts (email fails differently) from fake
+    // ones, defeating the anti-enumeration guarantee above.
+    try {
+      await sendPasswordResetEmail({ to: email, resetUrl });
+    } catch (resendError) {
+      console.error("[PASSWORD_RESET_EMAIL_ERROR]", resendError);
+    }
 
     return NextResponse.json({ message: "If an account exists, a reset link has been sent." });
   } catch (error) {
