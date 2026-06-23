@@ -9,13 +9,14 @@ interface PractitionerProfile {
   specialty?: string;
   clinicName?: string;
   location?: string;
-  verificationStatus?: string;
+  isVerified?: boolean;
 }
 
 interface ProviderRow {
   id: string;
   name: string;
   email: string;
+  isVerified?: boolean;
   practitionerProfile?: PractitionerProfile;
 }
 
@@ -164,17 +165,20 @@ export default function AdminProvidersPage() {
                       <div className="font-medium text-gray-900">{provider.practitionerProfile?.clinicName || "Independent"}</div>
                       <div className="text-xs">{provider.practitionerProfile?.location || "N/A"}</div>
                     </td>
-                    {/* Render status badge dynamically based on relationship parameters */}
+                    {/* Status reflects the real isVerified boolean — set by approveProviderProfile() on both User and PractitionerProfile */}
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        provider.practitionerProfile?.verificationStatus === "APPROVED"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : provider.practitionerProfile?.verificationStatus === "REJECTED"
-                          ? "bg-rose-50 text-rose-700 border border-rose-200"
-                          : "bg-amber-50 text-amber-700 border border-amber-200"
-                      }`}>
-                        {provider.practitionerProfile?.verificationStatus || "PENDING"}
-                      </span>
+                      {(() => {
+                        const isVerified = provider.practitionerProfile?.isVerified || provider.isVerified;
+                        return (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            isVerified
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-amber-50 text-amber-700 border border-amber-200"
+                          }`}>
+                            {isVerified ? "APPROVED" : "PENDING"}
+                          </span>
+                        );
+                      })()}
                     </td>
                     {/* Render action review anchor link */}
                     <td className="px-6 py-4 text-right">
