@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     // 1. Authenticate the request
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 2. Parse the incoming form data
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const { country, menstrualCycle, emergencyContact, dateOfBirth } = body;
 
     if (!country) {
-      return new NextResponse("Country is required", { status: 400 });
+      return NextResponse.json({ error: "Country is required" }, { status: 400 });
     }
 
     // Parse dateOfBirth safely — Google OAuth users often omit this field
@@ -49,7 +49,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json(profile, { status: 201 });
   } catch (error) {
-    console.error("[ONBOARDING_ERROR]", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    const message = error instanceof Error ? error.message : "Internal Server Error";
+    console.error("[ONBOARDING_ERROR]", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

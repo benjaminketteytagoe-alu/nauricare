@@ -13,14 +13,14 @@ export default function OnboardingPage() {
     setError("");
 
     const formData = new FormData(event.currentTarget);
-    
-    // FIX 1: Explicitly parse the cycle string into a strict integer for the Prisma backend
-    const cycleInput = formData.get("menstrualCycle");
-    const parsedCycle = cycleInput ? parseInt(cycleInput.toString(), 10) : null;
+
+    // menstrualCycle is stored as String? in Prisma (see PatientProfile.menstrualCycle) —
+    // keep it a string here, matching dashboard/settings' read/write of the same field.
+    const cycleInput = formData.get("menstrualCycle")?.toString().trim();
 
     const data = {
       country: formData.get("country"),
-      menstrualCycle: parsedCycle,
+      menstrualCycle: cycleInput || null,
       emergencyContact: formData.get("emergencyContact"),
     };
 
