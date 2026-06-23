@@ -35,13 +35,17 @@ export const authOptions: AuthOptions = {
         });
 
         if (!user || !user.passwordHash) {
-          throw new Error("No user records correspond with this address.");
+          throw new Error("No account found with this email.");
         }
 
         const isValidPassword = await bcrypt.compare(credentials.password, user.passwordHash);
 
         if (!isValidPassword) {
-          throw new Error("Invalid password submission.");
+          throw new Error("Incorrect password. Please try again.");
+        }
+
+        if (!user.isEmailVerified) {
+          throw new Error("Please verify your email address before logging in.");
         }
 
         return {

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
+import { passwordField } from "@/lib/validation/password";
 import { ShieldCheck, Stethoscope, Users } from "lucide-react";
 
 // ─── Trust panel data ─────────────────────────────────────────────────────────
@@ -39,6 +40,12 @@ export default function ProviderSignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [password, setPassword] = useState("");
+
+  const passwordResult = password ? passwordField.safeParse(password) : null;
+  const passwordError = passwordResult && !passwordResult.success
+    ? passwordResult.error.issues[0].message
+    : "";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -51,10 +58,16 @@ export default function ProviderSignUpPage() {
       return;
     }
 
+    const passwordCheck = passwordField.safeParse(password);
+    if (!passwordCheck.success) {
+      setError(passwordCheck.error.issues[0].message);
+      setLoading(false);
+      return;
+    }
+
     const formData = new FormData(e.currentTarget);
     const name           = formData.get("name") as string;
     const email          = formData.get("email") as string;
-    const password       = formData.get("password") as string;
     const dateOfBirth    = formData.get("dateOfBirth") as string;
     const specialty      = formData.get("specialty") as string;
     const clinicName     = formData.get("clinicName") as string;
@@ -124,8 +137,14 @@ export default function ProviderSignUpPage() {
                 <PasswordInput
                   id="password" name="password" required minLength={8}
                   placeholder="Min. 8 characters"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  aria-invalid={!!passwordError}
                   className="h-11 focus-visible:ring-teal-500 rounded-xl"
                 />
+                {passwordError && (
+                  <p className="text-xs text-red-600">{passwordError}</p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="dateOfBirth">Date of Birth</Label>

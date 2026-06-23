@@ -69,7 +69,7 @@ export default function LoginPage() {
       });
 
       if (res?.error) {
-        setError("Invalid email or password");
+        setError(res.error || "Invalid email or password");
         setLoading(false);
       } else {
         // Fetch the newly created session to check the user's role

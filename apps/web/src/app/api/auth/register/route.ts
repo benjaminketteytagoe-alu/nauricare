@@ -4,17 +4,11 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { getClientIp } from "@/lib/getClientIp";
-
-const PASSWORD_REGEX = /^(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/;
+import { passwordField } from "@/lib/validation/password";
 
 const privacyField = z.boolean().refine((v) => v === true, {
   message: "You must consent to the privacy policy",
 });
-
-const passwordField = z
-  .string()
-  .min(8, "Password must be at least 8 characters")
-  .regex(PASSWORD_REGEX, "Password must contain at least one number and one special character");
 
 const patientSchema = z.object({
   name: z.string().min(2).max(100),
@@ -90,6 +84,9 @@ export async function POST(req: Request) {
           dateOfBirth: dobDate,
           privacyConsent: true,
           role: data.role,
+          // Closed beta: email verification flow isn't wired up to the frontend yet,
+          // so new accounts are auto-verified to avoid locking out beta users.
+          isEmailVerified: true,
         },
       });
 
