@@ -36,13 +36,21 @@ const TRUST_CHIPS = [
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
-  const [successMsg, setSuccessMsg] = useState(() =>
-    typeof window !== "undefined" && window.location.search.includes("registered=true")
-      ? "Account created successfully! Please log in."
-      : ""
-  );
+  const [error, setError] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const params = window.location.search;
+    if (params.includes("verified=expired")) return "Your verification link has expired. Please sign up again to receive a new one.";
+    if (params.includes("verified=error")) return "Invalid or already-used verification link.";
+    return "";
+  });
+  const [successMsg, setSuccessMsg] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const params = window.location.search;
+    if (params.includes("registered=true")) return "Account created successfully! Please log in.";
+    if (params.includes("verified=true")) return "Email verified successfully! You can now log in.";
+    return "";
+  });
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

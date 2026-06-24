@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { randomBytes, createHash } from "crypto";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { getClientIp } from "@/lib/getClientIp";
 import { passwordField } from "@/lib/validation/password";
+import { sendVerificationEmail } from "@/lib/email";
 
 const privacyField = z.boolean().refine((v) => v === true, {
   message: "You must consent to the privacy policy",
@@ -75,6 +77,12 @@ export async function POST(req: Request) {
 
     const passwordHash = await bcrypt.hash(data.password, 12);
 
+    // Raw token only ever exists in the verification link — the DB stores a SHA-256
+    // hash, mirroring the ResetToken pattern used by the password-reset flow.
+    const rawToken = randomBytes(32).toString("hex");
+    const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
     const userWithoutPassword = await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
@@ -84,9 +92,6 @@ export async function POST(req: Request) {
           dateOfBirth: dobDate,
           privacyConsent: true,
           role: data.role,
-          // Closed beta: email verification flow isn't wired up to the frontend yet,
-          // so new accounts are auto-verified to avoid locking out beta users.
-          isEmailVerified: true,
         },
       });
 
@@ -108,6 +113,10 @@ export async function POST(req: Request) {
         });
       }
 
+      await tx.emailVerificationToken.create({
+        data: { tokenHash, userId: newUser.id, expiresAt },
+      });
+
       return {
         id: newUser.id,
         email: newUser.email,
@@ -116,6 +125,20 @@ export async function POST(req: Request) {
         createdAt: newUser.createdAt,
       };
     });
+
+    const verifyUrl = `${process.env.NEXTAUTH_URL}/verify-email?token=${rawToken}`;
+
+    // Never let an email failure roll back or fail a successful registration —
+    // the account already exists; the user can request a fresh link if needed.
+    try {
+      await sendVerificationEmail({
+        to: userWithoutPassword.email,
+        name: userWithoutPassword.name,
+        verifyUrl,
+      });
+    } catch (emailError) {
+      console.error("[VERIFICATION_EMAIL_ERROR]", emailError);
+    }
 
     return NextResponse.json(
       { message: "User registered successfully", user: userWithoutPassword },
