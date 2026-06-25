@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
@@ -65,16 +65,21 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
-    const { content, imageUrl, repostOfId } = await req.json();
+    const { content, mediaUrl, mediaType, repostOfId } = await req.json();
 
-    if (!content?.trim() && !imageUrl) {
-      return new NextResponse("Post must have content or an image", { status: 400 });
+    if (!content?.trim() && !mediaUrl) {
+      return new NextResponse("Post must have content or media", { status: 400 });
+    }
+
+    if (mediaType && mediaType !== "IMAGE" && mediaType !== "VIDEO") {
+      return new NextResponse("Invalid mediaType", { status: 400 });
     }
 
     const post = await prisma.communityPost.create({
       data: {
         content: content?.trim() ?? "",
-        imageUrl: imageUrl || null,
+        mediaUrl: mediaUrl || null,
+        mediaType: mediaUrl ? (mediaType ?? "IMAGE") : null,
         authorId: session.user.id,
         repostOfId: repostOfId || null,
       },

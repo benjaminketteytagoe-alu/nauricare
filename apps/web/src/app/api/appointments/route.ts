@@ -1,7 +1,7 @@
 // apps/web/src/app/api/appointments/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { sendPatientConfirmationEmail, sendProviderAlertEmail } from "@/lib/email";
 
@@ -94,29 +94,36 @@ export async function POST(req: Request) {
     });
 
     // Fire both emails concurrently after the DB transaction succeeds.
-    // Wrapped in try-catch so a delivery failure never blocks or rolls back a confirmed booking.
-    try {
-      await Promise.all([
-        sendPatientConfirmationEmail({
+    // allSettled (not all) so a failure on one side doesn't hide the other's
+    // outcome — Promise.all only ever surfaces the first rejection.
+    const emailJobs = [
+      { label: "patient", to: session.user.email, fn: () => sendPatientConfirmationEmail({
           to: session.user.email!,
           patientName: session.user.name ?? "Patient",
           providerName: practitioner.user.name ?? "Your Provider",
           date: apptDate,
           time: apptTime,
           meetingLink: appointment.meetingLink ?? "",
-        }),
-        sendProviderAlertEmail({
+        }) },
+      { label: "provider", to: practitioner.user.email, fn: () => sendProviderAlertEmail({
           to: practitioner.user.email,
           providerName: practitioner.user.name ?? "Provider",
           patientName: session.user.name ?? "Patient",
           date: apptDate,
           time: apptTime,
           meetingLink: appointment.meetingLink ?? "",
-        }),
-      ]);
-    } catch (emailErr) {
-      console.error("[APPOINTMENT_EMAIL_ERROR]", emailErr);
-    }
+        }) },
+    ];
+
+    const results = await Promise.allSettled(emailJobs.map((job) => job.fn()));
+    results.forEach((result, i) => {
+      const { label, to } = emailJobs[i];
+      if (result.status === "rejected") {
+        console.error(`[APPOINTMENT_EMAIL_ERROR] ${label} (to=${to}):`, result.reason);
+      } else {
+        console.log(`[APPOINTMENT_EMAIL_OK] ${label} (to=${to})`);
+      }
+    });
 
     return NextResponse.json(appointment, { status: 201 });
   } catch (error) {

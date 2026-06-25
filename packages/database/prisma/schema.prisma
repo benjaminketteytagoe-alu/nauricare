@@ -51,6 +51,11 @@ enum AuditAction {
   ADMIN_SETTINGS_UPDATE
 }
 
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
 // --- Core Models ---
 model User {
   id             String    @id @default(cuid())
@@ -365,11 +370,12 @@ model AuditLog {
 // --- Community Models ---
 
 model CommunityPost {
-  id       String  @id @default(cuid())
-  content  String
-  imageUrl String?
-  authorId String
-  author   User    @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  id        String     @id @default(cuid())
+  content   String
+  mediaUrl  String?
+  mediaType MediaType?
+  authorId  String
+  author    User       @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
 
   // Self-referential repost relation
   repostOfId String?

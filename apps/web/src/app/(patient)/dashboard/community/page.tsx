@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import {
   Heart, MessageCircle, Repeat2,
@@ -20,17 +20,21 @@ type AuthorProfile = {
 
 type RepostAuthor = { id: string; name: string; role: string };
 
+type MediaType = "IMAGE" | "VIDEO" | null;
+
 type RepostRef = {
   id: string;
   content: string;
-  imageUrl: string | null;
+  mediaUrl: string | null;
+  mediaType: MediaType;
   author: RepostAuthor;
 };
 
 type Post = {
   id: string;
   content: string;
-  imageUrl: string | null;
+  mediaUrl: string | null;
+  mediaType: MediaType;
   authorId: string;
   author: AuthorProfile;
   repostOf: RepostRef | null;
@@ -39,6 +43,14 @@ type Post = {
   repostCount: number;
   isLikedByMe: boolean;
   createdAt: string;
+};
+
+type Comment = {
+  id: string;
+  postId: string;
+  content: string;
+  createdAt: string;
+  author: { id: string; name: string; role: string };
 };
 
 type StoryItem = {
@@ -260,15 +272,126 @@ function avatarGradient(name: string): string {
   return gradients[name.charCodeAt(0) % gradients.length];
 }
 
+// ─── Comments thread ──────────────────────────────────────────────────────────
+
+function CommentsThread({
+  postId,
+  onCommentAdded,
+  onCommentFailed,
+}: {
+  postId: string;
+  onCommentAdded: () => void;
+  onCommentFailed: () => void;
+}) {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [draft, setDraft] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Guards against the initial GET resolving *after* an optimistic comment
+  // was already added — without this, a slow first fetch can silently wipe
+  // out a comment the user just submitted.
+  const hasLocalMutation = useRef(false);
+
+  useEffect(() => {
+    fetch(`/api/community/comments?postId=${postId}`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: Comment[]) => {
+        if (!hasLocalMutation.current) setComments(data);
+      })
+      .finally(() => setIsLoading(false));
+  }, [postId]);
+
+  async function handleSubmit() {
+    const content = draft.trim();
+    if (!content || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setDraft("");
+    hasLocalMutation.current = true;
+
+    // Optimistic insert with a temporary id, replaced once the server responds.
+    const tempId = `temp-${Date.now()}`;
+    const optimisticComment: Comment = {
+      id: tempId,
+      postId,
+      content,
+      createdAt: new Date().toISOString(),
+      author: { id: "me", name: "You", role: "PATIENT" },
+    };
+    setComments((prev) => [...prev, optimisticComment]);
+    onCommentAdded();
+
+    try {
+      const res = await fetch("/api/community/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId, content }),
+      });
+      if (!res.ok) throw new Error("failed");
+      const saved: Comment = await res.json();
+      setComments((prev) => prev.map((c) => (c.id === tempId ? saved : c)));
+    } catch {
+      setComments((prev) => prev.filter((c) => c.id !== tempId));
+      onCommentFailed();
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="border-t border-gray-50 px-4 py-3 space-y-3">
+      {isLoading ? (
+        <p className="text-xs text-gray-400">Loading comments…</p>
+      ) : comments.length === 0 ? (
+        <p className="text-xs text-gray-400">No comments yet — be the first to reply.</p>
+      ) : (
+        <div className="space-y-2.5">
+          {comments.map((c) => (
+            <div key={c.id} className="flex items-start gap-2">
+              <Avatar name={c.author.name} size="xs" />
+              <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2">
+                <p className="text-xs font-bold text-gray-800">{c.author.name}</p>
+                <p className="text-xs text-gray-600 leading-relaxed">{c.content}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+          placeholder="Write a comment…"
+          className="flex-1 text-sm border border-gray-100 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-300"
+        />
+        <button
+          onClick={handleSubmit}
+          disabled={!draft.trim() || isSubmitting}
+          className="text-sm font-bold text-teal-600 hover:text-teal-800 disabled:opacity-40 disabled:cursor-not-allowed px-2"
+        >
+          Send
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Post Card ────────────────────────────────────────────────────────────────
 
 function PostCard({
   post,
   onLike,
+  onCommentCountChange,
 }: {
   post: Post;
   onLike: (id: string) => void;
+  onCommentCountChange: (postId: string, delta: number) => void;
 }) {
+  const [showComments, setShowComments] = useState(false);
+
   return (
     <article className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
@@ -302,26 +425,38 @@ function PostCard({
             )}
           </div>
           <p className="text-xs text-gray-600 line-clamp-2">{post.repostOf.content}</p>
-          {post.repostOf.imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={post.repostOf.imageUrl}
-              alt=""
-              className="mt-2 w-full h-28 object-cover rounded-lg"
-            />
+          {post.repostOf.mediaUrl && (
+            post.repostOf.mediaType === "VIDEO" ? (
+              <video src={post.repostOf.mediaUrl} className="mt-2 w-full h-28 object-cover rounded-lg" muted />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={post.repostOf.mediaUrl}
+                alt=""
+                className="mt-2 w-full h-28 object-cover rounded-lg"
+              />
+            )
           )}
         </div>
       )}
 
       {/* ③ Media — full-bleed, no horizontal padding */}
-      {post.imageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={post.imageUrl}
-          alt=""
-          className="w-full object-cover max-h-[480px]"
-          loading="lazy"
-        />
+      {post.mediaUrl && (
+        post.mediaType === "VIDEO" ? (
+          <video
+            src={post.mediaUrl}
+            controls
+            className="w-full object-cover max-h-[480px] bg-black"
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={post.mediaUrl}
+            alt=""
+            className="w-full object-cover max-h-[480px]"
+            loading="lazy"
+          />
+        )
       )}
 
       {/* ④ Interaction bar */}
@@ -340,7 +475,10 @@ function PostCard({
         </button>
 
         <button
-          className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-sm font-semibold text-gray-400 hover:text-teal-500 hover:bg-teal-50 transition-all"
+          onClick={() => setShowComments((v) => !v)}
+          className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-sm font-semibold transition-all ${
+            showComments ? "text-teal-600 bg-teal-50" : "text-gray-400 hover:text-teal-500 hover:bg-teal-50"
+          }`}
           aria-label="Comment"
         >
           <MessageCircle className="w-5 h-5" />
@@ -364,6 +502,15 @@ function PostCard({
             {post.content}
           </p>
         </div>
+      )}
+
+      {/* ⑥ Comments thread — lazy-mounted only once expanded */}
+      {showComments && (
+        <CommentsThread
+          postId={post.id}
+          onCommentAdded={() => onCommentCountChange(post.id, 1)}
+          onCommentFailed={() => onCommentCountChange(post.id, -1)}
+        />
       )}
     </article>
   );
@@ -411,9 +558,11 @@ export default function CommunityPage() {
 
   // Compose post
   const [draft, setDraft]               = useState("");
-  const [imageUrl, setImageUrl]         = useState("");
-  const [showImageInput, setShowImageInput] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl]     = useState<string | null>(null);
   const [isPosting, setIsPosting]       = useState(false);
+  const [uploadStage, setUploadStage]   = useState<"idle" | "uploading" | "posting">("idle");
+  const [postError, setPostError]       = useState("");
 
   // Story creation
   const [showStoryForm, setShowStoryForm] = useState(false);
@@ -446,22 +595,97 @@ export default function CommunityPage() {
     setIsLoadingMore(false);
   }
 
-  async function handlePost() {
-    if (!draft.trim() && !imageUrl) return;
-    setIsPosting(true);
-    const res = await fetch("/api/community/feed", {
+  function handleFileSelect(file: File | null) {
+    setPostError("");
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    if (!file) {
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      return;
+    }
+
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+    const cap = isImage ? 5 * 1024 * 1024 : 50 * 1024 * 1024;
+
+    if (!isImage && !isVideo) {
+      setPostError("Only image and video files are supported.");
+      return;
+    }
+    if (file.size > cap) {
+      setPostError(`File exceeds the ${cap / (1024 * 1024)}MB limit for ${isImage ? "images" : "videos"}.`);
+      return;
+    }
+
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  }
+
+  // Direct-to-S3 upload: request a pre-signed PUT URL, upload the raw file
+  // straight to S3 (never through our own server), then hand the resulting
+  // public URL to createPost. Keeps large media off our compute entirely.
+  async function uploadSelectedFile(): Promise<{ mediaUrl: string; mediaType: "IMAGE" | "VIDEO" } | null> {
+    if (!selectedFile) return null;
+
+    const presignRes = await fetch("/api/upload/presigned-url", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: draft.trim(), imageUrl: imageUrl || undefined }),
+      body: JSON.stringify({
+        filename: selectedFile.name,
+        fileType: selectedFile.type,
+        fileSize: selectedFile.size,
+      }),
     });
-    if (res.ok) {
+    if (!presignRes.ok) {
+      const err = await presignRes.json().catch(() => ({}));
+      throw new Error(err.error || "Failed to prepare upload.");
+    }
+    const { uploadUrl, publicUrl, mediaType } = await presignRes.json();
+
+    const putRes = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": selectedFile.type },
+      body: selectedFile,
+    });
+    if (!putRes.ok) throw new Error("Upload to storage failed.");
+
+    return { mediaUrl: publicUrl, mediaType };
+  }
+
+  async function handlePost() {
+    if (!draft.trim() && !selectedFile) return;
+    setIsPosting(true);
+    setPostError("");
+
+    try {
+      let media: { mediaUrl: string; mediaType: "IMAGE" | "VIDEO" } | null = null;
+      if (selectedFile) {
+        setUploadStage("uploading");
+        media = await uploadSelectedFile();
+      }
+
+      setUploadStage("posting");
+      const res = await fetch("/api/community/feed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: draft.trim(),
+          mediaUrl: media?.mediaUrl,
+          mediaType: media?.mediaType,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to publish post.");
+
       const newPost: Post = await res.json();
       setPosts((prev) => [newPost, ...prev]);
       setDraft("");
-      setImageUrl("");
-      setShowImageInput(false);
+      handleFileSelect(null);
+    } catch (err) {
+      setPostError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setIsPosting(false);
+      setUploadStage("idle");
     }
-    setIsPosting(false);
   }
 
   async function handleLike(postId: string) {
@@ -488,6 +712,12 @@ export default function CommunityPage() {
         )
       );
     }
+  }
+
+  function handleCommentCountChange(postId: string, delta: number) {
+    setPosts((prev) =>
+      prev.map((p) => (p.id === postId ? { ...p, commentCount: p.commentCount + delta } : p))
+    );
   }
 
   async function handleAddStory() {
@@ -617,38 +847,49 @@ export default function CommunityPage() {
           />
         </div>
 
-        {showImageInput && (
-          <div className="flex items-center gap-2">
-            <input
-              type="url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://… (image or Cloudinary URL)"
-              className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal-300"
-            />
+        {postError && (
+          <p className="text-xs text-rose-500 font-medium px-1">{postError}</p>
+        )}
+
+        {previewUrl && selectedFile && (
+          <div className="relative rounded-xl overflow-hidden border border-gray-100">
+            {selectedFile.type.startsWith("video/") ? (
+              <video src={previewUrl} className="w-full max-h-64 object-cover" controls />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={previewUrl} alt="" className="w-full max-h-64 object-cover" />
+            )}
             <button
-              onClick={() => { setImageUrl(""); setShowImageInput(false); }}
-              className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              onClick={() => handleFileSelect(null)}
+              className="absolute top-2 right-2 w-7 h-7 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         )}
 
+        <input
+          id="community-media-input"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
+          onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null)}
+          className="hidden"
+        />
+
         <div className="flex items-center justify-between pt-1 border-t border-gray-50">
-          <button
-            onClick={() => setShowImageInput((v) => !v)}
-            className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors ${showImageInput ? "text-teal-600 bg-teal-50" : "text-gray-400 hover:text-teal-600 hover:bg-teal-50"}`}
+          <label
+            htmlFor="community-media-input"
+            className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${selectedFile ? "text-teal-600 bg-teal-50" : "text-gray-400 hover:text-teal-600 hover:bg-teal-50"}`}
           >
             <ImageIcon className="w-4 h-4" />
-            Photo
-          </button>
+            Photo / Video
+          </label>
           <button
             onClick={handlePost}
-            disabled={isPosting || (!draft.trim() && !imageUrl)}
+            disabled={isPosting || (!draft.trim() && !selectedFile)}
             className="bg-teal-600 hover:bg-teal-700 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold px-6 py-2 rounded-xl transition-all"
           >
-            {isPosting ? "Posting…" : "Post"}
+            {uploadStage === "uploading" ? "Uploading…" : uploadStage === "posting" ? "Posting…" : "Post"}
           </button>
         </div>
       </div>
@@ -670,7 +911,7 @@ export default function CommunityPage() {
         <>
           <div className="space-y-4">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} onLike={handleLike} />
+              <PostCard key={post.id} post={post} onLike={handleLike} onCommentCountChange={handleCommentCountChange} />
             ))}
           </div>
 
