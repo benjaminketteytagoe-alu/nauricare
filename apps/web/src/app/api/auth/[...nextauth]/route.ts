@@ -1,15 +1,33 @@
 import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+import EmailProvider from "next-auth/providers/email";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export const authOptions: AuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
+    // Magic Link sign-in. The real Turnstile-gated send path is
+    // POST /api/auth/magic-link, which creates its own VerificationToken row
+    // and emails it directly — bypassing this provider's own send pipeline
+    // entirely. sendVerificationRequest below is therefore a deliberate no-op:
+    // NextAuth still exposes a native /api/auth/signin/email route the moment
+    // this provider is registered, and without disabling the send here, that
+    // route would be a way to trigger real emails with zero bot protection.
+    // The actual link verification (/api/auth/callback/email) is untouched and
+    // still works normally for links our custom route sends.
+    EmailProvider({
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      async sendVerificationRequest(_params) {
+        console.warn("[MAGIC_LINK] Native NextAuth send path called — ignored. Use /api/auth/magic-link.");
+      },
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -69,17 +87,41 @@ export const authOptions: AuthOptions = {
           const existingUser = await prisma.user.findUnique({
             where: { email: cleanEmail },
           });
-          
-          if (!existingUser) {
-            await prisma.user.create({
-              data: {
-                email: cleanEmail,
-                name: user.name || "Google User",
-                passwordHash: "", 
-                role: "PATIENT",
+
+          const userId = existingUser
+            ? existingUser.id
+            : (
+                await prisma.user.create({
+                  data: {
+                    email: cleanEmail,
+                    name: user.name || "Google User",
+                    passwordHash: "",
+                    role: "PATIENT",
+                  },
+                })
+              ).id;
+
+          // Pre-create the adapter's Account link row ourselves. Without this,
+          // the adapter's own getUserByAccount() lookup (keyed on provider +
+          // providerAccountId, never on email) finds nothing for any user
+          // provisioned before this adapter existed, and falls through to
+          // createUser() — which collides with the unique email constraint
+          // and crashes. Upserting here guarantees a match every time.
+          await prisma.account.upsert({
+            where: {
+              provider_providerAccountId: {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
               },
-            });
-          }
+            },
+            update: {},
+            create: {
+              userId,
+              type: account.type,
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+            },
+          });
         } catch (dbError) {
           console.error("Error provisioning Google User in DB:", dbError);
           return false; // Reject sign in if DB creation fails completely
@@ -123,6 +165,19 @@ export const authOptions: AuthOptions = {
         session.user.role = token.role as string;
       }
       return session;
+    },
+  },
+  events: {
+    // Receiving and clicking a Magic Link proves inbox ownership exactly like
+    // our own /verify-email flow does — so a successful passwordless sign-in
+    // doubles as email verification for any account that hasn't completed it yet.
+    async signIn({ user, account }) {
+      if (account?.provider === "email" && user?.id) {
+        await prisma.user.updateMany({
+          where: { id: user.id, isEmailVerified: false },
+          data: { isEmailVerified: true },
+        });
+      }
     },
   },
   pages: {

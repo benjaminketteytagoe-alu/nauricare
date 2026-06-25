@@ -63,6 +63,10 @@ model User {
   privacyConsent Boolean   @default(false)
   isVerified        Boolean   @default(false)
   isEmailVerified   Boolean   @default(false)
+  // Required by the NextAuth PrismaAdapter contract (Magic Link). Distinct from
+  // isEmailVerified above — that field drives our own app logic; this one only
+  // exists so the adapter's updateUser() call doesn't fail on unknown fields.
+  emailVerified     DateTime?
   createdAt         DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -75,6 +79,8 @@ model User {
   auditLogs           AuditLog[]
   resetTokens         ResetToken[]
   emailVerificationTokens EmailVerificationToken[]
+  accounts                Account[]
+  sessions                Session[]
 
   // Messaging Relations
   sentMessages     Message[] @relation("SentMessages")
@@ -300,6 +306,47 @@ model EmailVerificationToken {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// ─── NextAuth PrismaAdapter models (Magic Link / EmailProvider) ───────────────
+// Standard shape required by @next-auth/prisma-adapter. Account/Session exist
+// only to satisfy the adapter contract — sessions still use the JWT strategy.
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Token itself is stored hashed (see hashToken() in next-auth/core/lib/utils) —
+// the raw token only ever exists in the emailed magic link.
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 model AuditLog {

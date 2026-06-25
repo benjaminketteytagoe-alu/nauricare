@@ -52,6 +52,43 @@ export default function LoginPage() {
     return "";
   });
 
+  // --- MAGIC LINK STATE ---
+  const [useMagicLink, setUseMagicLink] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [magicTurnstileToken, setMagicTurnstileToken] = useState("");
+  const [magicLoading, setMagicLoading] = useState(false);
+  const [magicError, setMagicError] = useState("");
+
+  async function handleMagicLinkSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setMagicLoading(true);
+    setMagicError("");
+
+    if (!magicTurnstileToken) {
+      setMagicError("Please complete the security check before continuing.");
+      setMagicLoading(false);
+      return;
+    }
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+
+    try {
+      const res = await fetch("/api/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, turnstileToken: magicTurnstileToken }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send login link.");
+      setMagicLinkSent(true);
+    } catch (err) {
+      setMagicError(err instanceof Error ? err.message : "Failed to send login link.");
+    } finally {
+      setMagicLoading(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -119,33 +156,76 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{error}</div>}
-            {successMsg && <div className="bg-teal-50 text-teal-700 p-3 rounded-md text-sm border border-teal-200 font-medium">{successMsg}</div>}
-            
-            <div className="space-y-1">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" required placeholder="jane@example.com" className="h-11 focus-visible:ring-teal-600" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link href="/forgot-password" className="text-xs text-teal-600 hover:underline">Forgot password?</Link>
+          {!useMagicLink ? (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {error && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{error}</div>}
+              {successMsg && <div className="bg-teal-50 text-teal-700 p-3 rounded-md text-sm border border-teal-200 font-medium">{successMsg}</div>}
+
+              <div className="space-y-1">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" name="email" type="email" required placeholder="jane@example.com" className="h-11 focus-visible:ring-teal-600" />
               </div>
-              <PasswordInput id="password" name="password" required className="h-11 focus-visible:ring-teal-600" />
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <Link href="/forgot-password" className="text-xs text-teal-600 hover:underline">Forgot password?</Link>
+                </div>
+                <PasswordInput id="password" name="password" required className="h-11 focus-visible:ring-teal-600" />
+              </div>
+
+              <Turnstile
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                onSuccess={setTurnstileToken}
+                onExpire={() => setTurnstileToken("")}
+                onError={() => setTurnstileToken("")}
+              />
+
+              <Button type="submit" className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white" disabled={loading}>
+                {loading ? "Logging in..." : "Log In"}
+              </Button>
+
+              <button
+                type="button"
+                onClick={() => { setUseMagicLink(true); setError(""); setSuccessMsg(""); }}
+                className="w-full text-center text-sm text-teal-600 hover:underline font-medium"
+              >
+                Email me a login link instead
+              </button>
+            </form>
+          ) : magicLinkSent ? (
+            <div className="bg-teal-50 text-teal-700 p-4 rounded-xl text-sm border border-teal-200 text-center space-y-1">
+              <p className="font-semibold">Check your inbox!</p>
+              <p>We&apos;ve sent a secure login link to your email. You can close this window.</p>
             </div>
+          ) : (
+            <form onSubmit={handleMagicLinkSubmit} className="space-y-5">
+              {magicError && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{magicError}</div>}
 
-            <Turnstile
-              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
-              onSuccess={setTurnstileToken}
-              onExpire={() => setTurnstileToken("")}
-              onError={() => setTurnstileToken("")}
-            />
+              <div className="space-y-1">
+                <Label htmlFor="magic-email">Email</Label>
+                <Input id="magic-email" name="email" type="email" required placeholder="jane@example.com" className="h-11 focus-visible:ring-teal-600" />
+              </div>
 
-            <Button type="submit" className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white" disabled={loading}>
-              {loading ? "Logging in..." : "Log In"}
-            </Button>
-          </form>
+              <Turnstile
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+                onSuccess={setMagicTurnstileToken}
+                onExpire={() => setMagicTurnstileToken("")}
+                onError={() => setMagicTurnstileToken("")}
+              />
+
+              <Button type="submit" className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white" disabled={magicLoading}>
+                {magicLoading ? "Sending..." : "Send Login Link"}
+              </Button>
+
+              <button
+                type="button"
+                onClick={() => { setUseMagicLink(false); setMagicError(""); }}
+                className="w-full text-center text-sm text-teal-600 hover:underline font-medium"
+              >
+                Use my password instead
+              </button>
+            </form>
+          )}
 
           <p className="text-center text-sm text-gray-600">
             Don&apos;t have an account? <Link href="/signup" className="text-teal-600 hover:underline font-semibold">Sign up</Link>

@@ -3,6 +3,7 @@ import { PatientBookingConfirmation, type PatientBookingConfirmationProps } from
 import { ProviderNewAppointmentAlert, type ProviderNewAppointmentAlertProps } from "@/emails/ProviderNewAppointmentAlert";
 import { PasswordReset, type PasswordResetProps } from "@/emails/PasswordReset";
 import { VerifyEmail, type VerifyEmailProps } from "@/emails/VerifyEmail";
+import { MagicLink, type MagicLinkProps } from "@/emails/MagicLink";
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
 
@@ -64,4 +65,18 @@ export async function sendVerificationEmail({
   });
 
   if (error) throw new Error(`[RESEND] Verification email failed: ${error.message}`);
+}
+
+export async function sendMagicLinkEmail({
+  to,
+  ...props
+}: MagicLinkProps & { to: string }) {
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "Your NauriCare login link",
+    react: MagicLink(props),
+  });
+
+  if (error) throw new Error(`[RESEND] Magic link email failed: ${error.message}`);
 }
