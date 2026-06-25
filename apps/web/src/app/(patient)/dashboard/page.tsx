@@ -9,6 +9,7 @@ import {
   Newspaper, Edit2, Video
 } from "lucide-react";
 import { CalendarButtons } from "@/components/CalendarButtons";
+import { CycleLogModal } from "@/components/CycleLogModal";
 
 interface HabitItem {
   id: number;
@@ -55,7 +56,7 @@ export default function PatientDashboardPage() {
   });
 
   // --- INTERACTIVE CYCLE TRACKER STATE ---
-  const [, setIsEditingCycle] = useState(false);
+  const [isEditingCycle, setIsEditingCycle] = useState(false);
   const [lastPeriodDate, setLastPeriodDate] = useState<string | null>(null);
   const [cycleLength, setCycleLength] = useState(28);
 
@@ -66,6 +67,22 @@ export default function PatientDashboardPage() {
       if (res.ok) setAnalyticsData(await res.json());
     } catch {
       console.log("Analytics API not ready yet.");
+    }
+  };
+
+  const fetchLatestCycle = async () => {
+    try {
+      const res = await fetch("/api/cycles/latest");
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (data) {
+        setCycleLength(data.cycleLength || 28);
+        if (data.lastPeriodDate) {
+          setLastPeriodDate(new Date(data.lastPeriodDate).toISOString().split('T')[0]);
+        }
+      }
+    } catch {
+      console.log("Cycles API not ready yet.");
     }
   };
 
@@ -140,6 +157,12 @@ export default function PatientDashboardPage() {
   const currentCycleDay = lastPeriodDate ? ((diffDays % cycleLength) || 1) : 1;
   const daysUntilNextPeriod = cycleLength - currentCycleDay;
 
+  // Predicted next period = last logged start date + saved average cycle length
+  const predictedNextPeriod = lastPeriodDate
+    ? new Date(lastP.getTime() + cycleLength * 24 * 60 * 60 * 1000)
+    : null;
+  const dateFormat: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" };
+
   let phaseInfo = "Follicular Phase";
   let phaseDesc = "Estrogen is rising. Focus on light cardio and fresh, vibrant foods.";
   if (currentCycleDay <= 5) {
@@ -174,7 +197,7 @@ export default function PatientDashboardPage() {
         <div className="lg:col-span-8 space-y-8">
           {/* Cycle Ring */}
           <div className="bg-white rounded-2xl p-8 border border-teal-100 shadow-sm relative overflow-hidden">
-            <button onClick={() => setIsEditingCycle(true)} className="absolute top-4 right-4 text-gray-400 p-2 rounded-full hover:bg-teal-50">
+            <button onClick={() => setIsEditingCycle(true)} className="absolute top-4 right-4 z-20 text-gray-400 p-2 rounded-full hover:bg-teal-50">
               <Edit2 className="w-4 h-4" />
             </button>
             <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
@@ -195,8 +218,19 @@ export default function PatientDashboardPage() {
                 <div className="text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1.5 rounded-lg inline-flex">
                   {lastPeriodDate ? `Next period in ${daysUntilNextPeriod} days` : "Log a period to begin tracking"}
                 </div>
+                {lastPeriodDate && predictedNextPeriod && (
+                  <div className="flex flex-wrap gap-4 pt-1 text-xs text-gray-500">
+                    <span>Last Period: <span className="font-semibold text-gray-700">{lastP.toLocaleDateString("en-US", dateFormat)}</span></span>
+                    <span>Predicted Next Period: <span className="font-semibold text-gray-700">{predictedNextPeriod.toLocaleDateString("en-US", dateFormat)}</span></span>
+                  </div>
+                )}
               </div>
             </div>
+            <CycleLogModal
+              isOpen={isEditingCycle}
+              onClose={() => setIsEditingCycle(false)}
+              onSuccess={fetchLatestCycle}
+            />
           </div>
 
           {/* Daily Action Plan & Tabs */}

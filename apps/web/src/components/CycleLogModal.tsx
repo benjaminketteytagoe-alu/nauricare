@@ -7,9 +7,10 @@ import { X, Calendar } from "lucide-react";
 interface CycleLogModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export function CycleLogModal({ isOpen, onClose }: CycleLogModalProps) {
+export function CycleLogModal({ isOpen, onClose, onSuccess }: CycleLogModalProps) {
   const router = useRouter();
   const [startDate, setStartDate] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -33,8 +34,11 @@ export function CycleLogModal({ isOpen, onClose }: CycleLogModalProps) {
         throw new Error("Failed to log cycle data.");
       }
 
-      // Refresh the server components to fetch the new date, then close modal
+      // Refresh any server-rendered data, re-fetch this page's client-side cycle
+      // state (useEffect only runs on mount — router.refresh() can't touch it),
+      // then close the modal.
       router.refresh();
+      onSuccess?.();
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save. Please try again.");

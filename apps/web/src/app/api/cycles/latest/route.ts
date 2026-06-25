@@ -23,17 +23,21 @@ export async function GET() {
       orderBy: { startDate: "desc" },
     });
 
+    // Fall back to the profile's saved average (e.g. "28"), defaulting to 28.
+    // This must apply whenever a log doesn't carry its own cycleLength — which is
+    // always true today, since the logging modal only ever submits a startDate.
+    const parsed = parseInt(profile.menstrualCycle ?? "", 10);
+    const profileCycleLength = Number.isFinite(parsed) ? parsed : 28;
+
     if (!latestLog) {
-      // Fall back to the profile's text-based menstrualCycle field (e.g. "28"), defaulting to 28
-      const parsed = parseInt(profile.menstrualCycle ?? "", 10);
       return NextResponse.json({
-        cycleLength: Number.isFinite(parsed) ? parsed : 28,
+        cycleLength: profileCycleLength,
         lastPeriodDate: null,
       });
     }
 
     return NextResponse.json({
-      cycleLength: latestLog.cycleLength ?? 28,
+      cycleLength: latestLog.cycleLength ?? profileCycleLength,
       lastPeriodDate: latestLog.startDate.toISOString(),
     });
   } catch (error) {
