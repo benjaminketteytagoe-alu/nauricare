@@ -24,6 +24,7 @@ export async function GET(req: Request) {
             id: true,
             name: true,
             role: true,
+            avatarUrl: true,
             patientProfile: { select: { country: true } },
             practitionerProfile: { select: { specialty: true } },
           },
@@ -33,7 +34,7 @@ export async function GET(req: Request) {
         repostOf: {
           include: {
             author: {
-              select: { id: true, name: true, role: true },
+              select: { id: true, name: true, role: true, avatarUrl: true },
             },
           },
         },
@@ -45,12 +46,24 @@ export async function GET(req: Request) {
       },
     });
 
+    // Resolve follow state for every distinct author in this page (excluding
+    // myself — the UI never shows a follow button on my own posts anyway).
+    const authorIds = [...new Set(posts.map((p) => p.authorId).filter((id) => id !== session.user.id))];
+    const myFollows = authorIds.length
+      ? await prisma.follow.findMany({
+          where: { followerId: session.user.id, followingId: { in: authorIds } },
+          select: { followingId: true },
+        })
+      : [];
+    const followedSet = new Set(myFollows.map((f) => f.followingId));
+
     const enriched = posts.map(({ likes, _count, ...post }) => ({
       ...post,
       likeCount: _count.likes,
       commentCount: _count.comments,
       repostCount: _count.reposts,
       isLikedByMe: likes.length > 0,
+      isFollowedByMe: followedSet.has(post.authorId),
     }));
 
     return NextResponse.json(enriched);
@@ -89,18 +102,19 @@ export async function POST(req: Request) {
             id: true,
             name: true,
             role: true,
+            avatarUrl: true,
             patientProfile: { select: { country: true } },
             practitionerProfile: { select: { specialty: true } },
           },
         },
         repostOf: {
-          include: { author: { select: { id: true, name: true, role: true } } },
+          include: { author: { select: { id: true, name: true, role: true, avatarUrl: true } } },
         },
       },
     });
 
     return NextResponse.json(
-      { ...post, likeCount: 0, commentCount: 0, repostCount: 0, isLikedByMe: false },
+      { ...post, likeCount: 0, commentCount: 0, repostCount: 0, isLikedByMe: false, isFollowedByMe: false },
       { status: 201 }
     );
   } catch (error) {

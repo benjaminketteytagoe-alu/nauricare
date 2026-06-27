@@ -146,12 +146,13 @@ export const authOptions: AuthOptions = {
         const cleanEmail = token.email.trim().toLowerCase();
         const dbUser = await prisma.user.findUnique({
           where: { email: cleanEmail },
-          select: { id: true, role: true }
+          select: { id: true, role: true, avatarUrl: true }
         });
-        
+
         if (dbUser) {
           token.id = dbUser.id;
           token.role = dbUser.role;
+          token.avatarUrl = dbUser.avatarUrl;
         }
       } catch (dbError) {
         console.error("NextAuth JWT Database Lookup Error:", dbError);
@@ -163,6 +164,7 @@ export const authOptions: AuthOptions = {
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.avatarUrl = token.avatarUrl ?? null;
       }
       return session;
     },

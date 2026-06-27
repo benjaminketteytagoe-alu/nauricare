@@ -12,7 +12,7 @@ export async function GET() {
     const profile = await prisma.patientProfile.findUnique({
       where: { userId: session.user.id },
       include: {
-        user: { select: { name: true, email: true, phoneNumber: true } }
+        user: { select: { name: true, email: true, phoneNumber: true, avatarUrl: true } }
       }
     });
 
@@ -21,6 +21,7 @@ export async function GET() {
     return NextResponse.json({
       name: profile.user.name,
       email: profile.user.email,
+      avatarUrl: profile.user.avatarUrl,
       healthGoals: profile.healthGoals,
       menstrualCycle: profile.menstrualCycle || "28",
       emergencyContact: profile.emergencyContact || ""

@@ -16,7 +16,7 @@ export async function GET(req: Request) {
       where: { postId },
       orderBy: { createdAt: "asc" },
       include: {
-        author: { select: { id: true, name: true, role: true } },
+        author: { select: { id: true, name: true, role: true, avatarUrl: true } },
       },
     });
 
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
         authorId: session.user.id,
       },
       include: {
-        author: { select: { id: true, name: true, role: true } },
+        author: { select: { id: true, name: true, role: true, avatarUrl: true } },
       },
     });
 

@@ -7,6 +7,8 @@ import {
   Image as ImageIcon, X, Plus, Users,
   ChevronLeft, ChevronRight,
 } from "lucide-react";
+import { Avatar } from "@/components/Avatar";
+import { followUser, unfollowUser } from "./actions";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -14,11 +16,12 @@ type AuthorProfile = {
   id: string;
   name: string;
   role: string;
+  avatarUrl: string | null;
   patientProfile: { country: string } | null;
   practitionerProfile: { specialty: string } | null;
 };
 
-type RepostAuthor = { id: string; name: string; role: string };
+type RepostAuthor = { id: string; name: string; role: string; avatarUrl: string | null };
 
 type MediaType = "IMAGE" | "VIDEO" | null;
 
@@ -42,6 +45,7 @@ type Post = {
   commentCount: number;
   repostCount: number;
   isLikedByMe: boolean;
+  isFollowedByMe: boolean;
   createdAt: string;
 };
 
@@ -50,7 +54,7 @@ type Comment = {
   postId: string;
   content: string;
   createdAt: string;
-  author: { id: string; name: string; role: string };
+  author: { id: string; name: string; role: string; avatarUrl: string | null };
 };
 
 type StoryItem = {
@@ -62,26 +66,10 @@ type StoryItem = {
 };
 
 type StoryGroup = {
-  author: { id: string; name: string; role: string };
+  author: { id: string; name: string; role: string; avatarUrl: string | null };
   storyCount: number;
   stories: StoryItem[];
 };
-
-// ─── Palette helpers ──────────────────────────────────────────────────────────
-
-const PALETTE = [
-  "bg-teal-500",    "bg-violet-500", "bg-rose-500",
-  "bg-amber-500",   "bg-sky-500",    "bg-pink-500",
-  "bg-emerald-500", "bg-indigo-500",
-];
-
-function avatarColor(name: string) {
-  return PALETTE[name.charCodeAt(0) % PALETTE.length];
-}
-
-function initials(name: string) {
-  return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
-}
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -91,25 +79,6 @@ function relativeTime(iso: string): string {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h`;
   return `${Math.floor(h / 24)}d`;
-}
-
-// ─── Avatar ───────────────────────────────────────────────────────────────────
-
-function Avatar({
-  name,
-  size = "md",
-  className = "",
-}: {
-  name: string;
-  size?: "xs" | "sm" | "md" | "lg" | "xl";
-  className?: string;
-}) {
-  const sz = { xs: "w-6 h-6 text-[9px]", sm: "w-8 h-8 text-xs", md: "w-10 h-10 text-sm", lg: "w-14 h-14 text-base", xl: "w-16 h-16 text-lg" }[size];
-  return (
-    <div className={`${sz} ${avatarColor(name)} rounded-full flex items-center justify-center text-white font-bold shrink-0 ${className}`}>
-      {initials(name)}
-    </div>
-  );
 }
 
 // ─── Role tag ─────────────────────────────────────────────────────────────────
@@ -143,7 +112,7 @@ function StoryRingItem({
           className="p-[2.5px] rounded-full"
         >
           <div className="bg-white p-[2px] rounded-full">
-            <Avatar name={group.author.name} size="lg" />
+            <Avatar name={group.author.name} avatarUrl={group.author.avatarUrl} size="lg" />
           </div>
         </div>
 
@@ -201,7 +170,7 @@ function StoryViewer({
 
         {/* Header */}
         <div className="absolute top-7 left-3 right-10 flex items-center gap-2 z-20">
-          <Avatar name={group.author.name} size="xs" />
+          <Avatar name={group.author.name} avatarUrl={group.author.avatarUrl} size="xs" />
           <div>
             <p className="text-white text-xs font-bold leading-none">{group.author.name}</p>
             <p className="text-white/60 text-[10px]">{relativeTime(story.createdAt)}</p>
@@ -276,10 +245,12 @@ function avatarGradient(name: string): string {
 
 function CommentsThread({
   postId,
+  currentUser,
   onCommentAdded,
   onCommentFailed,
 }: {
   postId: string;
+  currentUser: { name: string; avatarUrl: string | null };
   onCommentAdded: () => void;
   onCommentFailed: () => void;
 }) {
@@ -309,6 +280,7 @@ function CommentsThread({
     setIsSubmitting(true);
     setDraft("");
     hasLocalMutation.current = true;
+    setIsLoading(false); // we have at least our own comment now — stop showing the loading state
 
     // Optimistic insert with a temporary id, replaced once the server responds.
     const tempId = `temp-${Date.now()}`;
@@ -317,7 +289,7 @@ function CommentsThread({
       postId,
       content,
       createdAt: new Date().toISOString(),
-      author: { id: "me", name: "You", role: "PATIENT" },
+      author: { id: "me", name: currentUser.name, role: "PATIENT", avatarUrl: currentUser.avatarUrl },
     };
     setComments((prev) => [...prev, optimisticComment]);
     onCommentAdded();
@@ -349,7 +321,7 @@ function CommentsThread({
         <div className="space-y-2.5">
           {comments.map((c) => (
             <div key={c.id} className="flex items-start gap-2">
-              <Avatar name={c.author.name} size="xs" />
+              <Avatar name={c.author.name} avatarUrl={c.author.avatarUrl} size="xs" />
               <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2">
                 <p className="text-xs font-bold text-gray-800">{c.author.name}</p>
                 <p className="text-xs text-gray-600 leading-relaxed">{c.content}</p>
@@ -381,14 +353,48 @@ function CommentsThread({
 
 // ─── Post Card ────────────────────────────────────────────────────────────────
 
+function FollowButton({
+  isFollowing,
+  onToggle,
+}: {
+  isFollowing: boolean;
+  onToggle: () => Promise<void>;
+}) {
+  const [isPending, setIsPending] = useState(false);
+
+  async function handleClick() {
+    setIsPending(true);
+    await onToggle();
+    setIsPending(false);
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={isPending}
+      className={`text-xs font-bold px-3 py-1 rounded-full border transition-colors disabled:opacity-50 shrink-0 ${
+        isFollowing
+          ? "text-gray-500 border-gray-200 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50"
+          : "text-teal-600 border-teal-200 hover:bg-teal-50"
+      }`}
+    >
+      {isFollowing ? "Following" : "Follow"}
+    </button>
+  );
+}
+
 function PostCard({
   post,
+  currentUser,
   onLike,
   onCommentCountChange,
+  onToggleFollow,
 }: {
   post: Post;
+  currentUser?: { id: string; name: string; avatarUrl: string | null };
   onLike: (id: string) => void;
   onCommentCountChange: (postId: string, delta: number) => void;
+  onToggleFollow: (authorId: string, isCurrentlyFollowing: boolean) => Promise<void>;
 }) {
   const [showComments, setShowComments] = useState(false);
 
@@ -397,7 +403,7 @@ function PostCard({
 
       {/* ① Card header */}
       <div className="flex items-center gap-3 px-4 py-3">
-        <Avatar name={post.author.name} />
+        <Avatar name={post.author.name} avatarUrl={post.author.avatarUrl} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className="font-bold text-gray-900 text-sm truncate">{post.author.name}</p>
@@ -412,13 +418,19 @@ function PostCard({
             {relativeTime(post.createdAt)} ago
           </p>
         </div>
+        {currentUser && post.authorId !== currentUser.id && (
+          <FollowButton
+            isFollowing={post.isFollowedByMe}
+            onToggle={() => onToggleFollow(post.authorId, post.isFollowedByMe)}
+          />
+        )}
       </div>
 
       {/* ② Repost reference card */}
       {post.repostOf && (
         <div className="mx-4 mb-3 border border-gray-100 rounded-xl p-3 bg-gray-50">
           <div className="flex items-center gap-2 mb-1">
-            <Avatar name={post.repostOf.author.name} size="xs" />
+            <Avatar name={post.repostOf.author.name} avatarUrl={post.repostOf.author.avatarUrl} size="xs" />
             <span className="text-xs font-bold text-gray-600">{post.repostOf.author.name}</span>
             {post.repostOf.author.role === "PROVIDER" && (
               <span className="text-[9px] font-bold text-teal-600">Specialist</span>
@@ -508,6 +520,7 @@ function PostCard({
       {showComments && (
         <CommentsThread
           postId={post.id}
+          currentUser={{ name: currentUser?.name ?? "You", avatarUrl: currentUser?.avatarUrl ?? null }}
           onCommentAdded={() => onCommentCountChange(post.id, 1)}
           onCommentFailed={() => onCommentCountChange(post.id, -1)}
         />
@@ -567,8 +580,10 @@ export default function CommunityPage() {
   // Story creation
   const [showStoryForm, setShowStoryForm] = useState(false);
   const [storyText, setStoryText]       = useState("");
-  const [storyImage, setStoryImage]     = useState("");
+  const [storyFile, setStoryFile]       = useState<File | null>(null);
+  const [storyPreviewUrl, setStoryPreviewUrl] = useState<string | null>(null);
   const [isPostingStory, setIsPostingStory] = useState(false);
+  const [storyError, setStoryError]     = useState("");
 
   // Initial load: fetch feed + stories in parallel
   useEffect(() => {
@@ -720,16 +735,74 @@ export default function CommunityPage() {
     );
   }
 
+  async function handleToggleFollow(authorId: string, isCurrentlyFollowing: boolean) {
+    // Optimistic: flip every post by this author at once, since the button
+    // appears once per author but the feed can show several of their posts.
+    const applyFollowState = (followed: boolean) =>
+      setPosts((prev) =>
+        prev.map((p) => (p.authorId === authorId ? { ...p, isFollowedByMe: followed } : p))
+      );
+
+    applyFollowState(!isCurrentlyFollowing);
+
+    const result = isCurrentlyFollowing
+      ? await unfollowUser(authorId)
+      : await followUser(authorId);
+
+    if (!result.success) {
+      applyFollowState(isCurrentlyFollowing); // revert
+    }
+  }
+
+  function handleStoryFileSelect(file: File | null) {
+    setStoryError("");
+    if (storyPreviewUrl) URL.revokeObjectURL(storyPreviewUrl);
+    if (!file) {
+      setStoryFile(null);
+      setStoryPreviewUrl(null);
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setStoryError("Stories only support images right now.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setStoryError("Image exceeds the 5MB limit.");
+      return;
+    }
+    setStoryFile(file);
+    setStoryPreviewUrl(URL.createObjectURL(file));
+  }
+
   async function handleAddStory() {
-    if (!storyText.trim() && !storyImage) return;
+    if (!storyText.trim() && !storyFile) return;
     setIsPostingStory(true);
-    const res = await fetch("/api/community/stories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: storyText.trim(), imageUrl: storyImage || undefined }),
-    });
-    if (res.ok) {
-      const newStory: StoryItem & { author: { id: string; name: string; role: string } } = await res.json();
+    setStoryError("");
+
+    try {
+      let imageUrl: string | undefined;
+      if (storyFile) {
+        const presignRes = await fetch("/api/upload/presigned-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: storyFile.name, fileType: storyFile.type, fileSize: storyFile.size }),
+        });
+        if (!presignRes.ok) throw new Error("Failed to prepare upload.");
+        const { uploadUrl, publicUrl } = await presignRes.json();
+
+        const putRes = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": storyFile.type }, body: storyFile });
+        if (!putRes.ok) throw new Error("Upload to storage failed.");
+        imageUrl = publicUrl;
+      }
+
+      const res = await fetch("/api/community/stories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: storyText.trim(), imageUrl }),
+      });
+      if (!res.ok) throw new Error("Failed to share story.");
+
+      const newStory: StoryItem & { author: { id: string; name: string; role: string; avatarUrl: string | null } } = await res.json();
       setStoryGroups((prev) => {
         const existing = prev.find((g) => g.author.id === newStory.author.id);
         if (existing) {
@@ -745,13 +818,17 @@ export default function CommunityPage() {
         ];
       });
       setStoryText("");
-      setStoryImage("");
+      handleStoryFileSelect(null);
       setShowStoryForm(false);
+    } catch (err) {
+      setStoryError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setIsPostingStory(false);
     }
-    setIsPostingStory(false);
   }
 
-  const userName = (session?.user as { name?: string })?.name ?? "You";
+  const userName = session?.user?.name ?? "You";
+  const userAvatarUrl = session?.user?.avatarUrl ?? null;
 
   return (
     <div className="max-w-[600px] mx-auto space-y-5 animate-in fade-in duration-500 pb-20">
@@ -808,27 +885,53 @@ export default function CommunityPage() {
               rows={2}
               className="w-full resize-none text-sm text-gray-800 placeholder-gray-400 border border-gray-100 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
             />
+
+            {storyError && <p className="text-xs text-rose-500 font-medium">{storyError}</p>}
+
+            {storyPreviewUrl && storyFile && (
+              <div className="relative rounded-xl overflow-hidden border border-gray-100 inline-block">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={storyPreviewUrl} alt="" className="max-h-40 object-cover" />
+                <button
+                  onClick={() => handleStoryFileSelect(null)}
+                  className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
             <input
-              type="url"
-              value={storyImage}
-              onChange={(e) => setStoryImage(e.target.value)}
-              placeholder="Image URL (optional)"
-              className="w-full text-sm border border-gray-100 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-300"
+              id="story-media-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={(e) => handleStoryFileSelect(e.target.files?.[0] ?? null)}
+              className="hidden"
             />
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setShowStoryForm(false)}
-                className="text-sm text-gray-400 hover:text-gray-600 px-3 py-1.5 transition-colors"
+
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="story-media-input"
+                className={`inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${storyFile ? "text-teal-600 bg-teal-50" : "text-gray-400 hover:text-teal-600 hover:bg-teal-50"}`}
               >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddStory}
-                disabled={isPostingStory || (!storyText.trim() && !storyImage)}
-                className="bg-teal-600 hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold px-5 py-1.5 rounded-xl transition-colors"
-              >
-                {isPostingStory ? "Sharing…" : "Share Story"}
-              </button>
+                <ImageIcon className="w-4 h-4" />
+                Photo
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setShowStoryForm(false); handleStoryFileSelect(null); }}
+                  className="text-sm text-gray-400 hover:text-gray-600 px-3 py-1.5 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddStory}
+                  disabled={isPostingStory || (!storyText.trim() && !storyFile)}
+                  className="bg-teal-600 hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold px-5 py-1.5 rounded-xl transition-colors"
+                >
+                  {isPostingStory ? "Sharing…" : "Share Story"}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -837,7 +940,7 @@ export default function CommunityPage() {
       {/* ── Compose post ── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
         <div className="flex gap-3 items-start">
-          <Avatar name={userName} />
+          <Avatar name={userName} avatarUrl={userAvatarUrl} />
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -911,7 +1014,14 @@ export default function CommunityPage() {
         <>
           <div className="space-y-4">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} onLike={handleLike} onCommentCountChange={handleCommentCountChange} />
+              <PostCard
+                key={post.id}
+                post={post}
+                currentUser={session?.user?.id ? { id: session.user.id, name: userName, avatarUrl: userAvatarUrl } : undefined}
+                onLike={handleLike}
+                onCommentCountChange={handleCommentCountChange}
+                onToggleFollow={handleToggleFollow}
+              />
             ))}
           </div>
 

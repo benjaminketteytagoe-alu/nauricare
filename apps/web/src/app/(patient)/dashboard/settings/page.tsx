@@ -5,6 +5,7 @@ import {
   Settings, Save, CheckCircle2, Target, Droplet,
   BellRing, User, Smartphone
 } from "lucide-react";
+import { AvatarUploader } from "@/components/AvatarUploader";
 
 const AVAILABLE_GOALS = [
   { id: "PCOS", label: "PCOS Management", desc: "Tailor insights for Polycystic Ovary Syndrome." },
@@ -69,6 +70,7 @@ export default function SettingsPage() {
   const [cycleLength, setCycleLength] = useState("28");
   const [emergencyContact, setEmergencyContact] = useState("");
   const [userData, setUserData] = useState({ name: "", email: "" });
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   // UI States
   const [isLoading, setIsLoading] = useState(true);
@@ -86,6 +88,7 @@ export default function SettingsPage() {
         if (data.menstrualCycle) setCycleLength(data.menstrualCycle);
         if (data.emergencyContact) setEmergencyContact(data.emergencyContact);
         setUserData({ name: data.name, email: data.email });
+        setAvatarUrl(data.avatarUrl ?? null);
         setIsLoading(false);
       })
       .catch(() => setIsLoading(false));
@@ -223,6 +226,9 @@ export default function SettingsPage() {
           {activeTab === 'account' && (
             <div className="p-8 space-y-6">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Account & Security</h2>
+              <div className="max-w-md pb-2 border-b border-gray-50">
+                <AvatarUploader name={userData.name || "You"} avatarUrl={avatarUrl} onUploaded={setAvatarUrl} />
+              </div>
               <div className="space-y-4 max-w-md">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Full Name</label>

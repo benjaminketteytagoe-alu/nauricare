@@ -72,6 +72,7 @@ model User {
   // isEmailVerified above — that field drives our own app logic; this one only
   // exists so the adapter's updateUser() call doesn't fail on unknown fields.
   emailVerified     DateTime?
+  avatarUrl         String?
   createdAt         DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -86,6 +87,10 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
   accounts                Account[]
   sessions                Session[]
+
+  // Social graph — rows where I'm the follower / the one being followed
+  following Follow[] @relation("UserFollowing")
+  followers Follow[] @relation("UserFollowers")
 
   // Messaging Relations
   sentMessages     Message[] @relation("SentMessages")
@@ -416,6 +421,19 @@ model CommunityLike {
 
   @@unique([postId, userId])
   @@index([postId])
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
 }
 
 model CommunityStory {

@@ -33,11 +33,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { filename, fileType, fileSize } = await req.json();
+    const { filename, fileType, fileSize, context } = await req.json();
 
     if (!filename || !fileType || typeof fileSize !== "number") {
       return NextResponse.json({ error: "filename, fileType, and fileSize are required" }, { status: 400 });
     }
+
+    const folder = context === "avatar" ? "avatars" : "community";
 
     const isImage = ALLOWED_IMAGE_TYPES.has(fileType);
     const isVideo = ALLOWED_VIDEO_TYPES.has(fileType);
@@ -49,6 +51,10 @@ export async function POST(req: Request) {
       );
     }
 
+    if (folder === "avatars" && isVideo) {
+      return NextResponse.json({ error: "Profile pictures must be an image." }, { status: 400 });
+    }
+
     const cap = isImage ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
     if (fileSize <= 0 || fileSize > cap) {
       return NextResponse.json(
@@ -58,7 +64,7 @@ export async function POST(req: Request) {
     }
 
     const mediaType = isImage ? "IMAGE" : "VIDEO";
-    const key = `community/${session.user.id}/${randomUUID()}-${sanitizeFilename(filename)}`;
+    const key = `${folder}/${session.user.id}/${randomUUID()}-${sanitizeFilename(filename)}`;
 
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_S3_BUCKET_NAME,

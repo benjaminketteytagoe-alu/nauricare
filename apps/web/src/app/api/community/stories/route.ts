@@ -11,7 +11,7 @@ export async function GET() {
     const stories = await prisma.communityStory.findMany({
       where: { expiresAt: { gt: new Date() } },
       include: {
-        author: { select: { id: true, name: true, role: true } },
+        author: { select: { id: true, name: true, role: true, avatarUrl: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -21,7 +21,7 @@ export async function GET() {
     const groupMap = new Map<
       string,
       {
-        author: { id: string; name: string; role: string };
+        author: { id: string; name: string; role: string; avatarUrl: string | null };
         storyCount: number;
         stories: Array<{
           id: string;
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
         authorId: session.user.id,
         expiresAt,
       },
-      include: { author: { select: { id: true, name: true, role: true } } },
+      include: { author: { select: { id: true, name: true, role: true, avatarUrl: true } } },
     });
 
     return NextResponse.json(story, { status: 201 });
