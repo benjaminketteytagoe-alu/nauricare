@@ -56,6 +56,12 @@ enum MediaType {
   VIDEO
 }
 
+enum PrescriptionStatus {
+  PENDING
+  ROUTED
+  FULFILLED
+}
+
 // --- Core Models ---
 model User {
   id             String    @id @default(cuid())
@@ -95,6 +101,10 @@ model User {
   // Messaging Relations
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+
+  // Prescription relations
+  patientPrescriptions  Prescription[] @relation("PatientPrescriptions")
+  providerPrescriptions Prescription[] @relation("ProviderPrescriptions")
 
   // Community Relations
   communityPosts    CommunityPost[]    @relation("PostAuthor")
@@ -168,6 +178,8 @@ model Appointment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  prescriptions Prescription[]
+
   @@index([patientProfileId])
   @@index([practitionerProfileId])
   @@index([startTime])
@@ -221,12 +233,14 @@ model Notification {
 
 // --- Platform Resources ---
 model Pharmacy {
-  id          String   @id @default(cuid())
-  name        String
-  location    String
-  contactInfo String?
-  tags        String[]
-  createdAt   DateTime @default(now())
+  id           String         @id @default(cuid())
+  name         String
+  address      String
+  contactEmail String?
+  tags         String[]
+  createdAt    DateTime       @default(now())
+
+  prescriptions Prescription[]
 }
 
 model Article {
@@ -434,6 +448,33 @@ model Follow {
   @@unique([followerId, followingId])
   @@index([followerId])
   @@index([followingId])
+}
+
+model Prescription {
+  id             String             @id @default(cuid())
+  medicationName String
+  dosage         String
+  instructions   String?
+  status         PrescriptionStatus @default(PENDING)
+
+  patientId  String
+  patient    User   @relation("PatientPrescriptions", fields: [patientId], references: [id], onDelete: Cascade)
+
+  providerId String
+  provider   User   @relation("ProviderPrescriptions", fields: [providerId], references: [id], onDelete: Cascade)
+
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  pharmacyId String?
+  pharmacy   Pharmacy? @relation(fields: [pharmacyId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([providerId])
+  @@index([pharmacyId])
 }
 
 model CommunityStory {

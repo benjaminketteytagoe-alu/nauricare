@@ -7,14 +7,15 @@ import { signOut } from "next-auth/react";
 import { useState } from "react";
 import {
   Activity, Users, Calendar, MessageSquare, LogOut,
-  Bell, Settings, User, Lock, Sliders, CheckCircle
+  Bell, Settings, User, Lock, Sliders, CheckCircle, Pill
 } from "lucide-react";
 
 const navItems = [
-  { name: "Clinical Dashboard", href: "/provider", icon: Activity },
-  { name: "Patient Roster", href: "/provider/roster", icon: Users },
-  { name: "Appointments", href: "/provider/schedule", icon: Calendar },
-  { name: "Messages", href: "/provider/messages", icon: MessageSquare },
+  { name: "Clinical Dashboard", href: "/provider",               icon: Activity },
+  { name: "Patient Roster",     href: "/provider/roster",        icon: Users },
+  { name: "Appointments",       href: "/provider/schedule",      icon: Calendar },
+  { name: "Prescriptions",      href: "/provider/prescriptions", icon: Pill },
+  { name: "Messages",           href: "/provider/messages",      icon: MessageSquare },
 ];
 
 export default function ProviderLayoutClient({ children }: { children: React.ReactNode }) {

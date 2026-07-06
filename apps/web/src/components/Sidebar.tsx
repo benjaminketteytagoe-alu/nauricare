@@ -6,16 +6,17 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
 import {
-  LayoutDashboard, Activity, Calendar, FileText, Settings, LogOut, Users, Menu, X,
+  LayoutDashboard, Activity, Calendar, FileText, Settings, LogOut, Users, Menu, X, Pill,
 } from "lucide-react";
 
 const navItems = [
-  { name: "My Health",      href: "/dashboard",           icon: LayoutDashboard },
-  { name: "Symptom Log",    href: "/dashboard/symptoms",  icon: Activity },
-  { name: "Consultations",  href: "/dashboard/providers", icon: Calendar },
-  { name: "My Records",     href: "/dashboard/records",   icon: FileText },
-  { name: "Community",      href: "/dashboard/community", icon: Users },
-  { name: "Settings",       href: "/dashboard/settings",  icon: Settings },
+  { name: "My Health",       href: "/dashboard",                icon: LayoutDashboard },
+  { name: "Symptom Log",     href: "/dashboard/symptoms",       icon: Activity },
+  { name: "Consultations",   href: "/dashboard/providers",      icon: Calendar },
+  { name: "My Records",      href: "/dashboard/records",        icon: FileText },
+  { name: "Prescriptions",   href: "/dashboard/prescriptions",  icon: Pill },
+  { name: "Community",       href: "/dashboard/community",      icon: Users },
+  { name: "Settings",        href: "/dashboard/settings",       icon: Settings },
 ];
 
 export function Sidebar() {
