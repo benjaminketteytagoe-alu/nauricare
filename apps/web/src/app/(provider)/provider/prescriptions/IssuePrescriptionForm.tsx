@@ -10,19 +10,32 @@ interface Patient {
   email: string;
 }
 
-export default function IssuePrescriptionForm({ patients }: { patients: Patient[] }) {
+interface Pharmacy {
+  id: string;
+  name: string;
+  address: string;
+}
+
+export default function IssuePrescriptionForm({
+  patients,
+  pharmacies = [],
+}: {
+  patients: Patient[];
+  pharmacies?: Pharmacy[];
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState({
     patientId: "",
     medicationName: "",
     dosage: "",
     instructions: "",
+    suggestedPharmacyId: "",
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: { preventDefault(): void }) => {
     e.preventDefault();
     setError("");
     setSuccess("");
@@ -38,11 +51,12 @@ export default function IssuePrescriptionForm({ patients }: { patients: Patient[
         medicationName: form.medicationName,
         dosage: form.dosage,
         instructions: form.instructions || undefined,
+        suggestedPharmacyId: form.suggestedPharmacyId || undefined,
       });
 
       if (result.success) {
         setSuccess("Prescription issued successfully. The patient will be notified.");
-        setForm({ patientId: "", medicationName: "", dosage: "", instructions: "" });
+        setForm({ patientId: "", medicationName: "", dosage: "", instructions: "", suggestedPharmacyId: "" });
         setTimeout(() => setSuccess(""), 5000);
       } else {
         setError(result.error ?? "Failed to issue prescription.");
@@ -109,7 +123,7 @@ export default function IssuePrescriptionForm({ patients }: { patients: Patient[
           {/* Dosage */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              Dosage & Frequency
+              Dosage &amp; Frequency
             </label>
             <input
               required
@@ -135,6 +149,28 @@ export default function IssuePrescriptionForm({ patients }: { patients: Patient[
               className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
+
+          {/* Suggest a pharmacy */}
+          {pharmacies.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                Suggest a Pharmacy{" "}
+                <span className="text-slate-400 font-normal">(optional — patient can override)</span>
+              </label>
+              <select
+                value={form.suggestedPharmacyId}
+                onChange={(e) => setForm({ ...form, suggestedPharmacyId: e.target.value })}
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="">— No suggestion —</option>
+                {pharmacies.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} · {p.address}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {error && (
             <p className="text-sm text-rose-600 flex items-center gap-2">

@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
 import {
-  LayoutDashboard, Activity, Calendar, FileText, Settings, LogOut, Users, Menu, X, Pill,
+  LayoutDashboard, Activity, Calendar, FileText, Settings, LogOut,
+  Users, Menu, X, Pill, MessageSquare,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 
@@ -16,6 +17,7 @@ const navItems = [
   { name: "Consultations",   href: "/dashboard/providers",      icon: Calendar },
   { name: "My Records",      href: "/dashboard/records",        icon: FileText },
   { name: "Prescriptions",   href: "/dashboard/prescriptions",  icon: Pill },
+  { name: "Messages",        href: "/dashboard/messages",       icon: MessageSquare },
   { name: "Community",       href: "/dashboard/community",      icon: Users },
   { name: "Settings",        href: "/dashboard/settings",       icon: Settings },
 ];

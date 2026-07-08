@@ -20,6 +20,7 @@ enum AppointmentStatus {
   SCHEDULED
   COMPLETED
   CANCELLED
+  MISSED
 }
 
 enum NotificationType {
@@ -86,7 +87,13 @@ model User {
   // exists so the adapter's updateUser() call doesn't fail on unknown fields.
   emailVerified     DateTime?
   avatarUrl         String?
-  createdAt         DateTime  @default(now())
+
+  // Provider-editable professional fields (self-reported; not admin-verified)
+  licenseNumber       String?
+  hospitalAffiliation String?
+  secondaryEmail      String?
+
+  createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
   // Relations
@@ -105,9 +112,13 @@ model User {
   following Follow[] @relation("UserFollowing")
   followers Follow[] @relation("UserFollowers")
 
-  // Messaging Relations
+  // Legacy messaging (Message model)
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+
+  // Direct messaging (appointment-gated)
+  sentDirectMessages     DirectMessage[] @relation("DMSender")
+  receivedDirectMessages DirectMessage[] @relation("DMReceiver")
 
   // Prescription relations
   patientPrescriptions  Prescription[] @relation("PatientPrescriptions")
@@ -122,6 +133,9 @@ model User {
   communityComments CommunityComment[] @relation("CommentAuthor")
   communityLikes    CommunityLike[]
   communityStories  CommunityStory[]   @relation("StoryAuthor")
+
+  // Provider availability slots
+  availability ProviderAvailability[]
 }
 
 model PatientProfile {
@@ -180,7 +194,7 @@ model Appointment {
   // Scheduling details
   startTime DateTime
   endTime   DateTime
-  status    String   @default("PENDING")
+  status    AppointmentStatus @default(SCHEDULED)
 
   // Telehealth & clinical data
   meetingLink String?
@@ -231,6 +245,22 @@ model Message {
   createdAt DateTime @default(now())
 }
 
+// Appointment-gated 1-on-1 direct messaging between patients and providers.
+model DirectMessage {
+  id         String   @id @default(cuid())
+  senderId   String
+  sender     User     @relation("DMSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User     @relation("DMReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([senderId, receiverId])
+}
+
 model Notification {
   id          String             @id @default(cuid())
   userId      String
@@ -251,7 +281,11 @@ model Pharmacy {
   tags         String[]
   createdAt    DateTime       @default(now())
 
-  prescriptions Prescription[]
+  // Prescriptions where this pharmacy was chosen by the patient
+  prescriptions Prescription[] @relation("PharmacyFilled")
+
+  // Prescriptions where a provider suggested this pharmacy
+  suggestedPrescriptions Prescription[] @relation("PharmacySuggested")
 }
 
 model Article {
@@ -321,6 +355,22 @@ model ProviderProfile {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+// Availability slots that providers publish for booking.
+model ProviderAvailability {
+  id          String   @id @default(cuid())
+  providerId  String
+  provider    User     @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  date        DateTime @db.Date
+  startTime   String   // "HH:MM" 24-hour
+  endTime     String   // "HH:MM" 24-hour
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@unique([providerId, date, startTime, endTime])
+  @@index([providerId])
+  @@index([date])
+}
+
 model ResetToken {
   id        String   @id @default(cuid())
   tokenHash String   @unique
@@ -344,9 +394,6 @@ model EmailVerificationToken {
 }
 
 // ─── NextAuth PrismaAdapter models (Magic Link / EmailProvider) ───────────────
-// Standard shape required by @next-auth/prisma-adapter. Account/Session exist
-// only to satisfy the adapter contract — sessions still use the JWT strategy.
-
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -374,8 +421,6 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Token itself is stored hashed (see hashToken() in next-auth/core/lib/utils) —
-// the raw token only ever exists in the emailed magic link.
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -393,7 +438,6 @@ model AuditLog {
   ipAddress String?
   createdAt DateTime    @default(now())
 
-  // Relations
   actor User @relation(fields: [actorId], references: [id], onDelete: Cascade)
 }
 
@@ -407,7 +451,6 @@ model CommunityPost {
   authorId  String
   author    User       @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
 
-  // Self-referential repost relation
   repostOfId String?
   repostOf   CommunityPost?  @relation("Reposts", fields: [repostOfId], references: [id], onDelete: SetNull)
   reposts    CommunityPost[] @relation("Reposts")
@@ -480,8 +523,13 @@ model Prescription {
   appointmentId String?
   appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
 
+  // Pharmacy the patient actually routed to
   pharmacyId String?
-  pharmacy   Pharmacy? @relation(fields: [pharmacyId], references: [id], onDelete: SetNull)
+  pharmacy   Pharmacy? @relation("PharmacyFilled", fields: [pharmacyId], references: [id], onDelete: SetNull)
+
+  // Pharmacy the provider suggests the patient route to
+  suggestedPharmacyId String?
+  suggestedPharmacy   Pharmacy? @relation("PharmacySuggested", fields: [suggestedPharmacyId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -489,6 +537,7 @@ model Prescription {
   @@index([patientId])
   @@index([providerId])
   @@index([pharmacyId])
+  @@index([suggestedPharmacyId])
 }
 
 model UserNotification {

@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { useSession } from "next-auth/react";
-import { Pill, Store, CheckCircle2, Clock, Truck, ChevronDown, AlertCircle } from "lucide-react";
+import {
+  Pill, Store, CheckCircle2, Clock, Truck,
+  ChevronDown, AlertCircle, Sparkles,
+} from "lucide-react";
 import { routeToPharmacy } from "@/actions/prescription";
 
 interface PharmacyOption {
@@ -21,9 +24,13 @@ interface Prescription {
   createdAt: string;
   provider: { id: string; name: string };
   pharmacy: { id: string; name: string; address: string } | null;
+  suggestedPharmacy: { id: string; name: string; address: string } | null;
 }
 
-const STATUS_BADGE: Record<Prescription["status"], { label: string; class: string; icon: React.ReactNode }> = {
+const STATUS_BADGE: Record<
+  Prescription["status"],
+  { label: string; class: string; icon: React.ReactNode }
+> = {
   PENDING: {
     label: "Awaiting Routing",
     class: "bg-amber-50 text-amber-700 border-amber-200",
@@ -47,7 +54,6 @@ export default function PatientPrescriptionsPage() {
   const [pharmacies, setPharmacies] = useState<PharmacyOption[]>([]);
   const [isFetching, setIsFetching] = useState(true);
 
-  // Per-card routing state: { [prescriptionId]: selectedPharmacyId }
   const [selections, setSelections] = useState<Record<string, string>>({});
   const [routingId, setRoutingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -60,8 +66,19 @@ export default function PatientPrescriptionsPage() {
       fetch("/api/pharmacies").then((r) => r.json()),
     ])
       .then(([rxData, phData]) => {
-        setPrescriptions(Array.isArray(rxData) ? rxData : []);
-        setPharmacies(Array.isArray(phData) ? phData : []);
+        const rxList: Prescription[] = Array.isArray(rxData) ? rxData : [];
+        const phList: PharmacyOption[] = Array.isArray(phData) ? phData : [];
+        setPrescriptions(rxList);
+        setPharmacies(phList);
+
+        // Auto-select suggested pharmacy for each PENDING prescription that has one
+        const autoSelections: Record<string, string> = {};
+        for (const rx of rxList) {
+          if (rx.status === "PENDING" && rx.suggestedPharmacy) {
+            autoSelections[rx.id] = rx.suggestedPharmacy.id;
+          }
+        }
+        setSelections(autoSelections);
       })
       .catch(() => {})
       .finally(() => setIsFetching(false));
@@ -135,6 +152,9 @@ export default function PatientPrescriptionsPage() {
           {prescriptions.map((rx) => {
             const badge = STATUS_BADGE[rx.status];
             const isThisRouting = routingId === rx.id && isPending;
+            const suggested = rx.suggestedPharmacy;
+            const selectedId = selections[rx.id] ?? "";
+            const isSuggestionSelected = suggested && selectedId === suggested.id;
 
             return (
               <div
@@ -164,7 +184,8 @@ export default function PatientPrescriptionsPage() {
                   </div>
                   <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
                     <span>
-                      Issued by <span className="font-medium text-gray-700">Dr. {rx.provider.name}</span>
+                      Issued by{" "}
+                      <span className="font-medium text-gray-700">Dr. {rx.provider.name}</span>
                     </span>
                     <span>
                       {new Date(rx.createdAt).toLocaleDateString("en-US", {
@@ -180,14 +201,32 @@ export default function PatientPrescriptionsPage() {
                 <div className="p-5 bg-gray-50/50">
                   {rx.status === "PENDING" ? (
                     <div className="space-y-3">
+                      {/* Suggestion banner */}
+                      {suggested && (
+                        <div
+                          className={`flex items-start gap-2.5 px-3 py-2.5 rounded-xl text-xs border transition-colors ${
+                            isSuggestionSelected
+                              ? "bg-teal-50 border-teal-200 text-teal-800"
+                              : "bg-amber-50 border-amber-200 text-amber-800"
+                          }`}
+                        >
+                          <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                          <span>
+                            <span className="font-semibold">Dr. {rx.provider.name}</span> suggests{" "}
+                            <span className="font-semibold">{suggested.name}</span> · {suggested.address}
+                          </span>
+                        </div>
+                      )}
+
                       <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
                         <Store className="w-4 h-4 text-gray-400" />
-                        Select a Partner Pharmacy
+                        {suggested ? "Confirm or change pharmacy" : "Select a Partner Pharmacy"}
                       </p>
+
                       <div className="flex gap-3">
                         <div className="relative flex-1">
                           <select
-                            value={selections[rx.id] ?? ""}
+                            value={selectedId}
                             onChange={(e) =>
                               setSelections((prev) => ({ ...prev, [rx.id]: e.target.value }))
                             }
@@ -197,6 +236,7 @@ export default function PatientPrescriptionsPage() {
                             {pharmacies.map((p) => (
                               <option key={p.id} value={p.id}>
                                 {p.name} · {p.address}
+                                {suggested?.id === p.id ? " ★ Suggested" : ""}
                               </option>
                             ))}
                           </select>
@@ -210,6 +250,7 @@ export default function PatientPrescriptionsPage() {
                           {isThisRouting ? "Routing…" : "Route"}
                         </button>
                       </div>
+
                       {errors[rx.id] && (
                         <p className="text-xs text-rose-600 flex items-center gap-1.5">
                           <AlertCircle className="w-3.5 h-3.5" />

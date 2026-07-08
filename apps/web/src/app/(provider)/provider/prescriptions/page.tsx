@@ -23,35 +23,35 @@ export default async function ProviderPrescriptionsPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || session.user.role !== "PROVIDER") redirect("/login");
 
-  // Load this provider's practitioner profile to query their roster
   const practitioner = await prisma.practitionerProfile.findUnique({
     where: { userId: session.user.id },
   });
 
-  // Roster patients: any patient who has had an appointment with this provider
-  const rosterPatients = practitioner
-    ? await prisma.patientProfile.findMany({
-        where: { appointments: { some: { practitionerProfileId: practitioner.id } } },
-        include: { user: { select: { id: true, name: true, email: true } } },
-      })
-    : [];
+  const [rosterPatients, allPharmacies, prescriptions] = await Promise.all([
+    practitioner
+      ? prisma.patientProfile.findMany({
+          where: { appointments: { some: { practitionerProfileId: practitioner.id } } },
+          include: { user: { select: { id: true, name: true, email: true } } },
+        })
+      : Promise.resolve([]),
+    prisma.pharmacy.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, address: true } }),
+    prisma.prescription.findMany({
+      where: { providerId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      include: {
+        patient: { select: { id: true, name: true, email: true } },
+        pharmacy: { select: { id: true, name: true, address: true } },
+        suggestedPharmacy: { select: { id: true, name: true, address: true } },
+        appointment: { select: { id: true, startTime: true } },
+      },
+    }),
+  ]);
 
   const patients = rosterPatients.map((p) => ({
     userId: p.userId,
     name: p.user.name,
     email: p.user.email,
   }));
-
-  // All prescriptions this provider has issued
-  const prescriptions = await prisma.prescription.findMany({
-    where: { providerId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    include: {
-      patient: { select: { id: true, name: true, email: true } },
-      pharmacy: { select: { id: true, name: true, address: true } },
-      appointment: { select: { id: true, startTime: true } },
-    },
-  });
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-500 p-8">
@@ -66,7 +66,7 @@ export default async function ProviderPrescriptionsPage() {
       </div>
 
       {/* Issue prescription form */}
-      <IssuePrescriptionForm patients={patients} />
+      <IssuePrescriptionForm patients={patients} pharmacies={allPharmacies} />
 
       {/* Issued prescriptions list */}
       <div className="space-y-4">

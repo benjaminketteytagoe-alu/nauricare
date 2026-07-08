@@ -48,7 +48,7 @@ export async function POST(req: Request) {
           startTime: start,
           endTime: new Date(endTime),
           notes: notes || null,
-          status: "PENDING",
+          status: "SCHEDULED",
         },
       });
 

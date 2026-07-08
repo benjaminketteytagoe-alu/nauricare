@@ -11,6 +11,7 @@ export async function createPrescription(data: {
   dosage: string;
   instructions?: string;
   appointmentId?: string;
+  suggestedPharmacyId?: string;
 }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || session.user.role !== "PROVIDER") {
@@ -35,6 +36,7 @@ export async function createPrescription(data: {
       patientId: data.patientId,
       providerId: session.user.id,
       appointmentId: data.appointmentId || null,
+      suggestedPharmacyId: data.suggestedPharmacyId || null,
     },
   });
 

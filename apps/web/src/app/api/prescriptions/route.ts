@@ -29,6 +29,7 @@ export async function GET() {
         patient: { select: { id: true, name: true, email: true } },
         provider: { select: { id: true, name: true } },
         pharmacy: { select: { id: true, name: true, address: true } },
+        suggestedPharmacy: { select: { id: true, name: true, address: true } },
         appointment: { select: { id: true, startTime: true } },
       },
     });
