@@ -1,159 +1,60 @@
-# Turborepo starter
+# NauriCare
 
-This Turborepo starter is maintained by the Turborepo core team.
+NauriCare is a full-stack healthtech platform designed to connect women with compassionate, evidence-based care for reproductive health. It bridges the gap between digital consultations and physical care delivery through secure video conferencing, community engagement, and end-to-end prescription routing.
 
-## Using this example
+## Table of Contents
+- [Features](#features)
+- [Architecture & Tech Stack](#architecture--tech-stack)
+- [Project Structure](#project-structure)
+- [Environment Variables](#environment-variables)
+- [Local Development](#local-development)
+- [Infrastructure & DevOps](#infrastructure--devops)
 
-Run the following command:
+## Features
 
-```sh
-npx create-turbo@latest
-```
+### For Patients
+*   **Secure Authentication:** Passwordless login via Magic Links and Google OAuth, protected by Cloudflare Turnstile bot mitigation.
+*   **Telehealth Consultations:** Real-time booking engine integrated with automated transactional emails (Resend) and dynamic, secure Jitsi video conferencing rooms.
+*   **Prescription Routing:** A complete e-prescribing pipeline. Patients can view prescriptions issued during consultations and dynamically route them to local partner pharmacies (e.g., Kigali-based pharmacies).
+*   **Community Hub:** An interactive, X/Instagram-style social feed. Features include direct-to-cloud AWS S3 media uploads (images and video), a follower graph, optimistic UI comment threading, and custom user avatars.
+*   **Health Tracking:** Interactive menstrual cycle logs and predictive health analytics.
 
-## What's inside?
+### For Providers
+*   **Provider Dashboard:** Dedicated workspaces for verified medical professionals.
+*   **Roster & Records Management:** Access to patient health records and consultation history.
+*   **E-Prescribing:** Ability to instantly issue digital prescriptions tied to specific patient consultations.
 
-This Turborepo includes the following packages/apps:
+### For Administrators
+*   **Role-Based Access Control (RBAC):** Strict middleware enforcement isolating Patient, Provider, and Admin routes.
+*   **Pharmacy Analytics:** Dashboard tracking prescription routing volume, utilizing optimized Prisma aggregations to identify high-traffic pharmacy partners.
+*   **Audit Logging:** System-wide tracking of critical mutations and access logs.
 
-### Apps and Packages
+## Architecture & Tech Stack
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+NauriCare is built as a highly scalable, serverless monorepo.
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+*   **Frontend:** Next.js (App Router), React, Tailwind CSS, TypeScript
+*   **Backend:** Next.js API Routes / Server Actions, Node.js
+*   **Database:** PostgreSQL (Neon), Prisma ORM
+*   **Authentication:** NextAuth.js
+*   **Cloud Storage:** AWS S3 (Direct-to-cloud payload architecture with cryptographic `Content-Length` validation)
+*   **Video Conferencing:** Jitsi Meet API
+*   **Transactional Email:** Resend
 
-### Utilities
+## Project Structure
 
-This Turborepo has some additional tools already setup for you:
+The codebase is organized as a monorepo workspace to separate the web application from database schemas and internal packages.
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo build
-npm dlx turbo build
-npm exec turbo build
-```
-
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo build --filter=docs
-npm exec turbo build --filter=docs
-npm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-npm exec turbo dev
-npm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-npm exec turbo dev --filter=web
-npm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-npm exec turbo login
-npm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-npm exec turbo link
-npm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+```text
+nauricare/
+├── apps/
+│   └── web/                   # Next.js application (App Router)
+│       ├── src/app/           # Pages, Layouts, and API routes
+│       ├── src/actions/       # Server Actions (e.g., prescriptions, community)
+│       └── src/components/    # Reusable UI components
+├── packages/
+│   └── database/              # Prisma schema, migrations, and seed scripts
+│       └── prisma/
+│           └── schema.prisma
+├── .env.local                 # Local environment variables (git-ignored)
+└── README.md
