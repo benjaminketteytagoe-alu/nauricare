@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { parseMentionsAndNotify } from "@/lib/mentions";
 
 export async function GET(req: Request) {
   try {
@@ -18,27 +19,25 @@ export async function GET(req: Request) {
       skip,
       take,
       include: {
-        // Fetch enriched author: role badge + profile data for display
         author: {
           select: {
             id: true,
             name: true,
             role: true,
             avatarUrl: true,
+            handle: true,
             patientProfile: { select: { country: true } },
             practitionerProfile: { select: { specialty: true } },
           },
         },
         _count: { select: { likes: true, comments: true, reposts: true } },
-        // Nested repost: show condensed version of the original post
         repostOf: {
           include: {
             author: {
-              select: { id: true, name: true, role: true, avatarUrl: true },
+              select: { id: true, name: true, role: true, avatarUrl: true, handle: true },
             },
           },
         },
-        // Narrow to the current user's like only — avoids leaking all likes
         likes: {
           where: { userId: session.user.id },
           select: { id: true },
@@ -46,8 +45,6 @@ export async function GET(req: Request) {
       },
     });
 
-    // Resolve follow state for every distinct author in this page (excluding
-    // myself — the UI never shows a follow button on my own posts anyway).
     const authorIds = [...new Set(posts.map((p) => p.authorId).filter((id) => id !== session.user.id))];
     const myFollows = authorIds.length
       ? await prisma.follow.findMany({
@@ -103,19 +100,27 @@ export async function POST(req: Request) {
             name: true,
             role: true,
             avatarUrl: true,
+            handle: true,
             patientProfile: { select: { country: true } },
             practitionerProfile: { select: { specialty: true } },
           },
         },
         repostOf: {
-          include: { author: { select: { id: true, name: true, role: true, avatarUrl: true } } },
+          include: {
+            author: { select: { id: true, name: true, role: true, avatarUrl: true, handle: true } },
+          },
         },
       },
     });
 
+    // Fire-and-forget: parse @mentions in post content and notify matched users.
+    if (post.content) {
+      void parseMentionsAndNotify(post.content, session.user.id, "MENTION_POST", post.id);
+    }
+
     return NextResponse.json(
       { ...post, likeCount: 0, commentCount: 0, repostCount: 0, isLikedByMe: false, isFollowedByMe: false },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("[COMMUNITY_FEED_POST_ERROR]", error);

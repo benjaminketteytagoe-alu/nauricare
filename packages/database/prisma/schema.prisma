@@ -62,6 +62,12 @@ enum PrescriptionStatus {
   FULFILLED
 }
 
+enum UserNotificationType {
+  MENTION_POST
+  MENTION_COMMENT
+  FOLLOW
+}
+
 // --- Core Models ---
 model User {
   id             String    @id @default(cuid())
@@ -72,6 +78,7 @@ model User {
   dateOfBirth    DateTime?
   role           Role      @default(PATIENT)
   privacyConsent Boolean   @default(false)
+  handle            String?   @unique
   isVerified        Boolean   @default(false)
   isEmailVerified   Boolean   @default(false)
   // Required by the NextAuth PrismaAdapter contract (Magic Link). Distinct from
@@ -105,6 +112,10 @@ model User {
   // Prescription relations
   patientPrescriptions  Prescription[] @relation("PatientPrescriptions")
   providerPrescriptions Prescription[] @relation("ProviderPrescriptions")
+
+  // In-app notification relations
+  receivedNotifications UserNotification[] @relation("NotificationRecipient")
+  sentNotifications     UserNotification[] @relation("NotificationActor")
 
   // Community Relations
   communityPosts    CommunityPost[]    @relation("PostAuthor")
@@ -401,8 +412,9 @@ model CommunityPost {
   repostOf   CommunityPost?  @relation("Reposts", fields: [repostOfId], references: [id], onDelete: SetNull)
   reposts    CommunityPost[] @relation("Reposts")
 
-  comments CommunityComment[]
-  likes    CommunityLike[]
+  comments      CommunityComment[]
+  likes         CommunityLike[]
+  notifications UserNotification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -418,6 +430,8 @@ model CommunityComment {
   post     CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
   authorId String
   author   User          @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  notifications UserNotification[]
 
   createdAt DateTime @default(now())
 
@@ -475,6 +489,24 @@ model Prescription {
   @@index([patientId])
   @@index([providerId])
   @@index([pharmacyId])
+}
+
+model UserNotification {
+  id          String               @id @default(cuid())
+  recipientId String
+  recipient   User                 @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actorId     String
+  actor       User                 @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  type        UserNotificationType
+  postId      String?
+  post        CommunityPost?       @relation(fields: [postId], references: [id], onDelete: SetNull)
+  commentId   String?
+  comment     CommunityComment?    @relation(fields: [commentId], references: [id], onDelete: SetNull)
+  isRead      Boolean              @default(false)
+  createdAt   DateTime             @default(now())
+
+  @@index([recipientId])
+  @@index([recipientId, isRead])
 }
 
 model CommunityStory {

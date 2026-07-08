@@ -8,6 +8,7 @@ import {
   ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
+import { MentionText } from "@/components/MentionText";
 import { followUser, unfollowUser } from "./actions";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -17,11 +18,12 @@ type AuthorProfile = {
   name: string;
   role: string;
   avatarUrl: string | null;
+  handle: string | null;
   patientProfile: { country: string } | null;
   practitionerProfile: { specialty: string } | null;
 };
 
-type RepostAuthor = { id: string; name: string; role: string; avatarUrl: string | null };
+type RepostAuthor = { id: string; name: string; role: string; avatarUrl: string | null; handle: string | null };
 
 type MediaType = "IMAGE" | "VIDEO" | null;
 
@@ -54,7 +56,7 @@ type Comment = {
   postId: string;
   content: string;
   createdAt: string;
-  author: { id: string; name: string; role: string; avatarUrl: string | null };
+  author: { id: string; name: string; role: string; avatarUrl: string | null; handle: string | null };
 };
 
 type StoryItem = {
@@ -66,7 +68,7 @@ type StoryItem = {
 };
 
 type StoryGroup = {
-  author: { id: string; name: string; role: string; avatarUrl: string | null };
+  author: { id: string; name: string; role: string; avatarUrl: string | null; handle: string | null };
   storyCount: number;
   stories: StoryItem[];
 };
@@ -289,7 +291,7 @@ function CommentsThread({
       postId,
       content,
       createdAt: new Date().toISOString(),
-      author: { id: "me", name: currentUser.name, role: "PATIENT", avatarUrl: currentUser.avatarUrl },
+      author: { id: "me", name: currentUser.name, role: "PATIENT", avatarUrl: currentUser.avatarUrl, handle: null },
     };
     setComments((prev) => [...prev, optimisticComment]);
     onCommentAdded();
@@ -324,7 +326,7 @@ function CommentsThread({
               <Avatar name={c.author.name} avatarUrl={c.author.avatarUrl} size="xs" />
               <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2">
                 <p className="text-xs font-bold text-gray-800">{c.author.name}</p>
-                <p className="text-xs text-gray-600 leading-relaxed">{c.content}</p>
+                <p className="text-xs text-gray-600 leading-relaxed"><MentionText text={c.content} /></p>
               </div>
             </div>
           ))}
@@ -436,7 +438,7 @@ function PostCard({
               <span className="text-[9px] font-bold text-teal-600">Specialist</span>
             )}
           </div>
-          <p className="text-xs text-gray-600 line-clamp-2">{post.repostOf.content}</p>
+          <p className="text-xs text-gray-600 line-clamp-2"><MentionText text={post.repostOf.content} /></p>
           {post.repostOf.mediaUrl && (
             post.repostOf.mediaType === "VIDEO" ? (
               <video src={post.repostOf.mediaUrl} className="mt-2 w-full h-28 object-cover rounded-lg" muted />
@@ -511,7 +513,7 @@ function PostCard({
         <div className="px-4 pb-4 pt-1">
           <p className="text-sm text-gray-800 leading-relaxed">
             <span className="font-bold text-gray-900 mr-1.5">{post.author.name.split(" ")[0]}</span>
-            {post.content}
+            <MentionText text={post.content} />
           </p>
         </div>
       )}
@@ -802,7 +804,7 @@ export default function CommunityPage() {
       });
       if (!res.ok) throw new Error("Failed to share story.");
 
-      const newStory: StoryItem & { author: { id: string; name: string; role: string; avatarUrl: string | null } } = await res.json();
+      const newStory: StoryItem & { author: { id: string; name: string; role: string; avatarUrl: string | null; handle: string | null } } = await res.json();
       setStoryGroups((prev) => {
         const existing = prev.find((g) => g.author.id === newStory.author.id);
         if (existing) {

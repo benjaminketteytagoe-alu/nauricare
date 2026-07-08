@@ -8,6 +8,7 @@ import { useState } from "react";
 import {
   LayoutDashboard, Activity, Calendar, FileText, Settings, LogOut, Users, Menu, X, Pill,
 } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const navItems = [
   { name: "My Health",       href: "/dashboard",                icon: LayoutDashboard },
@@ -39,13 +40,16 @@ export function Sidebar() {
             priority
           />
         </Link>
-        <button
-          onClick={() => setIsSidebarOpen(true)}
-          aria-label="Open navigation menu"
-          className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-teal-600 transition-colors"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            aria-label="Open navigation menu"
+            className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-teal-600 transition-colors"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
       </div>
 
       {/* ── Backdrop overlay (mobile only) ───────────────────────── */}
@@ -132,7 +136,11 @@ export function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100">
+        <div className="p-4 border-t border-slate-100 space-y-1">
+          <div className="hidden md:flex items-center gap-3 px-4 py-3 text-slate-600">
+            <NotificationBell />
+            <span className="text-sm font-medium">Notifications</span>
+          </div>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-colors"

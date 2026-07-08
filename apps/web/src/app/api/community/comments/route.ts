@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { parseMentionsAndNotify } from "@/lib/mentions";
 
 export async function GET(req: Request) {
   try {
@@ -16,7 +17,7 @@ export async function GET(req: Request) {
       where: { postId },
       orderBy: { createdAt: "asc" },
       include: {
-        author: { select: { id: true, name: true, role: true, avatarUrl: true } },
+        author: { select: { id: true, name: true, role: true, avatarUrl: true, handle: true } },
       },
     });
 
@@ -47,9 +48,12 @@ export async function POST(req: Request) {
         authorId: session.user.id,
       },
       include: {
-        author: { select: { id: true, name: true, role: true, avatarUrl: true } },
+        author: { select: { id: true, name: true, role: true, avatarUrl: true, handle: true } },
       },
     });
+
+    // Fire-and-forget: parse @mentions in comment content and notify matched users.
+    void parseMentionsAndNotify(comment.content, session.user.id, "MENTION_COMMENT", postId, comment.id);
 
     return NextResponse.json(comment, { status: 201 });
   } catch (error) {
