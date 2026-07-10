@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
 import { passwordField } from "@/lib/validation/password";
+import { COUNTRIES, PRIORITY_COUNTRY_COUNT, dialCodeForCountry } from "@/lib/countries";
 import { ShieldCheck, Stethoscope, Users } from "lucide-react";
 
 // ─── Trust panel data ─────────────────────────────────────────────────────────
@@ -37,17 +38,21 @@ const TRUST_CHIPS = [
 
 export default function ProviderSignUpPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState("");
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
-  const [password, setPassword] = useState("");
+  const [password, setPassword]         = useState("");
+  const [selectedCountry, setSelectedCountry] = useState("Rwanda");
+  const [localPhone, setLocalPhone]     = useState("");
+
+  const dialCode = dialCodeForCountry(selectedCountry);
 
   const passwordResult = password ? passwordField.safeParse(password) : null;
-  const passwordError = passwordResult && !passwordResult.success
+  const passwordError  = passwordResult && !passwordResult.success
     ? passwordResult.error.issues[0].message
     : "";
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: { preventDefault(): void; currentTarget: HTMLFormElement }) {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -65,7 +70,13 @@ export default function ProviderSignUpPage() {
       return;
     }
 
-    const formData = new FormData(e.currentTarget);
+    if (!localPhone.trim()) {
+      setError("Please enter your phone number.");
+      setLoading(false);
+      return;
+    }
+
+    const formData    = new FormData(e.currentTarget);
     const name           = formData.get("name") as string;
     const email          = formData.get("email") as string;
     const dateOfBirth    = formData.get("dateOfBirth") as string;
@@ -74,6 +85,9 @@ export default function ProviderSignUpPage() {
     const location       = formData.get("location") as string;
     const privacyConsent = formData.get("privacyConsent") === "on";
 
+    // Combine dial code + local digits → E.164 format
+    const phoneNumber = dialCode + localPhone.replace(/\D/g, "");
+
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
@@ -81,6 +95,8 @@ export default function ProviderSignUpPage() {
         body: JSON.stringify({
           email, password, name, dateOfBirth, privacyConsent,
           role: "PROVIDER", specialty, clinicName, location, turnstileToken,
+          country: selectedCountry,
+          phoneNumber,
         }),
       });
 
@@ -181,6 +197,54 @@ export default function ProviderSignUpPage() {
                 placeholder="Kigali, Rwanda"
                 className="h-11 focus-visible:ring-teal-500 rounded-xl"
               />
+            </div>
+
+            {/* Country select */}
+            <div className="space-y-1.5">
+              <Label htmlFor="country">Country</Label>
+              <select
+                id="country"
+                required
+                value={selectedCountry}
+                onChange={(e) => {
+                  setSelectedCountry(e.target.value);
+                  setLocalPhone("");
+                }}
+                className="w-full h-11 px-3 border border-input rounded-xl text-sm bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 text-gray-900"
+              >
+                <optgroup label="Recommended regions">
+                  {COUNTRIES.slice(0, PRIORITY_COUNTRY_COUNT).map((c) => (
+                    <option key={c.name} value={c.name}>{c.name}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="All countries">
+                  {COUNTRIES.slice(PRIORITY_COUNTRY_COUNT).map((c) => (
+                    <option key={c.name} value={c.name}>{c.name}</option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+
+            {/* Phone number — dial code prefix + local number */}
+            <div className="space-y-1.5">
+              <Label htmlFor="localPhone">Phone Number</Label>
+              <div className="flex h-11 rounded-xl border border-input overflow-hidden focus-within:ring-2 focus-within:ring-teal-500 focus-within:ring-offset-0">
+                <span className="inline-flex items-center px-3 bg-gray-50 border-r border-input text-sm font-semibold text-gray-700 whitespace-nowrap select-none shrink-0">
+                  {dialCode || "—"}
+                </span>
+                <input
+                  id="localPhone"
+                  type="tel"
+                  required
+                  placeholder="788 123 456"
+                  value={localPhone}
+                  onChange={(e) => setLocalPhone(e.target.value)}
+                  className="flex-1 min-w-0 px-3 text-sm bg-white outline-none placeholder:text-gray-400"
+                />
+              </div>
+              <p className="text-xs text-gray-400">
+                Enter your local number — the country code ({dialCode}) is added automatically.
+              </p>
             </div>
 
             <div className="flex items-start gap-3 py-1">

@@ -12,6 +12,14 @@ const privacyField = z.boolean().refine((v) => v === true, {
   message: "You must consent to the privacy policy",
 });
 
+// E.164: + followed by 7–15 digits (no spaces/dashes/parens)
+const phoneField = z
+  .string()
+  .min(1, "Phone number is required")
+  .refine((v) => /^\+\d{7,15}$/.test(v), {
+    message: "Invalid phone number — expected E.164 format (e.g. +250788123456)",
+  });
+
 const patientSchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email(),
@@ -19,7 +27,8 @@ const patientSchema = z.object({
   dateOfBirth: z.string().min(1, "Date of birth is required"),
   privacyConsent: privacyField,
   role: z.literal("PATIENT"),
-  country: z.string().optional(),
+  country: z.string().min(1, "Country is required"),
+  phoneNumber: phoneField,
 });
 
 const providerSchema = z.object({
@@ -32,6 +41,8 @@ const providerSchema = z.object({
   specialty: z.string().min(2).max(100),
   clinicName: z.string().min(2).max(150),
   location: z.string().min(2).max(200),
+  country: z.string().min(1, "Country is required"),
+  phoneNumber: phoneField,
 });
 
 const registerSchema = z.discriminatedUnion("role", [patientSchema, providerSchema]);
@@ -49,6 +60,12 @@ export async function POST(req: Request) {
         { error: "Security verification failed. Please try again." },
         { status: 403 },
       );
+    }
+
+    // Sanitize phone before validation — strip spaces, dashes, parens that a
+    // browser tel input might insert between the prefix and local number.
+    if (typeof body?.phoneNumber === "string") {
+      body.phoneNumber = body.phoneNumber.replace(/[\s\-\(\)]/g, "");
     }
 
     const parsed = registerSchema.safeParse(body);
@@ -75,6 +92,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
     }
 
+    // Phone number uniqueness check — @unique constraint on User.phoneNumber
+    const existingPhone = await prisma.user.findUnique({ where: { phoneNumber: data.phoneNumber } });
+    if (existingPhone) {
+      return NextResponse.json({ error: "An account with this phone number already exists" }, { status: 409 });
+    }
+
     const passwordHash = await bcrypt.hash(data.password, 12);
 
     // Raw token only ever exists in the verification link — the DB stores a SHA-256
@@ -92,6 +115,8 @@ export async function POST(req: Request) {
           dateOfBirth: dobDate,
           privacyConsent: true,
           role: data.role,
+          country: data.country,
+          phoneNumber: data.phoneNumber,
         },
       });
 
@@ -99,7 +124,7 @@ export async function POST(req: Request) {
         await tx.patientProfile.create({
           data: {
             userId: newUser.id,
-            country: ("country" in data && data.country) ? data.country : "Unknown",
+            country: data.country,
           },
         });
       } else {

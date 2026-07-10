@@ -11,6 +11,7 @@ import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
 import { passwordField } from "@/lib/validation/password";
+import { COUNTRIES, PRIORITY_COUNTRY_COUNT, dialCodeForCountry } from "@/lib/countries";
 import { ShieldCheck, Lock, Globe } from "lucide-react";
 
 // ─── Trust panel data ─────────────────────────────────────────────────────────
@@ -38,17 +39,21 @@ const TRUST_CHIPS = [
 
 export default function SignUpPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState("");
+  const [loading, setLoading]           = useState(false);
+  const [error, setError]               = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
-  const [password, setPassword] = useState("");
+  const [password, setPassword]         = useState("");
+  const [selectedCountry, setSelectedCountry] = useState("Rwanda");
+  const [localPhone, setLocalPhone]     = useState("");
+
+  const dialCode = dialCodeForCountry(selectedCountry);
 
   const passwordResult = password ? passwordField.safeParse(password) : null;
-  const passwordError = passwordResult && !passwordResult.success
+  const passwordError  = passwordResult && !passwordResult.success
     ? passwordResult.error.issues[0].message
     : "";
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: { preventDefault(): void; currentTarget: HTMLFormElement }) {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -66,17 +71,31 @@ export default function SignUpPage() {
       return;
     }
 
-    const formData = new FormData(e.currentTarget);
-    const name           = formData.get("name") as string;
-    const email          = formData.get("email") as string;
-    const dateOfBirth    = formData.get("dateOfBirth") as string;
+    if (!localPhone.trim()) {
+      setError("Please enter your phone number.");
+      setLoading(false);
+      return;
+    }
+
+    const formData    = new FormData(e.currentTarget);
+    const name        = formData.get("name") as string;
+    const email       = formData.get("email") as string;
+    const dateOfBirth = formData.get("dateOfBirth") as string;
     const privacyConsent = formData.get("privacyConsent") === "on";
+
+    // Combine dial code + local digits → E.164 format
+    const phoneNumber = dialCode + localPhone.replace(/\D/g, "");
 
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name, dateOfBirth, privacyConsent, role: "PATIENT", turnstileToken }),
+        body: JSON.stringify({
+          email, password, name, dateOfBirth, privacyConsent,
+          role: "PATIENT", turnstileToken,
+          country: selectedCountry,
+          phoneNumber,
+        }),
       });
 
       const data = await res.json();
@@ -159,6 +178,54 @@ export default function SignUpPage() {
                   className="h-11 focus-visible:ring-teal-500 rounded-xl text-gray-700"
                 />
               </div>
+            </div>
+
+            {/* Country select */}
+            <div className="space-y-1.5">
+              <Label htmlFor="country">Country</Label>
+              <select
+                id="country"
+                required
+                value={selectedCountry}
+                onChange={(e) => {
+                  setSelectedCountry(e.target.value);
+                  setLocalPhone(""); // reset local number when country changes
+                }}
+                className="w-full h-11 px-3 border border-input rounded-xl text-sm bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 text-gray-900"
+              >
+                <optgroup label="Recommended regions">
+                  {COUNTRIES.slice(0, PRIORITY_COUNTRY_COUNT).map((c) => (
+                    <option key={c.name} value={c.name}>{c.name}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="All countries">
+                  {COUNTRIES.slice(PRIORITY_COUNTRY_COUNT).map((c) => (
+                    <option key={c.name} value={c.name}>{c.name}</option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+
+            {/* Phone number — dial code prefix + local number */}
+            <div className="space-y-1.5">
+              <Label htmlFor="localPhone">Phone Number</Label>
+              <div className="flex h-11 rounded-xl border border-input overflow-hidden focus-within:ring-2 focus-within:ring-teal-500 focus-within:ring-offset-0">
+                <span className="inline-flex items-center px-3 bg-gray-50 border-r border-input text-sm font-semibold text-gray-700 whitespace-nowrap select-none shrink-0">
+                  {dialCode || "—"}
+                </span>
+                <input
+                  id="localPhone"
+                  type="tel"
+                  required
+                  placeholder="788 123 456"
+                  value={localPhone}
+                  onChange={(e) => setLocalPhone(e.target.value)}
+                  className="flex-1 min-w-0 px-3 text-sm bg-white outline-none placeholder:text-gray-400"
+                />
+              </div>
+              <p className="text-xs text-gray-400">
+                Enter your local number — the country code ({dialCode}) is added automatically.
+              </p>
             </div>
 
             <div className="flex items-start gap-3 py-1">

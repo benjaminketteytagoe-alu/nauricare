@@ -88,6 +88,10 @@ model User {
   emailVerified     DateTime?
   avatarUrl         String?
 
+  // Geographic / contact identity fields — nullable for backward compat with
+  // pre-existing rows; enforced as required at the application layer for new signups.
+  country             String?
+
   // Provider-editable professional fields (self-reported; not admin-verified)
   licenseNumber       String?
   hospitalAffiliation String?
