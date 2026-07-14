@@ -47,7 +47,7 @@ export default function LoginPage() {
   const [successMsg, setSuccessMsg] = useState(() => {
     if (typeof window === "undefined") return "";
     const params = window.location.search;
-    if (params.includes("registered=true")) return "Account created successfully! Please log in.";
+    if (params.includes("registered=true")) return "Account created! Check your email for a verification link before logging in.";
     if (params.includes("verified=true")) return "Email verified successfully! You can now log in.";
     return "";
   });
@@ -59,7 +59,7 @@ export default function LoginPage() {
   const [magicLoading, setMagicLoading] = useState(false);
   const [magicError, setMagicError] = useState("");
 
-  async function handleMagicLinkSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleMagicLinkSubmit(e: { preventDefault(): void; currentTarget: HTMLFormElement }) {
     e.preventDefault();
     setMagicLoading(true);
     setMagicError("");
@@ -89,7 +89,7 @@ export default function LoginPage() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: { preventDefault(): void; currentTarget: HTMLFormElement }) {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -158,7 +158,22 @@ export default function LoginPage() {
 
           {!useMagicLink ? (
             <form onSubmit={handleSubmit} className="space-y-5">
-              {error && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{error}</div>}
+              {error && (
+                error.toLowerCase().includes("verify your email") ? (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm space-y-2">
+                    <p className="font-semibold text-amber-800">Email not yet verified</p>
+                    <p className="text-amber-700">Please check your inbox for the verification link we sent when you signed up.</p>
+                    <a
+                      href="/verify-email"
+                      className="inline-block text-teal-600 hover:underline font-medium"
+                    >
+                      Didn&apos;t get the email? Request a new link →
+                    </a>
+                  </div>
+                ) : (
+                  <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{error}</div>
+                )
+              )}
               {successMsg && <div className="bg-teal-50 text-teal-700 p-3 rounded-md text-sm border border-teal-200 font-medium">{successMsg}</div>}
 
               <div className="space-y-1">
