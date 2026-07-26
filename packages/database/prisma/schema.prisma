@@ -71,43 +71,43 @@ enum UserNotificationType {
 
 // --- Core Models ---
 model User {
-  id             String    @id @default(cuid())
-  name           String
-  email          String    @unique
-  phoneNumber    String?   @unique
-  passwordHash   String
-  dateOfBirth    DateTime?
-  role           Role      @default(PATIENT)
-  privacyConsent Boolean   @default(false)
-  handle            String?   @unique
-  isVerified        Boolean   @default(false)
-  isEmailVerified   Boolean   @default(false)
+  id              String    @id @default(cuid())
+  name            String
+  email           String    @unique
+  phoneNumber     String?   @unique
+  passwordHash    String
+  dateOfBirth     DateTime?
+  role            Role      @default(PATIENT)
+  privacyConsent  Boolean   @default(false)
+  handle          String?   @unique
+  isVerified      Boolean   @default(false)
+  isEmailVerified Boolean   @default(false)
   // Required by the NextAuth PrismaAdapter contract (Magic Link). Distinct from
   // isEmailVerified above — that field drives our own app logic; this one only
   // exists so the adapter's updateUser() call doesn't fail on unknown fields.
-  emailVerified     DateTime?
-  avatarUrl         String?
+  emailVerified   DateTime?
+  avatarUrl       String?
 
   // Geographic / contact identity fields — nullable for backward compat with
   // pre-existing rows; enforced as required at the application layer for new signups.
-  country             String?
+  country String?
 
   // Provider-editable professional fields (self-reported; not admin-verified)
   licenseNumber       String?
   hospitalAffiliation String?
   secondaryEmail      String?
 
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  patientProfile      PatientProfile?
-  practitionerProfile PractitionerProfile?
-  symptomChecks       SymptomCheck[]
-  notifications       Notification[]
-  providerProfile     ProviderProfile?
-  auditLogs           AuditLog[]
-  resetTokens         ResetToken[]
+  patientProfile          PatientProfile?
+  practitionerProfile     PractitionerProfile?
+  symptomChecks           SymptomCheck[]
+  notifications           Notification[]
+  providerProfile         ProviderProfile?
+  auditLogs               AuditLog[]
+  resetTokens             ResetToken[]
   emailVerificationTokens EmailVerificationToken[]
   accounts                Account[]
   sessions                Session[]
@@ -278,12 +278,12 @@ model Notification {
 
 // --- Platform Resources ---
 model Pharmacy {
-  id           String         @id @default(cuid())
+  id           String   @id @default(cuid())
   name         String
   address      String
   contactEmail String?
   tags         String[]
-  createdAt    DateTime       @default(now())
+  createdAt    DateTime @default(now())
 
   // Prescriptions where this pharmacy was chosen by the patient
   prescriptions Prescription[] @relation("PharmacyFilled")
@@ -316,10 +316,11 @@ model CycleLog {
   patientProfileId String
   patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
 
-  startDate   DateTime
-  endDate     DateTime?
-  cycleLength Int?
-  notes       String?
+  startDate    DateTime
+  endDate      DateTime?
+  cycleLength  Int?
+  periodLength Int?
+  notes        String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -365,8 +366,8 @@ model ProviderAvailability {
   providerId  String
   provider    User     @relation(fields: [providerId], references: [id], onDelete: Cascade)
   date        DateTime @db.Date
-  startTime   String   // "HH:MM" 24-hour
-  endTime     String   // "HH:MM" 24-hour
+  startTime   String // "HH:MM" 24-hour
+  endTime     String // "HH:MM" 24-hour
   isAvailable Boolean  @default(true)
   createdAt   DateTime @default(now())
 
@@ -518,8 +519,8 @@ model Prescription {
   instructions   String?
   status         PrescriptionStatus @default(PENDING)
 
-  patientId  String
-  patient    User   @relation("PatientPrescriptions", fields: [patientId], references: [id], onDelete: Cascade)
+  patientId String
+  patient   User   @relation("PatientPrescriptions", fields: [patientId], references: [id], onDelete: Cascade)
 
   providerId String
   provider   User   @relation("ProviderPrescriptions", fields: [providerId], references: [id], onDelete: Cascade)
@@ -563,11 +564,11 @@ model UserNotification {
 }
 
 model CommunityStory {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   content   String?
   imageUrl  String?
   authorId  String
-  author    User    @relation("StoryAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  author    User     @relation("StoryAuthor", fields: [authorId], references: [id], onDelete: Cascade)
   expiresAt DateTime
 
   createdAt DateTime @default(now())

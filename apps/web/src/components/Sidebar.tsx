@@ -7,12 +7,13 @@ import { signOut } from "next-auth/react";
 import { useState } from "react";
 import {
   LayoutDashboard, Activity, Calendar, FileText, Settings, LogOut,
-  Users, Menu, X, Pill, MessageSquare,
+  Users, Menu, X, Pill, MessageSquare, Droplet,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 
 const navItems = [
   { name: "My Health",       href: "/dashboard",                icon: LayoutDashboard },
+  { name: "My Cycle",        href: "/dashboard/cycle",          icon: Droplet },
   { name: "Symptom Log",     href: "/dashboard/symptoms",       icon: Activity },
   { name: "Consultations",   href: "/dashboard/providers",      icon: Calendar },
   { name: "My Records",      href: "/dashboard/records",        icon: FileText },
