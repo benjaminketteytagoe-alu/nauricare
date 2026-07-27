@@ -183,7 +183,7 @@ export default function PatientDashboardPage() {
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Health</h1>
+          <h1 className="text-3xl font-bold text-slate-900">My Health</h1>
           <p className="text-gray-500 mt-1">Welcome back, <span className="font-semibold text-rose-700">{session?.user?.name || "Jane"}</span>.</p>
         </div>
         <Link href="/dashboard/symptoms">

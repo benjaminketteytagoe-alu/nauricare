@@ -195,7 +195,7 @@ export function CycleCalendarClient({ initialData }: { initialData: CycleData })
                   "w-9 h-9 rounded-full text-xs flex items-center justify-center transition-colors relative",
                   !cell.inCurrentMonth ? "text-gray-300" : "text-gray-700",
                   solid ? "bg-rose-600 text-white font-bold shadow-sm shadow-rose-200 hover:bg-rose-700" : "hover:bg-rose-50",
-                  !solid && isPredictedPeriod ? "border-2 border-dashed border-rose-400 bg-rose-100/90 text-rose-800" : "",
+                  !solid && isPredictedPeriod ? "border-2 border-dashed border-rose-400 bg-rose-100 text-rose-800" : "",
                   !solid && !isPredictedPeriod && isOvulation ? "border-2 border-dashed border-purple-400 bg-purple-100 text-purple-900 font-medium" : "",
                   isToday && !solid ? "ring-2 ring-rose-500 ring-offset-2 bg-rose-50/60 font-bold" : "",
                 ].join(" ")}
@@ -211,7 +211,7 @@ export function CycleCalendarClient({ initialData }: { initialData: CycleData })
             <span className="w-2.5 h-2.5 rounded-full bg-rose-600" /> Logged
           </div>
           <div className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full border-2 border-dashed border-rose-400 bg-rose-100/90" /> Predicted period
+            <span className="w-2.5 h-2.5 rounded-full border-2 border-dashed border-rose-400 bg-rose-100" /> Predicted period
           </div>
           <div className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-full border-2 border-dashed border-purple-400 bg-purple-100" /> Ovulation

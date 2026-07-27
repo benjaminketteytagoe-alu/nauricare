@@ -154,7 +154,7 @@ export default function SymptomLoggerPage() {
         {aiResponse && (
           <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-rose-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className={`p-4 border-b flex items-center gap-2 font-semibold ${
-              aiResponse.riskLevel?.toLowerCase() === 'high' ? 'bg-rose-50 text-rose-800 border-rose-100' : 
+              aiResponse.riskLevel?.toLowerCase() === 'high' ? 'bg-red-50 text-red-700 border-red-200' :
               aiResponse.riskLevel?.toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-800 border-amber-100' : 
               'bg-teal-50 text-teal-800 border-teal-100'
             }`}>

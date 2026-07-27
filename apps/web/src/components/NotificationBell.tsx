@@ -77,7 +77,6 @@ export function NotificationBell({
   // Load full list when dropdown opens (only once until refresh)
   useEffect(() => {
     if (!open || notifications.length > 0) return;
-    setLoadingAll(true);
     getNotifications()
       .then((res) => {
         if (res.success) setNotifications(res.data as unknown as Notification[]);
@@ -103,7 +102,13 @@ export function NotificationBell({
   return (
     <div ref={ref} className="relative">
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={() =>
+          setOpen((v) => {
+            const next = !v;
+            if (next && notifications.length === 0) setLoadingAll(true);
+            return next;
+          })
+        }
         aria-label="Notifications"
         className={`relative p-2 rounded-lg transition-colors hover:text-teal-600 ${open ? "bg-gray-100 text-teal-600" : ""}`}
       >
@@ -154,7 +159,7 @@ export function NotificationBell({
                     </p>
                     {n.post && (
                       <p className="text-xs text-gray-500 truncate mt-0.5">
-                        "{n.post.content.slice(0, 60)}{n.post.content.length > 60 ? "…" : ""}"
+                        &ldquo;{n.post.content.slice(0, 60)}{n.post.content.length > 60 ? "…" : ""}&rdquo;
                       </p>
                     )}
                     <div className="flex items-center gap-2 mt-1">

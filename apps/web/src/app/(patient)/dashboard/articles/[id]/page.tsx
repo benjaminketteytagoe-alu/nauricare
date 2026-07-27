@@ -88,7 +88,7 @@ export default async function ArticleDetailPage({
         </div>
 
         {/* Title */}
-        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight">
           {article.title}
         </h1>
 

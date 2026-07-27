@@ -838,7 +838,7 @@ export default function CommunityPage() {
       {/* ── Page header ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900 flex items-center gap-2.5">
+          <h1 className="text-2xl font-extrabold text-slate-900 flex items-center gap-2.5">
             <Users className="w-7 h-7 text-rose-600" />
             Community
           </h1>

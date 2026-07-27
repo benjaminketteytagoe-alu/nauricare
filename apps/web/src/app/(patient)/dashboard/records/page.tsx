@@ -79,7 +79,7 @@ export default function HealthTimelinePage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+        <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
           <ShieldCheck className="w-8 h-8 text-rose-600" />
           My Health Timeline
         </h1>

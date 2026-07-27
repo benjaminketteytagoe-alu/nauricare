@@ -87,9 +87,9 @@ export default function TelehealthRoomPage() {
           <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-rose-700 transition-colors mb-2 font-medium">
             <ArrowLeft className="w-4 h-4" /> Back to Dashboard
           </button>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             Telehealth Session
-            <span className="bg-rose-50 text-rose-700 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-rose-100">
+            <span className="bg-blue-50 text-blue-700 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-blue-200">
               <Shield className="w-3 h-3" /> E2E Encrypted
             </span>
           </h1>

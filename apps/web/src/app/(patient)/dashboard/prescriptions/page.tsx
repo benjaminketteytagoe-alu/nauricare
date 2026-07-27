@@ -128,7 +128,7 @@ export default function PatientPrescriptionsPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-8 pb-12">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+        <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
           <Pill className="w-8 h-8 text-rose-600" />
           My Prescriptions
         </h1>

@@ -90,7 +90,7 @@ export default function ArticleLibraryPage() {
       {/* Page header */}
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
             <BookOpen className="w-8 h-8 text-rose-600" />
             Health Library
           </h1>

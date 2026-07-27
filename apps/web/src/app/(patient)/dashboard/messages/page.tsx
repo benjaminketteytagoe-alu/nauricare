@@ -10,7 +10,7 @@ export default function PatientMessagesPage() {
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col">
       <div className="mb-6 shrink-0">
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+        <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
           <MessageSquare className="w-8 h-8 text-rose-600" />
           Messages
         </h1>
