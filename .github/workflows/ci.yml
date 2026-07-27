@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ "main", "develop" ]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   # ==========================================
   # PHASE 1: CONTINUOUS INTEGRATION (TURBOREPO)
@@ -48,12 +52,16 @@ jobs:
         with:
           lfs: true
 
+      - name: Convert Repository Name to Lowercase
+        run: |
+          echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_PAT }}
+          password: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Build and Push Monorepo Image
         uses: docker/build-push-action@v5
@@ -61,8 +69,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ env.REPO_LOWER }}:latest
+            ghcr.io/${{ env.REPO_LOWER }}:${{ github.sha }}
           build-args: |
             NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
 
@@ -84,15 +92,15 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           envs: GHCR_PAT, GITHUB_ACTOR
           script: |
+            IMAGE_NAME="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
             echo "$GHCR_PAT" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-            docker pull ghcr.io/${{ github.repository }}:${{ github.sha }}
+            docker pull ${IMAGE_NAME}:${{ github.sha }}
             docker stop nauricare-staging || true
             docker rm nauricare-staging || true
-            docker run -d --name nauricare-staging -p 3001:3000 --env-file .env.staging -e TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }} -e RESEND_API_KEY=${{ secrets.RESEND_API_KEY }} -e EMAIL_FROM=${{ secrets.EMAIL_FROM }} ghcr.io/${{ github.repository }}:${{ github.sha }}
-            # FIXED: Added explicit Prisma version to Staging
+            docker run -d --name nauricare-staging -p 3001:3000 --env-file .env.staging -e TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }} -e RESEND_API_KEY=${{ secrets.RESEND_API_KEY }} -e EMAIL_FROM=${{ secrets.EMAIL_FROM }} ${IMAGE_NAME}:${{ github.sha }}
             docker exec nauricare-staging npx --yes --package prisma@6.19.3 prisma migrate deploy --schema=packages/database/prisma/schema.prisma
         env:
-          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
     
   # ==========================================
@@ -111,16 +119,15 @@ jobs:
           host: ${{ secrets.PROD_SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          # FIXED: Added missing envs context for GHCR login
           envs: GHCR_PAT, GITHUB_ACTOR
           script: |
+            IMAGE_NAME="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
             echo "$GHCR_PAT" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-            docker pull ghcr.io/${{ github.repository }}:${{ github.sha }}
-            # FIXED: Target nauricare-prod instead of staging containers
+            docker pull ${IMAGE_NAME}:${{ github.sha }}
             docker stop nauricare-prod || true
             docker rm nauricare-prod || true
-            docker run -d --name nauricare-prod -p 3000:3000 --env-file .env.production -e TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }} -e RESEND_API_KEY=${{ secrets.RESEND_API_KEY }} -e EMAIL_FROM=${{ secrets.EMAIL_FROM }} ghcr.io/${{ github.repository }}:${{ github.sha }}
+            docker run -d --name nauricare-prod -p 3000:3000 --env-file .env.production -e TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }} -e RESEND_API_KEY=${{ secrets.RESEND_API_KEY }} -e EMAIL_FROM=${{ secrets.EMAIL_FROM }} ${IMAGE_NAME}:${{ github.sha }}
             docker exec nauricare-prod npx --yes --package prisma@6.19.3 prisma migrate deploy --schema=packages/database/prisma/schema.prisma
         env:
-          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
