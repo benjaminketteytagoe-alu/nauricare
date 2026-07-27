@@ -10,7 +10,7 @@ import {
 interface Props {
   appointment: AppointmentForCalendar;
   title?: string;
-  variant?: "teal" | "slate";
+  variant?: "teal" | "slate" | "rose";
 }
 
 export function CalendarButtons({ appointment, title, variant = "slate" }: Props) {
@@ -30,6 +30,8 @@ export function CalendarButtons({ appointment, title, variant = "slate" }: Props
   const baseBtn =
     variant === "teal"
       ? "border border-teal-300/50 text-teal-100 hover:bg-teal-700/50"
+      : variant === "rose"
+      ? "border border-rose-300/50 text-rose-100 hover:bg-rose-700/50"
       : "border border-slate-200 text-slate-700 hover:bg-slate-50";
 
   return (

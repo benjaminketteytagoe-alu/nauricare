@@ -40,7 +40,7 @@ export default async function DashboardLayout({
 
   // 5. Render the explicit Patient Dashboard UI shell
   return (
-    <div className="min-h-screen flex bg-[#f8fafc]">
+    <div className="app-shell-canvas flex">
       <Sidebar />
       <main className="flex-1 flex flex-col min-h-screen md:h-screen overflow-hidden">
         {/* pt-20 clears the fixed mobile top bar (h-16) with breathing room */}

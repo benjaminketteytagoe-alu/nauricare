@@ -29,7 +29,7 @@ function TabButton({ id, icon: Icon, label, activeTab, onSelect }: TabButtonProp
     <button
       onClick={() => onSelect(id)}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
-        activeTab === id ? 'bg-teal-50 text-teal-700' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+        activeTab === id ? 'bg-rose-50 text-rose-700' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
       }`}
     >
       <Icon className="w-5 h-5" />
@@ -54,7 +54,7 @@ function ToggleSwitch({ label, desc, checked, onChange }: ToggleSwitchProps) {
       </div>
       <button
         onClick={onChange}
-        className={`w-12 h-6 rounded-full relative transition-colors ${checked ? 'bg-teal-500' : 'bg-gray-200'}`}
+        className={`w-12 h-6 rounded-full relative transition-colors ${checked ? 'bg-rose-500' : 'bg-gray-200'}`}
       >
         <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${checked ? 'left-7' : 'left-1'}`} />
       </button>
@@ -128,8 +128,8 @@ export default function SettingsPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
       <div>
-        <h1 className="text-3xl font-bold text-teal-900 flex items-center gap-3">
-          <Settings className="w-8 h-8 text-teal-600" />
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <Settings className="w-8 h-8 text-rose-600" />
           Settings & Profile
         </h1>
       </div>
@@ -145,7 +145,7 @@ export default function SettingsPage() {
         </div>
 
         {/* MAIN CONTENT AREA */}
-        <div className="flex-1 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="flex-1 card-surface overflow-hidden">
           
           {/* TAB 1: CYCLE BASELINES */}
           {activeTab === 'cycle' && (
@@ -159,7 +159,7 @@ export default function SettingsPage() {
                     type="number" 
                     value={cycleLength} 
                     onChange={(e) => setCycleLength(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none font-medium"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none font-medium"
                   />
                 </div>
               </div>
@@ -178,14 +178,14 @@ export default function SettingsPage() {
                     <div 
                       key={goal.id} onClick={() => toggleGoal(goal.id)}
                       className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex justify-between items-center ${
-                        isSelected ? 'border-teal-500 bg-teal-50' : 'border-gray-100 hover:border-teal-200 hover:bg-gray-50'
+                        isSelected ? 'border-rose-500 bg-rose-50' : 'border-gray-100 hover:border-rose-200 hover:bg-gray-50'
                       }`}
                     >
                       <div>
-                        <h3 className={`font-bold ${isSelected ? 'text-teal-900' : 'text-gray-900'}`}>{goal.label}</h3>
-                        <p className={`text-xs mt-0.5 ${isSelected ? 'text-teal-700' : 'text-gray-500'}`}>{goal.desc}</p>
+                        <h3 className={`font-bold ${isSelected ? 'text-rose-900' : 'text-gray-900'}`}>{goal.label}</h3>
+                        <p className={`text-xs mt-0.5 ${isSelected ? 'text-rose-700' : 'text-gray-500'}`}>{goal.desc}</p>
                       </div>
-                      <div className={`mt-1 shrink-0 ${isSelected ? 'text-teal-500' : 'text-gray-300'}`}>
+                      <div className={`mt-1 shrink-0 ${isSelected ? 'text-rose-500' : 'text-gray-300'}`}>
                         {isSelected ? <CheckCircle2 className="w-6 h-6" /> : <div className="w-6 h-6 rounded-full border-2 border-gray-200" />}
                       </div>
                     </div>
@@ -245,7 +245,7 @@ export default function SettingsPage() {
                     placeholder="+250 788 000 000"
                     value={emergencyContact} 
                     onChange={(e) => setEmergencyContact(e.target.value)}
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none font-medium"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none font-medium"
                   />
                 </div>
               </div>
@@ -253,14 +253,14 @@ export default function SettingsPage() {
           )}
 
           {/* GLOBAL SAVE BAR */}
-          <div className="p-6 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+          <div className="p-6 bg-rose-50/30 border-t border-rose-100 flex items-center justify-between">
             <span className="text-sm font-medium text-emerald-600 flex items-center gap-2">
               {saveMessage && <><CheckCircle2 className="w-4 h-4"/> {saveMessage}</>}
             </span>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="bg-teal-900 hover:bg-teal-950 text-white px-8 py-3 rounded-xl font-bold shadow-sm flex items-center gap-2 transition-all"
+              className="btn-brand px-8 py-3 rounded-xl font-bold flex items-center gap-2"
             >
               <Save className="w-4 h-4" />
               {isSaving ? "Saving..." : "Save Changes"}

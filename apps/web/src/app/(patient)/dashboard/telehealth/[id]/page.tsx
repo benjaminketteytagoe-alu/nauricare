@@ -46,8 +46,8 @@ export default function TelehealthRoomPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center text-teal-900">
-        <Loader2 className="w-10 h-10 animate-spin mb-4 text-teal-600" />
+      <div className="min-h-[80vh] flex flex-col items-center justify-center text-gray-900">
+        <Loader2 className="w-10 h-10 animate-spin mb-4 text-rose-600" />
         <h2 className="text-xl font-bold">Establishing Secure Connection...</h2>
         <p className="text-sm text-gray-500 mt-2">Encrypting your telehealth session</p>
       </div>
@@ -82,14 +82,14 @@ export default function TelehealthRoomPage() {
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
       
       {/* Header Panel */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="card-surface p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-teal-700 transition-colors mb-2 font-medium">
+          <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-rose-700 transition-colors mb-2 font-medium">
             <ArrowLeft className="w-4 h-4" /> Back to Dashboard
           </button>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             Telehealth Session
-            <span className="bg-teal-50 text-teal-700 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-teal-100">
+            <span className="bg-rose-50 text-rose-700 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-rose-100">
               <Shield className="w-3 h-3" /> E2E Encrypted
             </span>
           </h1>
@@ -98,8 +98,8 @@ export default function TelehealthRoomPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-4 bg-gray-50 px-4 py-3 rounded-xl border border-gray-100">
-          <Clock className="w-5 h-5 text-teal-600" />
+        <div className="flex items-center gap-4 bg-rose-50/30 px-4 py-3 rounded-xl border border-rose-100">
+          <Clock className="w-5 h-5 text-rose-600" />
           <div>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Scheduled Time</p>
             <p className="text-sm font-bold text-gray-900">

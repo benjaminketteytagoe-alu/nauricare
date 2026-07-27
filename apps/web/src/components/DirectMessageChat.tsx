@@ -38,11 +38,14 @@ export function DirectMessageChat({
   accentColor = "teal",
 }: {
   currentUserId: string;
-  accentColor?: "teal" | "blue";
+  accentColor?: "teal" | "blue" | "rose";
 }) {
-  const acc = accentColor === "blue"
-    ? { ring: "ring-blue-500", bg: "bg-blue-600", hover: "hover:bg-blue-700", bubble: "bg-blue-600", time: "text-blue-200", border: "border-blue-600", text: "text-blue-600" }
-    : { ring: "ring-teal-500", bg: "bg-teal-600", hover: "hover:bg-teal-700", bubble: "bg-teal-600", time: "text-teal-200", border: "border-teal-600", text: "text-teal-600" };
+  const ACCENTS = {
+    blue: { ring: "ring-blue-500", bg: "bg-blue-600", hover: "hover:bg-blue-700", bubble: "bg-blue-600", time: "text-blue-200", border: "border-blue-600", text: "text-blue-600" },
+    teal: { ring: "ring-teal-500", bg: "bg-teal-600", hover: "hover:bg-teal-700", bubble: "bg-teal-600", time: "text-teal-200", border: "border-teal-600", text: "text-teal-600" },
+    rose: { ring: "ring-rose-500", bg: "bg-rose-600", hover: "hover:bg-rose-700", bubble: "bg-rose-600", time: "text-rose-200", border: "border-rose-600", text: "text-rose-600" },
+  } as const;
+  const acc = ACCENTS[accentColor];
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -66,8 +69,6 @@ export function DirectMessageChat({
 
   useEffect(() => {
     if (!activeId) return;
-    setLoadingThread(true);
-    setGateError("");
     getDirectMessages(activeId)
       .then((res) => {
         if (res.success) setMessages(res.data as DM[]);
@@ -94,6 +95,8 @@ export function DirectMessageChat({
     setActiveAvatar(avatar);
     setMessages([]);
     setDraft("");
+    setLoadingThread(true);
+    setGateError("");
   }
 
   function handleSend() {

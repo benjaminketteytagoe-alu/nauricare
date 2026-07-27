@@ -20,6 +20,32 @@
   padding-left: env(safe-area-inset-left);
 }
 
+/* ─── NauriCare brand system (patient-facing surfaces) ──────────────────────
+   Warm, vibrant "feminine healthtech" palette, scoped to the patient portal
+   via these utilities rather than the shadcn --primary/--background tokens
+   (those stay neutral so the provider/admin portals are unaffected).
+
+   Primary accents .... rose-600 / pink-600 / fuchsia-700
+   Canvas ............. rose-50 -> pink-50 -> slate-50 wash
+   Pastel surfaces .... rose-50/70, purple-50/70, teal-50/70, amber-50/70
+   Borders ............ rose-100, pink-200/60
+   ───────────────────────────────────────────────────────────────────────── */
+@utility app-shell-canvas {
+  @apply bg-gradient-to-br from-rose-50/80 via-pink-50/30 to-background min-h-screen;
+}
+@utility nav-glass {
+  @apply bg-white/80 backdrop-blur-md border-rose-100;
+}
+@utility card-surface {
+  @apply bg-white/90 backdrop-blur-sm border border-rose-100 shadow-sm rounded-3xl;
+}
+@utility btn-brand {
+  @apply bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white shadow-md shadow-rose-200 transition-all;
+}
+@utility nav-pill-active {
+  @apply bg-rose-600 text-white shadow-sm shadow-rose-200;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

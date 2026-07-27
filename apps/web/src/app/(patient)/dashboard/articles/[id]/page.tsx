@@ -64,7 +64,7 @@ export default async function ArticleDetailPage({
       {/* Back navigation */}
       <Link
         href="/dashboard/articles"
-        className="inline-flex items-center gap-2 text-sm font-medium text-teal-600 hover:text-teal-800 mb-8 group"
+        className="inline-flex items-center gap-2 text-sm font-medium text-rose-600 hover:text-rose-800 mb-8 group"
       >
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
         Back to Library
@@ -88,7 +88,7 @@ export default async function ArticleDetailPage({
         </div>
 
         {/* Title */}
-        <h1 className="text-3xl md:text-4xl font-extrabold text-teal-900 leading-tight">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
           {article.title}
         </h1>
 
@@ -117,7 +117,7 @@ export default async function ArticleDetailPage({
               <ul key={i} className="space-y-2 pl-2">
                 {items.map((item, j) => (
                   <li key={j} className="flex items-start gap-3 text-gray-700 leading-relaxed text-base md:text-[17px]">
-                    <span className="mt-2 w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0" />
+                    <span className="mt-2 w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
                     {item}
                   </li>
                 ))}
@@ -130,13 +130,13 @@ export default async function ArticleDetailPage({
       </article>
 
       {/* Footer CTA */}
-      <div className="mt-12 bg-teal-50 border border-teal-100 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="mt-12 bg-rose-50 border border-rose-100 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <p className="font-bold text-teal-900">Ready to discuss this with a specialist?</p>
-          <p className="text-sm text-teal-700 mt-0.5">Book a secure telehealth consultation.</p>
+          <p className="font-bold text-rose-900">Ready to discuss this with a specialist?</p>
+          <p className="text-sm text-rose-700 mt-0.5">Book a secure telehealth consultation.</p>
         </div>
         <Link href="/dashboard/providers">
-          <button className="shrink-0 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold px-6 py-3 rounded-xl transition-colors">
+          <button className="shrink-0 btn-brand text-sm font-bold px-6 py-3 rounded-xl">
             Find a Specialist
           </button>
         </Link>

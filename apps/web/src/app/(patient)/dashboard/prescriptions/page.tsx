@@ -128,8 +128,8 @@ export default function PatientPrescriptionsPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-8 pb-12">
       <div>
-        <h1 className="text-3xl font-bold text-teal-900 flex items-center gap-3">
-          <Pill className="w-8 h-8 text-teal-600" />
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <Pill className="w-8 h-8 text-rose-600" />
           My Prescriptions
         </h1>
         <p className="text-gray-500 mt-1">
@@ -138,9 +138,9 @@ export default function PatientPrescriptionsPage() {
       </div>
 
       {prescriptions.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
-          <div className="w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Pill className="w-8 h-8 text-teal-400" />
+        <div className="card-surface p-12 text-center">
+          <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Pill className="w-8 h-8 text-rose-400" />
           </div>
           <h3 className="text-lg font-bold text-gray-900">No Prescriptions Yet</h3>
           <p className="text-gray-500 mt-1 text-sm">
@@ -159,7 +159,7 @@ export default function PatientPrescriptionsPage() {
             return (
               <div
                 key={rx.id}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+                className="card-surface overflow-hidden"
               >
                 {/* Header */}
                 <div className="p-5 border-b border-gray-50">
@@ -198,7 +198,7 @@ export default function PatientPrescriptionsPage() {
                 </div>
 
                 {/* Pharmacy section */}
-                <div className="p-5 bg-gray-50/50">
+                <div className="p-5 bg-rose-50/30">
                   {rx.status === "PENDING" ? (
                     <div className="space-y-3">
                       {/* Suggestion banner */}
@@ -206,7 +206,7 @@ export default function PatientPrescriptionsPage() {
                         <div
                           className={`flex items-start gap-2.5 px-3 py-2.5 rounded-xl text-xs border transition-colors ${
                             isSuggestionSelected
-                              ? "bg-teal-50 border-teal-200 text-teal-800"
+                              ? "bg-rose-50 border-rose-200 text-rose-800"
                               : "bg-amber-50 border-amber-200 text-amber-800"
                           }`}
                         >
@@ -230,7 +230,7 @@ export default function PatientPrescriptionsPage() {
                             onChange={(e) =>
                               setSelections((prev) => ({ ...prev, [rx.id]: e.target.value }))
                             }
-                            className="w-full appearance-none pl-3 pr-8 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            className="w-full appearance-none pl-3 pr-8 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-rose-500"
                           >
                             <option value="">— Choose a pharmacy —</option>
                             {pharmacies.map((p) => (
@@ -245,7 +245,7 @@ export default function PatientPrescriptionsPage() {
                         <button
                           onClick={() => handleRoute(rx.id)}
                           disabled={isThisRouting}
-                          className="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
+                          className="px-5 py-2.5 btn-brand disabled:opacity-60 text-sm font-semibold rounded-xl"
                         >
                           {isThisRouting ? "Routing…" : "Route"}
                         </button>

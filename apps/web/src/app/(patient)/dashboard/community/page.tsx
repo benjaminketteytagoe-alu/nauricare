@@ -88,7 +88,7 @@ function relativeTime(iso: string): string {
 function RoleTag({ role }: { role: string }) {
   if (role !== "PROVIDER") return null;
   return (
-    <span className="inline-flex items-center text-[10px] font-extrabold tracking-wide px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-100">
+    <span className="inline-flex items-center text-[10px] font-extrabold tracking-wide px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100">
       Specialist
     </span>
   );
@@ -110,7 +110,7 @@ function StoryRingItem({
       <div className="relative">
         {/* Gradient ring — conic for multi-story segmentation visual */}
         <div
-          style={{ background: "linear-gradient(135deg, #0d9488, #0891b2, #7c3aed)" }}
+          style={{ background: "linear-gradient(135deg, #e11d48, #db2777, #a21caf)" }}
           className="p-[2.5px] rounded-full"
         >
           <div className="bg-white p-[2px] rounded-full">
@@ -120,7 +120,7 @@ function StoryRingItem({
 
         {/* Story count badge */}
         {multiStory && (
-          <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-teal-600 text-white text-[10px] font-extrabold flex items-center justify-center border-2 border-white shadow">
+          <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center border-2 border-white shadow">
             {group.storyCount > 9 ? "9+" : group.storyCount}
           </span>
         )}
@@ -339,12 +339,12 @@ function CommentsThread({
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
           placeholder="Write a comment…"
-          className="flex-1 text-sm border border-gray-100 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal-300"
+          className="flex-1 text-sm border border-gray-100 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-300"
         />
         <button
           onClick={handleSubmit}
           disabled={!draft.trim() || isSubmitting}
-          className="text-sm font-bold text-teal-600 hover:text-teal-800 disabled:opacity-40 disabled:cursor-not-allowed px-2"
+          className="text-sm font-bold text-rose-600 hover:text-rose-800 disabled:opacity-40 disabled:cursor-not-allowed px-2"
         >
           Send
         </button>
@@ -377,7 +377,7 @@ function FollowButton({
       className={`text-xs font-bold px-3 py-1 rounded-full border transition-colors disabled:opacity-50 shrink-0 ${
         isFollowing
           ? "text-gray-500 border-gray-200 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50"
-          : "text-teal-600 border-teal-200 hover:bg-teal-50"
+          : "text-rose-600 border-rose-200 hover:bg-rose-50"
       }`}
     >
       {isFollowing ? "Following" : "Follow"}
@@ -401,7 +401,7 @@ function PostCard({
   const [showComments, setShowComments] = useState(false);
 
   return (
-    <article className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <article className="card-surface overflow-hidden">
 
       {/* ① Card header */}
       <div className="flex items-center gap-3 px-4 py-3">
@@ -435,7 +435,7 @@ function PostCard({
             <Avatar name={post.repostOf.author.name} avatarUrl={post.repostOf.author.avatarUrl} size="xs" />
             <span className="text-xs font-bold text-gray-600">{post.repostOf.author.name}</span>
             {post.repostOf.author.role === "PROVIDER" && (
-              <span className="text-[9px] font-bold text-teal-600">Specialist</span>
+              <span className="text-[9px] font-bold text-purple-600">Specialist</span>
             )}
           </div>
           <p className="text-xs text-gray-600 line-clamp-2"><MentionText text={post.repostOf.content} /></p>
@@ -491,7 +491,7 @@ function PostCard({
         <button
           onClick={() => setShowComments((v) => !v)}
           className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-sm font-semibold transition-all ${
-            showComments ? "text-teal-600 bg-teal-50" : "text-gray-400 hover:text-teal-500 hover:bg-teal-50"
+            showComments ? "text-purple-600 bg-purple-50" : "text-gray-400 hover:text-purple-500 hover:bg-purple-50"
           }`}
           aria-label="Comment"
         >
@@ -838,8 +838,8 @@ export default function CommunityPage() {
       {/* ── Page header ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-teal-900 flex items-center gap-2.5">
-            <Users className="w-7 h-7 text-teal-600" />
+          <h1 className="text-2xl font-extrabold text-gray-900 flex items-center gap-2.5">
+            <Users className="w-7 h-7 text-rose-600" />
             Community
           </h1>
           <p className="text-sm text-gray-400 mt-0.5">Share your journey with women on similar paths.</p>
@@ -847,7 +847,7 @@ export default function CommunityPage() {
       </div>
 
       {/* ── Story strip ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3.5 space-y-3">
+      <div className="card-surface px-4 py-3.5 space-y-3">
         <div className="flex items-start gap-4 overflow-x-auto pb-1 scrollbar-hide">
 
           {/* Add Story button */}
@@ -855,7 +855,7 @@ export default function CommunityPage() {
             onClick={() => setShowStoryForm((v) => !v)}
             className="flex flex-col items-center gap-1.5 shrink-0"
           >
-            <div className={`w-[60px] h-[60px] rounded-full border-2 border-dashed flex items-center justify-center transition-colors ${showStoryForm ? "border-teal-500 bg-teal-50 text-teal-600" : "border-teal-300 bg-gray-50 text-teal-400 hover:bg-teal-50"}`}>
+            <div className={`w-[60px] h-[60px] rounded-full border-2 border-dashed flex items-center justify-center transition-colors ${showStoryForm ? "border-rose-500 bg-rose-50 text-rose-600" : "border-rose-300 bg-gray-50 text-rose-400 hover:bg-rose-50"}`}>
               <Plus className="w-5 h-5" />
             </div>
             <span className="text-[11px] text-gray-500 font-semibold">Your Story</span>
@@ -885,7 +885,7 @@ export default function CommunityPage() {
               onChange={(e) => setStoryText(e.target.value)}
               placeholder="Share something… disappears in 24h."
               rows={2}
-              className="w-full resize-none text-sm text-gray-800 placeholder-gray-400 border border-gray-100 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
+              className="w-full resize-none text-sm text-gray-800 placeholder-gray-400 border border-gray-100 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all"
             />
 
             {storyError && <p className="text-xs text-rose-500 font-medium">{storyError}</p>}
@@ -914,7 +914,7 @@ export default function CommunityPage() {
             <div className="flex items-center justify-between">
               <label
                 htmlFor="story-media-input"
-                className={`inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${storyFile ? "text-teal-600 bg-teal-50" : "text-gray-400 hover:text-teal-600 hover:bg-teal-50"}`}
+                className={`inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${storyFile ? "text-rose-600 bg-rose-50" : "text-gray-400 hover:text-rose-600 hover:bg-rose-50"}`}
               >
                 <ImageIcon className="w-4 h-4" />
                 Photo
@@ -929,7 +929,7 @@ export default function CommunityPage() {
                 <button
                   onClick={handleAddStory}
                   disabled={isPostingStory || (!storyText.trim() && !storyFile)}
-                  className="bg-teal-600 hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold px-5 py-1.5 rounded-xl transition-colors"
+                  className="btn-brand disabled:opacity-40 disabled:cursor-not-allowed text-sm font-bold px-5 py-1.5 rounded-xl"
                 >
                   {isPostingStory ? "Sharing…" : "Share Story"}
                 </button>
@@ -940,7 +940,7 @@ export default function CommunityPage() {
       </div>
 
       {/* ── Compose post ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+      <div className="card-surface p-4 space-y-3">
         <div className="flex gap-3 items-start">
           <Avatar name={userName} avatarUrl={userAvatarUrl} />
           <textarea
@@ -948,7 +948,7 @@ export default function CommunityPage() {
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Share something with the NauriCare community…"
             rows={3}
-            className="flex-1 resize-none text-sm text-gray-800 placeholder-gray-400 border border-gray-100 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
+            className="flex-1 resize-none text-sm text-gray-800 placeholder-gray-400 border border-gray-100 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all"
           />
         </div>
 
@@ -984,7 +984,7 @@ export default function CommunityPage() {
         <div className="flex items-center justify-between pt-1 border-t border-gray-50">
           <label
             htmlFor="community-media-input"
-            className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${selectedFile ? "text-teal-600 bg-teal-50" : "text-gray-400 hover:text-teal-600 hover:bg-teal-50"}`}
+            className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${selectedFile ? "text-rose-600 bg-rose-50" : "text-gray-400 hover:text-rose-600 hover:bg-rose-50"}`}
           >
             <ImageIcon className="w-4 h-4" />
             Photo / Video
@@ -992,7 +992,7 @@ export default function CommunityPage() {
           <button
             onClick={handlePost}
             disabled={isPosting || (!draft.trim() && !selectedFile)}
-            className="bg-teal-600 hover:bg-teal-700 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-bold px-6 py-2 rounded-xl transition-all"
+            className="btn-brand active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-bold px-6 py-2 rounded-xl"
           >
             {uploadStage === "uploading" ? "Uploading…" : uploadStage === "posting" ? "Posting…" : "Post"}
           </button>
@@ -1003,9 +1003,9 @@ export default function CommunityPage() {
       {isLoadingFeed ? (
         <FeedSkeleton />
       ) : posts.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm py-16 text-center">
-          <div className="w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Users className="w-8 h-8 text-teal-200" />
+        <div className="card-surface py-16 text-center">
+          <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Users className="w-8 h-8 text-rose-200" />
           </div>
           <h3 className="text-lg font-bold text-gray-900">Be the first to post</h3>
           <p className="text-gray-400 mt-1.5 text-sm max-w-[240px] mx-auto">
@@ -1033,7 +1033,7 @@ export default function CommunityPage() {
               <button
                 onClick={loadMorePosts}
                 disabled={isLoadingMore}
-                className="text-sm font-bold text-teal-600 hover:text-teal-800 px-6 py-2.5 rounded-xl border border-teal-100 hover:border-teal-300 hover:bg-teal-50 transition-all disabled:opacity-50"
+                className="text-sm font-bold text-rose-600 hover:text-rose-800 px-6 py-2.5 rounded-xl border border-rose-100 hover:border-rose-300 hover:bg-rose-50 transition-all disabled:opacity-50"
               >
                 {isLoadingMore ? "Loading…" : "Load more posts"}
               </button>

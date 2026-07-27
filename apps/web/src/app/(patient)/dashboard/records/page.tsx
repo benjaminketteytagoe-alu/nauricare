@@ -79,8 +79,8 @@ export default function HealthTimelinePage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-teal-900 flex items-center gap-3">
-          <ShieldCheck className="w-8 h-8 text-teal-600" />
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+          <ShieldCheck className="w-8 h-8 text-rose-600" />
           My Health Timeline
         </h1>
         <p className="text-gray-500 mt-1">
@@ -96,16 +96,16 @@ export default function HealthTimelinePage() {
           <RecordSkeleton />
         </div>
       ) : records.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-12 text-center">
-          <div className="w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FileText className="w-8 h-8 text-teal-300" />
+        <div className="card-surface p-12 text-center">
+          <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FileText className="w-8 h-8 text-rose-300" />
           </div>
           <h3 className="text-lg font-bold text-gray-900">No records yet</h3>
           <p className="text-gray-500 mt-2 max-w-sm mx-auto text-sm">
             Your health records will appear here after your first consultation with a NauriCare provider.
           </p>
           <Link href="/dashboard/providers">
-            <button className="mt-6 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold px-6 py-3 rounded-xl transition-colors">
+            <button className="mt-6 btn-brand text-sm font-bold px-6 py-3 rounded-xl">
               Book a Consultation
             </button>
           </Link>
@@ -134,7 +134,7 @@ export default function HealthTimelinePage() {
 
                 {/* Record card */}
                 <div
-                  className={`flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm border-l-4 ${config.accent} overflow-hidden mb-2`}
+                  className={`flex-1 bg-white/90 backdrop-blur-sm rounded-2xl border border-rose-100 shadow-sm border-l-4 ${config.accent} overflow-hidden mb-2`}
                 >
                   <div className="p-6 space-y-4">
 
@@ -182,7 +182,7 @@ export default function HealthTimelinePage() {
                           href={record.documentUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-sm font-bold text-teal-600 hover:text-teal-800 hover:underline transition-colors"
+                          className="inline-flex items-center gap-2 text-sm font-bold text-rose-600 hover:text-rose-800 hover:underline transition-colors"
                         >
                           <Download className="w-4 h-4" />
                           View / Download Document

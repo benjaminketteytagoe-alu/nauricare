@@ -32,7 +32,7 @@ export function Sidebar() {
   return (
     <>
       {/* ── Mobile-only top bar ───────────────────────────────────── */}
-      <div className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 flex md:hidden items-center justify-between px-4 z-30 shrink-0">
+      <div className="fixed top-0 left-0 right-0 h-16 nav-glass border-b flex md:hidden items-center justify-between px-4 z-30 shrink-0">
         <Link href="/dashboard" onClick={close} className="hover:opacity-80 transition-opacity">
           <Image
             src="/logo-horizontal.jpg"
@@ -48,7 +48,7 @@ export function Sidebar() {
           <button
             onClick={() => setIsSidebarOpen(true)}
             aria-label="Open navigation menu"
-            className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-teal-600 transition-colors"
+            className="p-2 rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors"
           >
             <Menu className="w-6 h-6" />
           </button>
@@ -69,7 +69,7 @@ export function Sidebar() {
         className={[
           // Base — mobile: fixed off-canvas panel
           "fixed inset-y-0 left-0 z-50 w-64",
-          "bg-white border-r border-slate-200",
+          "nav-glass border-r",
           "flex flex-col",
           "shadow-xl",
           "transform transition-transform duration-300 ease-in-out",
@@ -81,7 +81,7 @@ export function Sidebar() {
         ].join(" ")}
       >
         {/* Sidebar header */}
-        <div className="h-16 md:h-24 px-5 border-b border-slate-100 flex items-center justify-between md:flex-col md:items-start md:justify-center">
+        <div className="h-16 md:h-24 px-5 border-b border-rose-100 flex items-center justify-between md:flex-col md:items-start md:justify-center">
           <Link
             href="/dashboard"
             onClick={close}
@@ -98,7 +98,7 @@ export function Sidebar() {
           </Link>
 
           {/* "Patient Portal" label — desktop only */}
-          <span className="hidden md:block text-[10px] font-extrabold text-teal-600 tracking-[0.2em] uppercase mt-2 ml-1">
+          <span className="hidden md:block text-[10px] font-extrabold text-rose-600 tracking-[0.2em] uppercase mt-2 ml-1">
             Patient Portal
           </span>
 
@@ -125,13 +125,13 @@ export function Sidebar() {
                 key={item.name}
                 href={item.href}
                 onClick={close}
-                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all ${
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all border border-transparent ${
                   isActive
-                    ? "bg-teal-50 text-teal-700 shadow-sm border border-teal-100"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-teal-600 border border-transparent"
+                    ? "nav-pill-active"
+                    : "text-slate-600 hover:bg-rose-50 hover:text-rose-600"
                 }`}
               >
-                <Icon className={`w-5 h-5 ${isActive ? "text-teal-600" : "text-slate-400"}`} />
+                <Icon className={`w-5 h-5 ${isActive ? "text-white" : "text-slate-400"}`} />
                 {item.name}
               </Link>
             );
@@ -139,7 +139,7 @@ export function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100 space-y-1">
+        <div className="p-4 border-t border-rose-100 space-y-1">
           <div className="hidden md:flex items-center gap-3 px-4 py-3 text-slate-600">
             <NotificationBell />
             <span className="text-sm font-medium">Notifications</span>

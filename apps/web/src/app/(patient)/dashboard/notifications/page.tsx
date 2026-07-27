@@ -29,7 +29,7 @@ function notificationLabel(n: Notification): string {
 }
 
 function NotificationIcon({ type }: { type: NotifType }) {
-  if (type === "FOLLOW")          return <UserPlus className="w-4 h-4 text-teal-600" />;
+  if (type === "FOLLOW")          return <UserPlus className="w-4 h-4 text-rose-600" />;
   if (type === "MENTION_COMMENT") return <MessageCircle className="w-4 h-4 text-blue-500" />;
   return <AtSign className="w-4 h-4 text-purple-500" />;
 }
@@ -79,7 +79,7 @@ export default function NotificationsPage() {
         {unreadCount > 0 && (
           <button
             onClick={handleMarkAll}
-            className="flex items-center gap-1.5 text-sm font-medium text-teal-600 hover:text-teal-700"
+            className="flex items-center gap-1.5 text-sm font-medium text-rose-600 hover:text-rose-700"
           >
             <Check className="w-4 h-4" />
             Mark all read
@@ -103,14 +103,14 @@ export default function NotificationsPage() {
         <div className="text-center py-20 text-gray-400">
           <Bell className="w-10 h-10 mx-auto mb-3 opacity-30" />
           <p className="font-medium">No notifications yet</p>
-          <p className="text-sm mt-1">When someone mentions you or follows you, it'll appear here.</p>
+          <p className="text-sm mt-1">When someone mentions you or follows you, it&apos;ll appear here.</p>
         </div>
       ) : (
         <div className="space-y-2">
           {notifications.map((n) => (
             <div
               key={n.id}
-              className={`bg-white rounded-xl border transition-colors ${!n.isRead ? "border-teal-100 bg-teal-50/30" : "border-gray-100"}`}
+              className={`bg-white rounded-xl border transition-colors ${!n.isRead ? "border-rose-100 bg-rose-50/30" : "border-gray-100"}`}
             >
               <div className="flex items-start gap-3 p-4">
                 <Avatar name={n.actor.name} avatarUrl={n.actor.avatarUrl} size="sm" />
@@ -133,7 +133,7 @@ export default function NotificationsPage() {
                   <button
                     onClick={() => handleMarkOne(n.id)}
                     aria-label="Mark as read"
-                    className="shrink-0 w-2.5 h-2.5 bg-teal-500 rounded-full mt-1 hover:bg-teal-700 transition-colors"
+                    className="shrink-0 w-2.5 h-2.5 bg-rose-500 rounded-full mt-1 hover:bg-rose-700 transition-colors"
                   />
                 )}
               </div>

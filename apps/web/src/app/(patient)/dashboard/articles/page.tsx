@@ -90,8 +90,8 @@ export default function ArticleLibraryPage() {
       {/* Page header */}
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-teal-900 flex items-center gap-3">
-            <BookOpen className="w-8 h-8 text-teal-600" />
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <BookOpen className="w-8 h-8 text-rose-600" />
             Health Library
           </h1>
           <p className="text-gray-500 mt-1">Evidence-based insights, curated for you.</p>
@@ -100,21 +100,21 @@ export default function ArticleLibraryPage() {
 
       {/* ── Featured Insight Hero ── */}
       {isLoading ? (
-        <div className="h-56 bg-teal-800 rounded-3xl animate-pulse" />
+        <div className="h-56 bg-rose-800 rounded-3xl animate-pulse" />
       ) : featured ? (
-        <div className="relative bg-gradient-to-br from-teal-800 to-teal-950 rounded-3xl p-8 md:p-10 text-white overflow-hidden shadow-lg">
+        <div className="relative bg-gradient-to-br from-rose-800 to-fuchsia-950 rounded-3xl p-8 md:p-10 text-white overflow-hidden shadow-lg">
           {/* Decorative blobs */}
           <div className="absolute top-0 right-0 w-72 h-72 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-teal-400/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-fuchsia-400/10 rounded-full blur-2xl pointer-events-none" />
 
           <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
             <div className="flex-1 space-y-4">
               <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1.5 text-[10px] font-extrabold tracking-widest uppercase text-teal-300 bg-teal-700/50 px-3 py-1 rounded-full">
+                <span className="flex items-center gap-1.5 text-[10px] font-extrabold tracking-widest uppercase text-rose-200 bg-white/10 px-3 py-1 rounded-full">
                   <Sparkles className="w-3 h-3" /> Daily Insight
                 </span>
                 {featured.tags.slice(0, 2).map((t) => (
-                  <span key={t} className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/10 text-teal-100">
+                  <span key={t} className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/10 text-rose-100">
                     {t}
                   </span>
                 ))}
@@ -122,15 +122,15 @@ export default function ArticleLibraryPage() {
               <h2 className="text-2xl md:text-3xl font-extrabold text-white leading-snug">
                 {featured.title}
               </h2>
-              <p className="text-sm text-teal-100 leading-relaxed max-w-xl">
+              <p className="text-sm text-rose-100 leading-relaxed max-w-xl">
                 {excerpt(featured.content, 160)}
               </p>
               <div className="flex items-center gap-4 pt-1">
-                <span className="flex items-center gap-1.5 text-xs text-teal-300">
+                <span className="flex items-center gap-1.5 text-xs text-rose-200">
                   <Clock className="w-3.5 h-3.5" /> {readingTime(featured.content)} min read
                 </span>
                 <Link href={`/dashboard/articles/${featured.id}`}>
-                  <button className="flex items-center gap-2 bg-white text-teal-900 text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-teal-50 transition-colors shadow-sm">
+                  <button className="flex items-center gap-2 bg-white text-rose-900 text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-rose-50 transition-colors shadow-sm">
                     Read Insight <ArrowRight className="w-4 h-4" />
                   </button>
                 </Link>
@@ -148,8 +148,8 @@ export default function ArticleLibraryPage() {
             onClick={() => setActiveTag(tag)}
             className={`px-4 py-1.5 rounded-full text-sm font-bold transition-all ${
               activeTag === tag
-                ? "bg-teal-600 text-white shadow-sm"
-                : "bg-white border border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-700"
+                ? "bg-rose-600 text-white shadow-sm"
+                : "bg-white border border-gray-200 text-gray-600 hover:border-rose-300 hover:text-rose-700"
             }`}
           >
             {tag}
@@ -169,20 +169,20 @@ export default function ArticleLibraryPage() {
           <div className="col-span-2 py-16 text-center text-gray-400">
             <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-30" />
             <p className="font-medium">No articles for this topic yet.</p>
-            <button onClick={() => setActiveTag("All")} className="text-sm text-teal-600 mt-2 hover:underline">
+            <button onClick={() => setActiveTag("All")} className="text-sm text-rose-600 mt-2 hover:underline">
               Show all articles
             </button>
           </div>
         ) : (
           grid.map((article) => (
             <Link key={article.id} href={`/dashboard/articles/${article.id}`} className="group block">
-              <article className="h-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-teal-200 transition-all p-6 flex flex-col gap-3">
+              <article className="h-full card-surface hover:shadow-md hover:border-rose-200 transition-all p-6 flex flex-col gap-3">
                 <div className="flex flex-wrap gap-1.5">
                   {article.tags.slice(0, 3).map((t) => (
                     <TagPill key={t} tag={t} small />
                   ))}
                 </div>
-                <h3 className="text-base font-bold text-gray-900 group-hover:text-teal-700 transition-colors leading-snug">
+                <h3 className="text-base font-bold text-gray-900 group-hover:text-rose-700 transition-colors leading-snug">
                   {article.title}
                 </h3>
                 <p className="text-sm text-gray-500 flex-1 leading-relaxed">
@@ -192,7 +192,7 @@ export default function ArticleLibraryPage() {
                   <span className="flex items-center gap-1 text-xs text-gray-400">
                     <Clock className="w-3 h-3" /> {readingTime(article.content)} min read
                   </span>
-                  <span className="text-xs font-bold text-teal-600 flex items-center gap-1 group-hover:gap-2 transition-all">
+                  <span className="text-xs font-bold text-rose-600 flex items-center gap-1 group-hover:gap-2 transition-all">
                     Read more <ArrowRight className="w-3.5 h-3.5" />
                   </span>
                 </div>

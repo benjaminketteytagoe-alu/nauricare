@@ -68,20 +68,19 @@ export default function SymptomLoggerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-3xl mx-auto space-y-6">
-        
+    <div className="max-w-3xl mx-auto space-y-6 pb-12">
+
         {/* Navigation */}
-        <Link href="/dashboard" className="text-teal-700 hover:text-teal-900 flex items-center gap-2 font-medium w-fit">
+        <Link href="/dashboard" className="text-rose-700 hover:text-rose-900 flex items-center gap-2 font-medium w-fit">
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </Link>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="bg-teal-900 p-6 text-white">
+        <div className="card-surface overflow-hidden">
+          <div className="bg-gradient-to-r from-rose-700 to-fuchsia-800 p-6 text-white">
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Activity className="w-6 h-6 text-teal-300" /> Daily Health Log
+              <Activity className="w-6 h-6 text-rose-200" /> Daily Health Log
             </h1>
-            <p className="text-teal-100 mt-1">Track how you are feeling today to build a better picture of your reproductive health.</p>
+            <p className="text-rose-100 mt-1">Track how you are feeling today to build a better picture of your reproductive health.</p>
           </div>
 
           <div className="p-6 md:p-8">
@@ -101,9 +100,9 @@ export default function SymptomLoggerPage() {
                         type="button"
                         onClick={() => toggleSymptom(symptom)}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
-                          isSelected 
-                            ? "bg-teal-600 border-teal-600 text-white shadow-sm" 
-                            : "bg-white border-gray-200 text-gray-700 hover:border-teal-300 hover:bg-teal-50"
+                          isSelected
+                            ? "bg-rose-600 border-rose-600 text-white shadow-sm"
+                            : "bg-white border-gray-200 text-gray-700 hover:border-rose-300 hover:bg-rose-50"
                         }`}
                       >
                         {symptom}
@@ -125,7 +124,7 @@ export default function SymptomLoggerPage() {
                     placeholder="e.g., 14" 
                     value={cycleDay}
                     onChange={(e) => setCycleDay(e.target.value)}
-                    className="h-11 focus-visible:ring-teal-600" 
+                    className="h-11 focus-visible:ring-rose-600"
                   />
                   <p className="text-xs text-gray-500">Day 1 is the first day of your period.</p>
                 </div>
@@ -140,11 +139,11 @@ export default function SymptomLoggerPage() {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Any emotional changes, triggers, or severity details..." 
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-600"
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-600"
                 />
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full md:w-auto h-11 px-8 bg-teal-600 hover:bg-teal-700 text-white">
+              <Button type="submit" disabled={loading} className="w-full md:w-auto h-11 px-8 btn-brand">
                 {loading ? "Analyzing Context..." : "Save Daily Log"}
               </Button>
             </form>
@@ -153,7 +152,7 @@ export default function SymptomLoggerPage() {
 
         {/* Gemini AI Response Area */}
         {aiResponse && (
-          <div className="bg-white rounded-xl shadow-sm border border-teal-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-rose-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className={`p-4 border-b flex items-center gap-2 font-semibold ${
               aiResponse.riskLevel?.toLowerCase() === 'high' ? 'bg-rose-50 text-rose-800 border-rose-100' : 
               aiResponse.riskLevel?.toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-800 border-amber-100' : 
@@ -164,7 +163,7 @@ export default function SymptomLoggerPage() {
             </div>
             <div className="p-6 space-y-5">
               <div className="flex gap-4 text-gray-700 leading-relaxed">
-                <Brain className="w-6 h-6 text-teal-600 shrink-0 mt-1" />
+                <Brain className="w-6 h-6 text-rose-600 shrink-0 mt-1" />
                 <p>{aiResponse.insight}</p>
               </div>
 
@@ -172,7 +171,7 @@ export default function SymptomLoggerPage() {
               {(aiResponse.riskLevel?.toLowerCase() === 'high' || aiResponse.riskLevel?.toLowerCase() === 'medium') && (
                 <div className="pt-2 sm:pl-10">
                   <Link href="/dashboard/providers">
-                    <Button className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm">
+                    <Button className="btn-brand font-bold px-6 py-2.5 rounded-xl flex items-center gap-2">
                       <Video className="w-4 h-4" /> Consult a Verified Specialist Now
                     </Button>
                   </Link>
@@ -182,7 +181,6 @@ export default function SymptomLoggerPage() {
           </div>
         )}
 
-      </div>
     </div>
   );
 }
