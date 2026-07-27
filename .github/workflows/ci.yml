@@ -53,7 +53,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_PAT }}
+          password: ${{ github.token }}
 
       - name: Build and Push Monorepo Image
         uses: docker/build-push-action@v5
