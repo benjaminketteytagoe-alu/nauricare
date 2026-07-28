@@ -128,7 +128,7 @@ export default function HealthTimelinePage() {
                     <Icon className="w-5 h-5" />
                   </div>
                   {!isLast && (
-                    <div className="flex-1 w-0.5 bg-gradient-to-b from-gray-200 to-gray-100 mt-2" />
+                    <div className="flex-1 w-0.5 bg-gray-200 mt-2" />
                   )}
                 </div>
 

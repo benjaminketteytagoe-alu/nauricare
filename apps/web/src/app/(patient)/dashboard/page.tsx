@@ -288,7 +288,7 @@ export default function PatientDashboardPage() {
           
           {/* Dynamic Telehealth Card */}
           {nextAppointment ? (
-            <div className="bg-gradient-to-br from-rose-700 to-fuchsia-900 rounded-2xl p-6 text-white shadow-md shadow-rose-200 space-y-4 relative overflow-hidden">
+            <div className="bg-rose-800 rounded-2xl p-6 text-white shadow-md shadow-rose-200 space-y-4 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-2xl"></div>
               <div className="flex justify-between items-center relative z-10">
                 <Calendar className="w-5 h-5 text-rose-200" />
@@ -325,7 +325,7 @@ export default function PatientDashboardPage() {
               </Link>
             </div>
           ) : (
-            <div className="bg-gradient-to-br from-rose-700 to-fuchsia-900 rounded-2xl p-6 text-white shadow-md shadow-rose-200 space-y-4">
+            <div className="bg-rose-800 rounded-2xl p-6 text-white shadow-md shadow-rose-200 space-y-4">
               <div className="flex justify-between items-center">
                 <Calendar className="w-5 h-5 text-rose-200" />
                 <span className="bg-white/20 text-rose-100 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full">Available Now</span>

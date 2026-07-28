@@ -21,36 +21,38 @@
 }
 
 /* ─── NauriCare brand system (patient-facing surfaces) ──────────────────────
-   Warm, vibrant "feminine healthtech" palette, scoped to the patient portal
-   via these utilities rather than the shadcn --primary/--background tokens
-   (those stay neutral so the provider/admin portals are unaffected).
+   Crisp, solid "clinical" palette, scoped to the patient portal via these
+   utilities rather than the shadcn --primary/--background tokens (those
+   stay neutral so the provider/admin portals are unaffected).
 
-   Primary accents .... rose-600 / pink-600 / fuchsia-700
-   Canvas ............. rose-50 -> pink-50 -> slate-50 wash
+   No multi-color gradients: every surface below is a single solid color.
+
+   Primary accent ..... rose-600 (hover rose-700, active rose-800)
+   Canvas .............. solid slate-50
    Pastel surfaces .... rose-50/70, purple-50/70, teal-50/70, amber-50/70
    Borders ............ rose-100, pink-200/60
    ───────────────────────────────────────────────────────────────────────── */
 @utility app-shell-canvas {
-  @apply bg-gradient-to-br from-rose-50/90 via-pink-50/40 to-slate-50 min-h-screen;
+  @apply bg-slate-50 min-h-screen;
 }
 /* nav-glass intentionally omits border-b/border-r: it's used on both the
    mobile top bar (border-b) and the responsive aside (border-r at all
    sizes, incl. the mobile off-canvas drawer) — a single baked-in side
    would be wrong for one of the two. Callers supply the side. */
 @utility nav-glass {
-  @apply bg-white/80 backdrop-blur-md border-rose-100;
+  @apply bg-white/95 border-rose-100;
 }
 /* card-surface intentionally omits padding: call sites range from p-4 to
    p-12, and several wrap tab/list children that already pad themselves
    (baking in p-6 would double-pad those). Callers supply their own padding. */
 @utility card-surface {
-  @apply bg-white/90 backdrop-blur-sm border border-rose-100 shadow-sm rounded-3xl;
+  @apply bg-white border border-rose-100 shadow-sm rounded-3xl;
 }
 /* btn-brand intentionally omits rounded-*/font-weight: call sites split
    between rounded-full and rounded-xl (and font-medium/semibold/bold)
    depending on context. Callers supply shape + weight. */
 @utility btn-brand {
-  @apply bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white shadow-md shadow-rose-200 transition-all;
+  @apply bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white shadow-md shadow-rose-200 transition-all;
 }
 @utility nav-pill-active {
   @apply bg-rose-600 text-white font-semibold rounded-full shadow-sm shadow-rose-200;

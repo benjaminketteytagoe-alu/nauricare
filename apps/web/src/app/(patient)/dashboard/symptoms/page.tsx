@@ -76,7 +76,7 @@ export default function SymptomLoggerPage() {
         </Link>
 
         <div className="card-surface overflow-hidden">
-          <div className="bg-gradient-to-r from-rose-700 to-fuchsia-800 p-6 text-white">
+          <div className="bg-rose-800 p-6 text-white">
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Activity className="w-6 h-6 text-rose-200" /> Daily Health Log
             </h1>

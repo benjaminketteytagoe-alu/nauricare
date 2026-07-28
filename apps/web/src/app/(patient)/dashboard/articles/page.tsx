@@ -102,7 +102,7 @@ export default function ArticleLibraryPage() {
       {isLoading ? (
         <div className="h-56 bg-rose-800 rounded-3xl animate-pulse" />
       ) : featured ? (
-        <div className="relative bg-gradient-to-br from-rose-800 to-fuchsia-950 rounded-3xl p-8 md:p-10 text-white overflow-hidden shadow-lg">
+        <div className="relative bg-rose-800 rounded-3xl p-8 md:p-10 text-white overflow-hidden shadow-lg">
           {/* Decorative blobs */}
           <div className="absolute top-0 right-0 w-72 h-72 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-fuchsia-400/10 rounded-full blur-2xl pointer-events-none" />

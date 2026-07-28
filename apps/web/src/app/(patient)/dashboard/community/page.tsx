@@ -110,7 +110,7 @@ function StoryRingItem({
       <div className="relative">
         {/* Gradient ring — conic for multi-story segmentation visual */}
         <div
-          style={{ background: "linear-gradient(135deg, #e11d48, #db2777, #a21caf)" }}
+          style={{ background: "#e11d48" }}
           className="p-[2.5px] rounded-full"
         >
           <div className="bg-white p-[2px] rounded-full">
@@ -198,7 +198,7 @@ function StoryViewer({
         ) : (
           <div
             className="w-full aspect-[9/16] max-h-[500px] flex items-center justify-center"
-            style={{ background: `linear-gradient(135deg, ${avatarGradient(group.author.name)})` }}
+            style={{ background: avatarColor(group.author.name) }}
           >
             <p className="text-white text-xl font-bold px-6 text-center leading-relaxed">
               {story.content}
@@ -208,7 +208,7 @@ function StoryViewer({
 
         {/* Caption overlay when has image */}
         {story.imageUrl && story.content && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-5 pt-10">
+          <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-5 pt-5">
             <p className="text-white text-sm leading-relaxed">{story.content}</p>
           </div>
         )}
@@ -234,13 +234,10 @@ function StoryViewer({
   );
 }
 
-// Map a name to a two-stop gradient for story cards without images
-function avatarGradient(name: string): string {
-  const gradients = [
-    "#0d9488, #0891b2", "#7c3aed, #db2777", "#0891b2, #0ea5e9",
-    "#d97706, #dc2626", "#059669, #0d9488", "#9333ea, #6366f1",
-  ];
-  return gradients[name.charCodeAt(0) % gradients.length];
+// Map a name to a solid background color for story cards without images
+function avatarColor(name: string): string {
+  const colors = ["#e11d48", "#1d4ed8", "#d97706", "#0f172a", "#be123c", "#334155"];
+  return colors[name.charCodeAt(0) % colors.length];
 }
 
 // ─── Comments thread ──────────────────────────────────────────────────────────
