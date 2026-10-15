@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { nauriAgent } from "@/agents/nauri-agent";
+import { getClientIp } from "@/lib/getClientIp";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 // Public endpoint: Nauri is embedded on the landing page for all visitors.
-// Add rate limiting via middleware before production traffic.
+// No session to key on, so rate limiting is by IP — each call proxies to a
+// paid Anthropic API, making this a real cost/abuse vector if unbounded.
 
 type IncomingMessage = { role: string; content: string };
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req.headers);
+    const limit = rateLimit(`agent-chat:${ip}`, 15, 5 * 60_000);
+    if (!limit.allowed) return rateLimitResponse(limit);
+
     const { messages } = (await req.json()) as { messages: IncomingMessage[] };
 
     if (!Array.isArray(messages) || messages.length === 0) {

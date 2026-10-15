@@ -50,6 +50,46 @@ enum AuditAction {
   PROVIDER_SUSPEND
   RECORD_ACCESS
   ADMIN_SETTINGS_UPDATE
+  PAYMENT_VERIFIED
+  PAYMENT_REJECTED
+}
+
+enum SubscriptionTier {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  VERIFYING
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  MOMO
+  STRIPE
+  INVOICE_WIRE
+}
+
+enum CorporateTier {
+  STARTER
+  GROWTH
+  ENTERPRISE
+}
+
+enum CorporateBillingCycle {
+  MONTHLY
+  ANNUAL
+}
+
+enum PaymentTransactionStatus {
+  PENDING
+  VERIFYING
+  COMPLETED
+  FAILED
 }
 
 enum MediaType {
@@ -97,6 +137,19 @@ model User {
   hospitalAffiliation String?
   secondaryEmail      String?
 
+  // Student trial eligibility — permanent record, independent of the
+  // Subscription row's lifecycle, so a lapsed/cancelled trial can never be
+  // re-granted by re-verifying or re-subscribing.
+  studentTrialGrantedAt   DateTime?
+  studentTrialEmailDomain String?
+
+  // Corporate ("NauriCare Corporate Care") seat membership — live-checked
+  // against the org's CorporateSubscription.status on every entitlement
+  // check, unlike the student trial's permanent one-time grant above.
+  organizationId      String?
+  organization        Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  isCorporateEmployee Boolean       @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -111,6 +164,9 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
   accounts                Account[]
   sessions                Session[]
+  subscription            Subscription?
+  paymentTransactions     PaymentTransaction[]
+  feedback                Feedback[]
 
   // Social graph — rows where I'm the follower / the one being followed
   following Follow[] @relation("UserFollowing")
@@ -168,6 +224,7 @@ model PractitionerProfile {
   specialty  String // e.g., "Endocrinologist", "Gynecologist"
   bio        String?
   isVerified Boolean @default(false) // Admin approval flag
+  isActive   Boolean @default(true) // Soft-delete flag — false once an admin "deletes" the provider
 
   appointments  Appointment[]  @relation("DoctorAppointments")
   healthRecords HealthRecord[] @relation("ProviderHealthRecords")
@@ -575,4 +632,189 @@ model CommunityStory {
 
   @@index([authorId])
   @@index([expiresAt])
+}
+
+// --- Subscriptions & Payments ---
+
+// Source of truth for pricing — looked up server-side on every checkout/
+// verification call. Never trust a client-supplied amount.
+model Plan {
+  id                  String           @id @default(cuid())
+  tier                SubscriptionTier @unique
+  name                String
+  priceCents          Int // total price for the whole billing period, in USD cents
+  billingPeriodMonths Int
+  stripePriceId       String?          @unique
+  isActive            Boolean          @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions       Subscription[]
+  paymentTransactions PaymentTransaction[]
+}
+
+model Subscription {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Nullable: a TRIALING subscription grants full access without the
+  // user having chosen a paid tier yet.
+  planId String?
+  plan   Plan?             @relation(fields: [planId], references: [id])
+  tier   SubscriptionTier?
+
+  status SubscriptionStatus @default(EXPIRED)
+
+  trialStartedAt DateTime?
+  trialEndsAt    DateTime?
+
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelledAt        DateTime?
+
+  stripeCustomerId     String?
+  stripeSubscriptionId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  paymentTransactions PaymentTransaction[]
+
+  @@index([status])
+}
+
+model PaymentTransaction {
+  id     String  @id @default(cuid())
+  // Nullable — a corporate lead-gen payment (HR signing up their company)
+  // may be submitted before the HR contact has any NauriCare User account.
+  // Individual payments always set this.
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Nullable — corporate payments price by tier × seats, not an individual Plan row.
+  planId String?
+  plan   Plan?   @relation(fields: [planId], references: [id])
+
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  organizationId          String?
+  organization            Organization?          @relation(fields: [organizationId], references: [id])
+  corporateSubscriptionId String?
+  corporateSubscription   CorporateSubscription? @relation(fields: [corporateSubscriptionId], references: [id])
+
+  method PaymentMethod
+  status PaymentTransactionStatus @default(PENDING)
+
+  // Snapshotted server-side at creation — the record of what was actually charged.
+  amountCents Int
+  currency    String @default("USD")
+
+  // MoMo — reference code the patient dials via USSD and submits for review.
+  // @unique is the DB-level backstop against replaying the same code twice.
+  momoTransactionRef String? @unique
+  momoPhoneNumber    String?
+
+  // Stripe
+  stripeSessionId       String? @unique
+  stripePaymentIntentId String?
+
+  // Manual MoMo verification trail
+  verifiedByAdminId String?
+  verifiedAt        DateTime?
+  failureReason     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([organizationId])
+}
+
+// --- B2B Corporate Wellness ("NauriCare Corporate Care") ---
+
+model Organization {
+  id                   String @id @default(uuid())
+  name                 String
+  corporateEmailDomain String @unique
+
+  contactPersonName String
+  contactEmail      String
+  contactPhone      String?
+
+  // Seat count is the ground truth for auto-enrollment eligibility — always
+  // mutated via an atomic conditional update (see lib/corporateEnrollment.ts),
+  // never a plain read-then-write, to avoid a race that over-provisions seats.
+  allocatedSeats Int @default(10)
+  usedSeats      Int @default(0)
+
+  subscription        CorporateSubscription?
+  employees           User[]
+  paymentTransactions PaymentTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CorporateSubscription {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  tier         CorporateTier
+  billingCycle CorporateBillingCycle
+
+  // Float per the product spec's stated pricing granularity (dollars, not
+  // cents) — internal calculation still does integer-cents arithmetic and
+  // only converts to Float at the point of storage, to keep rounding error
+  // out of the actual computation.
+  pricePerSeatMonth  Float
+  totalContractValue Float
+
+  status        SubscriptionStatus @default(VERIFYING)
+  paymentMethod PaymentMethod
+
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+
+  paymentTransactions PaymentTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+enum FeedbackCategory {
+  GENERAL
+  BUG_REPORT
+  FEATURE_REQUEST
+  PROVIDER_EXPERIENCE
+  BILLING
+}
+
+enum FeedbackStatus {
+  NEW
+  REVIEWED
+  ACTIONED
+}
+
+model Feedback {
+  id       String           @id @default(cuid())
+  userId   String
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating   Int
+  category FeedbackCategory @default(GENERAL)
+  comment  String
+  status   FeedbackStatus   @default(NEW)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([category])
 }

@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
+import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+
+const onboardingSchema = z.object({
+  country: z.string().trim().min(1, "Country is required"),
+  menstrualCycle: z.string().trim().optional().nullable(),
+  emergencyContact: z.string().trim().max(200).optional().nullable(),
+  dateOfBirth: z.string().optional().nullable(),
+});
 
 export async function POST(req: Request) {
   try {
@@ -12,12 +20,18 @@ export async function POST(req: Request) {
     }
 
     // 2. Parse the incoming form data
-    const body = await req.json();
-    const { country, menstrualCycle, emergencyContact, dateOfBirth } = body;
-
-    if (!country) {
-      return NextResponse.json({ error: "Country is required" }, { status: 400 });
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
+
+    const parsed = onboardingSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+    }
+    const { country, menstrualCycle, emergencyContact, dateOfBirth } = parsed.data;
 
     // Parse dateOfBirth safely — Google OAuth users often omit this field
     const parsedDob = dateOfBirth ? new Date(dateOfBirth) : null;

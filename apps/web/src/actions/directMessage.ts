@@ -4,6 +4,18 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { checkSubscriptionStatus } from "@/lib/entitlements";
+
+const PREMIUM_REQUIRED_ERROR = "Direct messaging requires an active subscription or student trial.";
+
+// Direct provider messaging is a gated premium feature for patients only —
+// providers using this same action (DirectMessageChat is shared by both
+// portals) are never subject to a patient subscription check.
+async function blockedByPremiumGate(userId: string, role: string): Promise<boolean> {
+  if (role !== "PATIENT") return false;
+  const entitlement = await checkSubscriptionStatus(userId);
+  return !entitlement.active;
+}
 
 // Returns true when the two users share at least one appointment (either direction).
 async function hasSharedAppointment(userA: string, userB: string): Promise<boolean> {
@@ -46,6 +58,10 @@ export async function getConversations() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { success: false, error: "Unauthorized", data: [] };
 
+  if (await blockedByPremiumGate(session.user.id, session.user.role)) {
+    return { success: false, error: PREMIUM_REQUIRED_ERROR, data: [] };
+  }
+
   const messages = await prisma.directMessage.findMany({
     where: {
       OR: [{ senderId: session.user.id }, { receiverId: session.user.id }],
@@ -86,6 +102,10 @@ export async function getDirectMessages(contactId: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { success: false, error: "Unauthorized", data: [] };
 
+  if (await blockedByPremiumGate(session.user.id, session.user.role)) {
+    return { success: false, error: PREMIUM_REQUIRED_ERROR, data: [] };
+  }
+
   const allowed = await hasSharedAppointment(session.user.id, contactId);
   if (!allowed) return { success: false, error: "No shared appointment with this user.", data: [] };
 
@@ -113,6 +133,10 @@ export async function getDirectMessages(contactId: string) {
 export async function sendDirectMessage(receiverId: string, content: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+
+  if (await blockedByPremiumGate(session.user.id, session.user.role)) {
+    return { success: false, error: PREMIUM_REQUIRED_ERROR };
+  }
 
   const trimmed = content.trim();
   if (!trimmed) return { success: false, error: "Message cannot be empty" };

@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { sendPatientConfirmationEmail, sendProviderAlertEmail } from "@/lib/email";
+import { requirePremiumApi } from "@/lib/entitlements";
 
 export async function POST(req: Request) {
   try {
@@ -11,6 +12,11 @@ export async function POST(req: Request) {
     if (!session?.user?.id || session.user.role !== "PATIENT") {
       return new NextResponse("Unauthorized. Only patients can book appointments.", { status: 401 });
     }
+
+    // Booking is part of the gated "Teleconsultations / Direct Provider
+    // Messaging & Booking" premium feature.
+    const gate = await requirePremiumApi(session.user.id);
+    if (!gate.ok) return gate.response;
 
     const body = await req.json();
     const { practitionerProfileId, startTime, endTime, notes } = body;
@@ -160,6 +166,9 @@ export async function GET() {
     }
 
     // --- SCENARIO B: The user is a PATIENT ---
+    const gate = await requirePremiumApi(session.user.id);
+    if (!gate.ok) return gate.response;
+
     const patientProfile = await prisma.patientProfile.findUnique({
       where: { userId: session.user.id },
     });

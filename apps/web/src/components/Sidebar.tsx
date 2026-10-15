@@ -7,9 +7,10 @@ import { signOut } from "next-auth/react";
 import { useState } from "react";
 import {
   LayoutDashboard, Activity, Calendar, FileText, Settings, LogOut,
-  Users, Menu, X, Pill, MessageSquare, Droplet,
+  Users, Menu, X, Pill, MessageSquare, Droplet, CreditCard,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
+import { UserFeedbackModal } from "@/components/feedback/UserFeedbackModal";
 
 const navItems = [
   { name: "My Health",       href: "/dashboard",                icon: LayoutDashboard },
@@ -20,6 +21,7 @@ const navItems = [
   { name: "Prescriptions",   href: "/dashboard/prescriptions",  icon: Pill },
   { name: "Messages",        href: "/dashboard/messages",       icon: MessageSquare },
   { name: "Community",       href: "/dashboard/community",      icon: Users },
+  { name: "Upgrade Plan",    href: "/dashboard/pricing",        icon: CreditCard },
   { name: "Settings",        href: "/dashboard/settings",       icon: Settings },
 ];
 
@@ -144,6 +146,7 @@ export function Sidebar() {
             <NotificationBell />
             <span className="text-sm font-medium">Notifications</span>
           </div>
+          <UserFeedbackModal />
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-colors"

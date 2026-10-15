@@ -5,6 +5,7 @@ import { randomBytes, createHash } from "crypto";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { getClientIp } from "@/lib/getClientIp";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 const schema = z.object({
   email: z.string().email(),
@@ -13,12 +14,13 @@ const schema = z.object({
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req.headers as Headers);
+    const limit = rateLimit(`auth-forgot-password:${ip}`, 5, 15 * 60_000);
+    if (!limit.allowed) return rateLimitResponse(limit);
+
     const body = await req.json();
 
-    const isHuman = await verifyTurnstileToken(
-      body?.turnstileToken ?? "",
-      getClientIp(req.headers as Headers),
-    );
+    const isHuman = await verifyTurnstileToken(body?.turnstileToken ?? "", ip);
     if (!isHuman) {
       return NextResponse.json(
         { error: "Security verification failed. Please try again." },

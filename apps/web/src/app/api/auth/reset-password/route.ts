@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { createHash } from "crypto";
 import bcrypt from "bcryptjs";
+import { getClientIp } from "@/lib/getClientIp";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 const PASSWORD_REGEX = /^(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/;
 
@@ -16,6 +18,10 @@ const schema = z.object({
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req.headers);
+    const limit = rateLimit(`auth-reset-password:${ip}`, 10, 15 * 60_000);
+    if (!limit.allowed) return rateLimitResponse(limit);
+
     const body = await req.json();
     const parsed = schema.safeParse(body);
     if (!parsed.success) {

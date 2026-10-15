@@ -2,12 +2,18 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { requirePremiumApi } from "@/lib/entitlements";
 
 // GET: Return the latest message from every distinct conversation for the current user.
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+
+    if (session.user.role === "PATIENT") {
+      const gate = await requirePremiumApi(session.user.id);
+      if (!gate.ok) return gate.response;
+    }
 
     // Fetch recent messages in both directions. 200 is a safe cap for V1 —
     // deduplication below reduces this to one entry per unique partner.
@@ -59,6 +65,11 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+
+    if (session.user.role === "PATIENT") {
+      const gate = await requirePremiumApi(session.user.id);
+      if (!gate.ok) return gate.response;
+    }
 
     const { receiverId, content } = await req.json();
 

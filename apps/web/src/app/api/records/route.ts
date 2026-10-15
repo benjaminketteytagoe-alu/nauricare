@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
+import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { logAdministrativeAction } from "@/lib/audit";
+
+const createRecordSchema = z.object({
+  patientProfileId: z.string().min(1),
+  type: z.string().trim().min(1).max(100),
+  content: z.string().trim().min(1).max(10_000),
+  notes: z.string().trim().max(5_000).optional(),
+  documentUrl: z.url().optional(),
+});
 
 export async function GET(req: Request) {
   try {
@@ -89,7 +98,18 @@ export async function POST(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { patientProfileId, type, content } = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return new NextResponse("Invalid JSON body", { status: 400 });
+    }
+
+    const parsed = createRecordSchema.safeParse(body);
+    if (!parsed.success) {
+      return new NextResponse(parsed.error.issues[0].message, { status: 400 });
+    }
+    const { patientProfileId, type, content, notes, documentUrl } = parsed.data;
 
     const practitioner = await prisma.practitionerProfile.findUnique({
       where: { userId: session.user.id }
@@ -97,12 +117,24 @@ export async function POST(req: Request) {
 
     if (!practitioner) return new NextResponse("Practitioner not found", { status: 404 });
 
+    // BOLA guard: a provider may only write a record for a patient they have
+    // an actual appointment relationship with — without this, any provider
+    // could write clinical records against any patient in the system.
+    const sharedAppointment = await prisma.appointment.findFirst({
+      where: { practitionerProfileId: practitioner.id, patientProfileId },
+    });
+    if (!sharedAppointment) {
+      return new NextResponse("Forbidden: no active patient relationship", { status: 403 });
+    }
+
     const record = await prisma.healthRecord.create({
       data: {
-        patientProfileId: patientProfileId, 
+        patientProfileId,
         practitionerProfileId: practitioner.id,
-        type: type, 
-        content: content, 
+        type,
+        content,
+        notes: notes || null,
+        documentUrl: documentUrl || null,
       }
     });
 

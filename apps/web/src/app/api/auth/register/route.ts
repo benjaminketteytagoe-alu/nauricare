@@ -7,6 +7,7 @@ import { verifyTurnstileToken } from "@/lib/turnstile";
 import { getClientIp } from "@/lib/getClientIp";
 import { passwordField } from "@/lib/validation/password";
 import { sendVerificationEmail } from "@/lib/email";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 const privacyField = z.boolean().refine((v) => v === true, {
   message: "You must consent to the privacy policy",
@@ -49,11 +50,15 @@ const registerSchema = z.discriminatedUnion("role", [patientSchema, providerSche
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req.headers as Headers);
+    const limit = rateLimit(`auth-register:${ip}`, 5, 15 * 60_000);
+    if (!limit.allowed) return rateLimitResponse(limit);
+
     const body = await req.json();
 
     const isHuman = await verifyTurnstileToken(
       body?.turnstileToken ?? "",
-      getClientIp(req.headers as Headers),
+      ip,
     );
     if (!isHuman) {
       return NextResponse.json(

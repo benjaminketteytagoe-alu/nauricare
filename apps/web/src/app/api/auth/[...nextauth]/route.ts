@@ -6,6 +6,9 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { verifyTurnstileToken } from "@/lib/turnstile";
+import { grantStudentTrialIfEligible } from "@/lib/studentTrial";
+import { linkCorporateEmployeeIfEligible } from "@/lib/corporateEnrollment";
+import { rateLimit } from "@/lib/rateLimit";
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -39,6 +42,13 @@ export const authOptions: AuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Please fill in both email and password fields.");
+        }
+
+        // Brute-force guard: cap login attempts per email, independent of
+        // Turnstile (a solved token doesn't limit how many passwords get tried).
+        const loginLimit = rateLimit(`auth-login:${credentials.email.trim().toLowerCase()}`, 10, 15 * 60_000);
+        if (!loginLimit.allowed) {
+          throw new Error("Too many login attempts. Please try again in a few minutes.");
         }
 
         const isHuman = await verifyTurnstileToken(credentials.turnstileToken ?? "");
@@ -179,6 +189,14 @@ export const authOptions: AuthOptions = {
           where: { id: user.id, isEmailVerified: false },
           data: { isEmailVerified: true },
         });
+        if (user.email) {
+          try {
+            await grantStudentTrialIfEligible(user.id, user.email);
+            await linkCorporateEmployeeIfEligible(user.id, user.email);
+          } catch (err) {
+            console.error("[STUDENT_TRIAL_GRANT_ERROR]", err);
+          }
+        }
       }
     },
   },

@@ -48,7 +48,7 @@
 @utility card-surface {
   @apply bg-white border border-rose-100 shadow-sm rounded-3xl;
 }
-/* btn-brand intentionally omits rounded-*/font-weight: call sites split
+/* btn-brand intentionally omits rounding and font-weight: call sites split
    between rounded-full and rounded-xl (and font-medium/semibold/bold)
    depending on context. Callers supply shape + weight. */
 @utility btn-brand {
