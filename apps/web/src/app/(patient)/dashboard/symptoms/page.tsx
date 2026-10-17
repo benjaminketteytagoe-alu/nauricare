@@ -6,7 +6,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Activity, Brain, AlertCircle, Heart, Video } from "lucide-react";
+import { ArrowLeft, Activity } from "lucide-react";
+import { TriageResultCard, type TriageView } from "@/components/triage/TriageResultCard";
 
 const COMMON_SYMPTOMS = [
   "Cramps", "Bloating", "Headache", "Fatigue", 
@@ -19,7 +20,7 @@ export default function SymptomLoggerPage() {
   const [cycleDay, setCycleDay] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
-  const [aiResponse, setAiResponse] = useState<{ insight: string; riskLevel: string } | null>(null);
+  const [aiResponse, setAiResponse] = useState<{ triage: TriageView; checkId: string } | null>(null);
   const [error, setError] = useState("");
 
   const toggleSymptom = (symptom: string) => {
@@ -55,10 +56,7 @@ export default function SymptomLoggerPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to log symptoms.");
 
-      setAiResponse({
-        insight: data.aiInsight,
-        riskLevel: data.log.riskLevel,
-      });
+      setAiResponse({ triage: data.triage, checkId: data.log.id });
       
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to log symptoms.");
@@ -150,36 +148,8 @@ export default function SymptomLoggerPage() {
           </div>
         </div>
 
-        {/* Gemini AI Response Area */}
-        {aiResponse && (
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-sm border border-rose-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className={`p-4 border-b flex items-center gap-2 font-semibold ${
-              aiResponse.riskLevel?.toLowerCase() === 'high' ? 'bg-red-50 text-red-700 border-red-200' :
-              aiResponse.riskLevel?.toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-800 border-amber-100' : 
-              'bg-teal-50 text-teal-800 border-teal-100'
-            }`}>
-              {aiResponse.riskLevel?.toLowerCase() === 'high' ? <AlertCircle className="w-5 h-5" /> : <Heart className="w-5 h-5" />}
-              NauriCare AI Insight (Risk Level: {aiResponse.riskLevel})
-            </div>
-            <div className="p-6 space-y-5">
-              <div className="flex gap-4 text-gray-700 leading-relaxed">
-                <Brain className="w-6 h-6 text-rose-600 shrink-0 mt-1" />
-                <p>{aiResponse.insight}</p>
-              </div>
-
-              {/* Dynamic Escalation Action Button */}
-              {(aiResponse.riskLevel?.toLowerCase() === 'high' || aiResponse.riskLevel?.toLowerCase() === 'medium') && (
-                <div className="pt-2 sm:pl-10">
-                  <Link href="/dashboard/providers">
-                    <Button className="btn-brand font-bold px-6 py-2.5 rounded-xl flex items-center gap-2">
-                      <Video className="w-4 h-4" /> Consult a Verified Specialist Now
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {/* AI triage result (MedGemma → Gemini → safety rules) */}
+        {aiResponse && <TriageResultCard triage={aiResponse.triage} symptomCheckId={aiResponse.checkId} />}
 
     </div>
   );
