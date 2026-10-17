@@ -4,6 +4,14 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { idSchema, firstIssue } from "@/lib/validation/common";
+
+const UpdateStatusInput = z.object({
+  appointmentId: idSchema,
+  status: z.enum(["COMPLETED", "MISSED", "CANCELLED"]),
+});
+
 type AppointmentStatus = "SCHEDULED" | "COMPLETED" | "CANCELLED" | "MISSED";
 
 const TERMINAL_STATUSES: AppointmentStatus[] = ["COMPLETED", "CANCELLED", "MISSED"];
@@ -16,6 +24,9 @@ export async function updateAppointmentStatus(
   if (!session?.user?.id || session.user.role !== "PROVIDER") {
     return { success: false, error: "Unauthorized" };
   }
+
+  const parsed = UpdateStatusInput.safeParse({ appointmentId, status });
+  if (!parsed.success) return { success: false, error: firstIssue(parsed.error) };
 
   const practitioner = await prisma.practitionerProfile.findUnique({
     where: { userId: session.user.id },
@@ -37,8 +48,8 @@ export async function updateAppointmentStatus(
   }
 
   await prisma.appointment.update({
-    where: { id: appointmentId },
-    data: { status },
+    where: { id: appointment.id },
+    data: { status: parsed.data.status },
   });
 
   revalidatePath("/provider/roster");

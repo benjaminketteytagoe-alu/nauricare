@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { INSURANCE_VALUES } from "@/lib/referrals/constants";
-import { requirePatientId } from "@/lib/referrals/server";
+import { getUserIdWithRole } from "@/lib/auth-guards";
 
 const InsuranceInput = z
   .object({
@@ -21,7 +21,7 @@ const InsuranceInput = z
   });
 
 export async function GET() {
-  const userId = await requirePatientId();
+  const userId = await getUserIdWithRole("PATIENT");
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const insurance = await prisma.patientInsurance.findUnique({ where: { userId } });
@@ -29,7 +29,7 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  const userId = await requirePatientId();
+  const userId = await getUserIdWithRole("PATIENT");
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const parsed = InsuranceInput.safeParse(await req.json().catch(() => null));

@@ -596,8 +596,11 @@ model CommunityStory {
 
 enum FeedbackCategory {
   GENERAL
+  CLINICAL_TRIAGE
+  REFERRALS_BOOKING
   BUG_REPORT
   FEATURE_REQUEST
+  // Legacy values, no longer offered in the form; kept so historical rows stay valid.
   PROVIDER_EXPERIENCE
   BILLING
 }

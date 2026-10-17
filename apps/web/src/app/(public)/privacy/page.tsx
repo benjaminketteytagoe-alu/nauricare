@@ -157,7 +157,7 @@ const sections: LegalSection[] = [
     body: (
       <p>
         We will post any update on this page and change the effective date. If a change is significant, we will tell you
-        by email or in the app before it takes effect. See also our <Link href="/terms">Terms of Use</Link> and{" "}
+        by email or in the app before it takes effect. See also our <Link href="/terms">Terms of Service</Link> and{" "}
         <Link href="/consent">Informed Consent</Link>.
       </p>
     ),

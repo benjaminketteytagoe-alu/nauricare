@@ -1,182 +1,181 @@
 "use client";
 
-import { useState } from "react";
-import { MessageSquarePlus, X, Star, CheckCircle2 } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { CheckCircle2, Loader2, MessageSquarePlus, X } from "lucide-react";
 import { submitFeedback } from "@/actions/feedback";
-
-const CATEGORIES = [
-  { value: "GENERAL", label: "General Feedback" },
-  { value: "BUG_REPORT", label: "Bug Report" },
-  { value: "FEATURE_REQUEST", label: "Feature Request" },
-  { value: "PROVIDER_EXPERIENCE", label: "Provider Experience" },
-  { value: "BILLING", label: "Billing" },
-] as const;
+import { CSAT_SCALE, FEEDBACK_FORM_CATEGORIES, type FeedbackFormCategory } from "@/lib/feedback/categories";
+import { SidebarAction, type SidebarTone } from "@/components/navigation/AppSidebar";
+import { Callout } from "@/components/ui/callout";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 const COMMENT_MAX = 2000;
 
-/**
- * Self-contained feedback widget: renders its own trigger button and modal,
- * so callers just drop <UserFeedbackModal /> into a sidebar/header with no
- * state wiring, matching the NotificationBell pattern in this codebase.
- */
-export function UserFeedbackModal({ variant = "light" }: { variant?: "light" | "dark" }) {
-  const [isOpen, setIsOpen] = useState(false);
+/** The feedback form dialog. Controlled: the caller owns `open`. */
+export function FeedbackDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const titleId = useId();
+  const firstFieldRef = useRef<HTMLSelectElement>(null);
   const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]["value"]>("GENERAL");
+  const [category, setCategory] = useState<FeedbackFormCategory>("GENERAL");
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  function reset() {
-    setRating(0);
-    setHoverRating(0);
-    setCategory("GENERAL");
-    setComment("");
-    setError("");
-    setSubmitted(false);
+  // Latest close handler in a ref, so the open-effect below runs only when
+  // `open` changes (not on every render) and focus isn't stolen while typing.
+  const closeRef = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    if (!open) return;
+    firstFieldRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeRef.current();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  function close() {
+    onClose();
+    // Reset after the dialog has unmounted so it never flashes empty.
+    setTimeout(() => {
+      setRating(0);
+      setCategory("GENERAL");
+      setComment("");
+      setError("");
+      setSubmitted(false);
+    }, 200);
   }
 
-  function handleClose() {
-    setIsOpen(false);
-    // Delay reset so the closing state doesn't flash empty before the modal unmounts.
-    setTimeout(reset, 200);
-  }
+  useEffect(() => {
+    closeRef.current = close;
+  });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (rating === 0) {
-      setError("Please choose a star rating.");
-      return;
-    }
-    if (!comment.trim()) {
-      setError("Please share a few words of feedback.");
-      return;
-    }
-
+    if (rating === 0) return setError("Please choose how satisfied you are.");
+    if (!comment.trim()) return setError("Please share a few words of feedback.");
     setError("");
     setIsSubmitting(true);
     const result = await submitFeedback({ rating, category, comment: comment.trim() });
     setIsSubmitting(false);
-
-    if (result.success) {
-      setSubmitted(true);
-    } else {
-      setError(result.error);
-    }
+    if (result.success) setSubmitted(true);
+    else setError(result.error);
   }
 
-  return (
-    <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className={
-          variant === "dark"
-            ? "flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-teal-100 hover:bg-teal-800/50 hover:text-white transition-colors"
-            : "flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-colors"
-        }
-      >
-        <MessageSquarePlus className="w-5 h-5" />
-        Send Feedback
-      </button>
+  if (!open) return null;
 
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="card-surface w-full max-w-md overflow-hidden">
-            <div className="flex justify-between items-center p-6 border-b border-rose-100">
-              <h2 className="text-xl font-bold text-slate-900">Share Your Feedback</h2>
-              <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
-                <X className="w-5 h-5" />
-              </button>
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 animate-in fade-in duration-200" onClick={close}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-xl animate-in zoom-in-95 duration-200"
+      >
+        <div className="flex items-start justify-between gap-4 px-6 pb-2 pt-6">
+          <div>
+            <h2 id={titleId} className="text-xl font-bold text-nc-ink">Share your feedback</h2>
+            <p className="mt-1 text-sm text-slate-500">It goes straight to the NauriCare team.</p>
+          </div>
+          <button type="button" onClick={close} aria-label="Close feedback" className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+            <X className="h-5 w-5" aria-hidden />
+          </button>
+        </div>
+
+        {submitted ? (
+          <div className="space-y-3 px-6 pb-8 pt-6 text-center">
+            <CheckCircle2 className="mx-auto h-12 w-12 text-nc-primary" aria-hidden />
+            <h3 className="text-lg font-bold text-nc-ink">Thank you!</h3>
+            <p className="text-sm text-slate-600">Your feedback helps us make NauriCare better for every woman who uses it.</p>
+            <button type="button" onClick={close} className="m3-btn-filled mt-2">Done</button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-5 px-6 pb-6 pt-4">
+            {error && <Callout tone="danger" role="alert">{error}</Callout>}
+
+            <fieldset>
+              <legend className="mb-2 text-sm font-semibold text-nc-ink">How satisfied are you with NauriCare?</legend>
+              <div role="radiogroup" className="grid grid-cols-5 gap-2">
+                {CSAT_SCALE.map((s) => {
+                  const selected = rating === s.value;
+                  return (
+                    <button
+                      key={s.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      aria-label={s.label}
+                      onClick={() => setRating(s.value)}
+                      className={`flex flex-col items-center gap-1 rounded-2xl border px-1 py-2.5 transition-all ${
+                        selected
+                          ? "scale-105 border-nc-primary bg-nc-primary-container shadow-sm"
+                          : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                      }`}
+                    >
+                      <span className={`text-2xl transition-[filter] ${selected || rating === 0 ? "" : "grayscale"}`} aria-hidden>{s.emoji}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-1.5 flex justify-between text-xs text-slate-500">
+                <span>Very dissatisfied</span>
+                <span className="font-medium text-nc-primary">{CSAT_SCALE.find((s) => s.value === rating)?.label ?? ""}</span>
+                <span>Very satisfied</span>
+              </div>
+            </fieldset>
+
+            <div>
+              <label htmlFor="feedback-category" className="mb-1.5 block text-sm font-semibold text-nc-ink">Category</label>
+              <select
+                id="feedback-category"
+                ref={firstFieldRef}
+                value={category}
+                onChange={(e) => setCategory(e.target.value as FeedbackFormCategory)}
+                className="m3-input"
+              >
+                {FEEDBACK_FORM_CATEGORIES.map((c) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </select>
             </div>
 
-            {submitted ? (
-              <div className="p-6 text-center py-10 space-y-3">
-                <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto" />
-                <h3 className="font-bold text-slate-900">Thank you!</h3>
-                <p className="text-sm text-gray-500">Your feedback helps us make NauriCare better.</p>
-                <button onClick={handleClose} className="btn-brand rounded-xl px-6 py-2.5 text-sm font-bold mt-2">
-                  Done
-                </button>
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label htmlFor="feedback-comment" className="text-sm font-semibold text-nc-ink">Tell us more</label>
+                <span className="text-xs text-slate-400">{comment.length}/{COMMENT_MAX}</span>
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="p-6 space-y-5 bg-slate-50">
-                {error && <p className="text-sm text-red-600">{error}</p>}
+              <textarea
+                id="feedback-comment"
+                rows={4}
+                value={comment}
+                maxLength={COMMENT_MAX}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="What's working well? What could be better?"
+                className="m3-input resize-none leading-relaxed"
+              />
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">How would you rate your experience?</label>
-                  <div className="flex items-center gap-1" onMouseLeave={() => setHoverRating(0)}>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setRating(star)}
-                        onMouseEnter={() => setHoverRating(star)}
-                        aria-label={`${star} star${star === 1 ? "" : "s"}`}
-                        className="p-1"
-                      >
-                        <Star
-                          className={`w-8 h-8 transition-colors ${
-                            (hoverRating || rating) >= star
-                              ? "fill-rose-500 text-rose-500"
-                              : "text-gray-300"
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            <button type="submit" disabled={isSubmitting} className="m3-btn-filled w-full">
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+              {isSubmitting ? "Sending…" : "Send feedback"}
+            </button>
+            <p className="text-center text-xs text-slate-500">
+              Prefer email? Write to <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-nc-primary hover:underline">{SUPPORT_EMAIL}</a>
+            </p>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
 
-                <div>
-                  <label htmlFor="feedback-category" className="block text-sm font-medium text-slate-700 mb-1">
-                    Category
-                  </label>
-                  <select
-                    id="feedback-category"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value as typeof category)}
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm"
-                  >
-                    {CATEGORIES.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label htmlFor="feedback-comment" className="block text-sm font-medium text-slate-700">
-                      Tell us more
-                    </label>
-                    <span className={`text-xs ${comment.length > COMMENT_MAX ? "text-red-600" : "text-gray-400"}`}>
-                      {comment.length}/{COMMENT_MAX}
-                    </span>
-                  </div>
-                  <textarea
-                    id="feedback-comment"
-                    rows={4}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value.slice(0, COMMENT_MAX))}
-                    placeholder="What's working well? What could be better?"
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm resize-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full btn-brand rounded-xl py-3 text-sm font-bold disabled:opacity-50"
-                >
-                  {isSubmitting ? "Submitting..." : "Submit Feedback"}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
+/** Sidebar entry that opens the feedback dialog. */
+export function UserFeedbackModal({ tone, collapsed }: { tone: SidebarTone; collapsed: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <SidebarAction icon={MessageSquarePlus} label="Send Feedback" onClick={() => setOpen(true)} tone={tone} collapsed={collapsed} />
+      <FeedbackDialog open={open} onClose={() => setOpen(false)} />
     </>
   );
 }

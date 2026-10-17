@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { carryAuthParams } from "@/lib/safeRedirect";
+import { useAuthParams } from "@/lib/authDestination";
 import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { Button } from "@/components/ui/button";
@@ -38,6 +40,7 @@ const TRUST_CHIPS = [
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function SignUpPage() {
+  const authParams = useAuthParams(); // keeps ?redirect=&action= when switching auth pages
   const router = useRouter();
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState("");
@@ -100,7 +103,9 @@ export default function SignUpPage() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to register");
-      router.push("/login?registered=true");
+      // Carry ?redirect=&action= so login can resume a landing-page triage.
+      const carry = carryAuthParams(window.location.search);
+      router.push(`/login?registered=true${carry ? `&${carry.slice(1)}` : ""}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred.");
     } finally {
@@ -261,7 +266,7 @@ export default function SignUpPage() {
 
           <p className="text-center text-sm text-gray-500">
             Already have an account?{" "}
-            <Link href="/login" className="text-teal-600 hover:underline font-semibold">
+            <Link href={`/login${authParams}`} className="text-teal-600 hover:underline font-semibold">
               Log in
             </Link>
           </p>

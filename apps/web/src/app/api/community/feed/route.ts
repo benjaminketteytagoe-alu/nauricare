@@ -3,6 +3,21 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { parseMentionsAndNotify } from "@/lib/mentions";
+import { z } from "zod";
+import { parseJson } from "@/lib/api";
+import { sanitizePlainText } from "@/lib/sanitize";
+import { idSchema } from "@/lib/validation/common";
+import { mediaUrlSchema } from "@/lib/validation/media";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+
+const PostInput = z
+  .object({
+    content: z.string().max(5000, "Posts must be under 5000 characters.").default(""),
+    mediaUrl: mediaUrlSchema.optional().or(z.literal("")).or(z.null()),
+    mediaType: z.enum(["IMAGE", "VIDEO"]).optional().or(z.null()),
+    repostOfId: idSchema.optional().or(z.literal("")).or(z.null()),
+  })
+  .refine((v) => v.content.trim().length > 0 || !!v.mediaUrl || !!v.repostOfId, { message: "Post must have content or media" });
 
 export async function GET(req: Request) {
   try {
@@ -75,19 +90,22 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
-    const { content, mediaUrl, mediaType, repostOfId } = await req.json();
+    const limit = rateLimit(`community-post:${session.user.id}`, 10, 10 * 60_000);
+    if (!limit.allowed) return rateLimitResponse(limit);
 
-    if (!content?.trim() && !mediaUrl) {
-      return new NextResponse("Post must have content or media", { status: 400 });
-    }
+    const parsed = await parseJson(req, PostInput);
+    if (!parsed.ok) return parsed.response;
+    const { mediaUrl, mediaType, repostOfId } = parsed.data;
+    const content = sanitizePlainText(parsed.data.content);
 
-    if (mediaType && mediaType !== "IMAGE" && mediaType !== "VIDEO") {
-      return new NextResponse("Invalid mediaType", { status: 400 });
+    if (repostOfId) {
+      const original = await prisma.communityPost.findUnique({ where: { id: repostOfId }, select: { id: true } });
+      if (!original) return new NextResponse("Original post not found", { status: 404 });
     }
 
     const post = await prisma.communityPost.create({
       data: {
-        content: content?.trim() ?? "",
+        content,
         mediaUrl: mediaUrl || null,
         mediaType: mediaUrl ? (mediaType ?? "IMAGE") : null,
         authorId: session.user.id,

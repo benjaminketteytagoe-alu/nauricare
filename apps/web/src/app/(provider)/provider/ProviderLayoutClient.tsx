@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { AppSidebar, SidebarAction, SidebarMobileTrigger, SidebarProvider, type NavItem } from "@/components/navigation/AppSidebar";
 import { useState } from "react";
 import {
   Activity, Users, Calendar, MessageSquare, LogOut,
@@ -12,7 +11,7 @@ import {
 import { NotificationBell } from "@/components/NotificationBell";
 import { UserFeedbackModal } from "@/components/feedback/UserFeedbackModal";
 
-const navItems = [
+const navItems: NavItem[] = [
   { name: "Clinical Dashboard", href: "/provider",               icon: Activity },
   { name: "Patient Roster",     href: "/provider/roster",        icon: Users },
   { name: "Appointments",       href: "/provider/schedule",      icon: Calendar },
@@ -21,61 +20,27 @@ const navItems = [
 ];
 
 export default function ProviderLayoutClient({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const [showSettings, setShowSettings] = useState(false);
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      <aside className="w-64 bg-teal-900 text-teal-50 flex flex-col shadow-xl z-20">
-        <div className="p-6 border-b border-teal-800">
-          <Link href="/provider" className="inline-block mb-2 bg-white p-1.5 rounded-lg shadow-sm">
-            <Image
-              src="/logo-horizontal.jpg"
-              alt="NauriCare Logo"
-              width={150}
-              height={40}
-              className="h-8 w-auto rounded-sm"
-              priority
-            />
-          </Link>
-          <p className="text-teal-400 text-xs font-semibold tracking-wider uppercase mt-1">Clinical Portal</p>
-        </div>
+    <SidebarProvider>
+    <div className="flex min-h-screen bg-gray-50">
+      <AppSidebar
+        items={navItems}
+        homeHref="/provider"
+        portalLabel="Clinical Portal"
+        tone="dark"
+        footer={(iconOnly) => (
+            <>
+              <UserFeedbackModal tone="dark" collapsed={iconOnly} />
+              <SidebarAction icon={LogOut} label="Sign Out" onClick={() => signOut({ callbackUrl: "/login" })} tone="dark" collapsed={iconOnly} />
+            </>
+        )}
+      />
 
-        <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-teal-800 text-white shadow-sm"
-                    : "text-teal-100 hover:bg-teal-800/50 hover:text-white"
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="p-4 border-t border-teal-800 space-y-1">
-          <UserFeedbackModal variant="dark" />
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-teal-100 hover:bg-teal-800 hover:text-white transition-colors"
-          >
-            <LogOut className="w-5 h-5" />
-            Sign Out
-          </button>
-        </div>
-      </aside>
-
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-end px-8 shadow-sm z-10">
+      <main className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="z-10 flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm lg:justify-end lg:px-8">
+          <SidebarMobileTrigger className="text-gray-500 hover:bg-gray-100 hover:text-teal-600" />
           <div className="flex items-center gap-4 text-gray-500">
 
             <NotificationBell notificationsHref="/provider/notifications" />
@@ -111,10 +76,11 @@ export default function ProviderLayoutClient({ children }: { children: React.Rea
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           {children}
         </div>
       </main>
     </div>
+    </SidebarProvider>
   );
 }

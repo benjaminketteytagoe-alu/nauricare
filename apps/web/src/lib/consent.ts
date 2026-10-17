@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma";
 
-// Bump this whenever the wording of the triage consent notice changes in a
-// way that matters. Everyone who agreed to an older version is shown the gate
-// again, because Law N° 058/2021 consent must be informed by the notice that
-// actually applies.
-export const CURRENT_CONSENT_VERSION = "2026.1";
+// The version lives in a client-safe module. Bumping it shows everyone the
+// gate again, because Law N° 058/2021 consent must be informed by the notice
+// that actually applies.
+import { CURRENT_CONSENT_VERSION } from "@/lib/consentVersion";
+export { CURRENT_CONSENT_VERSION };
 
 export interface TriageConsent {
   valid: boolean;

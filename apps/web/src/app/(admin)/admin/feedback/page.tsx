@@ -2,9 +2,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Star, Search, MessageSquareHeart, TrendingUp, Users, Loader2 } from "lucide-react";
+import type { FeedbackCategory, FeedbackStatus } from "@prisma/client";
+import { FEEDBACK_CATEGORY_LABELS, FEEDBACK_CATEGORY_TONES } from "@/lib/feedback/categories";
+import { StatusChip } from "@/components/ui/status-chip";
 
-type Category = "GENERAL" | "BUG_REPORT" | "FEATURE_REQUEST" | "PROVIDER_EXPERIENCE" | "BILLING";
-type Status = "NEW" | "REVIEWED" | "ACTIONED";
+type Category = FeedbackCategory;
+type Status = FeedbackStatus;
 
 interface FeedbackItem {
   id: string;
@@ -24,21 +27,7 @@ interface FeedbackStats {
   byStatus: Partial<Record<Status, number>>;
 }
 
-const CATEGORY_LABELS: Record<Category, string> = {
-  GENERAL: "General",
-  BUG_REPORT: "Bug Report",
-  FEATURE_REQUEST: "Feature Request",
-  PROVIDER_EXPERIENCE: "Provider Experience",
-  BILLING: "Billing",
-};
-
-const CATEGORY_BADGE: Record<Category, string> = {
-  GENERAL: "bg-slate-50 text-slate-700 border-slate-200",
-  BUG_REPORT: "bg-red-50 text-red-700 border-red-200",
-  FEATURE_REQUEST: "bg-blue-50 text-blue-700 border-blue-200",
-  PROVIDER_EXPERIENCE: "bg-purple-50 text-purple-700 border-purple-200",
-  BILLING: "bg-amber-50 text-amber-700 border-amber-200",
-};
+const CATEGORY_LABELS = FEEDBACK_CATEGORY_LABELS;
 
 const STATUS_BADGE: Record<Status, string> = {
   NEW: "bg-amber-50 text-amber-700 border-amber-200",
@@ -155,9 +144,9 @@ export default function AdminFeedbackPage() {
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">By Category</p>
           <div className="flex flex-wrap gap-1.5">
             {(Object.keys(CATEGORY_LABELS) as Category[]).map((cat) => (
-              <span key={cat} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${CATEGORY_BADGE[cat]}`}>
+              <StatusChip key={cat} tone={FEEDBACK_CATEGORY_TONES[cat]} className="text-[10px]">
                 {CATEGORY_LABELS[cat]}: {stats?.byCategory[cat] ?? 0}
-              </span>
+              </StatusChip>
             ))}
           </div>
         </div>
@@ -229,9 +218,9 @@ export default function AdminFeedbackPage() {
                   <div className="flex-1 min-w-[240px]">
                     <div className="flex items-center gap-3 flex-wrap">
                       <StarRow rating={item.rating} />
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${CATEGORY_BADGE[item.category]}`}>
+                      <StatusChip tone={FEEDBACK_CATEGORY_TONES[item.category]} className="text-[10px]">
                         {CATEGORY_LABELS[item.category]}
-                      </span>
+                      </StatusChip>
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_BADGE[item.status]}`}>
                         {item.status}
                       </span>

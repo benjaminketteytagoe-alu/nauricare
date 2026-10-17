@@ -3,6 +3,16 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { parseMentionsAndNotify } from "@/lib/mentions";
+import { z } from "zod";
+import { parseJson } from "@/lib/api";
+import { sanitizePlainText } from "@/lib/sanitize";
+import { idSchema } from "@/lib/validation/common";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+
+const CommentInput = z.object({
+  postId: idSchema,
+  content: z.string().trim().min(1, "Comment cannot be empty").max(2000, "Comments must be under 2000 characters."),
+});
 
 export async function GET(req: Request) {
   try {
@@ -33,10 +43,14 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
-    const { postId, content } = await req.json();
-    if (!postId || !content?.trim()) {
-      return new NextResponse("postId and content are required", { status: 400 });
-    }
+    const limit = rateLimit(`community-comment:${session.user.id}`, 30, 10 * 60_000);
+    if (!limit.allowed) return rateLimitResponse(limit);
+
+    const parsed = await parseJson(req, CommentInput);
+    if (!parsed.ok) return parsed.response;
+    const { postId } = parsed.data;
+    const content = sanitizePlainText(parsed.data.content);
+    if (!content) return new NextResponse("Comment cannot be empty", { status: 400 });
 
     const post = await prisma.communityPost.findUnique({ where: { id: postId } });
     if (!post) return new NextResponse("Post not found", { status: 404 });
@@ -44,7 +58,7 @@ export async function POST(req: Request) {
     const comment = await prisma.communityComment.create({
       data: {
         postId,
-        content: content.trim(),
+        content,
         authorId: session.user.id,
       },
       include: {

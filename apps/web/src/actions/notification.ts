@@ -3,6 +3,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { idSchema } from "@/lib/validation/common";
 import { revalidatePath } from "next/cache";
 
 export async function getNotifications() {
@@ -34,6 +35,7 @@ export async function getUnreadCount(): Promise<number> {
 export async function markNotificationRead(notificationId: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+  if (!idSchema.safeParse(notificationId).success) return { success: false, error: "Invalid notification." };
 
   await prisma.userNotification.updateMany({
     where: { id: notificationId, recipientId: session.user.id },

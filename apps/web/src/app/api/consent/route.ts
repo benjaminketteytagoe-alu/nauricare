@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getUserIdWithRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { logAdministrativeAction } from "@/lib/audit";
 import { getClientIp } from "@/lib/getClientIp";
@@ -17,20 +16,15 @@ const GrantInput = z.object({
   version: z.string(),
 });
 
-async function patientId(): Promise<string | null> {
-  const session = await getServerSession(authOptions);
-  return session?.user?.id && session.user.role === "PATIENT" ? session.user.id : null;
-}
-
 export async function GET() {
-  const userId = await patientId();
+  const userId = await getUserIdWithRole("PATIENT");
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const consent = await getTriageConsent(userId);
   return NextResponse.json({ consent, currentVersion: CURRENT_CONSENT_VERSION });
 }
 
 export async function POST(req: Request) {
-  const userId = await patientId();
+  const userId = await getUserIdWithRole("PATIENT");
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const limit = rateLimit(`consent:${userId}`, 20, 60 * 60_000);
@@ -79,7 +73,7 @@ export async function POST(req: Request) {
 // AI processing. It does not delete logs already created; the user can ask
 // for erasure separately, as the Privacy Policy explains.
 export async function DELETE(req: Request) {
-  const userId = await patientId();
+  const userId = await getUserIdWithRole("PATIENT");
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await prisma.user.update({

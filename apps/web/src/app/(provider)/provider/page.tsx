@@ -1,10 +1,9 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireRole } from "@/lib/auth-guards";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Calendar, Clock, Activity } from "lucide-react";
 
 export default async function ProviderDashboardPage() {
-  const session = await getServerSession(authOptions);
+  const session = await requireRole("PROVIDER");
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">

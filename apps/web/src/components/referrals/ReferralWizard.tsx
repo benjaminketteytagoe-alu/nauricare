@@ -12,6 +12,8 @@ import {
   type Specialty, type TriageSeverity,
 } from "@/lib/referrals/constants";
 import { EmergencyBanner } from "@/components/triage/EmergencyBanner";
+import { Callout } from "@/components/ui/callout";
+import { SEVERITY_TONE, StatusChip } from "@/components/ui/status-chip";
 import { FloatingField } from "./FloatingField";
 
 export interface WizardInsurance {
@@ -45,12 +47,6 @@ interface CreatedReferral {
 }
 
 const STEPS = ["Reason", "Insurance", "Hospital", "Review"] as const;
-
-const SEVERITY_CHIP: Record<TriageSeverity, string> = {
-  LOW: "bg-nc-primary-container text-nc-primary",
-  MODERATE: "bg-nc-amber-container text-nc-amber",
-  URGENT: "bg-nc-berry-container text-nc-berry",
-};
 
 function Stepper({ current }: { current: number }) {
   return (
@@ -222,9 +218,7 @@ export function ReferralWizard({ prefill, initialInsurance }: { prefill: WizardP
 
       <div className="m3-card p-5 sm:p-8">
         {error && (
-          <div role="alert" className="mb-6 rounded-lg border border-rose-200 bg-nc-berry-container px-4 py-3 text-sm text-nc-berry">
-            {error}
-          </div>
+          <Callout tone="danger" role="alert" className="mb-6">{error}</Callout>
         )}
 
         {/* ── Step 1: Reason ─────────────────────────────────────────────── */}
@@ -238,7 +232,7 @@ export function ReferralWizard({ prefill, initialInsurance }: { prefill: WizardP
             {severity && (
               <p className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
                 Triage result from your symptom check:
-                <span className={`rounded-full px-3 py-0.5 text-xs font-semibold ${SEVERITY_CHIP[severity]}`}>{severity}</span>
+                <StatusChip tone={SEVERITY_TONE[severity]}>{severity}</StatusChip>
               </p>
             )}
 

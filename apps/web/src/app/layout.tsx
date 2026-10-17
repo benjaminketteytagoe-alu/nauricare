@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://nauricare.org";
+import { SITE_URL as BASE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),

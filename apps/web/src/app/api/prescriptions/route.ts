@@ -17,13 +17,18 @@ export async function GET() {
     const role = session.user.role;
     const userId = session.user.id;
 
+    // Only the patient and the prescribing provider may list prescriptions.
+    // Admin-wide access to clinical data is not offered here (it would bypass
+    // the audited, need-to-know access promised in the Informed Consent).
+    if (role !== "PATIENT" && role !== "PROVIDER") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const prescriptions = await prisma.prescription.findMany({
       where:
         role === "PATIENT"
           ? { patientId: userId }
-          : role === "PROVIDER"
-            ? { providerId: userId }
-            : {},
+          : { providerId: userId },
       orderBy: { createdAt: "desc" },
       include: {
         patient: { select: { id: true, name: true, email: true } },

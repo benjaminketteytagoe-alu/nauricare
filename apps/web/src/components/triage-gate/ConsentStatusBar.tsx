@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ShieldCheck } from "lucide-react";
 import { SPRING, tactile } from "./motion";
+import { formatDate } from "@/lib/format";
 
 // Withdrawing must be as easy as agreeing (Law Nº 058/2021), so it lives
 // one tap away on the symptom guide itself, with a single confirmation step.
@@ -14,7 +15,7 @@ export function ConsentStatusBar({ grantedAt }: { grantedAt: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const date = new Date(grantedAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const date = formatDate(grantedAt, "long");
 
   async function withdraw() {
     setBusy(true);

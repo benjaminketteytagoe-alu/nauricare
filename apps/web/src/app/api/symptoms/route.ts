@@ -69,7 +69,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.email || !session.user?.id) {
@@ -92,6 +92,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ logs }, { status: 200 });
   } catch (error) {
+    console.error("[SYMPTOM_LOGS_ERROR]", error instanceof Error ? error.message : error);
     return NextResponse.json({ error: "Failed to fetch logs" }, { status: 500 });
   }
 }

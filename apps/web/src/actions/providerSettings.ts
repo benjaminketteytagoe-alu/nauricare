@@ -5,6 +5,28 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
+import { passwordField } from "@/lib/validation/password";
+import { dateKeySchema, firstIssue, optionalText, timeSchema } from "@/lib/validation/common";
+
+const ProfileInput = z.object({
+  name: z.string().trim().min(1, "Name is required").max(120),
+  specialty: z.string().trim().min(1, "Specialty is required").max(120),
+  bio: optionalText(2000),
+  clinicName: optionalText(200),
+  licenseNumber: optionalText(64),
+  hospitalAffiliation: optionalText(200),
+});
+
+const SecurityInput = z.object({
+  currentPassword: z.string().min(1, "Enter your current password").max(200),
+  newPassword: passwordField,
+  secondaryEmail: z.union([z.literal(""), z.email("Enter a valid secondary email")]).optional(),
+});
+
+const SlotInput = z
+  .object({ date: dateKeySchema, startTime: timeSchema, endTime: timeSchema, isAvailable: z.boolean() })
+  .refine((v) => v.startTime < v.endTime, { message: "End time must be after start time" });
 
 export async function updateProviderProfile(data: {
   name: string;
@@ -19,11 +41,10 @@ export async function updateProviderProfile(data: {
     return { success: false, error: "Unauthorized" };
   }
 
-  const name = data.name.trim();
-  const specialty = data.specialty.trim();
-  if (!name || !specialty) {
-    return { success: false, error: "Name and specialty are required" };
-  }
+  const parsed = ProfileInput.safeParse(data);
+  if (!parsed.success) return { success: false, error: firstIssue(parsed.error) };
+  data = parsed.data;
+  const { name, specialty } = parsed.data;
 
   await Promise.all([
     prisma.user.update({
@@ -58,10 +79,10 @@ export async function updateSecuritySettings(data: {
     return { success: false, error: "Unauthorized" };
   }
 
-  const newPassword = data.newPassword.trim();
-  if (newPassword.length < 8) {
-    return { success: false, error: "New password must be at least 8 characters" };
-  }
+  const parsed = SecurityInput.safeParse(data);
+  if (!parsed.success) return { success: false, error: firstIssue(parsed.error) };
+  data = parsed.data;
+  const newPassword = parsed.data.newPassword;
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -99,10 +120,10 @@ export async function upsertAvailabilitySlot(data: {
     return { success: false, error: "Unauthorized" };
   }
 
-  const dateObj = new Date(data.date);
-  if (isNaN(dateObj.getTime())) {
-    return { success: false, error: "Invalid date" };
-  }
+  const parsed = SlotInput.safeParse(data);
+  if (!parsed.success) return { success: false, error: firstIssue(parsed.error) };
+  data = parsed.data;
+  const dateObj = new Date(`${data.date}T00:00:00.000Z`);
 
   await prisma.providerAvailability.upsert({
     where: {

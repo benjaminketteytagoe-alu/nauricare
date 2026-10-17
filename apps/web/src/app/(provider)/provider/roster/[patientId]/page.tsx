@@ -8,7 +8,6 @@ export default function PatientMedicalRecordPage() {
   const params = useParams();
   const router = useRouter();
   
-  const [, setPatient] = useState<Record<string, unknown> | null>(null);
   const [records, setRecords] = useState<{ type: string; content: string }[]>([]);
   
   const [isAdding, setIsAdding] = useState(false);

@@ -1,16 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { AppSidebar, SidebarAction, SidebarMobileTrigger, SidebarProvider, type NavItem } from "@/components/navigation/AppSidebar";
 import { useState } from "react";
 import {
   LayoutDashboard, Stethoscope, Store, ShieldAlert, LogOut,
   Settings, Bell, User, Lock, Sliders, CheckCircle, AlertTriangle, MessageSquareHeart
 } from "lucide-react";
 
-const navItems = [
+const navItems: NavItem[] = [
   { name: "Overview", href: "/admin", icon: LayoutDashboard },
   { name: "Providers", href: "/admin/providers", icon: Stethoscope },
   { name: "Pharmacies", href: "/admin/pharmacies", icon: Store },
@@ -19,61 +18,26 @@ const navItems = [
 ];
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      <aside className="w-64 bg-teal-900 text-teal-50 flex flex-col shadow-xl z-20">
-        <div className="p-6 border-b border-teal-800">
-          <Link href="/admin" className="inline-block mb-2 bg-white p-1.5 rounded-lg shadow-sm">
-            <Image
-              src="/logo-horizontal.jpg"
-              alt="NauriCare Logo"
-              width={150}
-              height={40}
-              className="h-8 w-auto rounded-sm"
-            />
-          </Link>
-          <p className="text-teal-400 text-xs font-semibold tracking-wider uppercase mt-1">Admin Console</p>
-        </div>
+    <SidebarProvider>
+    <div className="flex min-h-screen bg-gray-50">
+      <AppSidebar
+        items={navItems}
+        homeHref="/admin"
+        portalLabel="Admin Console"
+        tone="dark"
+        footer={(iconOnly) => (
+            <SidebarAction icon={LogOut} label="Sign Out" onClick={() => signOut({ callbackUrl: "/login" })} tone="dark" collapsed={iconOnly} />
+        )}
+      />
 
-        <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-teal-800 text-white shadow-sm"
-                    : "text-teal-100 hover:bg-teal-800/50 hover:text-white"
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="p-4 border-t border-teal-800">
-          <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-teal-100 hover:bg-teal-800 hover:text-white transition-colors"
-          >
-            <LogOut className="w-5 h-5" />
-            Sign Out
-          </button>
-        </div>
-      </aside>
-
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-end px-8 shadow-sm z-10">
+      <main className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="z-10 flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm lg:justify-end lg:px-8">
+          <SidebarMobileTrigger className="text-gray-500 hover:bg-gray-100 hover:text-teal-600" />
           <div className="flex items-center gap-4 text-gray-500">
 
             <div className="relative">
@@ -154,10 +118,11 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           {children}
         </div>
       </main>
     </div>
+    </SidebarProvider>
   );
 }

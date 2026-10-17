@@ -1,9 +1,6 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth/next";
 import { ArrowLeft } from "lucide-react";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { SPECIALTIES, TRIAGE_SEVERITIES, type Specialty, type TriageSeverity } from "@/lib/referrals/constants";
 import { ReferralWizard, type WizardInsurance, type WizardPrefill } from "@/components/referrals/ReferralWizard";
@@ -17,9 +14,7 @@ interface StoredAnswers {
 }
 
 export default async function NewReferralPage({ searchParams }: { searchParams: Promise<{ checkId?: string }> }) {
-  await cookies(); // forces dynamic rendering — prevents cross-user cache leak
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) redirect("/login");
+  const session = await requireRole("PATIENT");
   const userId = session.user.id;
   const { checkId } = await searchParams;
 

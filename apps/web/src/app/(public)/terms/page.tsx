@@ -3,7 +3,7 @@ import Link from "next/link";
 import { LegalDocument, type LegalSection } from "@/components/legal/LegalDocument";
 
 export const metadata: Metadata = {
-  title: "Terms of Use | NauriCare",
+  title: "Terms of Service | NauriCare",
   description: "The rules for using NauriCare, the scope of teleconsultations, and the provider-patient relationship.",
 };
 
@@ -13,7 +13,7 @@ const sections: LegalSection[] = [
     title: "Accepting these terms",
     body: (
       <p>
-        By creating an account or using NauriCare, you agree to these Terms of Use, our{" "}
+        By creating an account or using NauriCare, you agree to these Terms of Service, our{" "}
         <Link href="/privacy">Privacy Policy</Link> and our <Link href="/consent">Informed Consent</Link>. If you do not
         agree, please do not use the platform.
       </p>
@@ -135,7 +135,7 @@ export default function TermsPage() {
   return (
     <LegalDocument
       eyebrow="Legal"
-      title="Terms of Use"
+      title="Terms of Service"
       current="/terms"
       intro={<p>These terms explain how NauriCare works, what teleconsultations can and cannot do, and who is responsible for your care.</p>}
       sections={sections}

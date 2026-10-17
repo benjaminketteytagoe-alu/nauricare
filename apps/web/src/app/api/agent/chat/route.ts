@@ -2,24 +2,40 @@ import { NextResponse } from "next/server";
 import { nauriAgent } from "@/agents/nauri-agent";
 import { getClientIp } from "@/lib/getClientIp";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { z } from "zod";
+import { parseJson } from "@/lib/api";
+import { getSessionUser } from "@/lib/auth-guards";
 
 // Public endpoint: Nauri is embedded on the landing page for all visitors.
-// No session to key on, so rate limiting is by IP — each call proxies to a
-// paid Anthropic API, making this a real cost/abuse vector if unbounded.
+// Each call proxies to a paid model API, so input is bounded and the caller
+// is limited to 10 requests/minute, keyed by account when signed in, else IP.
 
-type IncomingMessage = { role: string; content: string };
+const ChatInput = z.object({
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string().trim().min(1).max(4000, "Messages must be under 4000 characters."),
+      }),
+    )
+    .min(1, "messages array required")
+    .max(30, "This conversation is too long. Please start a new one.")
+    // The model must answer a user turn, and roles must alternate, so a
+    // caller can't forge a run of "assistant" turns to steer the model.
+    .refine((m) => m[0].role === "user" && m[m.length - 1].role === "user", { message: "Conversation must start and end with a user message." })
+    .refine((m) => m.every((x, i) => i === 0 || x.role !== m[i - 1].role), { message: "Messages must alternate between user and assistant." }),
+});
 
 export async function POST(req: Request) {
   try {
-    const ip = getClientIp(req.headers);
-    const limit = rateLimit(`agent-chat:${ip}`, 15, 5 * 60_000);
+    const user = await getSessionUser();
+    const key = user ? `user:${user.id}` : `ip:${getClientIp(req.headers)}`;
+    const limit = rateLimit(`agent-chat:${key}`, 10, 60_000);
     if (!limit.allowed) return rateLimitResponse(limit);
 
-    const { messages } = (await req.json()) as { messages: IncomingMessage[] };
-
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return new NextResponse("messages array required", { status: 400 });
-    }
+    const parsed = await parseJson(req, ChatInput);
+    if (!parsed.ok) return parsed.response;
+    const { messages } = parsed.data;
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
 
@@ -43,10 +59,7 @@ export async function POST(req: Request) {
         max_tokens: nauriAgent.maxTokens,
         stream: true,
         system: nauriAgent.systemPrompt,
-        messages: messages.map((m) => ({
-          role: m.role === "user" ? "user" : "assistant",
-          content: m.content,
-        })),
+        messages,
       }),
     });
 

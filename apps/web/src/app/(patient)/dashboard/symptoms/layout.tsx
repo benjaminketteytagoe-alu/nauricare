@@ -1,11 +1,9 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { CURRENT_CONSENT_VERSION, evaluateConsent } from "@/lib/consent";
 import { TriageGate } from "@/components/triage-gate/TriageGate";
 import { ConsentStatusBar } from "@/components/triage-gate/ConsentStatusBar";
+import { TriageHandover } from "@/components/triage-gate/TriageHandover";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +11,7 @@ export const dynamic = "force-dynamic";
 // patient holds valid, current-version consent. The symptoms API enforces the
 // same rule independently, so this layout is the UX, not the only lock.
 export default async function SymptomsLayout({ children }: { children: React.ReactNode }) {
-  await cookies(); // forces dynamic rendering — prevents cross-user cache leak
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) redirect("/login");
+  const session = await requireRole("PATIENT");
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -31,11 +27,17 @@ export default async function SymptomsLayout({ children }: { children: React.Rea
 
   if (!consent.valid) {
     const firstName = user?.name?.trim().split(/\s+/)[0] || "there";
-    return <TriageGate firstName={firstName} version={CURRENT_CONSENT_VERSION} />;
+    return (
+      <>
+        <TriageHandover consentValid={false} />
+        <TriageGate firstName={firstName} version={CURRENT_CONSENT_VERSION} />
+      </>
+    );
   }
 
   return (
     <>
+      <TriageHandover consentValid />
       <ConsentStatusBar grantedAt={consent.grantedAt!.toISOString()} />
       {children}
     </>

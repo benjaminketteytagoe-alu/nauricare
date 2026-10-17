@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { INSURANCE_VALUES, KIGALI_DISTRICTS } from "@/lib/referrals/constants";
-import { requirePatientId } from "@/lib/referrals/server";
+import { getUserIdWithRole } from "@/lib/auth-guards";
 
 // GET /api/hospitals?insurance=RSSB_RAMA&district=Gasabo
 // Both filters are optional and ignored when they are not recognised values.
 export async function GET(req: Request) {
-  const userId = await requirePatientId();
+  const userId = await getUserIdWithRole("PATIENT");
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const url = new URL(req.url);

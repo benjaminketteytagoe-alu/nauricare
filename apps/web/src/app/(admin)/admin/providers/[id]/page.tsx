@@ -1,6 +1,5 @@
-import { redirect, notFound } from "next/navigation";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { notFound } from "next/navigation";
+import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { VerifyButton } from "./VerifyButton";
 import { DeleteProviderButton } from "./DeleteProviderButton";
@@ -12,8 +11,7 @@ interface PageProps {
 }
 
 export default async function ProviderDetailPage({ params }: PageProps) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user || session.user.role !== "ADMIN") redirect("/login");
+  await requireRole("ADMIN");
 
   const resolvedParams = await params;
   const { id } = resolvedParams;

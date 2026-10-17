@@ -11,6 +11,7 @@ import {
   Tailwind,
   Text,
 } from "@react-email/components";
+import { SITE_URL } from "@/lib/site";
 
 export interface ProviderNewAppointmentAlertProps {
   providerName: string;
@@ -94,7 +95,7 @@ export function ProviderNewAppointmentAlert({
 
               <Text className="text-gray-400 text-xs mt-6 mb-0">
                 Manage your full schedule from the{" "}
-                <a href="https://nauricare.com/provider" className="text-teal-600">
+                <a href={`${SITE_URL}/provider`} className="text-teal-600">
                   NauriCare Clinical Portal
                 </a>.
               </Text>

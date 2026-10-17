@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -7,7 +6,7 @@ export const dynamic = "force-dynamic";
 import { Users, Stethoscope, Store, Activity, BarChart3 } from "lucide-react";
 
 export default async function AdminOverviewPage() {
-  const session = await getServerSession(authOptions);
+  const session = await requireRole("ADMIN");
 
   // 1. Fetch live metrics
   const [totalPatients, activeProviders, partnerPharmacies] = await Promise.all([
