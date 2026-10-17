@@ -58,6 +58,50 @@
   @apply bg-rose-600 text-white font-semibold rounded-full shadow-sm shadow-rose-200;
 }
 
+/* ─── NauriCare × Google Material 3 tokens ─────────────────────────────────
+   Colors are taken from the NauriCare logo's four accent stripes. They power
+   the Material 3 surfaces: public footer, legal pages, the triage result and
+   the referral & insurance wizard.
+
+   nc-primary ....... Royal Cobalt  #1D4ED8  primary pill buttons, focus, active steps
+   nc-amber ......... Warm Ochre    #D97706  triage warnings, specialist badges, tags
+   nc-berry ......... Crimson Rose  #BE123C  critical triage, emergency escalation
+   nc-ink ........... Deep Obsidian #0F172A  headings and high-contrast text
+   nc-divider ....... Slate         #E2E8F0  hairline dividers
+   ───────────────────────────────────────────────────────────────────────── */
+@theme {
+  --color-nc-primary: #1d4ed8;
+  --color-nc-primary-hover: #1e40af;
+  --color-nc-primary-container: #eff6ff;
+  --color-nc-amber: #d97706;
+  --color-nc-amber-container: #fffbeb;
+  --color-nc-berry: #be123c;
+  --color-nc-berry-container: #fff1f2;
+  --color-nc-ink: #0f172a;
+  --color-nc-divider: #e2e8f0;
+}
+
+/* Outlined text field */
+@utility m3-input {
+  @apply w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-nc-primary focus:ring-1 focus:ring-nc-primary focus:outline-none disabled:bg-slate-50 disabled:text-slate-500;
+}
+/* Filled pill button (primary action) */
+@utility m3-btn-filled {
+  @apply inline-flex items-center justify-center gap-2 rounded-full bg-nc-primary px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-nc-primary-hover hover:shadow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nc-primary disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none;
+}
+/* Outlined pill button (secondary action) */
+@utility m3-btn-outlined {
+  @apply inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-medium text-nc-primary shadow-sm transition-all hover:bg-nc-primary-container hover:shadow focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nc-primary disabled:cursor-not-allowed disabled:opacity-50;
+}
+/* Elevated card / modal surface — callers supply padding */
+@utility m3-card {
+  @apply rounded-2xl border border-slate-100 bg-white shadow-md;
+}
+/* Assist chip — selectable when paired with aria-pressed */
+@utility m3-chip {
+  @apply inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 aria-pressed:border-nc-primary aria-pressed:bg-nc-primary-container aria-pressed:text-nc-primary;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

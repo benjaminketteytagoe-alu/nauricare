@@ -114,6 +114,8 @@ model User {
   accounts                Account[]
   sessions                Session[]
   feedback                Feedback[]
+  insurance               PatientInsurance?
+  referrals               Referral[]
 
   // Social graph — rows where I'm the follower / the one being followed
   following Follow[] @relation("UserFollowing")
@@ -610,4 +612,69 @@ model Feedback {
   @@index([userId])
   @@index([status])
   @@index([category])
+}
+
+// --- Hospital Referrals & Insurance ---
+
+enum InsuranceProvider {
+  RSSB_RAMA
+  MMI
+  RADIANT
+  SANLAM
+  BRITAM
+  UAP_OLD_MUTUAL
+  OTHER_PRIVATE
+  NONE_CASH
+}
+
+enum ReferralStatus {
+  PENDING
+  ACCEPTED
+  COMPLETED
+  EXPIRED
+}
+
+model PatientInsurance {
+  id              String            @id @default(cuid())
+  userId          String            @unique
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider        InsuranceProvider @default(NONE_CASH)
+  policyNumber    String?
+  principalMember String?
+  expiryDate      DateTime?
+  cardPhotoUrl    String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model Hospital {
+  id                  String              @id @default(cuid())
+  name                String // e.g., "King Faisal Hospital", "CHUK", "Kacyiru District Hospital"
+  address             String
+  district            String // e.g., "Gasabo", "Nyarugenge", "Kicukiro"
+  phone               String
+  supportedInsurances InsuranceProvider[]
+  referrals           Referral[]
+  createdAt           DateTime            @default(now())
+
+  @@unique([name, district])
+}
+
+model Referral {
+  id                String         @id @default(cuid())
+  patientId         String
+  patient           User           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  hospitalId        String
+  hospital          Hospital       @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  specialtyRequired String // e.g., "Obstetrics & Gynecology", "General Practitioner"
+  clinicalReason    String         @db.Text
+  triageSeverity    String // "LOW", "MODERATE", "URGENT"
+  insuranceSnapshot Json? // Frozen insurance snapshot at the time of referral
+  referralCode      String         @unique // Unique short code e.g. "NC-REF-8942"
+  status            ReferralStatus @default(PENDING)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([patientId])
+  @@index([hospitalId])
 }

@@ -40,6 +40,8 @@ Required environment variables (`apps/web/.env.local`):
 - `TURNSTILE_SECRET_KEY` — Cloudflare Turnstile server-side secret (runtime only, never in image)
 - `RESEND_API_KEY` — Resend email API key (runtime only; falls back to dummy string at build time)
 - `EMAIL_FROM` — sender address e.g. `appointments@nauricare.com`; use `onboarding@resend.dev` until domain is verified
+- `MEDGEMMA_ENDPOINT_URL` / `MEDGEMMA_API_KEY` — OpenAI-compatible `/chat/completions` endpoint serving MedGemma (primary triage model; runtime only). Optional `MEDGEMMA_MODEL`, default `google/medgemma-27b-text-it`
+- `GEMINI_API_KEY` — Gemini fallback for triage when MedGemma is unset or fails
 
 ## Architecture
 
