@@ -6,8 +6,6 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { verifyTurnstileToken } from "@/lib/turnstile";
-import { grantStudentTrialIfEligible } from "@/lib/studentTrial";
-import { linkCorporateEmployeeIfEligible } from "@/lib/corporateEnrollment";
 import { rateLimit } from "@/lib/rateLimit";
 
 export const authOptions: AuthOptions = {
@@ -189,14 +187,6 @@ export const authOptions: AuthOptions = {
           where: { id: user.id, isEmailVerified: false },
           data: { isEmailVerified: true },
         });
-        if (user.email) {
-          try {
-            await grantStudentTrialIfEligible(user.id, user.email);
-            await linkCorporateEmployeeIfEligible(user.id, user.email);
-          } catch (err) {
-            console.error("[STUDENT_TRIAL_GRANT_ERROR]", err);
-          }
-        }
       }
     },
   },

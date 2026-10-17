@@ -3,17 +3,11 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { parseMentionsAndNotify } from "@/lib/mentions";
-import { requirePremiumApi } from "@/lib/entitlements";
 
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
-
-    if (session.user.role === "PATIENT") {
-      const gate = await requirePremiumApi(session.user.id);
-      if (!gate.ok) return gate.response;
-    }
 
     const url = new URL(req.url);
     const postId = url.searchParams.get("postId");
@@ -38,11 +32,6 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
-
-    if (session.user.role === "PATIENT") {
-      const gate = await requirePremiumApi(session.user.id);
-      if (!gate.ok) return gate.response;
-    }
 
     const { postId, content } = await req.json();
     if (!postId || !content?.trim()) {

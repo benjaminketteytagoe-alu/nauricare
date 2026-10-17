@@ -2,8 +2,6 @@ import Link from "next/link";
 import { createHash } from "crypto";
 import { CheckCircle2, XCircle, Mail } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { grantStudentTrialIfEligible } from "@/lib/studentTrial";
-import { linkCorporateEmployeeIfEligible } from "@/lib/corporateEnrollment";
 import { ResendVerificationForm } from "./ResendVerificationForm";
 
 export const dynamic = "force-dynamic";
@@ -140,22 +138,6 @@ export default async function VerifyEmailPage({ searchParams }: PageProps) {
     }),
     prisma.emailVerificationToken.delete({ where: { tokenHash } }),
   ]);
-
-  // Best-effort student trial + corporate seat grants, kept separate from
-  // the verification transaction above — a failure here must never block
-  // the user from seeing their (already-successful) email verification.
-  try {
-    const verifiedUser = await prisma.user.findUnique({
-      where: { id: record.userId },
-      select: { email: true },
-    });
-    if (verifiedUser) {
-      await grantStudentTrialIfEligible(record.userId, verifiedUser.email);
-      await linkCorporateEmployeeIfEligible(record.userId, verifiedUser.email);
-    }
-  } catch (err) {
-    console.error("[STUDENT_TRIAL_GRANT_ERROR]", err);
-  }
 
   return <SuccessCard />;
 }

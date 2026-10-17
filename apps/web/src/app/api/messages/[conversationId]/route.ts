@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import { requirePremiumApi } from "@/lib/entitlements";
 
 // GET: Fetch the full chronological message thread between the current user
 // and the user identified by conversationId (their userId).
@@ -13,11 +12,6 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
-
-    if (session.user.role === "PATIENT") {
-      const gate = await requirePremiumApi(session.user.id);
-      if (!gate.ok) return gate.response;
-    }
 
     const { conversationId } = await params;
 

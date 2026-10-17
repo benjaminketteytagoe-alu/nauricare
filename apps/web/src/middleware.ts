@@ -41,6 +41,5 @@ export const config = {
     "/admin/:path*",
     "/provider/:path*",
     "/dashboard/:path*",
-    "/corporate/dashboard/:path*",
   ],
 };

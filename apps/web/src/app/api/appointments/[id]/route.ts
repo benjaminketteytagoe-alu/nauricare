@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import { requirePremiumApi } from "@/lib/entitlements";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> | { id: string } }) {
   try {
@@ -29,14 +28,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     if (!isPatient && !isProvider) {
       return new NextResponse("Forbidden: You do not have access to this telehealth room.", { status: 403 });
-    }
-
-    // Teleconsultations are a gated premium feature for patients — the
-    // provider side of the same room is never blocked by a patient's
-    // subscription state.
-    if (isPatient) {
-      const gate = await requirePremiumApi(session.user.id);
-      if (!gate.ok) return gate.response;
     }
 
     return NextResponse.json(appointment);

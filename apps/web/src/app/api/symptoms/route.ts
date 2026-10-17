@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { requirePremiumApi } from "@/lib/entitlements";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
@@ -13,11 +12,6 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.email || !session.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (session.user.role === "PATIENT") {
-      const gate = await requirePremiumApi(session.user.id);
-      if (!gate.ok) return gate.response;
     }
 
     // AI triage is an LLM call — rate-limit distinctly from generic API abuse.
@@ -103,11 +97,6 @@ export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.email || !session.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (session.user.role === "PATIENT") {
-      const gate = await requirePremiumApi(session.user.id);
-      if (!gate.ok) return gate.response;
     }
 
     const dbUser = await prisma.user.findUnique({

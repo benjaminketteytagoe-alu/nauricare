@@ -2,17 +2,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import { requirePremiumApi } from "@/lib/entitlements";
 
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
-
-    if (session.user.role === "PATIENT") {
-      const gate = await requirePremiumApi(session.user.id);
-      if (!gate.ok) return gate.response;
-    }
 
     const { postId } = await req.json();
     if (!postId) return new NextResponse("postId required", { status: 400 });

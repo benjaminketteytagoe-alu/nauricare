@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 // In-memory, single-process rate limiter. Resets on deploy/restart and does
 // NOT coordinate across multiple server instances — it's a defensive first
-// layer for sensitive endpoints (payments, AI triage, auth), not a
+// layer for sensitive endpoints (AI triage, auth), not a
 // substitute for a shared store. Swap for @upstash/ratelimit + Redis before
 // running more than one instance in production.
 

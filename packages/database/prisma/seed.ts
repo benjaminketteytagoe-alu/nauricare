@@ -88,21 +88,6 @@ Tracking these patterns over 2–3 cycles builds a personalised performance and 
   },
 ];
 
-// Keep in sync with apps/web/src/lib/pricing.ts's PLAN_DEFINITIONS — that
-// file is the source new checkout code reads pricing copy from; this seeds
-// the DB rows the API routes actually price against. Effective monthly rate
-// is strictly Monthly > Quarterly > Yearly.
-const SEED_PLANS: {
-  tier: "MONTHLY" | "QUARTERLY" | "YEARLY";
-  name: string;
-  priceCents: number;
-  billingPeriodMonths: number;
-}[] = [
-  { tier: "MONTHLY", name: "Monthly", priceCents: 1299, billingPeriodMonths: 1 },
-  { tier: "QUARTERLY", name: "Quarterly", priceCents: 2999, billingPeriodMonths: 3 },
-  { tier: "YEARLY", name: "Yearly", priceCents: 8999, billingPeriodMonths: 12 },
-];
-
 async function main() {
   console.log("Seeding articles...");
 
@@ -118,16 +103,6 @@ async function main() {
 
   console.log(`\nDone. ${SEED_ARTICLES.length} articles upserted.`);
 
-  console.log("\nSeeding subscription plans...");
-  for (const plan of SEED_PLANS) {
-    await prisma.plan.upsert({
-      where: { tier: plan.tier },
-      update: { name: plan.name, priceCents: plan.priceCents, billingPeriodMonths: plan.billingPeriodMonths },
-      create: plan,
-    });
-    console.log(`  ✓ [${plan.tier}] ${plan.name} — $${(plan.priceCents / 100).toFixed(2)} / ${plan.billingPeriodMonths}mo`);
-  }
-  console.log(`Done. ${SEED_PLANS.length} plans upserted.`);
 }
 
 main()

@@ -7,7 +7,7 @@ import { signOut } from "next-auth/react";
 import { useState } from "react";
 import {
   LayoutDashboard, Activity, Calendar, FileText, Settings, LogOut,
-  Users, Menu, X, Pill, MessageSquare, Droplet, CreditCard,
+  Users, Menu, X, Pill, MessageSquare, Droplet,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { UserFeedbackModal } from "@/components/feedback/UserFeedbackModal";
@@ -21,7 +21,6 @@ const navItems = [
   { name: "Prescriptions",   href: "/dashboard/prescriptions",  icon: Pill },
   { name: "Messages",        href: "/dashboard/messages",       icon: MessageSquare },
   { name: "Community",       href: "/dashboard/community",      icon: Users },
-  { name: "Upgrade Plan",    href: "/dashboard/pricing",        icon: CreditCard },
   { name: "Settings",        href: "/dashboard/settings",       icon: Settings },
 ];
 
