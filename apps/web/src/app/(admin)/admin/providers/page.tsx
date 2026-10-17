@@ -1,15 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Search, X, Stethoscope, ArrowRight } from "lucide-react";
+import { UserPlus, Search, X, Stethoscope, ArrowRight, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { deleteProviderProfile } from "../actions";
 
 interface PractitionerProfile {
   specialty?: string;
   clinicName?: string;
   location?: string;
   isVerified?: boolean;
+  isActive?: boolean;
 }
 
 interface ProviderRow {
@@ -20,11 +22,47 @@ interface ProviderRow {
   practitionerProfile?: PractitionerProfile;
 }
 
+interface ToastState {
+  type: "success" | "error";
+  message: string;
+}
+
 export default function AdminProvidersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [providers, setProviders] = useState<ProviderRow[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Delete flow
+  const [deleteTarget, setDeleteTarget] = useState<ProviderRow | null>(null);
+  const [isDeleting, startDeleteTransition] = useTransition();
+  const [toast, setToast] = useState<ToastState | null>(null);
+
+  function showToast(next: ToastState) {
+    setToast(next);
+    setTimeout(() => setToast(null), 4000);
+  }
+
+  function handleDelete() {
+    if (!deleteTarget) return;
+    const target = deleteTarget;
+    startDeleteTransition(async () => {
+      const result = await deleteProviderProfile(target.id);
+      if (result.success) {
+        setProviders((prev) =>
+          prev.map((p) =>
+            p.id === target.id
+              ? { ...p, practitionerProfile: { ...p.practitionerProfile, isActive: false } }
+              : p
+          )
+        );
+        showToast({ type: "success", message: "Provider successfully deleted" });
+      } else {
+        showToast({ type: "error", message: result.error || "Failed to delete provider" });
+      }
+      setDeleteTarget(null);
+    });
+  }
 
   const WOMEN_HEALTH_SPECIALTIES = [
     "Gynecologist",
@@ -168,7 +206,15 @@ export default function AdminProvidersPage() {
                     {/* Status reflects the real isVerified boolean — set by approveProviderProfile() on both User and PractitionerProfile */}
                     <td className="px-6 py-4">
                       {(() => {
+                        const isDeleted = provider.practitionerProfile?.isActive === false;
                         const isVerified = provider.practitionerProfile?.isVerified || provider.isVerified;
+                        if (isDeleted) {
+                          return (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                              DELETED
+                            </span>
+                          );
+                        }
                         return (
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                             isVerified
@@ -180,14 +226,25 @@ export default function AdminProvidersPage() {
                         );
                       })()}
                     </td>
-                    {/* Render action review anchor link */}
+                    {/* Render action review anchor link + delete control */}
                     <td className="px-6 py-4 text-right">
-                      <Link
-                        href={`/admin/providers/${provider.id}`}
-                        className="inline-flex items-center text-xs font-semibold text-teal-600 hover:text-teal-800 hover:underline gap-1"
-                      >
-                        Review <ArrowRight className="w-3 h-3" />
-                      </Link>
+                      <div className="flex items-center justify-end gap-3">
+                        <Link
+                          href={`/admin/providers/${provider.id}`}
+                          className="inline-flex items-center text-xs font-semibold text-teal-600 hover:text-teal-800 hover:underline gap-1"
+                        >
+                          Review <ArrowRight className="w-3 h-3" />
+                        </Link>
+                        {provider.practitionerProfile?.isActive !== false && (
+                          <button
+                            onClick={() => setDeleteTarget(provider)}
+                            aria-label={`Delete ${provider.name}`}
+                            className="inline-flex items-center text-xs font-semibold text-red-600 hover:text-red-800 hover:underline gap-1"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -253,6 +310,71 @@ export default function AdminProvidersPage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900">Delete Provider</h2>
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={isDeleting}
+                className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-600">
+                Are you sure you want to delete <span className="font-semibold text-gray-900">{deleteTarget.name}</span>?
+                This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete Provider
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed bottom-6 right-6 z-[60] flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-sm font-medium ${
+            toast.type === "success"
+              ? "bg-emerald-600 text-white"
+              : "bg-red-600 text-white"
+          }`}
+        >
+          {toast.type === "success" ? (
+            <CheckCircle2 className="w-4 h-4" />
+          ) : (
+            <AlertCircle className="w-4 h-4" />
+          )}
+          {toast.message}
         </div>
       )}
     </div>

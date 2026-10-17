@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { VerifyButton } from "./VerifyButton";
+import { DeleteProviderButton } from "./DeleteProviderButton";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ export default async function ProviderDetailPage({ params }: PageProps) {
 
   const profile = providerUser.practitionerProfile;
   const isVerified = profile?.isVerified || providerUser.isVerified;
+  const isDeleted = profile?.isActive === false;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -71,20 +73,31 @@ export default async function ProviderDetailPage({ params }: PageProps) {
           <div>
             <span className="font-medium text-slate-400 block uppercase tracking-wider text-xs">Verification Status</span>
             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold mt-1 ${
-              isVerified 
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200" 
+              isVerified
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                 : "bg-amber-50 text-amber-700 border border-amber-200"
             }`}>
               {isVerified ? "APPROVED" : "PENDING VERIFICATION"}
+            </span>
+          </div>
+          <div>
+            <span className="font-medium text-slate-400 block uppercase tracking-wider text-xs">Account Status</span>
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold mt-1 ${
+              isDeleted
+                ? "bg-gray-100 text-gray-500 border border-gray-200"
+                : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+            }`}>
+              {isDeleted ? "DELETED" : "ACTIVE"}
             </span>
           </div>
         </div>
       </div>
 
       {/* Dynamic Action Controls */}
-      {!isVerified && (
-        <div className="flex justify-end pt-4 border-t">
-          <VerifyButton providerId={providerUser.id} adminId={providerUser.id} />
+      {(!isVerified || !isDeleted) && (
+        <div className="flex justify-end items-center gap-3 pt-4 border-t">
+          {!isVerified && <VerifyButton providerId={providerUser.id} adminId={providerUser.id} />}
+          {!isDeleted && <DeleteProviderButton providerId={providerUser.id} providerName={providerUser.name} />}
         </div>
       )}
     </div>

@@ -28,6 +28,39 @@ export async function createPrescription(data: {
   });
   if (!patient) return { success: false, error: "Patient not found" };
 
+  // BOLA guard: a provider may only prescribe to a patient they have an
+  // actual appointment relationship with — without this, any provider could
+  // issue prescriptions against any patient in the system.
+  const practitioner = await prisma.practitionerProfile.findUnique({
+    where: { userId: session.user.id },
+    select: { id: true },
+  });
+  if (!practitioner) return { success: false, error: "Practitioner profile not found" };
+
+  const sharedAppointment = await prisma.appointment.findFirst({
+    where: { practitionerProfileId: practitioner.id, patient: { userId: data.patientId } },
+  });
+  if (!sharedAppointment) {
+    return { success: false, error: "Forbidden: no active patient relationship" };
+  }
+
+  // If a specific appointment is cited, it must actually belong to this
+  // practitioner+patient pair — otherwise a provider could link the
+  // prescription to an unrelated appointment record.
+  let appointmentId: string | null = null;
+  if (data.appointmentId) {
+    const appointment = await prisma.appointment.findFirst({
+      where: {
+        id: data.appointmentId,
+        practitionerProfileId: practitioner.id,
+        patient: { userId: data.patientId },
+      },
+      select: { id: true },
+    });
+    if (!appointment) return { success: false, error: "Appointment not found" };
+    appointmentId = appointment.id;
+  }
+
   const prescription = await prisma.prescription.create({
     data: {
       medicationName: data.medicationName.trim(),
@@ -35,7 +68,7 @@ export async function createPrescription(data: {
       instructions: data.instructions?.trim() || null,
       patientId: data.patientId,
       providerId: session.user.id,
-      appointmentId: data.appointmentId || null,
+      appointmentId,
       suggestedPharmacyId: data.suggestedPharmacyId || null,
     },
   });

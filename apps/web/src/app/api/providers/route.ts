@@ -12,10 +12,11 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Securely fetch ONLY verified practitioner profiles
+    // Securely fetch ONLY verified, active (non-deleted) practitioner profiles
     const providers = await prisma.practitionerProfile.findMany({
-      where: { 
-        isVerified: true 
+      where: {
+        isVerified: true,
+        isActive: true,
       },
       include: {
         // Attach the user's name and email for the directory cards

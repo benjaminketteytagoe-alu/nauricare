@@ -10,6 +10,7 @@ import {
   Settings, User, Lock, Sliders, Pill,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
+import { UserFeedbackModal } from "@/components/feedback/UserFeedbackModal";
 
 const navItems = [
   { name: "Clinical Dashboard", href: "/provider",               icon: Activity },
@@ -61,7 +62,8 @@ export default function ProviderLayoutClient({ children }: { children: React.Rea
           })}
         </nav>
 
-        <div className="p-4 border-t border-teal-800">
+        <div className="p-4 border-t border-teal-800 space-y-1">
+          <UserFeedbackModal variant="dark" />
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-teal-100 hover:bg-teal-800 hover:text-white transition-colors"

@@ -1,17 +1,26 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { randomBytes, createHash } from "crypto";
 import { sendVerificationEmail } from "@/lib/email";
+import { getClientIp } from "@/lib/getClientIp";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+
+const schema = z.object({ email: z.email() });
 
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
+    const ip = getClientIp(req.headers);
+    const limit = rateLimit(`auth-resend-verification:${ip}`, 5, 15 * 60_000);
+    if (!limit.allowed) return rateLimitResponse(limit);
 
-    if (!email || typeof email !== "string") {
-      return NextResponse.json({ error: "Email is required." }, { status: 400 });
+    const body = await req.json();
+    const parsed = schema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
     }
 
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanEmail = parsed.data.email.trim().toLowerCase();
     const user = await prisma.user.findUnique({ where: { email: cleanEmail } });
 
     // Always return 200 — never reveal whether an email is registered.

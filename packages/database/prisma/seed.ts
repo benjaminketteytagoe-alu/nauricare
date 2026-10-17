@@ -102,6 +102,7 @@ async function main() {
   }
 
   console.log(`\nDone. ${SEED_ARTICLES.length} articles upserted.`);
+
 }
 
 main()

@@ -10,6 +10,7 @@ import {
   Users, Menu, X, Pill, MessageSquare, Droplet,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
+import { UserFeedbackModal } from "@/components/feedback/UserFeedbackModal";
 
 const navItems = [
   { name: "My Health",       href: "/dashboard",                icon: LayoutDashboard },
@@ -144,6 +145,7 @@ export function Sidebar() {
             <NotificationBell />
             <span className="text-sm font-medium">Notifications</span>
           </div>
+          <UserFeedbackModal />
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-colors"

@@ -1,6 +1,8 @@
 import { createHmac, randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import type { AgentDefinition } from "@/agents/nauri-agent";
+import { getClientIp } from "@/lib/getClientIp";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 /**
  * createTokenHandler — higher-order function that returns a Next.js route GET
@@ -11,7 +13,11 @@ import type { AgentDefinition } from "@/agents/nauri-agent";
  * Token format: base64url(payload).HMAC-SHA256(payload)
  */
 export function createTokenHandler(agent: AgentDefinition) {
-  return async function GET(): Promise<NextResponse> {
+  return async function GET(req: Request): Promise<NextResponse> {
+    const ip = getClientIp(req.headers);
+    const limit = rateLimit(`agent-token:${ip}`, 30, 5 * 60_000);
+    if (!limit.allowed) return rateLimitResponse(limit);
+
     const secret = process.env.NEXTAUTH_SECRET ?? "dev-secret";
     const sessionId = randomBytes(16).toString("hex");
 

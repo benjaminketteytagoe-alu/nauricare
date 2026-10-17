@@ -7,13 +7,14 @@ import { signOut } from "next-auth/react";
 import { useState } from "react";
 import {
   LayoutDashboard, Stethoscope, Store, ShieldAlert, LogOut,
-  Settings, Bell, User, Lock, Sliders, CheckCircle, AlertTriangle
+  Settings, Bell, User, Lock, Sliders, CheckCircle, AlertTriangle, MessageSquareHeart
 } from "lucide-react";
 
 const navItems = [
   { name: "Overview", href: "/admin", icon: LayoutDashboard },
   { name: "Providers", href: "/admin/providers", icon: Stethoscope },
   { name: "Pharmacies", href: "/admin/pharmacies", icon: Store },
+  { name: "Feedback", href: "/admin/feedback", icon: MessageSquareHeart },
   { name: "Audit Logs", href: "/admin/audit", icon: ShieldAlert },
 ];
 

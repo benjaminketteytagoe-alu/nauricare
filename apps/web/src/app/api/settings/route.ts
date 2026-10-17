@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
+import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+
+const settingsSchema = z.object({
+  healthGoals: z.array(z.string().max(100)).max(20),
+  menstrualCycle: z.union([z.string(), z.number()]).optional(),
+  emergencyContact: z.string().trim().max(200).optional().nullable(),
+});
 
 // GET: Fetch all user preferences for the settings UI
 export async function GET() {
@@ -38,15 +45,25 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
-    const body = await req.json();
-    const { healthGoals, menstrualCycle, emergencyContact } = body;
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return new NextResponse("Invalid JSON body", { status: 400 });
+    }
+
+    const parsed = settingsSchema.safeParse(body);
+    if (!parsed.success) {
+      return new NextResponse(parsed.error.issues[0].message, { status: 400 });
+    }
+    const { healthGoals, menstrualCycle, emergencyContact } = parsed.data;
 
     const updatedProfile = await prisma.patientProfile.update({
       where: { userId: session.user.id },
-      data: { 
+      data: {
         healthGoals,
-        menstrualCycle: menstrualCycle.toString(),
-        emergencyContact
+        menstrualCycle: menstrualCycle !== undefined ? menstrualCycle.toString() : undefined,
+        emergencyContact,
       },
     });
 
