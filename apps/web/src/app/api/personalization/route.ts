@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+import { parseJson } from "@/lib/api";
+
+const GoalsInput = z.object({
+  healthGoals: z.array(z.string().trim().min(1).max(60)).max(20),
+});
 
 // --- CURATED MEDICAL CONTENT LIBRARY ---
 const CONTENT_DB = {
@@ -104,8 +110,9 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
-    const body = await req.json();
-    const { healthGoals } = body;
+    const parsed = await parseJson(req, GoalsInput);
+    if (!parsed.ok) return parsed.response;
+    const { healthGoals } = parsed.data;
 
     const updatedProfile = await prisma.patientProfile.update({
       where: { userId: session.user.id },

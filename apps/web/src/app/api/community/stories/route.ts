@@ -2,6 +2,18 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+import { parseJson } from "@/lib/api";
+import { sanitizePlainText } from "@/lib/sanitize";
+import { mediaUrlSchema } from "@/lib/validation/media";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+
+const StoryInput = z
+  .object({
+    content: z.string().max(500, "Stories must be under 500 characters.").optional().or(z.null()),
+    imageUrl: mediaUrlSchema.optional().or(z.literal("")).or(z.null()),
+  })
+  .refine((v) => !!v.content?.trim() || !!v.imageUrl, { message: "Story must have content or an image" });
 
 export async function GET() {
   try {
@@ -66,16 +78,19 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
-    const { content, imageUrl } = await req.json();
-    if (!content?.trim() && !imageUrl) {
-      return new NextResponse("Story must have content or an image", { status: 400 });
-    }
+    const limit = rateLimit(`community-story:${session.user.id}`, 10, 60 * 60_000);
+    if (!limit.allowed) return rateLimitResponse(limit);
+
+    const parsed = await parseJson(req, StoryInput);
+    if (!parsed.ok) return parsed.response;
+    const { imageUrl } = parsed.data;
+    const content = parsed.data.content ? sanitizePlainText(parsed.data.content) : "";
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1_000);
 
     const story = await prisma.communityStory.create({
       data: {
-        content: content?.trim() || null,
+        content: content || null,
         imageUrl: imageUrl || null,
         authorId: session.user.id,
         expiresAt,

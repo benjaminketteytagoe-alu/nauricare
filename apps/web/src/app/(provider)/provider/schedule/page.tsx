@@ -1,17 +1,12 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
 import { Calendar, Search, Clock, Video, MapPin, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { CalendarButtons } from "@/components/CalendarButtons";
 
 export default async function ProviderSchedulePage() {
-  const session = await getServerSession(authOptions);
+  const session = await requireRole("PROVIDER");
 
-  if (!session?.user?.id || session.user.role !== "PROVIDER") {
-    redirect("/login");
-  }
 
   // 1. Get the Practitioner Profile
   const practitioner = await prisma.practitionerProfile.findUnique({

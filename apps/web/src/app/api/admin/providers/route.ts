@@ -16,8 +16,8 @@ const onboardProviderSchema = z.object({
   clinicName: z.string().trim().min(1, "Clinic name is required").max(150),
 });
 
-// NEW: Fetch all providers
-export async function GET(req: Request) {
+// Fetch all providers
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (session?.user?.role !== "ADMIN") {

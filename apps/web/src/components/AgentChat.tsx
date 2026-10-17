@@ -11,15 +11,29 @@ const QUICK_PROMPTS = [
   "What should I track in my cycle?",
 ];
 
+// The chat API accepts at most 30 alternating turns that start with a user
+// message, so send a recent window that satisfies that shape.
+const MAX_TURNS = 20;
+function recentTurns(history: Message[]) {
+  let window = history.slice(-MAX_TURNS);
+  while (window.length && window[0].role !== "user") window = window.slice(1);
+  return window.map((m) => ({ role: m.role, content: m.content }));
+}
+
 export function AgentChat() {
   const [messages, setMessages]             = useState<Message[]>([]);
   const [input, setInput]                   = useState("");
   const [isStreaming, setIsStreaming]        = useState(false);
   const [streamingText, setStreamingText]   = useState("");
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Keep the newest message in view by scrolling the chat pane itself.
+  // (scrollIntoView would scroll the whole landing page on mount, pulling
+  // visitors past the hero.)
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const pane = scrollRef.current;
+    if (!pane || (messages.length === 0 && !streamingText)) return;
+    pane.scrollTo({ top: pane.scrollHeight, behavior: "smooth" });
   }, [messages, streamingText]);
 
   async function sendMessage(text: string) {
@@ -38,7 +52,7 @@ export function AgentChat() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: history.map((m) => ({ role: m.role, content: m.content })),
+          messages: recentTurns(history),
         }),
       });
 
@@ -61,7 +75,10 @@ export function AgentChat() {
         setStreamingText(full);
       }
 
-      setMessages((prev) => [...prev, { role: "assistant", content: full }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: full.trim() ? full : "Sorry, I couldn't put together a reply. Could you rephrase that?" },
+      ]);
       setStreamingText("");
     } catch {
       setMessages((prev) => [
@@ -103,7 +120,7 @@ export function AgentChat() {
       </div>
 
       {/* ── Messages ── */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scroll-smooth">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scroll-smooth">
 
         {/* Welcome + quick prompts */}
         {showWelcome && (
@@ -179,7 +196,6 @@ export function AgentChat() {
           </div>
         )}
 
-        <div ref={bottomRef} />
       </div>
 
       {/* ── Disclaimer ── */}

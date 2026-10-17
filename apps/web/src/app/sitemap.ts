@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://nauricare.org";
+import { SITE_URL as BASE_URL } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

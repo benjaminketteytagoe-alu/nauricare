@@ -2,7 +2,10 @@
 "use client";
 
 import { useState } from "react";
+import { useClientValue } from "@/lib/hooks/useClientValue";
+import { Callout } from "@/components/ui/callout";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +19,9 @@ const COMMON_SYMPTOMS = [
 ];
 
 export default function SymptomLoggerPage() {
+  const router = useRouter();
+  // ?saved=1 is set after a landing-page Nauri assessment is saved to this account.
+  const justSaved = useClientValue(() => window.location.search.includes("saved=1"), false);
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [cycleDay, setCycleDay] = useState("");
   const [notes, setNotes] = useState("");
@@ -54,6 +60,12 @@ export default function SymptomLoggerPage() {
       });
 
       const data = await res.json();
+      // Consent was withdrawn in another tab, or the notice version changed:
+      // re-render the layout so the consent gate shows again.
+      if (res.status === 403 && data.code === "CONSENT_REQUIRED") {
+        router.refresh();
+        return;
+      }
       if (!res.ok) throw new Error(data.error || "Failed to log symptoms.");
 
       setAiResponse({ triage: data.triage, checkId: data.log.id });
@@ -67,6 +79,12 @@ export default function SymptomLoggerPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-12">
+
+        {justSaved && (
+          <Callout tone="success" role="status" title="Your Nauri assessment is saved">
+            It&apos;s now part of your health log. Log how you feel below whenever things change.
+          </Callout>
+        )}
 
         {/* Navigation */}
         <Link href="/dashboard" className="text-rose-700 hover:text-rose-900 flex items-center gap-2 font-medium w-fit">

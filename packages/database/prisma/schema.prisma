@@ -52,6 +52,8 @@ enum AuditAction {
   ADMIN_SETTINGS_UPDATE
   PAYMENT_VERIFIED
   PAYMENT_REJECTED
+  TRIAGE_CONSENT_GRANTED
+  TRIAGE_CONSENT_WITHDRAWN
 }
 
 enum MediaType {
@@ -98,6 +100,15 @@ model User {
   licenseNumber       String?
   hospitalAffiliation String?
   secondaryEmail      String?
+
+  // AI triage consent (Rwanda Law N° 058/2021). Explicit, granular and
+  // versioned: the gate treats consent as valid only when both flags are
+  // true, consentTimestamp is set, and consentVersion matches the current
+  // notice version. Every grant and withdrawal is also written to AuditLog.
+  hasConsentedToPrivacy Boolean   @default(false)
+  hasConsentedToTriage  Boolean   @default(false)
+  consentTimestamp      DateTime?
+  consentVersion        String?   @default("2026.1")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -585,8 +596,11 @@ model CommunityStory {
 
 enum FeedbackCategory {
   GENERAL
+  CLINICAL_TRIAGE
+  REFERRALS_BOOKING
   BUG_REPORT
   FEATURE_REQUEST
+  // Legacy values, no longer offered in the form; kept so historical rows stay valid.
   PROVIDER_EXPERIENCE
   BILLING
 }

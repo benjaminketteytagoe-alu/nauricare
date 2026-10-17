@@ -6,6 +6,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { verifyTurnstileToken } from "@/lib/turnstile";
+import { getClientIp } from "@/lib/getClientIp";
 import { rateLimit } from "@/lib/rateLimit";
 
 export const authOptions: AuthOptions = {
@@ -37,9 +38,17 @@ export const authOptions: AuthOptions = {
         password: { label: "Password", type: "password" },
         turnstileToken: { label: "Turnstile Token", type: "text" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Please fill in both email and password fields.");
+        }
+
+        // Per-IP burst limit (5/min) stops one client spraying many accounts;
+        // the per-email limit below stops many clients targeting one account.
+        const ip = getClientIp(new Headers((req?.headers ?? {}) as Record<string, string>));
+        const ipLimit = rateLimit(`auth-login-ip:${ip}`, 5, 60_000);
+        if (!ipLimit.allowed) {
+          throw new Error("Too many login attempts. Please wait a minute and try again.");
         }
 
         // Brute-force guard: cap login attempts per email, independent of
@@ -171,7 +180,7 @@ export const authOptions: AuthOptions = {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        session.user.role = token.role;
         session.user.avatarUrl = token.avatarUrl ?? null;
       }
       return session;

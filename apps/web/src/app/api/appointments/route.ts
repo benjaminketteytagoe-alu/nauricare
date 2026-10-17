@@ -4,6 +4,22 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { sendPatientConfirmationEmail, sendProviderAlertEmail } from "@/lib/email";
+import { z } from "zod";
+import { apiError, parseJson } from "@/lib/api";
+import { sanitizePlainText } from "@/lib/sanitize";
+import { idSchema } from "@/lib/validation/common";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+
+const isoDate = z.string().max(40).refine((v) => !Number.isNaN(Date.parse(v)), "Invalid date.");
+const BookingInput = z
+  .object({
+    practitionerProfileId: idSchema,
+    startTime: isoDate,
+    endTime: isoDate,
+    notes: z.string().max(2000, "Notes must be under 2000 characters.").optional().or(z.null()),
+  })
+  .refine((v) => Date.parse(v.endTime) > Date.parse(v.startTime), { message: "The appointment must end after it starts." })
+  .refine((v) => Date.parse(v.startTime) > Date.now() - 5 * 60_000, { message: "Please choose a time in the future." });
 
 export async function POST(req: Request) {
   try {
@@ -12,12 +28,13 @@ export async function POST(req: Request) {
       return new NextResponse("Unauthorized. Only patients can book appointments.", { status: 401 });
     }
 
-    const body = await req.json();
-    const { practitionerProfileId, startTime, endTime, notes } = body;
+    const limit = rateLimit(`booking:${session.user.id}`, 10, 60 * 60_000);
+    if (!limit.allowed) return rateLimitResponse(limit);
 
-    if (!practitionerProfileId || !startTime || !endTime) {
-      return new NextResponse("Missing required booking details.", { status: 400 });
-    }
+    const parsed = await parseJson(req, BookingInput);
+    if (!parsed.ok) return parsed.response;
+    const { practitionerProfileId, startTime, endTime } = parsed.data;
+    const notes = parsed.data.notes ? sanitizePlainText(parsed.data.notes) : "";
 
     const patientProfile = await prisma.patientProfile.findUnique({
       where: { userId: session.user.id },
@@ -30,7 +47,10 @@ export async function POST(req: Request) {
       include: { user: { select: { name: true, email: true } } },
     });
 
-    if (!practitioner) return new NextResponse("Practitioner not found.", { status: 404 });
+    // Only verified, active practitioners can be booked (same rule as the directory).
+    if (!practitioner || !practitioner.isVerified || !practitioner.isActive) {
+      return apiError("This specialist isn't available for booking.", 404);
+    }
 
     const start = new Date(startTime);
     const dateLabel =

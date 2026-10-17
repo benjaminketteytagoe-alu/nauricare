@@ -4,6 +4,8 @@ import { ProviderNewAppointmentAlert, type ProviderNewAppointmentAlertProps } fr
 import { PasswordReset, type PasswordResetProps } from "@/emails/PasswordReset";
 import { VerifyEmail, type VerifyEmailProps } from "@/emails/VerifyEmail";
 import { MagicLink, type MagicLinkProps } from "@/emails/MagicLink";
+import { FeedbackNotification, type FeedbackNotificationProps } from "@/emails/FeedbackNotification";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
 
@@ -79,4 +81,20 @@ export async function sendMagicLinkEmail({
   });
 
   if (error) throw new Error(`[RESEND] Magic link email failed: ${error.message}`);
+}
+
+// Strips characters that could break out of an email header line.
+const headerSafe = (value: string) => value.replace(/[\r\n]+/g, " ").slice(0, 120);
+
+/** Sends a submitted feedback record to the NauriCare support inbox. */
+export async function sendFeedbackEmail(props: FeedbackNotificationProps) {
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to: SUPPORT_EMAIL,
+    replyTo: props.userEmail,
+    subject: headerSafe(`[NauriCare Feedback] ${props.category} - Rating: ${props.rating}/5 from ${props.userName}`),
+    react: FeedbackNotification(props),
+  });
+
+  if (error) throw new Error(`[RESEND] Feedback email failed: ${error.message}`);
 }

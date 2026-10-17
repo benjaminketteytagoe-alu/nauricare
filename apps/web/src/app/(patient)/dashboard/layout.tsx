@@ -1,53 +1,16 @@
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
-import { Sidebar } from "@/components/Sidebar";
+import { requireRole } from "@/lib/auth-guards";
+import { PatientShell } from "@/components/Sidebar";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardLayout({
-  children
-}: {
-  children: React.ReactNode
-}) {
-  await cookies(); // forces dynamic rendering — prevents cross-user cache leak
-  const session = await getServerSession(authOptions);
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const session = await requireRole("PATIENT");
 
-  // 2. Explicit Security Gate: Ensure a valid user session exists
-  if (!session || !session.user) {
-    redirect("/login");
-  }
+  // Patients must finish their health onboarding profile first.
+  const profile = await prisma.patientProfile.findUnique({ where: { userId: session.user.id }, select: { id: true } });
+  if (!profile) redirect("/onboarding");
 
-  // 3. Role Boundary Protection: Instantly bounce non-patient accounts to their proper domains
-  if (session.user.role === "ADMIN") {
-    redirect("/admin");
-  }
-  if (session.user.role === "PROVIDER") {
-    redirect("/provider");
-  }
-
-  // 4. Gatekeeper: Verify PATIENT users have completed their health onboarding profile
-  const profile = await prisma.patientProfile.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  // Force redirect if the client profile relation is missing
-  if (!profile) {
-    redirect("/onboarding");
-  }
-
-  // 5. Render the explicit Patient Dashboard UI shell
-  return (
-    <div className="app-shell-canvas flex">
-      <Sidebar />
-      <main className="flex-1 flex flex-col min-h-screen md:h-screen overflow-hidden">
-        {/* pt-20 clears the fixed mobile top bar (h-16) with breathing room */}
-        <div className="flex-1 overflow-y-auto p-4 pt-20 md:p-8">
-          {children}
-        </div>
-      </main>
-    </div>
-  );
+  return <PatientShell>{children}</PatientShell>;
 }

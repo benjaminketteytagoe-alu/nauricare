@@ -2,6 +2,17 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+import { parseJson } from "@/lib/api";
+
+const CycleInput = z.object({
+  startDate: z
+    .string()
+    .max(40)
+    .refine((v) => !Number.isNaN(Date.parse(v)), "Enter a valid start date.")
+    .refine((v) => Date.parse(v) <= Date.now() + 24 * 60 * 60_000, "The start date can't be in the future.")
+    .refine((v) => Date.parse(v) >= Date.parse("2000-01-01"), "Enter a valid start date."),
+});
 
 export async function POST(req: Request) {
   try {
@@ -12,12 +23,9 @@ export async function POST(req: Request) {
     }
 
     // 2. Parse the payload from the frontend pen icon modal
-    const body = await req.json();
-    const { startDate } = body;
-
-    if (!startDate) {
-      return new NextResponse("Start date is required", { status: 400 });
-    }
+    const parsed = await parseJson(req, CycleInput);
+    if (!parsed.ok) return parsed.response;
+    const { startDate } = parsed.data;
 
     // 3. Find the PatientProfile ID linked to this user
     const profile = await prisma.patientProfile.findUnique({

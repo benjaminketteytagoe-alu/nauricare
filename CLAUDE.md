@@ -68,14 +68,13 @@ The app uses route groups to scope layouts per role:
 | `(provider)` | `/provider` | `PROVIDER` |
 | `(admin)` | `/admin` | `ADMIN` |
 
-Middleware at `apps/web/src/middleware.ts` enforces role boundaries: unauthenticated requests are rejected; authenticated users hitting `/dashboard` are redirected to their role-specific root. Each layout file adds a second layer of server-side role verification and redirects.
+Proxy (Next 16's renamed middleware) at `apps/web/src/proxy.ts` enforces role boundaries: unauthenticated requests are rejected; authenticated users hitting `/dashboard` are redirected to their role-specific root. Each layout and protected page adds a second layer via `requireRole(role)` from `src/lib/auth-guards.ts` (forces dynamic rendering, requires a session, bounces other roles to their portal).
 
 ### Authentication
 
 NextAuth v4 with JWT strategy. Two auth providers: Google OAuth and email/password (bcrypt).
 
-- **Canonical `authOptions`**: `src/app/api/auth/[...nextauth]/route.ts` — this is the active config. Import from here in layouts and server components.
-- `src/lib/auth.ts` also exists but is a secondary definition; the route handler version is preferred.
+- **Canonical `authOptions`**: `src/app/api/auth/[...nextauth]/route.ts`. Prefer the helpers in `src/lib/auth-guards.ts` (`requireRole`, `getSessionUser`, `getUserIdWithRole`) over calling `getServerSession` directly.
 - JWT callback re-queries the DB on every token refresh to keep `role` and `id` in sync.
 - Session type extensions are in `src/types/next-auth.d.ts`.
 - Google sign-in auto-provisions a `PATIENT` user if the email doesn't exist.
@@ -110,6 +109,15 @@ REST-style route handlers in `src/app/api/`. Each handler calls `getServerSessio
 ### Server Actions
 
 Admin mutations use Next.js Server Actions (e.g., `(admin)/admin/actions.ts`). They call `revalidatePath()` after writes to bust the router cache.
+
+### Shared helpers (`src/lib/`, `src/components/ui/`)
+
+- `api.ts` — `apiSuccess`, `apiError`, `parseJson(req, zodSchema)` for route handlers.
+- `validation/common.ts` / `validation/media.ts` — reusable Zod fields (ids, dates, times) and the upload-host allow-list for user media.
+- `sanitize.ts` — `sanitizePlainText()`; run on all user-generated text before storing.
+- `site.ts` — `SITE_URL`, `SUPPORT_EMAIL` (nauricare@gmail.com), `EMERGENCY_NUMBERS`. Never hard-code these.
+- `format.ts` — `formatDate`/`formatTime` (en-GB). `safeRedirect.ts` — open-redirect guard for `?redirect=`/`callbackUrl`.
+- UI primitives: `Callout`, `StatusChip` (+ `SEVERITY_TONE`, `REFERRAL_STATUS_TONE`), `Tooltip`. Portal navigation: `components/navigation/AppSidebar.tsx`.
 
 ### Security utilities (`src/lib/`)
 

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { postAuthDestination, useAuthParams } from "@/lib/authDestination";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
 import { ShieldCheck, Lock } from "lucide-react";
@@ -29,12 +30,13 @@ const TRUST_SLIDES: AuthVisualSlide[] = [
 ];
 
 const TRUST_CHIPS = [
-  { Icon: ShieldCheck, label: "HIPAA Compliant" },
+  { Icon: ShieldCheck, label: "Law Nº 058/2021 Aligned" },
   { Icon: Lock,        label: "End-to-End Encrypted" },
 ];
 
 export default function LoginPage() {
   const router = useRouter();
+  const authParams = useAuthParams(); // keeps ?redirect=&action= when switching auth pages
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [error, setError] = useState(() => {
@@ -121,14 +123,9 @@ export default function LoginPage() {
         const session = await getSession();
         const role = session?.user?.role;
 
-        // Route dynamically based on RBAC
-        if (role === "PROVIDER") {
-          router.push("/provider");
-        } else if (role === "ADMIN") {
-          router.push("/admin");
-        } else {
-          router.push("/dashboard"); // Default Patient route
-        }
+        // Route by role, honouring a safe ?redirect= / callbackUrl and any
+        // pending landing-page triage hand-over.
+        router.push(postAuthDestination(role));
       }
     } catch {
       setError("An unexpected error occurred.");
@@ -243,7 +240,7 @@ export default function LoginPage() {
           )}
 
           <p className="text-center text-sm text-gray-600">
-            Don&apos;t have an account? <Link href="/signup" className="text-teal-600 hover:underline font-semibold">Sign up</Link>
+            Don&apos;t have an account? <Link href={`/signup${authParams}`} className="text-teal-600 hover:underline font-semibold">Sign up</Link>
           </p>
           <p className="text-center text-sm text-gray-600">
             Are you a provider? <Link href="/signup/provider" className="text-teal-600 hover:underline font-semibold">Register your practice</Link>

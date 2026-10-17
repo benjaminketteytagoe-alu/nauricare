@@ -4,6 +4,13 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { rateLimit } from "@/lib/rateLimit";
+import { sanitizePlainText } from "@/lib/sanitize";
+import { idSchema } from "@/lib/validation/common";
+
+const MESSAGE_MAX = 4000;
+const SendInput = z.object({ receiverId: idSchema, content: z.string().max(MESSAGE_MAX, `Messages must be under ${MESSAGE_MAX} characters.`) });
 
 // Returns true when the two users share at least one appointment (either direction).
 async function hasSharedAppointment(userA: string, userB: string): Promise<boolean> {
@@ -85,6 +92,7 @@ export async function getConversations() {
 export async function getDirectMessages(contactId: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { success: false, error: "Unauthorized", data: [] };
+  if (!idSchema.safeParse(contactId).success) return { success: false, error: "Invalid contact.", data: [] };
 
   const allowed = await hasSharedAppointment(session.user.id, contactId);
   if (!allowed) return { success: false, error: "No shared appointment with this user.", data: [] };
@@ -114,7 +122,13 @@ export async function sendDirectMessage(receiverId: string, content: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { success: false, error: "Unauthorized" };
 
-  const trimmed = content.trim();
+  const parsed = SendInput.safeParse({ receiverId, content });
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid message." };
+
+  const limit = rateLimit(`dm-send:${session.user.id}`, 30, 60_000);
+  if (!limit.allowed) return { success: false, error: "You're sending messages too quickly. Please wait a moment." };
+
+  const trimmed = sanitizePlainText(parsed.data.content);
   if (!trimmed) return { success: false, error: "Message cannot be empty" };
 
   const allowed = await hasSharedAppointment(session.user.id, receiverId);

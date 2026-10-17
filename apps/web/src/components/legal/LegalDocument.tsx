@@ -2,7 +2,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { EmergencyBanner } from "@/components/triage/EmergencyBanner";
 
-export const LEGAL_CONTACT_EMAIL = "privacy@nauricare.com";
+import { SUPPORT_EMAIL } from "@/lib/site";
+
+export const LEGAL_CONTACT_EMAIL = SUPPORT_EMAIL;
 export const LEGAL_EFFECTIVE_DATE = "17 October 2026";
 
 export interface LegalSection {
@@ -13,7 +15,7 @@ export interface LegalSection {
 
 const RELATED = [
   { href: "/privacy", label: "Privacy Policy" },
-  { href: "/terms", label: "Terms of Use" },
+  { href: "/terms", label: "Terms of Service" },
   { href: "/consent", label: "Informed Consent" },
 ];
 

@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Video, FileText, Users, ShieldCheck, ArrowRight } from "lucide-react";
 import { AgentChat } from "@/components/AgentChat";
+import { NauriTriageCard } from "@/components/nauri/NauriTriageCard";
 
 // ─── Animation presets ────────────────────────────────────────────────────────
 
@@ -135,40 +136,36 @@ export default function LandingPageClient() {
         {/* Rich warm overlay — ensures WCAG-compliant contrast against the crossfading imagery */}
         <div className="absolute inset-0 bg-gradient-to-b from-stone-900/75 via-stone-900/55 to-stone-950/85 pointer-events-none" />
 
-        {/* Hero copy */}
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 text-center text-white">
+        {/* Hero copy + Nauri front door */}
+        <div className="relative z-10 mx-auto grid w-full max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:py-16">
           <motion.div
             initial="hidden"
             animate="visible"
             variants={stagger}
-            className="space-y-8"
+            className="space-y-7 text-center text-white lg:text-left"
           >
             <motion.h1
               variants={fadeUp}
-              className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-[-0.02em] leading-[1.06] drop-shadow-2xl text-balance"
+              className="text-4xl sm:text-6xl lg:text-[4.25rem] font-extrabold tracking-[-0.02em] leading-[1.06] drop-shadow-2xl text-balance"
             >
               Your body,{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-300 to-amber-300">
-                understood.
-              </span>
+              <span className="text-rose-300">understood.</span>
               <br />
               Your health,{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-300 to-amber-300">
-                connected.
-              </span>
+              <span className="text-amber-300">connected.</span>
             </motion.h1>
 
             <motion.p
               variants={fadeUp}
-              className="text-lg md:text-xl text-amber-50/90 max-w-2xl mx-auto leading-relaxed drop-shadow-lg text-pretty"
+              className="mx-auto max-w-xl text-lg leading-relaxed text-amber-50/90 drop-shadow-lg text-pretty md:text-xl lg:mx-0"
             >
               Compassionate, evidence-based care for PCOS, fibroids, and women&apos;s reproductive
-              health — always private, always yours.
+              health. Ask Nauri how soon to get care, then book a verified specialist or hospital referral.
             </motion.p>
 
             <motion.div
               variants={fadeUp}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2"
+              className="flex flex-col items-center justify-center gap-4 pt-1 sm:flex-row lg:justify-start"
             >
               <Link
                 href="/signup"
@@ -185,10 +182,19 @@ export default function LandingPageClient() {
               </Link>
             </motion.div>
           </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="mx-auto w-full max-w-lg lg:max-w-none"
+          >
+            <NauriTriageCard />
+          </motion.div>
         </div>
 
         {/* Scroll cue */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 text-white/35 pointer-events-none">
+        <div className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-1.5 text-white/35 pointer-events-none xl:flex">
           <div className="w-6 h-10 border-2 border-white/20 rounded-full flex justify-center pt-2">
             <motion.div
               className="w-1 h-2.5 bg-white/40 rounded-full"

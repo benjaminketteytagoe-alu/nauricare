@@ -81,6 +81,12 @@
   --color-nc-divider: #e2e8f0;
 }
 
+/* Friendly rounded system stack for emotional, Flo-style surfaces (triage
+   gate). System fonts only: nothing is downloaded at build or run time. */
+@utility font-friendly {
+  font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, Roboto, "Noto Sans", Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+}
+
 /* Outlined text field */
 @utility m3-input {
   @apply w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-nc-primary focus:ring-1 focus:ring-nc-primary focus:outline-none disabled:bg-slate-50 disabled:text-slate-500;

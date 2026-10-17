@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Clock, Hospital, ShieldAlert, Stethoscope, Video } from "lucide-react";
 import type { TriageSeverity } from "@/lib/referrals/constants";
 import { EmergencyBanner } from "./EmergencyBanner";
+import { SEVERITY_TONE, StatusChip } from "@/components/ui/status-chip";
 
 export interface TriageView {
   severity: TriageSeverity;
@@ -13,10 +14,10 @@ export interface TriageView {
   engine: "medgemma" | "gemini" | "rules";
 }
 
-const SEVERITY_STYLES: Record<TriageSeverity, { label: string; chip: string; icon: typeof CheckCircle2 }> = {
-  LOW: { label: "Low urgency", chip: "bg-nc-primary-container text-nc-primary border-blue-200", icon: CheckCircle2 },
-  MODERATE: { label: "See a clinician soon", chip: "bg-nc-amber-container text-nc-amber border-amber-200", icon: AlertTriangle },
-  URGENT: { label: "Urgent care needed", chip: "bg-nc-berry-container text-nc-berry border-rose-200", icon: ShieldAlert },
+const SEVERITY_STYLES: Record<TriageSeverity, { label: string; icon: typeof CheckCircle2 }> = {
+  LOW: { label: "Low urgency", icon: CheckCircle2 },
+  MODERATE: { label: "See a clinician soon", icon: AlertTriangle },
+  URGENT: { label: "Urgent care needed", icon: ShieldAlert },
 };
 
 const ENGINE_LABEL: Record<TriageView["engine"], string> = {
@@ -36,10 +37,10 @@ export function TriageResultCard({ triage, symptomCheckId }: { triage: TriageVie
       className="m3-card overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500"
     >
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-nc-divider px-6 py-4">
-        <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold ${style.chip}`}>
+        <StatusChip tone={SEVERITY_TONE[triage.severity]} className="px-3 py-1 text-sm">
           <Icon className="h-4 w-4" aria-hidden />
           {style.label}
-        </span>
+        </StatusChip>
         <span className="text-xs font-medium text-slate-500">{ENGINE_LABEL[triage.engine]}</span>
       </header>
 

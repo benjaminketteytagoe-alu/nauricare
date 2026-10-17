@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+import { parseJson } from "@/lib/api";
+import { sanitizePlainText } from "@/lib/sanitize";
+import { idSchema } from "@/lib/validation/common";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+
+const MessageInput = z.object({
+  receiverId: idSchema,
+  content: z.string().trim().min(1, "Message cannot be empty").max(4000, "Messages must be under 4000 characters."),
+});
 
 // GET: Return the latest message from every distinct conversation for the current user.
 export async function GET() {
@@ -60,11 +70,14 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
-    const { receiverId, content } = await req.json();
+    const limit = rateLimit(`messages-send:${session.user.id}`, 30, 60_000);
+    if (!limit.allowed) return rateLimitResponse(limit);
 
-    if (!receiverId || !content?.trim()) {
-      return new NextResponse("receiverId and content are required", { status: 400 });
-    }
+    const parsed = await parseJson(req, MessageInput);
+    if (!parsed.ok) return parsed.response;
+    const { receiverId } = parsed.data;
+    const content = sanitizePlainText(parsed.data.content);
+    if (!content) return new NextResponse("Message cannot be empty", { status: 400 });
 
     if (receiverId === session.user.id) {
       return new NextResponse("Cannot send a message to yourself", { status: 400 });
@@ -99,7 +112,7 @@ export async function POST(req: Request) {
       data: {
         senderId: session.user.id,
         receiverId,
-        content: content.trim(),
+        content,
       },
       include: {
         sender: { select: { id: true, name: true } },

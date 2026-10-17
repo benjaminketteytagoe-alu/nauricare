@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Store, TrendingUp, Package } from "lucide-react";
@@ -8,7 +7,7 @@ import PharmacyManagementClient from "./PharmacyManagementClient";
 export const dynamic = "force-dynamic";
 
 export default async function AdminPharmaciesPage() {
-  const session = await getServerSession(authOptions);
+  const session = await requireRole("ADMIN");
   if (session?.user?.role !== "ADMIN") redirect("/login");
 
   // Aggregate prescriptions routed/fulfilled per pharmacy, ordered by popularity

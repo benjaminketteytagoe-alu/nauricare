@@ -3,8 +3,9 @@ import { getServerSession } from "next-auth/next";
 import { Prisma } from "@prisma/client";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { ALL_FEEDBACK_CATEGORIES } from "@/lib/feedback/categories";
 
-const VALID_CATEGORIES = new Set(["GENERAL", "BUG_REPORT", "FEATURE_REQUEST", "PROVIDER_EXPERIENCE", "BILLING"]);
+const VALID_CATEGORIES = new Set<string>(ALL_FEEDBACK_CATEGORIES);
 const VALID_STATUSES = new Set(["NEW", "REVIEWED", "ACTIONED"]);
 
 export async function GET(req: Request) {

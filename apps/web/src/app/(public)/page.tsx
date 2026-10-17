@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import LandingPageClient from "@/components/landing/LandingPageClient";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://nauricare.org";
+import { SITE_URL as BASE_URL, SUPPORT_EMAIL } from "@/lib/site";
 
 // Page-level metadata inherits the root template: "NauriCare — Women's Health, Connected | NauriCare"
 // The title.template in layout.tsx appends " | NauriCare" automatically.
@@ -94,7 +94,7 @@ const jsonLd = {
   contactPoint: {
     "@type": "ContactPoint",
     contactType: "customer support",
-    email: "support@nauricare.org",
+    email: SUPPORT_EMAIL,
     availableLanguage: ["en"],
   },
   founder: {

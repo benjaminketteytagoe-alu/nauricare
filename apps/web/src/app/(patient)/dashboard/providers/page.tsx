@@ -74,7 +74,14 @@ export default function ProvidersDirectoryPage() {
       });
 
       if (!res.ok) {
-        const msg = await res.text();
+        // Errors are JSON ({ error }) or, from older paths, plain text.
+        const raw = await res.text();
+        let msg = raw;
+        try {
+          msg = JSON.parse(raw).error ?? raw;
+        } catch {
+          /* plain-text error */
+        }
         throw new Error(msg || "Failed to book appointment.");
       }
 

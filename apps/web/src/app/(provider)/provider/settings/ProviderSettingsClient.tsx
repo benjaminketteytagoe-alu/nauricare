@@ -65,7 +65,8 @@ function ProfileTab({ initial }: { initial: Profile }) {
         licenseNumber: form.licenseNumber,
         hospitalAffiliation: form.hospitalAffiliation,
       });
-      res.success ? flash("Profile updated successfully.", "success") : flash(res.error ?? "Failed.", "error");
+      if (res.success) flash("Profile updated successfully.", "success");
+      else flash(res.error ?? "Failed.", "error");
     });
   }
 

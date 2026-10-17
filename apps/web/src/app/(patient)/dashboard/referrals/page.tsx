@@ -1,31 +1,14 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth/next";
 import { Hospital, MapPin, Plus, Stethoscope } from "lucide-react";
-import type { ReferralStatus } from "@prisma/client";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
+import { formatDate } from "@/lib/format";
+import { REFERRAL_STATUS_TONE, SEVERITY_TEXT, StatusChip } from "@/components/ui/status-chip";
 
 export const dynamic = "force-dynamic";
 
-const STATUS_STYLE: Record<ReferralStatus, string> = {
-  PENDING: "bg-nc-amber-container text-nc-amber",
-  ACCEPTED: "bg-nc-primary-container text-nc-primary",
-  COMPLETED: "bg-slate-100 text-slate-700",
-  EXPIRED: "bg-slate-100 text-slate-500",
-};
-
-const SEVERITY_STYLE: Record<string, string> = {
-  LOW: "text-nc-primary",
-  MODERATE: "text-nc-amber",
-  URGENT: "text-nc-berry",
-};
-
 export default async function ReferralsPage() {
-  await cookies(); // forces dynamic rendering — prevents cross-user cache leak
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) redirect("/login");
+  const session = await requireRole("PATIENT");
 
   const referrals = await prisma.referral.findMany({
     where: { patientId: session.user.id },
@@ -65,14 +48,14 @@ export default async function ReferralsPage() {
                 <div className="min-w-0">
                   <p className="font-mono text-lg font-bold tracking-wider text-nc-ink">{r.referralCode}</p>
                   <p className="mt-1 text-sm text-slate-500">
-                    {r.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                    {formatDate(r.createdAt)}
                     {" · "}
-                    <span className={`font-semibold ${SEVERITY_STYLE[r.triageSeverity] ?? "text-slate-600"}`}>
+                    <span className={`font-semibold ${SEVERITY_TEXT[r.triageSeverity] ?? "text-slate-600"}`}>
                       {r.triageSeverity}
                     </span>
                   </p>
                 </div>
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLE[r.status]}`}>{r.status}</span>
+                <StatusChip tone={REFERRAL_STATUS_TONE[r.status]}>{r.status}</StatusChip>
               </div>
               <div className="mt-4 grid gap-3 border-t border-nc-divider pt-4 text-sm sm:grid-cols-2">
                 <p className="flex items-start gap-2 text-slate-700">

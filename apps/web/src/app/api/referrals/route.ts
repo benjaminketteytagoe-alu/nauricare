@@ -4,7 +4,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { SPECIALTIES, TRIAGE_SEVERITIES, insuranceLabel, type TriageSeverity } from "@/lib/referrals/constants";
-import { generateReferralCode, requirePatientId } from "@/lib/referrals/server";
+import { generateReferralCode } from "@/lib/referrals/server";
+import { getUserIdWithRole } from "@/lib/auth-guards";
 import { maxSeverity, screenRedFlags } from "@/lib/triage/redFlags";
 
 const ReferralInput = z.object({
@@ -31,7 +32,7 @@ const referralSelect = {
 } satisfies Prisma.ReferralSelect;
 
 export async function GET() {
-  const userId = await requirePatientId();
+  const userId = await getUserIdWithRole("PATIENT");
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const referrals = await prisma.referral.findMany({
@@ -61,7 +62,7 @@ async function resolveSeverity(userId: string, reason: string, symptomCheckId?: 
 }
 
 export async function POST(req: Request) {
-  const userId = await requirePatientId();
+  const userId = await getUserIdWithRole("PATIENT");
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const limit = rateLimit(`referrals:${userId}`, 10, 60 * 60_000);

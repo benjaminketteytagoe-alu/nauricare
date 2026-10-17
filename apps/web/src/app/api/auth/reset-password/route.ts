@@ -21,6 +21,8 @@ export async function POST(req: Request) {
     const ip = getClientIp(req.headers);
     const limit = rateLimit(`auth-reset-password:${ip}`, 10, 15 * 60_000);
     if (!limit.allowed) return rateLimitResponse(limit);
+    const burst = rateLimit(`auth-reset-password-burst:${ip}`, 5, 60_000);
+    if (!burst.allowed) return rateLimitResponse(burst);
 
     const body = await req.json();
     const parsed = schema.safeParse(body);

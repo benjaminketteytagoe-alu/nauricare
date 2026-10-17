@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+import { parseJson } from "@/lib/api";
+import { sanitizePlainText } from "@/lib/sanitize";
+
+const PharmacyInput = z.object({
+  name: z.string().trim().min(1, "name and address are required").max(200),
+  address: z.string().trim().min(1, "name and address are required").max(300),
+  contactEmail: z.union([z.literal(""), z.email("Enter a valid contact email")]).optional().or(z.null()),
+  tags: z.array(z.string().trim().min(1).max(40)).max(20).optional().or(z.null()),
+});
 
 export async function GET() {
   try {
@@ -28,15 +38,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const body = await req.json();
-    const { name, address, contactEmail, tags } = body;
-
-    if (!name || !address) {
-      return NextResponse.json({ error: "name and address are required" }, { status: 400 });
-    }
+    const parsed = await parseJson(req, PharmacyInput);
+    if (!parsed.ok) return parsed.response;
+    const { contactEmail, tags } = parsed.data;
 
     const newPharmacy = await prisma.pharmacy.create({
-      data: { name, address, contactEmail: contactEmail || null, tags: tags || [] },
+      data: {
+        name: sanitizePlainText(parsed.data.name),
+        address: sanitizePlainText(parsed.data.address),
+        contactEmail: contactEmail || null,
+        tags: (tags ?? []).map(sanitizePlainText).filter(Boolean),
+      },
     });
 
     await prisma.auditEvent.create({

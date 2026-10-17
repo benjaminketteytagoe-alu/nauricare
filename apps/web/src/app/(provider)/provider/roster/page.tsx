@@ -1,8 +1,5 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { Users, Search, Calendar, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { AppointmentStatusButton } from "./AppointmentStatusButton";
@@ -10,9 +7,7 @@ import { AppointmentStatusButton } from "./AppointmentStatusButton";
 export const dynamic = "force-dynamic";
 
 export default async function ProviderRosterPage() {
-  await cookies();
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== "PROVIDER") redirect("/login");
+  const session = await requireRole("PROVIDER");
 
   const practitioner = await prisma.practitionerProfile.findUnique({
     where: { userId: session.user.id },

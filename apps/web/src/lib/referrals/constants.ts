@@ -34,4 +34,4 @@ export const KIGALI_DISTRICTS = ["Gasabo", "Kicukiro", "Nyarugenge"] as const;
 export const TRIAGE_SEVERITIES = ["LOW", "MODERATE", "URGENT"] as const;
 export type TriageSeverity = (typeof TRIAGE_SEVERITIES)[number];
 
-export const EMERGENCY_NUMBERS = "112 / 912";
+export { EMERGENCY_NUMBERS } from "@/lib/site";

@@ -5,6 +5,15 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { s3, AWS_REGION, AWS_S3_BUCKET, s3IsConfigured } from "@/lib/s3";
+import { z } from "zod";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+
+const UploadInput = z.object({
+  filename: z.string().min(1).max(255),
+  fileType: z.string().min(1).max(100),
+  fileSize: z.number().int(),
+  context: z.enum(["avatar", "community"]).optional(),
+});
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;  // 5MB
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // 50MB
@@ -39,14 +48,14 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { filename, fileType, fileSize, context } = await req.json();
-
-    if (!filename || !fileType || typeof fileSize !== "number") {
-      return NextResponse.json(
-        { error: "filename, fileType, and fileSize are required" },
-        { status: 400 },
-      );
+    const parsed = UploadInput.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) {
+      return NextResponse.json({ error: "filename, fileType, and fileSize are required" }, { status: 400 });
     }
+    const { filename, fileType, fileSize, context } = parsed.data;
+
+    const limit = rateLimit(`upload-presign:${session.user.id}`, 20, 10 * 60_000);
+    if (!limit.allowed) return rateLimitResponse(limit);
 
     const folder = context === "avatar" ? "avatars" : "community";
 

@@ -1,20 +1,13 @@
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth/next";
-import { cookies } from "next/headers";
 import { Droplet } from "lucide-react";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireRole } from "@/lib/auth-guards";
 import { getCycleData } from "./actions";
 import { CycleCalendarClient } from "./CycleCalendarClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function CyclePage() {
-  await cookies(); // forces dynamic rendering — prevents cross-user cache leak
-  const session = await getServerSession(authOptions);
+  await requireRole("PATIENT");
 
-  if (!session?.user || session.user.role !== "PATIENT") {
-    redirect("/login");
-  }
 
   const data = await getCycleData();
 
