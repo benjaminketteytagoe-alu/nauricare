@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,7 @@ const COMMON_SYMPTOMS = [
 ];
 
 export default function SymptomLoggerPage() {
+  const router = useRouter();
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [cycleDay, setCycleDay] = useState("");
   const [notes, setNotes] = useState("");
@@ -54,6 +56,12 @@ export default function SymptomLoggerPage() {
       });
 
       const data = await res.json();
+      // Consent was withdrawn in another tab, or the notice version changed:
+      // re-render the layout so the consent gate shows again.
+      if (res.status === 403 && data.code === "CONSENT_REQUIRED") {
+        router.refresh();
+        return;
+      }
       if (!res.ok) throw new Error(data.error || "Failed to log symptoms.");
 
       setAiResponse({ triage: data.triage, checkId: data.log.id });

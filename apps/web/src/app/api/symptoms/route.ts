@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { runTriage, toLegacyRiskLevel } from "@/lib/triage/engine";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { getTriageConsent } from "@/lib/consent";
 
 const SymptomInput = z.object({
   symptoms: z.array(z.string().trim().min(1).max(60)).min(1, "Select at least one symptom.").max(20),
@@ -17,6 +18,15 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.email || !session.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Server-side consent gate: the UI gate can be bypassed, this cannot.
+    const consent = await getTriageConsent(session.user.id);
+    if (!consent.valid) {
+      return NextResponse.json(
+        { error: "Please review and accept the AI triage consent before using the symptom checker.", code: "CONSENT_REQUIRED" },
+        { status: 403 },
+      );
     }
 
     // AI triage is an LLM call — rate-limit distinctly from generic API abuse.
