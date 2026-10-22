@@ -12,6 +12,7 @@ interface FooterLink {
 // returned afterwards, so these targets work for every audience.
 const PLATFORM_LINKS: FooterLink[] = [
   { href: "/", label: "Home" },
+  { href: "/waitlist", label: "Join the Waitlist" },
   { href: "/#nauri", label: "AI Symptom Guide" },
   { href: "/dashboard/referrals", label: "Hospital Referrals" },
   { href: "/dashboard/providers", label: "Telehealth" },

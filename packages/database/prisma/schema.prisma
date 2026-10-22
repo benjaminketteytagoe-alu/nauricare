@@ -692,3 +692,29 @@ model Referral {
   @@index([patientId])
   @@index([hospitalId])
 }
+
+// --- Pre-launch waitlist (public form at /waitlist) ---
+
+enum WaitlistRole {
+  PATIENT
+  PROVIDER
+  ORGANIZATION
+  OTHER
+}
+
+model WaitlistEntry {
+  id        String       @id @default(cuid())
+  name      String
+  email     String       @unique // stored lower-cased; one signup per address
+  phone     String?
+  country   String?
+  role      WaitlistRole @default(PATIENT)
+  interest  String?      @db.Text // optional "what would you like from NauriCare?"
+  source    String? // e.g. utm_source or referrer path
+  consentAt DateTime // explicit consent to be contacted (Law Nº 058/2021)
+  ipAddress String?
+  createdAt DateTime     @default(now())
+
+  @@index([createdAt])
+  @@index([role])
+}
