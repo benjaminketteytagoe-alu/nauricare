@@ -1,75 +1,88 @@
-# ==========================================
-# STAGE 1: PRUNE WORKSPACE
-# ==========================================
-FROM node:24-alpine AS builder
-RUN apk update && apk add --no-cache libc6-compat
+# syntax=docker/dockerfile:1
+# ============================================================================
+# NauriCare web — multi-stage build (Turborepo prune → npm ci → Next standalone)
+#
+# Reproducibility rule: dependencies are installed ONLY from the pruned
+# package-lock.json with `npm ci`. A lockfile-less `npm install` re-resolves
+# every ^range on each build, which is how a new upstream minor release broke
+# CI type-checking without any code change.
+# ============================================================================
+
+# Node 24 is the active LTS and matches the CI test job (Node 20 reached EOL
+# in April 2026). openssl lets Prisma detect the OpenSSL 3 engine on Alpine.
+FROM node:24-alpine AS base
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    TURBO_TELEMETRY_DISABLED=1
 
-# Install turbo globally
-RUN npm install -g turbo
-
-# Copy the entire monorepo into the builder
+# ----------------------------------------------------------------------------
+# 1. Pruner: extract only the `web` app and its internal dependencies
+# ----------------------------------------------------------------------------
+FROM base AS pruner
+# Install the exact turbo version recorded in the lockfile (no "latest" drift).
+# Copying only the lockfile first keeps this layer cached between builds.
+COPY package-lock.json ./
+RUN npm install -g "turbo@$(node -p "require('./package-lock.json').packages['node_modules/turbo'].version")"
 COPY . .
-
-# Extract only the code needed for the 'web' app and its dependencies
 RUN turbo prune web --docker
 
-# ==========================================
-# STAGE 2: INSTALL & BUILD
-# ==========================================
-FROM node:24-alpine AS installer
-RUN apk update && apk add --no-cache libc6-compat
-WORKDIR /app
+# ----------------------------------------------------------------------------
+# 2. Builder: install from the lockfile, generate Prisma, build Next.js
+# ----------------------------------------------------------------------------
+FROM base AS builder
 
-# Copy the pruned package.json files
-COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/tsconfig.json /app/tsconfig.json
+# Dependency manifests + pruned lockfile first, for layer caching.
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/package-lock.json ./package-lock.json
+RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
 
-RUN rm -f package-lock.json && npm install
+# Full pruned source. apps/web/tsconfig.json extends the root tsconfig, which
+# `turbo prune` does not include, so copy it explicitly.
+COPY --from=pruner /app/out/full/ .
+COPY --from=pruner /app/tsconfig.json ./tsconfig.json
 
-# Copy the actual pruned source code
-COPY --from=builder /app/out/full/ .
-
-# Generate the Prisma client using your specific monorepo path
 RUN npx prisma generate --schema=packages/database/prisma/schema.prisma
 
-# Cloudflare Turnstile public site key — must be baked in at build time
-# so Next.js can embed it in the client bundle via process.env.NEXT_PUBLIC_*
+# Public build-time values are inlined into the client bundle, so the
+# Turnstile site key must be supplied as a build arg (CI passes it).
 ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
 ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
-# Build the Next.js application
+# Placeholder server-side values so `next build` never depends on real
+# secrets. They exist only in this builder stage (never in the final image);
+# real values are injected at runtime with `docker run -e/--env-file`.
+# turbo.json lists them under passThroughEnv so turbo's strict env mode
+# forwards them to `next build`. Do NOT add NEXT_PUBLIC_* placeholders here:
+# those would be baked into the shipped bundle.
+ENV NODE_ENV=production \
+    DATABASE_URL="postgresql://build_user:build_pass@localhost:5432/build_db?schema=public" \
+    NEXTAUTH_SECRET="build_dummy_nextauth_secret_minimum_32_characters_long" \
+    NEXTAUTH_URL="http://localhost:3000"
+
 RUN npx turbo run build --filter=web
 
-# ==========================================
-# STAGE 3: PRODUCTION RUNNER
-# ==========================================
-FROM node:24-alpine AS runner
-WORKDIR /app
+# ----------------------------------------------------------------------------
+# 3. Runner: minimal image with the standalone server
+# ----------------------------------------------------------------------------
+FROM base AS runner
+ENV NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME=0.0.0.0
 
-# Security: Do not run the application as the root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Never run as root.
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser --system --uid 1001 --ingroup nodejs nextjs
+
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+# Prisma schema + migrations: the deploy job runs `prisma migrate deploy`
+# inside this container after start-up.
+COPY --from=builder --chown=nextjs:nodejs /app/packages/database/prisma ./packages/database/prisma
+
 USER nextjs
-
-# FIX: Updated to the modern ENV syntax (=) to remove Docker warnings
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-
-# Copy only the necessary files for production (Next.js Standalone output)
-COPY --from=installer --chown=nextjs:nodejs /app/apps/web/next.config.* .
-COPY --from=installer --chown=nextjs:nodejs /app/apps/web/package.json .
-
-# The standalone build automatically creates a minimal server
-COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
-COPY --from=installer --chown=nextjs:nodejs /app/packages/database/prisma ./packages/database/prisma
-
 EXPOSE 3000
-ENV PORT=3000
-# Required: standalone server must bind to 0.0.0.0, not 127.0.0.1, inside Docker
-ENV HOSTNAME=0.0.0.0
 
-# Start the standalone Node server
+# Standalone server; binds to 0.0.0.0 via HOSTNAME so Docker can route to it.
 CMD ["node", "apps/web/server.js"]

@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "turbo": "latest"
+    "turbo": "2.9.16"
   },
   "dependencies": {
     "@21st-sdk/agent": "^0.0.18",
