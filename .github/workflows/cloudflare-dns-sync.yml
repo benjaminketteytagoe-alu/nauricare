@@ -1,0 +1,58 @@
+name: Cloudflare DNS Sync
+
+# Safety net for the no-load-balancer setup: if ECS replaces a production task
+# between deploys (crash, failed health check, AWS maintenance), the new task
+# gets a new public IP. This job re-points nauricare.org at whatever tasks are
+# healthy right now. It only writes when something differs, and it never
+# removes the last record.
+#
+# GitHub runs schedules on the default branch and may delay them under load.
+# In a public repository, scheduled workflows are paused after 60 days with no
+# repository activity; re-enable it from the Actions tab if that happens.
+
+# Off until you enable it: set the repository variable ECS_DNS_SYNC_ENABLED
+# to "true" (Settings > Secrets and variables > Actions > Variables) once the
+# first production deploy to ECS has succeeded. Until then this job is skipped
+# instead of failing every 5 minutes.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-dns-sync
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    name: Point nauricare.org at Healthy ECS Tasks
+    if: vars.ECS_DNS_SYNC_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      AWS_REGION: us-east-1
+      ECS_CLUSTER: default
+      ECS_SERVICE: nauricare-service
+      DNS_NAMES: nauricare.org www.nauricare.org deploy-check.nauricare.org
+      MODE: reconcile
+      CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+    steps:
+      - name: Checkout Sync Script
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Reconcile Cloudflare DNS
+        run: .github/scripts/cloudflare-ecs-dns.sh
