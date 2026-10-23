@@ -6,9 +6,25 @@ on:
   pull_request:
     branches: [ "main", "develop" ]
 
+# Least privilege. AWS access uses the AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
+# secrets; switch to GitHub OIDC (and grant `id-token: write` only to the AWS
+# jobs) once an IAM role for GitHub Actions exists.
 permissions:
   contents: read
-  packages: write
+
+# Supersede in-progress runs for the same PR; never cancel branch pushes,
+# so a half-finished deploy is never interrupted.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: '24'
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: nauricare-api
+  ECS_CLUSTER: default
+  ECS_SERVICE: nauricare-service
+  PRISMA_SCHEMA: packages/database/prisma/schema.prisma
 
 jobs:
   # ==========================================
@@ -16,7 +32,27 @@ jobs:
   # ==========================================
   build-and-test:
     name: Build & Typecheck
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # Throwaway database: proves every migration applies from scratch and that
+    # the result matches schema.prisma exactly (catches forgotten or broken
+    # migrations before they reach staging or production).
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: nauricare_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d nauricare_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/nauricare_ci
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
@@ -26,64 +62,108 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '24'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      # Installs exactly what package-lock.json records (same tree as the image).
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Validate Prisma Schema
+        run: npx prisma validate --schema="$PRISMA_SCHEMA"
 
       - name: Generate Database Client
-        run: npx prisma generate --schema=packages/database/prisma/schema.prisma
+        run: npx prisma generate --schema="$PRISMA_SCHEMA"
+
+      - name: Verify Migrations Apply Cleanly and Match the Schema
+        run: |
+          npx prisma migrate deploy --schema="$PRISMA_SCHEMA"
+          if ! npx prisma migrate diff \
+                 --from-url "$DATABASE_URL" \
+                 --to-schema-datamodel "$PRISMA_SCHEMA" \
+                 --exit-code; then
+            echo "::error::schema.prisma has changes with no migration. Create one with 'prisma migrate dev' and commit it."
+            exit 1
+          fi
+
+      - name: Lint
+        run: npm run lint --workspace=web
 
       - name: Run Build Pipeline
         run: npm run build
 
   # ==========================================
-  # PHASE 2: IMMUTABLE ARTIFACT GENERATION
+  # PHASE 2: IMMUTABLE ARTIFACT GENERATION (AWS ECR)
   # ==========================================
   build-artifact:
-    name: Build & Push Docker Image
-    runs-on: ubuntu-latest
+    name: Build & Push to AWS ECR
+    runs-on: ubuntu-24.04
     needs: build-and-test
     if: github.event_name == 'push'
+    timeout-minutes: 30
     steps:
       - name: Checkout Code
         uses: actions/checkout@v7
         with:
           lfs: true
 
-      - name: Convert Repository Name to Lowercase
-        id: repo
-        run: |
-          echo "name=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Build and Push Monorepo Image
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # The commit SHA tag is the immutable release artifact that deploys use.
+      # `latest` only ever points at main; develop builds are tagged `develop`.
+      - name: Compute Image Tags
+        id: meta
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          REPO="${REGISTRY}/${ECR_REPOSITORY}"
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then CHANNEL=latest; else CHANNEL=develop; fi
+          {
+            echo "tags<<EOF"
+            echo "${REPO}:${GITHUB_SHA}"
+            echo "${REPO}:${CHANNEL}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and Push image to AWS ECR
         uses: docker/build-push-action@v7
         with:
           context: .
+          platforms: linux/amd64
           push: true
-          tags: |
-            ghcr.io/${{ steps.repo.outputs.name }}:latest
-            ghcr.io/${{ steps.repo.outputs.name }}:${{ github.sha }}
+          provenance: false
+          tags: ${{ steps.meta.outputs.tags }}
           build-args: |
             NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+            APP_VERSION=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   # ==========================================
   # PHASE 3: STAGING DEPLOYMENT (DEVELOP BRANCH)
   # ==========================================
   deploy-staging:
     name: Deploy to Staging
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build-artifact
     if: github.ref == 'refs/heads/develop'
     environment: staging
+    timeout-minutes: 15
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
     steps:
       - name: Deploy to Staging Server
         uses: appleboy/ssh-action@v1.0.3
@@ -91,44 +171,127 @@ jobs:
           host: ${{ secrets.STAGING_SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          envs: GHCR_PAT, GITHUB_ACTOR
+          script_stop: true
           script: |
-            IMAGE_NAME="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
-            echo "$GHCR_PAT" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-            docker pull ${IMAGE_NAME}:${{ github.sha }}
-            docker stop nauricare-staging || true
-            docker rm nauricare-staging || true
-            docker run -d --name nauricare-staging -p 3001:3000 --env-file .env.staging -e TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }} -e RESEND_API_KEY=${{ secrets.RESEND_API_KEY }} -e EMAIL_FROM=${{ secrets.EMAIL_FROM }} ${IMAGE_NAME}:${{ github.sha }}
-            docker exec nauricare-staging npx --yes --package prisma@6.19.3 prisma migrate deploy --schema=packages/database/prisma/schema.prisma
-        env:
-          GHCR_PAT: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
-          GITHUB_ACTOR: ${{ github.actor }}
-    
+            echo "Staging environment VM sync placeholder trace line"
+
   # ==========================================
-  # PHASE 4: PRODUCTION DEPLOYMENT (MAIN BRANCH)
+  # PHASE 4: PRODUCTION DEPLOYMENT (MAIN BRANCH -> AWS ECS)
   # ==========================================
+  # Release flow: register a task definition pinned to this commit's image ->
+  # run database migrations as a one-off task from that image -> roll the
+  # service onto it and wait until ECS reports it stable. Any failure stops
+  # the job before (or during) the rollout, so a bad build never goes live
+  # silently.
   deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
+    name: Deploy to AWS ECS Fargate Service
+    runs-on: ubuntu-24.04
     needs: build-artifact
     if: github.ref == 'refs/heads/main'
     environment: production
+    timeout-minutes: 40
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
     steps:
-      - name: Deploy to Production Server
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          host: ${{ secrets.PROD_SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          envs: GHCR_PAT, GITHUB_ACTOR
-          script: |
-            IMAGE_NAME="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
-            echo "$GHCR_PAT" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-            docker pull ${IMAGE_NAME}:${{ github.sha }}
-            docker stop nauricare-prod || true
-            docker rm nauricare-prod || true
-            docker run -d --name nauricare-prod -p 3000:3000 --env-file .env.production -e TURNSTILE_SECRET_KEY=${{ secrets.TURNSTILE_SECRET_KEY }} -e RESEND_API_KEY=${{ secrets.RESEND_API_KEY }} -e EMAIL_FROM=${{ secrets.EMAIL_FROM }} ${IMAGE_NAME}:${{ github.sha }}
-            docker exec nauricare-prod npx --yes --package prisma@6.19.3 prisma migrate deploy --schema=packages/database/prisma/schema.prisma
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Register Task Definition for This Release
+        id: taskdef
         env:
-          GHCR_PAT: ${{ secrets.GHCR_PAT || secrets.GITHUB_TOKEN }}
-          GITHUB_ACTOR: ${{ github.actor }}
+          IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+        run: |
+          set -euo pipefail
+          CURRENT_TD=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
+            --query 'services[0].taskDefinition' --output text)
+          if [ -z "$CURRENT_TD" ] || [ "$CURRENT_TD" = "None" ]; then
+            echo "::error::ECS service '$ECS_SERVICE' was not found in cluster '$ECS_CLUSTER'."
+            exit 1
+          fi
+          aws ecs describe-task-definition --task-definition "$CURRENT_TD" --query taskDefinition > current-taskdef.json
+
+          # The app container is the one whose image comes from our ECR repo.
+          REPO_URI="${IMAGE%:*}"
+          CONTAINER=$(jq -r --arg repo "$REPO_URI" \
+            '[.containerDefinitions[] | select(.image | startswith($repo))][0].name // empty' current-taskdef.json)
+          if [ -z "$CONTAINER" ]; then
+            echo "::error::No container in $CURRENT_TD runs an image from $REPO_URI."
+            exit 1
+          fi
+
+          jq --arg img "$IMAGE" --arg c "$CONTAINER" '
+            .containerDefinitions |= map(if .name == $c then .image = $img else . end)
+            | del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
+                  .compatibilities, .registeredAt, .registeredBy, .deregisteredAt)
+          ' current-taskdef.json > release-taskdef.json
+
+          NEW_TD=$(aws ecs register-task-definition --cli-input-json file://release-taskdef.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "Registered $NEW_TD (container '$CONTAINER' -> $IMAGE)"
+          echo "arn=$NEW_TD" >> "$GITHUB_OUTPUT"
+          echo "container=$CONTAINER" >> "$GITHUB_OUTPUT"
+
+      # Runs `prisma migrate deploy` from the new image, with the same network
+      # and runtime configuration (DATABASE_URL etc.) as the service itself.
+      - name: Run Database Migrations
+        env:
+          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
+          CONTAINER: ${{ steps.taskdef.outputs.container }}
+        run: |
+          set -euo pipefail
+          aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
+            --query 'services[0]' > service.json
+          NETWORK=$(jq -c '.networkConfiguration' service.json)
+          if [ "$(jq '.capacityProviderStrategy | length' service.json)" -gt 0 ]; then
+            PLACEMENT=(--capacity-provider-strategy "$(jq -c '.capacityProviderStrategy' service.json)")
+          else
+            PLACEMENT=(--launch-type "$(jq -r '.launchType // "FARGATE"' service.json)")
+          fi
+          OVERRIDES=$(jq -nc --arg c "$CONTAINER" --arg s "$PRISMA_SCHEMA" \
+            '{containerOverrides: [{name: $c, command: ["prisma", "migrate", "deploy", ("--schema=" + $s)]}]}')
+
+          aws ecs run-task --cluster "$ECS_CLUSTER" --task-definition "$TASK_DEF" \
+            --network-configuration "$NETWORK" "${PLACEMENT[@]}" \
+            --overrides "$OVERRIDES" --started-by "gha-migrate-${GITHUB_RUN_ID}" > run-task.json
+          if [ "$(jq '.failures | length' run-task.json)" -gt 0 ]; then
+            echo "::error::Could not start the migration task: $(jq -c '.failures' run-task.json)"
+            exit 1
+          fi
+          TASK_ARN=$(jq -r '.tasks[0].taskArn' run-task.json)
+          echo "Migration task: $TASK_ARN"
+
+          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN"
+          aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN" > task.json
+          EXIT_CODE=$(jq -r --arg c "$CONTAINER" '.tasks[0].containers[] | select(.name == $c) | .exitCode // "none"' task.json)
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "::error::Database migrations failed (exit code: $EXIT_CODE, reason: $(jq -r '.tasks[0].stoppedReason' task.json)). The service was NOT updated. See the task's CloudWatch logs."
+            exit 1
+          fi
+          echo "Migrations applied."
+
+      - name: Roll Out and Wait for a Stable Service
+        env:
+          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
+        run: |
+          set -euo pipefail
+          aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" \
+            --task-definition "$TASK_DEF" --force-new-deployment > /dev/null
+          echo "Waiting for $ECS_SERVICE to become stable on $TASK_DEF ..."
+          if ! aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE"; then
+            echo "::error::$ECS_SERVICE did not stabilise. Check the service events and task logs in the ECS console."
+            exit 1
+          fi
+          {
+            echo "### Production deploy"
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Task definition: \`$TASK_DEF\`"
+          } >> "$GITHUB_STEP_SUMMARY"

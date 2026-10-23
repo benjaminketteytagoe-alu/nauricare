@@ -16,6 +16,12 @@ UPDATE "Appointment"
 SET "status" = 'SCHEDULED'
 WHERE "status" NOT IN ('SCHEDULED', 'COMPLETED', 'CANCELLED', 'MISSED');
 
+-- The TEXT column still carries DEFAULT 'PENDING' (from
+-- 20260608020228_add_location_to_practitioner); Postgres can't cast that
+-- default to the enum, so drop it before the type change and re-add below.
+-- Without this line the migration fails on any fresh database (42804).
+ALTER TABLE "Appointment" ALTER COLUMN "status" DROP DEFAULT;
+
 ALTER TABLE "Appointment"
   ALTER COLUMN "status" TYPE "AppointmentStatus"
     USING "status"::"AppointmentStatus";

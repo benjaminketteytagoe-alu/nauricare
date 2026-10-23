@@ -1,4 +1,7 @@
 # syntax=docker/dockerfile:1
+# check=skip=SecretsUsedInArgOrEnv
+# (The only flagged value is the NEXTAUTH_SECRET *placeholder* in the builder
+# stage below. It is not a secret and never reaches the final image.)
 # ============================================================================
 # NauriCare web — multi-stage build (Turborepo prune → npm ci → Next standalone)
 #
@@ -74,6 +77,14 @@ ENV NODE_ENV=production \
 RUN addgroup --system --gid 1001 nodejs \
  && adduser --system --uid 1001 --ingroup nodejs nextjs
 
+# Prisma CLI, pinned to the lockfile version, so migrations can run as a
+# one-off task from this same image (ECS `run-task`, or `docker exec ... prisma
+# migrate deploy`) with no package download at deploy time.
+COPY --from=pruner /app/out/package-lock.json /tmp/package-lock.json
+RUN npm install -g "prisma@$(node -p "require('/tmp/package-lock.json').packages['node_modules/prisma'].version")" \
+ && rm /tmp/package-lock.json \
+ && npm cache clean --force
+
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
@@ -81,8 +92,16 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 # inside this container after start-up.
 COPY --from=builder --chown=nextjs:nodejs /app/packages/database/prisma ./packages/database/prisma
 
+# Build identifier, surfaced by /api/health (CI passes the commit SHA).
+ARG APP_VERSION=unknown
+ENV APP_VERSION=$APP_VERSION
+
 USER nextjs
 EXPOSE 3000
+
+# Liveness check used by `docker run` deployments (ECS uses its own config).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:3000/api/health >/dev/null || exit 1
 
 # Standalone server; binds to 0.0.0.0 via HOSTNAME so Docker can route to it.
 CMD ["node", "apps/web/server.js"]
