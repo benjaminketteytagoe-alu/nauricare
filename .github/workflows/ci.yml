@@ -25,6 +25,13 @@ env:
   ECS_CLUSTER: default
   ECS_SERVICE: nauricare-service
   PRISMA_SCHEMA: packages/database/prisma/schema.prisma
+  # Hostnames pointed at the production ECS tasks through Cloudflare (read by
+  # .github/scripts/cloudflare-ecs-dns.sh). deploy-check.* only ever points at
+  # ECS tasks, so it gives a reliable post-deploy check even while the apex
+  # still shares traffic with the old server.
+  DNS_NAMES: nauricare.org www.nauricare.org deploy-check.nauricare.org
+  PRODUCTION_URL: https://nauricare.org
+  DEPLOY_CHECK_URL: https://deploy-check.nauricare.org
 
 jobs:
   # ==========================================
@@ -176,24 +183,47 @@ jobs:
             echo "Staging environment VM sync placeholder trace line"
 
   # ==========================================
-  # PHASE 4: PRODUCTION DEPLOYMENT (MAIN BRANCH -> AWS ECS)
+  # PHASE 4: PRODUCTION DEPLOYMENT (MAIN BRANCH -> AWS ECS + CLOUDFLARE)
   # ==========================================
-  # Release flow: register a task definition pinned to this commit's image ->
-  # run database migrations as a one-off task from that image -> roll the
-  # service onto it and wait until ECS reports it stable. Any failure stops
-  # the job before (or during) the rollout, so a bad build never goes live
-  # silently.
+  # No load balancer and no NAT: each Fargate task has a public IP and
+  # Cloudflare proxies nauricare.org straight to it. Release flow:
+  #   1. register a task definition pinned to this commit's image, with an
+  #      ECS health check on /api/health
+  #   2. run database migrations as a one-off task from that image
+  #   3. roll the service out (automatic rollback on failure)
+  #   4. as soon as new tasks are HEALTHY, ADD their IPs to Cloudflare (old
+  #      tasks still serve, so there is no gap)
+  #   5. once the rollout is stable, REMOVE the old tasks' IPs
+  #   6. confirm https://nauricare.org reports this commit's version
+  # The scheduled "Cloudflare DNS Sync" workflow repairs DNS if ECS replaces a
+  # task between deploys (its IP changes).
   deploy-production:
-    name: Deploy to AWS ECS Fargate Service
+    name: Deploy to AWS ECS Fargate & Sync Cloudflare
     runs-on: ubuntu-24.04
     needs: build-artifact
     if: github.ref == 'refs/heads/main'
     environment: production
-    timeout-minutes: 40
+    timeout-minutes: 45
     concurrency:
       group: deploy-production
       cancel-in-progress: false
+    env:
+      CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
     steps:
+      - name: Checkout Deploy Scripts
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Check Required Secrets
+        run: |
+          missing=0
+          for v in CF_API_TOKEN CF_ZONE_ID; do
+            if [ -z "${!v}" ]; then echo "::error::Secret for $v is not set."; missing=1; fi
+          done
+          exit $missing
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
@@ -228,8 +258,18 @@ jobs:
             exit 1
           fi
 
+          # Pin the image to this commit. Add an ECS health check if the task
+          # definition has none: without a load balancer it is the only signal
+          # ECS (and the DNS sync) has that a task is actually serving.
           jq --arg img "$IMAGE" --arg c "$CONTAINER" '
-            .containerDefinitions |= map(if .name == $c then .image = $img else . end)
+            .containerDefinitions |= map(
+              if .name == $c then
+                .image = $img
+                | .healthCheck //= {
+                    command: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health >/dev/null || exit 1"],
+                    interval: 15, timeout: 5, retries: 3, startPeriod: 30
+                  }
+              else . end)
             | del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
                   .compatibilities, .registeredAt, .registeredBy, .deregisteredAt)
           ' current-taskdef.json > release-taskdef.json
@@ -250,6 +290,10 @@ jobs:
           set -euo pipefail
           aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
             --query 'services[0]' > service.json
+          if [ "$(jq -r '.networkConfiguration.awsvpcConfiguration.assignPublicIp' service.json)" != "ENABLED" ]; then
+            echo "::error::$ECS_SERVICE must have assignPublicIp=ENABLED (no NAT: tasks need it to reach ECR, the database and Cloudflare)."
+            exit 1
+          fi
           NETWORK=$(jq -c '.networkConfiguration' service.json)
           if [ "$(jq '.capacityProviderStrategy | length' service.json)" -gt 0 ]; then
             PLACEMENT=(--capacity-provider-strategy "$(jq -c '.capacityProviderStrategy' service.json)")
@@ -278,20 +322,88 @@ jobs:
           fi
           echo "Migrations applied."
 
-      - name: Roll Out and Wait for a Stable Service
+      - name: Start Rollout
         env:
           TASK_DEF: ${{ steps.taskdef.outputs.arn }}
         run: |
           set -euo pipefail
+          # 200/100: a new task starts before an old one stops. The circuit
+          # breaker rolls back automatically if new tasks never become healthy.
           aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" \
-            --task-definition "$TASK_DEF" --force-new-deployment > /dev/null
-          echo "Waiting for $ECS_SERVICE to become stable on $TASK_DEF ..."
-          if ! aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE"; then
-            echo "::error::$ECS_SERVICE did not stabilise. Check the service events and task logs in the ECS console."
+            --task-definition "$TASK_DEF" --force-new-deployment \
+            --deployment-configuration "maximumPercent=200,minimumHealthyPercent=100,deploymentCircuitBreaker={enable=true,rollback=true}" \
+            > /dev/null
+
+      - name: Add New Tasks to Cloudflare as Soon as They Are Healthy
+        env:
+          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
+          MODE: add
+        run: |
+          set -euo pipefail
+          # Up to ~10 minutes for the first new task to pass its health check.
+          # Output is captured so expected "not healthy yet" messages don't
+          # appear as errors; only the final attempt's output is shown.
+          LAST_OUTPUT=""
+          for _ in $(seq 1 60); do
+            if LAST_OUTPUT=$(.github/scripts/cloudflare-ecs-dns.sh 2>&1); then
+              echo "$LAST_OUTPUT"
+              exit 0
+            fi
+            ROLLOUT=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
+              --query "services[0].deployments[?taskDefinition=='$TASK_DEF'].rolloutState | [0]" --output text)
+            if [ "$ROLLOUT" = "FAILED" ]; then
+              echo "::error::The new tasks failed their health checks and ECS rolled back. Check the task logs."
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "${LAST_OUTPUT//::error::/Last attempt: }"
+          echo "::error::No new task became healthy within 10 minutes."
+          exit 1
+
+      - name: Wait for the Rollout to Finish
+        env:
+          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
+        run: |
+          set -euo pipefail
+          aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE"
+          # A rollback also ends "stable" -- make sure it is OUR release running.
+          PRIMARY_TD=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
+            --query "services[0].deployments[?status=='PRIMARY'].taskDefinition | [0]" --output text)
+          if [ "$PRIMARY_TD" != "$TASK_DEF" ]; then
+            echo "::error::ECS rolled back to $PRIMARY_TD. This release is not live."
             exit 1
           fi
-          {
-            echo "### Production deploy"
-            echo "- Commit: \`$GITHUB_SHA\`"
-            echo "- Task definition: \`$TASK_DEF\`"
-          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove Old Tasks from Cloudflare
+        env:
+          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
+          MODE: reconcile
+        run: .github/scripts/cloudflare-ecs-dns.sh
+
+      - name: Verify the ECS Tasks Serve This Release Through Cloudflare
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 24); do
+            VERSION=$(curl -fsS --max-time 10 "$DEPLOY_CHECK_URL/api/health" 2>/dev/null | jq -r '.version // empty' || true)
+            if [ "$VERSION" = "$GITHUB_SHA" ]; then
+              echo "$DEPLOY_CHECK_URL is serving $GITHUB_SHA."
+              {
+                echo "### Production deploy"
+                echo "- Commit: \`$GITHUB_SHA\` is live at $PRODUCTION_URL"
+                echo "- Task definition: \`${{ steps.taskdef.outputs.arn }}\`"
+              } >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::$DEPLOY_CHECK_URL/api/health did not report $GITHUB_SHA within 2 minutes (last seen: ${VERSION:-no response}). Check the Cloudflare Origin Rule (port 3000), SSL mode and the security group."
+          exit 1
+
+      # If anything above failed, point DNS at whatever is healthy right now
+      # (old tasks after a rollback), so the site is never left dark.
+      - name: Repair Cloudflare DNS After a Failure
+        if: failure() && steps.taskdef.outcome == 'success'
+        env:
+          MODE: reconcile
+        run: .github/scripts/cloudflare-ecs-dns.sh
