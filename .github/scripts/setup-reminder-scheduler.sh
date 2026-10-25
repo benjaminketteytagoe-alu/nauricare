@@ -23,7 +23,7 @@ set -euo pipefail
 REGION="${AWS_REGION:-us-east-1}"
 PREFIX="/nauricare/production"
 CLUSTER="${ECS_CLUSTER:-default}"
-SERVICE="${ECS_SERVICE:-nauricare-service}"
+SERVICE="${ECS_SERVICE:-nauricare-api-0acf}"
 ENDPOINT="${CRON_ENDPOINT:-https://nauricare.org/api/cron/execute}"
 SCHEDULE="${CRON_SCHEDULE:-rate(15 minutes)}"
 NAME="nauricare-reminders"
