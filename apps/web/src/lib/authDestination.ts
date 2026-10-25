@@ -3,7 +3,8 @@ import { useClientValue } from "@/lib/hooks/useClientValue";
 import { carryAuthParams, resolveAuthRedirect } from "@/lib/safeRedirect";
 import { readPendingClaim } from "@/lib/triage/guestStorage";
 
-const HOME: Record<string, string> = { PATIENT: "/dashboard", PROVIDER: "/provider", ADMIN: "/admin" };
+export const ROLE_HOME_PATHS: Record<string, string> = { PATIENT: "/dashboard", PROVIDER: "/provider", ADMIN: "/admin" };
+const HOME = ROLE_HOME_PATHS;
 
 export function postAuthDestination(role?: string | null): string {
   const home = HOME[role ?? "PATIENT"] ?? "/dashboard";

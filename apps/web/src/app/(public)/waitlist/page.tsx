@@ -17,7 +17,7 @@ const PERKS = [
 export default function WaitlistPage() {
   return (
     <div className="bg-slate-50">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:gap-16 lg:px-8 lg:py-20">
+      <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-16 lg:px-8 lg:py-20">
         <div className="lg:pt-6">
           <p className="text-sm font-semibold uppercase tracking-wider text-nc-primary">Coming soon</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-nc-ink sm:text-4xl">Join the NauriCare waitlist</h1>

@@ -6,6 +6,7 @@ import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { getTriageConsent } from "@/lib/consent";
 import { toLegacyRiskLevel } from "@/lib/triage/engine";
 import { openGuestTriage } from "@/lib/triage/claimToken";
+import { recordActivity } from "@/server/activity/activity.service";
 
 // Moves a guest's sealed landing-page triage into the signed-in patient's
 // health log, so the referral wizard can be pre-filled from it. The stored
@@ -51,6 +52,23 @@ export async function POST(req: Request) {
       riskLevel: toLegacyRiskLevel(payload.triage.severity),
     },
     select: { id: true },
+  });
+  await recordActivity({
+    userId,
+    type: "AI_TRIAGE",
+    title: `Saved Nauri assessment from the website: ${payload.triage.severity.toLowerCase()} urgency`,
+    details: {
+      prompt: { symptoms: payload.symptoms, notes: payload.notes },
+      response: {
+        severity: payload.triage.severity,
+        summary: payload.triage.summary,
+        recommendedSpecialty: payload.triage.recommendedSpecialty,
+        redFlags: payload.triage.redFlags,
+        engine: payload.triage.engine,
+      },
+      source: "landing_guest",
+    },
+    ref: { type: "SymptomCheck", id: check.id },
   });
   return apiSuccess({ checkId: check.id }, 201);
 }

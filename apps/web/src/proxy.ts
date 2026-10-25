@@ -6,6 +6,13 @@ export default withAuth(
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
+    // 0. Signed in but the emailed sign-in code isn't verified yet.
+    if (token && token.mfaVerified !== true) {
+      const url = new URL("/verify-code", req.url);
+      url.searchParams.set("next", path + req.nextUrl.search);
+      return NextResponse.redirect(url);
+    }
+
     // 1. THE TRAFFIC COP: Automatically route users to their correct workspaces
     if (path === "/dashboard") {
       if (token?.role === "ADMIN") {

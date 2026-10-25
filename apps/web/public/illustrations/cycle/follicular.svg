@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-label="Illustration: follicular phase">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FEF3C7"/><stop offset="1" stop-color="#FDE68A"/></linearGradient>
+<clipPath id="frame"><rect width="640" height="328"/></clipPath></defs>
+<rect width="640" height="360" fill="url(#bg)"/>
+<g clip-path="url(#frame)">
+    <circle cx="150" cy="250" r="90" fill="#F59E0B" fill-opacity=".55"/>
+    <g stroke="#15803D" stroke-width="6" stroke-linecap="round" fill="none"><path d="M70 300 v-70"/><path d="M200 300 v-50"/></g>
+    <path d="M70 250 q-34 -10 -40 -40 q34 2 40 40 z M70 236 q30 -14 44 -44 q-34 6 -44 44 z" fill="#22C55E"/>
+    <path d="M200 262 q-26 -8 -30 -30 q26 2 30 30 z M200 254 q24 -10 34 -34 q-26 4 -34 34 z" fill="#16A34A"/><g transform="translate(360 52) scale(1.9)">
+<circle cx="80" cy="26" r="21" fill="#17100D"/>
+<path d="M26 160 C26 128 50 114 80 114 C110 114 134 128 134 160 Z" fill="#2F6F68"/>
+<rect x="70" y="96" width="20" height="26" rx="9" fill="#5C3A28"/><rect x="70" y="96" width="20" height="10" fill="#000" fill-opacity=".12"/><ellipse cx="53" cy="80" rx="5" ry="7" fill="#5C3A28"/><ellipse cx="107" cy="80" rx="5" ry="7" fill="#5C3A28"/>
+<ellipse cx="80" cy="76" rx="27" ry="31" fill="#5C3A28"/>
+<path d="M52 72 C50 44 64 34 80 34 C96 34 110 44 108 72 C101 57 91 51 80 51 C69 51 59 57 52 72 Z" fill="#17100D"/><rect x="66" y="38" width="28" height="7" rx="3.5" fill="#E8B04B"/>
+<path d="M64 69 q6 -4 12 0 M84 69 q6 -4 12 0" stroke="#140C09" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+<ellipse cx="70" cy="78" rx="2.8" ry="3.4" fill="#140C09"/><ellipse cx="90" cy="78" rx="2.8" ry="3.4" fill="#140C09"/>
+<circle cx="64" cy="88" r="5" fill="#E26D5A" fill-opacity=".18"/><circle cx="96" cy="88" r="5" fill="#E26D5A" fill-opacity=".18"/>
+<path d="M72 92 Q80 99 88 92" stroke="#2A1712" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+
+</g></g>
+<rect x="0" y="328" width="640" height="32" fill="#FCD34D" fill-opacity=".35"/><path d="M0 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="14" cy="348" r="3" fill="#FCD34D"/><path d="M28 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="42" cy="348" r="3" fill="#FCD34D"/><path d="M56 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="70" cy="348" r="3" fill="#FCD34D"/><path d="M84 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="98" cy="348" r="3" fill="#FCD34D"/><path d="M112 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="126" cy="348" r="3" fill="#FCD34D"/><path d="M140 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="154" cy="348" r="3" fill="#FCD34D"/><path d="M168 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="182" cy="348" r="3" fill="#FCD34D"/><path d="M196 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="210" cy="348" r="3" fill="#FCD34D"/><path d="M224 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="238" cy="348" r="3" fill="#FCD34D"/><path d="M252 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="266" cy="348" r="3" fill="#FCD34D"/><path d="M280 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="294" cy="348" r="3" fill="#FCD34D"/><path d="M308 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="322" cy="348" r="3" fill="#FCD34D"/><path d="M336 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="350" cy="348" r="3" fill="#FCD34D"/><path d="M364 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="378" cy="348" r="3" fill="#FCD34D"/><path d="M392 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="406" cy="348" r="3" fill="#FCD34D"/><path d="M420 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="434" cy="348" r="3" fill="#FCD34D"/><path d="M448 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="462" cy="348" r="3" fill="#FCD34D"/><path d="M476 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="490" cy="348" r="3" fill="#FCD34D"/><path d="M504 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="518" cy="348" r="3" fill="#FCD34D"/><path d="M532 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="546" cy="348" r="3" fill="#FCD34D"/><path d="M560 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="574" cy="348" r="3" fill="#FCD34D"/><path d="M588 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="602" cy="348" r="3" fill="#FCD34D"/><path d="M616 356 l14 -24 l14 24 z" fill="#D97706"/><circle cx="630" cy="348" r="3" fill="#FCD34D"/>
+</svg>

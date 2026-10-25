@@ -42,6 +42,10 @@ Required environment variables (`apps/web/.env.local`):
 - `EMAIL_FROM` — sender address e.g. `appointments@nauricare.com`; use `onboarding@resend.dev` until domain is verified
 - `MEDGEMMA_ENDPOINT_URL` / `MEDGEMMA_API_KEY` — OpenAI-compatible `/chat/completions` endpoint serving MedGemma (primary triage model; runtime only). Optional `MEDGEMMA_MODEL`, default `google/medgemma-27b-text-it`
 - `GEMINI_API_KEY` — Gemini fallback for triage when MedGemma is unset or fails
+- `DATA_ENCRYPTION_KEY` — key for sealed data (referral share payloads, claim tokens); falls back to `NEXTAUTH_SECRET`. Set it explicitly in production and never rotate it without a migration plan
+- `CRON_SECRET` — 32+ chars. Required in production for reminders: AWS EventBridge calls `POST /api/cron/execute` with `Authorization: <secret>` (or `Bearer <secret>`); 404 when unset. `CRON_SECRET_PREVIOUS` is accepted during rotation
+- `REMINDER_SCHEDULER` — `on` runs the sweep in-process every 10 min (local dev / single server only). Off by default; production uses EventBridge
+- Production secrets live in SSM Parameter Store and are injected by ECS; see `docs/runbooks/reminder-scheduler.md`. Never commit or paste secret values
 
 ## Architecture
 
@@ -78,6 +82,7 @@ NextAuth v4 with JWT strategy. Two auth providers: Google OAuth and email/passwo
 - JWT callback re-queries the DB on every token refresh to keep `role` and `id` in sync.
 - Session type extensions are in `src/types/next-auth.d.ts`.
 - Google sign-in auto-provisions a `PATIENT` user if the email doesn't exist.
+- **Sign-in codes (second step):** every sign-in (password, Google, magic link) starts with `token.mfaVerified = false`. Until the 6-digit emailed code is entered at `/verify-code`, the proxy redirects portal pages there and the session callback blanks `session.user.id` (so all guards treat it as signed out; `session.loginCodePending` is true). Codes live in `LoginChallenge` (HMAC only, 10-min TTL, 5 attempts, bound to the session via `token.mfaSid`); see `src/server/auth/loginCode.service.ts`. The client unlocks with `update({ loginCode: "verified" })`, which the jwt callback honours only after consuming a verified challenge. `LOGIN_CODE_DEV_LOG=1` prints codes to the server log in development only.
 
 ### Database
 

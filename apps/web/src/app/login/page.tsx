@@ -5,6 +5,7 @@ import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
+import { useTurnstileSize } from "@/lib/useTurnstileSize";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +38,7 @@ const TRUST_CHIPS = [
 export default function LoginPage() {
   const router = useRouter();
   const authParams = useAuthParams(); // keeps ?redirect=&action= when switching auth pages
+  const turnstileSize = useTurnstileSize();
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [error, setError] = useState(() => {
@@ -123,9 +125,9 @@ export default function LoginPage() {
         const session = await getSession();
         const role = session?.user?.role;
 
-        // Route by role, honouring a safe ?redirect= / callbackUrl and any
-        // pending landing-page triage hand-over.
-        router.push(postAuthDestination(role));
+        // Second step: the emailed sign-in code. Afterwards the user goes to
+        // their portal (honouring a safe ?redirect= / pending triage hand-over).
+        router.push(`/verify-code?next=${encodeURIComponent(postAuthDestination(role))}`);
       }
     } catch {
       setError("An unexpected error occurred.");
@@ -185,7 +187,7 @@ export default function LoginPage() {
                 <PasswordInput id="password" name="password" required className="h-11 focus-visible:ring-teal-600" />
               </div>
 
-              <Turnstile
+              <Turnstile key={turnstileSize} options={{ size: turnstileSize }}
                 siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
                 onSuccess={setTurnstileToken}
                 onExpire={() => setTurnstileToken("")}
@@ -218,7 +220,7 @@ export default function LoginPage() {
                 <Input id="magic-email" name="email" type="email" required placeholder="jane@example.com" className="h-11 focus-visible:ring-teal-600" />
               </div>
 
-              <Turnstile
+              <Turnstile key={turnstileSize} options={{ size: turnstileSize }}
                 siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
                 onSuccess={setMagicTurnstileToken}
                 onExpire={() => setMagicTurnstileToken("")}

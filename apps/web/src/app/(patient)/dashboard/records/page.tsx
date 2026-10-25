@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ActivityTimeline } from "@/components/records/ActivityTimeline";
+import { useClientValue } from "@/lib/hooks/useClientValue";
 import Link from "next/link";
 import {
   FlaskConical, ScanSearch, Pill, FileText,
@@ -63,7 +65,7 @@ function RecordSkeleton() {
   );
 }
 
-export default function HealthTimelinePage() {
+function ClinicalRecordsPanel() {
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -204,6 +206,67 @@ export default function HealthTimelinePage() {
             </div>
             <p className="text-xs text-gray-400 font-medium">Beginning of your health record</p>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+const RECORD_TABS = [
+  { id: "clinical", label: "Clinical records" },
+  { id: "activity", label: "Activity" },
+  { id: "ai", label: "AI history" },
+] as const;
+type RecordTab = (typeof RECORD_TABS)[number]["id"];
+
+export default function RecordsPage() {
+  // ?tab=activity|ai deep-links (e.g. from notifications); local state after that.
+  const fromUrl = useClientValue(() => new URLSearchParams(window.location.search).get("tab"), null);
+  const [chosen, setChosen] = useState<RecordTab | null>(null);
+  const tab: RecordTab = chosen ?? (RECORD_TABS.some((t) => t.id === fromUrl) ? (fromUrl as RecordTab) : "clinical");
+
+  function select(id: RecordTab) {
+    setChosen(id);
+    const url = new URL(window.location.href);
+    if (id === "clinical") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", id);
+    window.history.replaceState(null, "", url);
+  }
+
+  return (
+    <div className="space-y-6">
+      <div role="tablist" aria-label="Records" className="mx-auto flex max-w-3xl gap-1 overflow-x-auto rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+        {RECORD_TABS.map((t) => (
+          <button
+            key={t.id}
+            role="tab"
+            aria-selected={tab === t.id}
+            onClick={() => select(t.id)}
+            className={`flex-1 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition-colors ${tab === t.id ? "bg-nc-primary text-white shadow-sm" : "text-slate-600 hover:bg-slate-50"}`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "clinical" && <ClinicalRecordsPanel />}
+      {tab === "activity" && (
+        <div className="mx-auto max-w-3xl space-y-4 pb-16">
+          <header>
+            <h1 className="text-2xl font-bold text-nc-ink sm:text-3xl">Your activity</h1>
+            <p className="mt-1 text-slate-600">Everything you have done on NauriCare: bookings, referrals, consent changes and sign-ins. Only you can see this.</p>
+          </header>
+          <ActivityTimeline />
+        </div>
+      )}
+      {tab === "ai" && (
+        <div className="mx-auto max-w-3xl space-y-4 pb-16">
+          <header>
+            <h1 className="text-2xl font-bold text-nc-ink sm:text-3xl">AI history</h1>
+            <p className="mt-1 text-slate-600">Every symptom check: what you told the AI and what it answered.</p>
+          </header>
+          <ActivityTimeline types={["AI_TRIAGE"]} expandAi emptyText="You haven't used the symptom guide yet." />
         </div>
       )}
     </div>

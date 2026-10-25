@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { sendPatientConfirmationEmail, sendProviderAlertEmail } from "@/lib/email";
+import { recordActivity } from "@/server/activity/activity.service";
+import { notify } from "@/server/notifications/notify";
 import { z } from "zod";
 import { apiError, parseJson } from "@/lib/api";
 import { sanitizePlainText } from "@/lib/sanitize";
@@ -143,6 +145,23 @@ export async function POST(req: Request) {
       } else {
         console.log(`[APPOINTMENT_EMAIL_OK] ${label} (to=${to})`);
       }
+    });
+
+    await notify({
+      recipientId: practitioner.userId,
+      actorId: session.user.id,
+      type: "APPOINTMENT_BOOKED",
+      title: `New booking: ${dateLabel}`,
+      body: `${session.user.name ?? "A patient"} booked a video consultation.`,
+      link: "/provider/schedule",
+    });
+
+    await recordActivity({
+      userId: session.user.id,
+      type: "APPOINTMENT_BOOKED",
+      title: `Booked a consultation with ${practitioner.user.name}`,
+      details: { startTime: start.toISOString(), clinic: practitioner.clinicName },
+      ref: { type: "Appointment", id: appointment.id },
     });
 
     return NextResponse.json(appointment, { status: 201 });

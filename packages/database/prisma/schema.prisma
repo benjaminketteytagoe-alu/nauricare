@@ -54,6 +54,11 @@ enum AuditAction {
   PAYMENT_REJECTED
   TRIAGE_CONSENT_GRANTED
   TRIAGE_CONSENT_WITHDRAWN
+  PROVIDER_SOURCE_CHANGE
+  PROVIDER_SCRAPE_RUN
+  PROVIDER_CANDIDATE_REVIEW
+  PROVIDER_CANDIDATE_PUBLISH
+  ACCOUNT_DELETED
 }
 
 enum MediaType {
@@ -71,6 +76,15 @@ enum UserNotificationType {
   MENTION_POST
   MENTION_COMMENT
   FOLLOW
+  MESSAGE
+  APPOINTMENT_BOOKED
+  APPOINTMENT_UPDATED
+  APPOINTMENT_REMINDER
+  COMMUNITY_LIKE
+  COMMUNITY_COMMENT
+  REFERRAL_UPDATE
+  PERIOD_REMINDER
+  SYSTEM
 }
 
 // --- Core Models ---
@@ -91,6 +105,9 @@ model User {
   // exists so the adapter's updateUser() call doesn't fail on unknown fields.
   emailVerified   DateTime?
   avatarUrl       String?
+  lastSeenAt      DateTime? // presence: updated while the realtime stream is open
+  googlePhotoUrl  String? // latest Google profile photo, synced at Google sign-in
+  deletedAt       DateTime? // account closed by the patient (anonymised soft delete)
 
   // Geographic / contact identity fields — nullable for backward compat with
   // pre-existing rows; enforced as required at the application layer for new signups.
@@ -126,7 +143,11 @@ model User {
   sessions                Session[]
   feedback                Feedback[]
   insurance               PatientInsurance?
+  reminderPreference      ReminderPreference?
+  loginChallenges         LoginChallenge[]
+  reminderDispatches      ReminderDispatch[]
   referrals               Referral[]
+  activities              PatientActivity[]
 
   // Social graph — rows where I'm the follower / the one being followed
   following Follow[] @relation("UserFollowing")
@@ -170,21 +191,26 @@ model PatientProfile {
 
   // Relations
   cycleLogs     CycleLog[]
+  cycleDayLogs  CycleDayLog[]
   habitLogs     HabitLog[]
   healthRecords HealthRecord[] @relation("PatientHealthRecords")
   appointments  Appointment[]  @relation("PatientAppointments")
 }
 
 model PractitionerProfile {
-  id         String  @id @default(cuid())
-  userId     String  @unique
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  location   String?
-  clinicName String
-  specialty  String // e.g., "Endocrinologist", "Gynecologist"
-  bio        String?
-  isVerified Boolean @default(false) // Admin approval flag
-  isActive   Boolean @default(true) // Soft-delete flag — false once an admin "deletes" the provider
+  id              String  @id @default(cuid())
+  userId          String  @unique
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location        String?
+  clinicName      String
+  specialty       String // e.g., "Endocrinologist", "Gynecologist"
+  bio             String?
+  yearsExperience Int?
+  // Practice coordinates for the patient map (geocoded from `location`).
+  latitude        Float?
+  longitude       Float?
+  isVerified      Boolean @default(false) // Admin approval flag
+  isActive        Boolean @default(true) // Soft-delete flag — false once an admin "deletes" the provider
 
   appointments  Appointment[]  @relation("DoctorAppointments")
   healthRecords HealthRecord[] @relation("ProviderHealthRecords")
@@ -225,6 +251,8 @@ model Appointment {
   updatedAt DateTime @updatedAt
 
   prescriptions Prescription[]
+
+  reminderSentAt DateTime? // 24-hour reminder sent (idempotency for the reminder sweep)
 
   @@index([patientProfileId])
   @@index([practitionerProfileId])
@@ -566,8 +594,12 @@ model UserNotification {
   id          String               @id @default(cuid())
   recipientId String
   recipient   User                 @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  actorId     String
-  actor       User                 @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  // Null for system notifications (reminders, referral updates).
+  actorId     String?
+  actor       User?                @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  title       String?
+  body        String?
+  link        String? // in-app path to open, e.g. /dashboard/messages
   type        UserNotificationType
   postId      String?
   post        CommunityPost?       @relation(fields: [postId], references: [id], onDelete: SetNull)
@@ -637,6 +669,7 @@ enum InsuranceProvider {
   SANLAM
   BRITAM
   UAP_OLD_MUTUAL
+  EDENCARE
   OTHER_PRIVATE
   NONE_CASH
 }
@@ -649,16 +682,17 @@ enum ReferralStatus {
 }
 
 model PatientInsurance {
-  id              String            @id @default(cuid())
-  userId          String            @unique
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  provider        InsuranceProvider @default(NONE_CASH)
-  policyNumber    String?
-  principalMember String?
-  expiryDate      DateTime?
-  cardPhotoUrl    String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id                String            @id @default(cuid())
+  userId            String            @unique
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          InsuranceProvider @default(NONE_CASH)
+  otherProviderName String? // insurer name when provider = OTHER_PRIVATE
+  policyNumber      String?
+  principalMember   String?
+  expiryDate        DateTime?
+  cardPhotoUrl      String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 }
 
 model Hospital {
@@ -667,6 +701,8 @@ model Hospital {
   address             String
   district            String // e.g., "Gasabo", "Nyarugenge", "Kicukiro"
   phone               String
+  latitude            Float?
+  longitude           Float?
   supportedInsurances InsuranceProvider[]
   referrals           Referral[]
   createdAt           DateTime            @default(now())
@@ -675,19 +711,20 @@ model Hospital {
 }
 
 model Referral {
-  id                String         @id @default(cuid())
+  id                String          @id @default(cuid())
   patientId         String
-  patient           User           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  patient           User            @relation(fields: [patientId], references: [id], onDelete: Cascade)
   hospitalId        String
-  hospital          Hospital       @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+  hospital          Hospital        @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
   specialtyRequired String // e.g., "Obstetrics & Gynecology", "General Practitioner"
-  clinicalReason    String         @db.Text
+  clinicalReason    String          @db.Text
   triageSeverity    String // "LOW", "MODERATE", "URGENT"
   insuranceSnapshot Json? // Frozen insurance snapshot at the time of referral
-  referralCode      String         @unique // Unique short code e.g. "NC-REF-8942"
-  status            ReferralStatus @default(PENDING)
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  referralCode      String          @unique // Unique short code e.g. "NC-REF-8942"
+  status            ReferralStatus  @default(PENDING)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  shares            ReferralShare[]
 
   @@index([patientId])
   @@index([hospitalId])
@@ -717,4 +754,274 @@ model WaitlistEntry {
 
   @@index([createdAt])
   @@index([role])
+}
+
+// --- Provider sourcing pipeline (public web pages -> admin review -> invite) ---
+//
+// Scraped doctors are prospects, not providers. A candidate becomes a bookable
+// provider only after an admin approves it AND the doctor consents: either by
+// claiming the invitation, or via an admin-recorded offline attestation.
+
+enum ProviderScrapeStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum ProviderCandidateStatus {
+  PENDING_REVIEW // extracted, waiting for an admin
+  INVITED // approved; invitation sent, waiting for the doctor to accept
+  PUBLISHED // live, bookable provider account exists
+  REJECTED
+  DUPLICATE
+}
+
+enum ProviderConsentSource {
+  INVITE_CLAIMED // the doctor accepted the invitation themselves
+  ADMIN_ATTESTED // an admin recorded consent obtained offline
+}
+
+model ProviderSource {
+  id          String    @id @default(cuid())
+  name        String // e.g. "King Faisal Hospital - Our Doctors"
+  url         String    @unique // https page to start crawling from
+  notes       String?
+  isActive    Boolean   @default(true)
+  createdById String
+  lastRunAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  runs       ProviderScrapeRun[]
+  candidates ProviderCandidate[]
+}
+
+model ProviderScrapeRun {
+  id              String               @id @default(cuid())
+  sourceId        String
+  source          ProviderSource       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  status          ProviderScrapeStatus @default(QUEUED)
+  triggeredById   String
+  pagesFetched    Int                  @default(0)
+  candidatesFound Int                  @default(0)
+  log             String?              @db.Text // human-readable progress / warnings
+  error           String?
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  createdAt       DateTime             @default(now())
+
+  candidates ProviderCandidate[]
+
+  @@index([sourceId, createdAt])
+}
+
+model ProviderCandidate {
+  id        String             @id @default(cuid())
+  sourceId  String
+  source    ProviderSource     @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  runId     String?
+  run       ProviderScrapeRun? @relation(fields: [runId], references: [id], onDelete: SetNull)
+  dedupeKey String             @unique // normalised email, else name + facility
+
+  fullName         String
+  specialty        String
+  email            String?
+  phone            String?
+  yearsExperience  Int?
+  facilityName     String?
+  practiceLocation String?
+  latitude         Float?
+  longitude        Float?
+  photoSourceUrl   String? // original image URL on the source site (admin preview only)
+  profileUrl       String // page the details were found on
+  evidence         String  @db.Text // verbatim text the fields came from
+  confidence       Float   @default(0)
+  extractor        String // "ai" | "heuristic"
+
+  status       ProviderCandidateStatus @default(PENDING_REVIEW)
+  reviewedById String?
+  reviewedAt   DateTime?
+  reviewNote   String?
+
+  inviteTokenHash String?   @unique // SHA-256 of the raw invite token
+  inviteExpiresAt DateTime?
+  invitedAt       DateTime?
+
+  consentSource     ProviderConsentSource?
+  consentRecordedAt DateTime?
+  consentNote       String?
+  publishedUserId   String?                @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+}
+
+// --- Hospital referral sharing (opaque link -> encrypted snapshot) ---
+//
+// The URL holds only a random token; we store its SHA-256 hash. The patient
+// data is an AES-256-GCM encrypted snapshot, unlocked by the hospital with the
+// patient's referral code as a second factor. Every attempt is logged.
+
+model ReferralShare {
+  id               String    @id @default(cuid())
+  referralId       String
+  referral         Referral  @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  tokenHash        String    @unique
+  encryptedPayload String    @db.Text
+  payloadVersion   Int       @default(1)
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  failedAttempts   Int       @default(0)
+  accessCount      Int       @default(0)
+  lastAccessedAt   DateTime?
+  createdAt        DateTime  @default(now())
+
+  accesses ReferralShareAccess[]
+
+  @@index([referralId])
+}
+
+model ReferralShareAccess {
+  id        String        @id @default(cuid())
+  shareId   String
+  share     ReferralShare @relation(fields: [shareId], references: [id], onDelete: Cascade)
+  success   Boolean
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime      @default(now())
+
+  @@index([shareId, createdAt])
+}
+
+// --- Patient activity history (shown in the Records tab) ---
+
+enum PatientActivityType {
+  AI_TRIAGE
+  APPOINTMENT_BOOKED
+  REFERRAL_CREATED
+  REFERRAL_SHARED
+  REFERRAL_SHARE_REVOKED
+  REFERRAL_SHARE_OPENED
+  INSURANCE_UPDATED
+  CONSENT_GRANTED
+  CONSENT_WITHDRAWN
+  CYCLE_LOGGED
+  PRESCRIPTION_ROUTED
+  FEEDBACK_SUBMITTED
+  SIGNED_IN
+  PROFILE_UPDATED
+}
+
+model PatientActivity {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      PatientActivityType
+  title     String
+  details   Json? // e.g. AI prompt + response for AI_TRIAGE; never secrets
+  refType   String? // "SymptomCheck" | "Appointment" | "Referral" | ...
+  refId     String?
+  createdAt DateTime            @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, type, createdAt])
+}
+
+// Patient reminder settings (Settings > Reminders). Delivery state lives in
+// ReminderDispatch (the idempotency ledger), not here.
+model ReminderPreference {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  periodReminders      Boolean @default(true)
+  periodLeadDays       Int     @default(2) // notify this many days before the predicted start
+  dailyLogReminders    Boolean @default(false)
+  weeklyInsights       Boolean @default(false)
+  appointmentReminders Boolean @default(true)
+  emailEnabled         Boolean @default(true) // in-app is always on; email is opt-out
+  reminderHour         Int     @default(19) // local hour (0-23) for daily and weekly nudges
+  timezone             String  @default("Africa/Kigali")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum FlowLevel {
+  NONE
+  SPOTTING
+  LIGHT
+  MEDIUM
+  HEAVY
+}
+
+// One row per patient per day (Flo-style daily log): flow, symptoms, mood.
+model CycleDayLog {
+  id               String         @id @default(cuid())
+  patientProfileId String
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+
+  date     DateTime   @db.Date
+  flow     FlowLevel?
+  symptoms String[]   @default([])
+  moods    String[]   @default([])
+  notes    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([patientProfileId, date]) // also serves date-range lookups
+}
+
+// Sign-in verification codes (second step after every sign-in). Only a keyed
+// hash of the 6-digit code is stored. `sessionKeyHash` binds the challenge
+// to one signed-in browser session, so a code can't unlock another session.
+model LoginChallenge {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionKeyHash String
+  codeHash       String
+  attempts       Int       @default(0)
+  expiresAt      DateTime
+  verifiedAt     DateTime? // correct code entered
+  consumedAt     DateTime? // used to unlock the session (one time)
+  ipAddress      String?
+  createdAt      DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@index([sessionKeyHash])
+}
+
+enum ReminderDispatchStatus {
+  CLAIMED
+  SENT
+  FAILED
+}
+
+// Idempotency ledger for scheduled reminders. One row per reminder
+// (dedupeKey, e.g. "period:<userId>:2026-11-02"). A run claims a row
+// atomically, delivers, then marks it SENT. Failed or abandoned claims
+// (lease older than 15 min) are retried, up to 5 attempts. Each delivery step
+// is recorded so a retry never repeats a step that already succeeded.
+model ReminderDispatch {
+  id         String                 @id @default(cuid())
+  dedupeKey  String                 @unique
+  kind       String // period | daily | weekly | appointment | appointment-provider
+  userId     String
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status     ReminderDispatchStatus @default(CLAIMED)
+  attempts   Int                    @default(1)
+  claimedAt  DateTime               @default(now())
+  notifiedAt DateTime? // in-app notification created
+  emailedAt  DateTime? // email accepted by the provider
+  sentAt     DateTime? // all steps done
+  lastError  String?
+  createdAt  DateTime               @default(now())
+
+  @@index([status, claimedAt])
+  @@index([userId])
 }

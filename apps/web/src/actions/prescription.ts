@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { sanitizePlainText } from "@/lib/sanitize";
+import { recordActivity } from "@/server/activity/activity.service";
 import { firstIssue, idSchema } from "@/lib/validation/common";
 
 const CreatePrescriptionInput = z.object({
@@ -132,6 +133,7 @@ export async function routeToPharmacy(prescriptionId: string, pharmacyId: string
     data: { pharmacyId, status: "ROUTED" },
   });
   if (routed.count === 0) return { success: false, error: "Prescription has already been routed" };
+  await recordActivity({ userId: session.user.id, type: "PRESCRIPTION_ROUTED", title: "Sent a prescription to a pharmacy", ref: { type: "Prescription", id: prescriptionId } });
 
   revalidatePath("/dashboard/prescriptions");
   return { success: true };

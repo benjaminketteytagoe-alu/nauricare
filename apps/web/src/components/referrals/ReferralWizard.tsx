@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import type { InsuranceProvider } from "@prisma/client";
 import {
-  INSURANCE_OPTIONS, KIGALI_DISTRICTS, SPECIALTIES, insuranceLabel,
+  INSURANCE_OPTIONS, KIGALI_DISTRICTS, SPECIALTIES, insuranceLabel, insurerKey,
   type Specialty, type TriageSeverity,
 } from "@/lib/referrals/constants";
 import { EmergencyBanner } from "@/components/triage/EmergencyBanner";
@@ -18,6 +18,7 @@ import { FloatingField } from "./FloatingField";
 
 export interface WizardInsurance {
   provider: InsuranceProvider;
+  otherProviderName: string; // when provider = OTHER_PRIVATE
   policyNumber: string;
   principalMember: string;
   expiryDate: string; // yyyy-mm-dd or ""
@@ -74,7 +75,24 @@ function Stepper({ current }: { current: number }) {
   );
 }
 
-export function ReferralWizard({ prefill, initialInsurance }: { prefill: WizardPrefill; initialInsurance: WizardInsurance | null }) {
+interface InsuranceChoice {
+  id: string;
+  label: string;
+  hint: string;
+  provider: InsuranceProvider;
+  otherName?: string;
+}
+
+export function ReferralWizard({
+  prefill,
+  initialInsurance,
+  knownInsurers = [],
+}: {
+  prefill: WizardPrefill;
+  initialInsurance: WizardInsurance | null;
+  /** Private insurers other NauriCare patients have entered (see knownPrivateInsurers). */
+  knownInsurers?: string[];
+}) {
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -85,8 +103,25 @@ export function ReferralWizard({ prefill, initialInsurance }: { prefill: WizardP
 
   // Step 2
   const [insurance, setInsurance] = useState<WizardInsurance>(
-    initialInsurance ?? { provider: "NONE_CASH", policyNumber: "", principalMember: "", expiryDate: "" },
+    initialInsurance ?? { provider: "NONE_CASH", otherProviderName: "", policyNumber: "", principalMember: "", expiryDate: "" },
   );
+
+  // Listed insurers, then ones patients have added, then "another" and cash.
+  const choices = useMemo<InsuranceChoice[]>(() => {
+    const listed = INSURANCE_OPTIONS.filter((o) => o.value !== "OTHER_PRIVATE" && o.value !== "NONE_CASH");
+    const option = (v: InsuranceProvider) => INSURANCE_OPTIONS.find((o) => o.value === v)!;
+    return [
+      ...listed.map((o) => ({ id: o.value, label: o.label, hint: o.hint, provider: o.value })),
+      ...knownInsurers.map((name) => ({ id: `other:${name}`, label: name, hint: "Private insurer", provider: "OTHER_PRIVATE" as const, otherName: name })),
+      { id: "OTHER_PRIVATE", label: "Another private insurer", hint: "Type your insurer's name", provider: "OTHER_PRIVATE" },
+      { id: "NONE_CASH", label: option("NONE_CASH").label, hint: option("NONE_CASH").hint, provider: "NONE_CASH" },
+    ];
+  }, [knownInsurers]);
+  const knownMatch = insurance.provider === "OTHER_PRIVATE"
+    ? knownInsurers.find((n) => insurerKey(n) === insurerKey(insurance.otherProviderName))
+    : undefined;
+  const selectedChoiceId = insurance.provider !== "OTHER_PRIVATE" ? insurance.provider : knownMatch ? `other:${knownMatch}` : "OTHER_PRIVATE";
+  const [otherNameError, setOtherNameError] = useState("");
   const [policyError, setPolicyError] = useState("");
 
   // Step 3
@@ -127,6 +162,11 @@ export function ReferralWizard({ prefill, initialInsurance }: { prefill: WizardP
 
   async function saveInsuranceAndContinue() {
     setPolicyError("");
+    setOtherNameError("");
+    if (insurance.provider === "OTHER_PRIVATE" && insurance.otherProviderName.trim().length < 2) {
+      setOtherNameError("Enter the name of your insurer.");
+      return;
+    }
     if (insurance.provider !== "NONE_CASH" && !insurance.policyNumber.trim()) {
       setPolicyError("Enter your policy or membership number.");
       return;
@@ -140,6 +180,10 @@ export function ReferralWizard({ prefill, initialInsurance }: { prefill: WizardP
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Could not save your insurance details.");
+      // The server may file a typed name under a listed insurer ("Britam").
+      if (data.insurance) {
+        setInsurance((i) => ({ ...i, provider: data.insurance.provider, otherProviderName: data.insurance.otherProviderName ?? "" }));
+      }
       setHospitals(null);
       go(2);
     } catch (e) {
@@ -286,11 +330,11 @@ export function ReferralWizard({ prefill, initialInsurance }: { prefill: WizardP
             <fieldset>
               <legend className="sr-only">Insurance provider</legend>
               <div className="grid gap-3 sm:grid-cols-2">
-                {INSURANCE_OPTIONS.map((opt) => {
-                  const checked = insurance.provider === opt.value;
+                {choices.map((opt) => {
+                  const checked = selectedChoiceId === opt.id;
                   return (
                     <label
-                      key={opt.value}
+                      key={opt.id}
                       className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${
                         checked ? "border-nc-primary bg-nc-primary-container" : "border-slate-300 hover:bg-slate-50"
                       }`}
@@ -298,9 +342,16 @@ export function ReferralWizard({ prefill, initialInsurance }: { prefill: WizardP
                       <input
                         type="radio"
                         name="insurance"
-                        value={opt.value}
+                        value={opt.id}
                         checked={checked}
-                        onChange={() => setInsurance((i) => ({ ...i, provider: opt.value }))}
+                        onChange={() =>
+                          setInsurance((i) => ({
+                            ...i,
+                            provider: opt.provider,
+                            // A named insurer fills the name; "another" starts blank.
+                            otherProviderName: opt.otherName ?? (opt.provider === "OTHER_PRIVATE" && !knownMatch ? i.otherProviderName : ""),
+                          }))
+                        }
                         className="mt-1 h-4 w-4 accent-nc-primary"
                       />
                       <span>
@@ -315,6 +366,19 @@ export function ReferralWizard({ prefill, initialInsurance }: { prefill: WizardP
 
             {insurance.provider !== "NONE_CASH" && (
               <div className="grid gap-4 sm:grid-cols-2">
+                {selectedChoiceId === "OTHER_PRIVATE" && (
+                  <div className="sm:col-span-2">
+                    <FloatingField
+                      id="otherProviderName"
+                      label="Insurer name"
+                      value={insurance.otherProviderName}
+                      maxLength={80}
+                      autoComplete="off"
+                      error={otherNameError}
+                      onChange={(e) => setInsurance((i) => ({ ...i, otherProviderName: e.target.value }))}
+                    />
+                  </div>
+                )}
                 <FloatingField
                   id="policyNumber"
                   label="Policy / membership number"
@@ -362,7 +426,7 @@ export function ReferralWizard({ prefill, initialInsurance }: { prefill: WizardP
               <p className="mt-1 text-sm text-slate-600">
                 {insurance.provider === "NONE_CASH"
                   ? "Showing all partner hospitals."
-                  : `Showing hospitals listed as accepting ${insuranceLabel(insurance.provider)}.`}
+                  : `Showing hospitals listed as accepting ${insuranceLabel(insurance.provider, insurance.otherProviderName)}.`}
               </p>
             </div>
 
@@ -460,7 +524,7 @@ export function ReferralWizard({ prefill, initialInsurance }: { prefill: WizardP
                 <ShieldCheck className="mt-0.5 h-5 w-5 text-nc-primary" aria-hidden />
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Payment</dt>
-                  <dd className="font-semibold text-nc-ink">{insuranceLabel(insurance.provider)}</dd>
+                  <dd className="font-semibold text-nc-ink">{insuranceLabel(insurance.provider, insurance.otherProviderName)}</dd>
                   {insurance.policyNumber && insurance.provider !== "NONE_CASH" && (
                     <dd className="text-sm text-slate-600">Policy {insurance.policyNumber}</dd>
                   )}

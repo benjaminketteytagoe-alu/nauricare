@@ -5,47 +5,59 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { logAdministrativeAction } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { getClientIp } from "@/lib/getClientIp";
+import { idSchema } from "@/lib/validation/common";
 
-export async function approveProviderProfile(providerUserId: string, adminId: string, ipAddress: string) {
+/**
+ * Approves a provider. Authorization and the audit identity come ONLY from the
+ * server session: server actions are public HTTP endpoints, so nothing the
+ * browser sends (admin id, IP) can be trusted.
+ */
+export async function approveProviderProfile(providerUserId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
+    return { success: false as const, error: "Unauthorized" };
+  }
+  if (!idSchema.safeParse(providerUserId).success) {
+    return { success: false as const, error: "Invalid provider." };
+  }
+
   try {
-    // 1. Update the verification state on both the User and their Profile
-    const updatedUser = await prisma.user.update({
+    const provider = await prisma.user.findUnique({
       where: { id: providerUserId },
-      data: {
-        isVerified: true,
-        practitionerProfile: {
-          update: {
-            isVerified: true,
-          },
-        },
-      },
-      include: { practitionerProfile: true },
+      select: { id: true, role: true, email: true, isVerified: true, practitionerProfile: { select: { id: true } } },
+    });
+    if (!provider || provider.role !== "PROVIDER" || !provider.practitionerProfile) {
+      return { success: false as const, error: "Provider not found." };
+    }
+
+    await prisma.user.update({
+      where: { id: providerUserId },
+      data: { isVerified: true, practitionerProfile: { update: { isVerified: true } } },
     });
 
-    // 2. Commit the audit log entry for historical compliance tracing
     await logAdministrativeAction({
       action: "PROVIDER_VERIFY",
-      actorId: adminId,
+      actorId: session.user.id,
       targetId: providerUserId,
-      ipAddress,
+      ipAddress: getClientIp(await headers()),
       details: {
-        previousStatus: "PENDING",
+        previousStatus: provider.isVerified ? "APPROVED" : "PENDING",
         updatedStatus: "APPROVED",
-        providerEmail: updatedUser.email,
+        providerEmail: provider.email,
       },
     });
 
-    // 3. Reset the Next.js router cache for this route layout context
     revalidatePath("/admin/providers");
     revalidatePath(`/admin/providers/${providerUserId}`);
-    // Patient-facing specialist directory — ensures a newly-verified provider
-    // is never served from a stale cached entry for this route.
+    // Patient-facing directory: a newly verified provider must not be served stale.
     revalidatePath("/dashboard/providers");
 
-    return { success: true, data: updatedUser };
+    return { success: true as const };
   } catch (error) {
     console.error("Failed to execute provider approval transaction:", error);
-    return { success: false, error: "Internal operational execution failure." };
+    return { success: false as const, error: "Internal operational execution failure." };
   }
 }
 

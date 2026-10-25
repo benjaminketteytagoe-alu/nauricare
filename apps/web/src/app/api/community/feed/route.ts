@@ -9,6 +9,7 @@ import { sanitizePlainText } from "@/lib/sanitize";
 import { idSchema } from "@/lib/validation/common";
 import { mediaUrlSchema } from "@/lib/validation/media";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { requireCommunityAvatar, scrubAuthor } from "@/server/community/avatars";
 
 const PostInput = z
   .object({
@@ -70,7 +71,8 @@ export async function GET(req: Request) {
     const followedSet = new Set(myFollows.map((f) => f.followingId));
 
     const enriched = posts.map(({ likes, _count, ...post }) => ({
-      ...post,
+      ...scrubAuthor(post),
+      repostOf: post.repostOf ? scrubAuthor(post.repostOf) : null,
       likeCount: _count.likes,
       commentCount: _count.comments,
       repostCount: _count.reposts,
@@ -92,6 +94,9 @@ export async function POST(req: Request) {
 
     const limit = rateLimit(`community-post:${session.user.id}`, 10, 10 * 60_000);
     if (!limit.allowed) return rateLimitResponse(limit);
+
+    const noAvatar = await requireCommunityAvatar(session.user.id);
+    if (noAvatar) return noAvatar;
 
     const parsed = await parseJson(req, PostInput);
     if (!parsed.ok) return parsed.response;
@@ -137,7 +142,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { ...post, likeCount: 0, commentCount: 0, repostCount: 0, isLikedByMe: false, isFollowedByMe: false },
+      { ...scrubAuthor(post), repostOf: post.repostOf ? scrubAuthor(post.repostOf) : null, likeCount: 0, commentCount: 0, repostCount: 0, isLikedByMe: false, isFollowedByMe: false },
       { status: 201 },
     );
   } catch (error) {

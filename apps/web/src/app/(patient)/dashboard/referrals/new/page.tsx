@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { SPECIALTIES, TRIAGE_SEVERITIES, type Specialty, type TriageSeverity } from "@/lib/referrals/constants";
+import { knownPrivateInsurers } from "@/server/insurance/insurers";
 import { ReferralWizard, type WizardInsurance, type WizardPrefill } from "@/components/referrals/ReferralWizard";
 
 export const dynamic = "force-dynamic";
@@ -18,11 +19,12 @@ export default async function NewReferralPage({ searchParams }: { searchParams: 
   const userId = session.user.id;
   const { checkId } = await searchParams;
 
-  const [check, insurance] = await Promise.all([
+  const [check, insurance, knownInsurers] = await Promise.all([
     checkId
       ? prisma.symptomCheck.findFirst({ where: { id: checkId, userId }, select: { id: true, answers: true } })
       : null,
     prisma.patientInsurance.findUnique({ where: { userId } }),
+    knownPrivateInsurers(),
   ]);
 
   const prefill: WizardPrefill = {};
@@ -45,6 +47,7 @@ export default async function NewReferralPage({ searchParams }: { searchParams: 
   const initialInsurance: WizardInsurance | null = insurance
     ? {
         provider: insurance.provider,
+        otherProviderName: insurance.otherProviderName ?? "",
         policyNumber: insurance.policyNumber ?? "",
         principalMember: insurance.principalMember ?? "",
         expiryDate: insurance.expiryDate ? insurance.expiryDate.toISOString().slice(0, 10) : "",
@@ -60,7 +63,7 @@ export default async function NewReferralPage({ searchParams }: { searchParams: 
         <h1 className="text-2xl font-bold text-nc-ink sm:text-3xl">New hospital referral</h1>
         <p className="mt-1 text-slate-600">Four short steps. Your answers are saved securely to your NauriCare record.</p>
       </header>
-      <ReferralWizard prefill={prefill} initialInsurance={initialInsurance} />
+      <ReferralWizard prefill={prefill} initialInsurance={initialInsurance} knownInsurers={knownInsurers} />
     </div>
   );
 }

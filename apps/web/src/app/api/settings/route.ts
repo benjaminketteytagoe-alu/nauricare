@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { recordActivity } from "@/server/activity/activity.service";
 
 const settingsSchema = z.object({
   healthGoals: z.array(z.string().max(100)).max(20),
@@ -19,7 +20,7 @@ export async function GET() {
     const profile = await prisma.patientProfile.findUnique({
       where: { userId: session.user.id },
       include: {
-        user: { select: { name: true, email: true, phoneNumber: true, avatarUrl: true } }
+        user: { select: { name: true, email: true, phoneNumber: true, avatarUrl: true, googlePhotoUrl: true } }
       }
     });
 
@@ -29,6 +30,7 @@ export async function GET() {
       name: profile.user.name,
       email: profile.user.email,
       avatarUrl: profile.user.avatarUrl,
+      googlePhotoUrl: profile.user.googlePhotoUrl,
       healthGoals: profile.healthGoals,
       menstrualCycle: profile.menstrualCycle || "28",
       emergencyContact: profile.emergencyContact || ""
@@ -67,6 +69,7 @@ export async function POST(req: Request) {
       },
     });
 
+    await recordActivity({ userId: session.user.id, type: "PROFILE_UPDATED", title: "Updated health profile settings" });
     return NextResponse.json(updatedProfile);
   } catch (error) {
     console.error("[POST_SETTINGS_ERROR]", error);

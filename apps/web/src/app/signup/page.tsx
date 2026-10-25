@@ -6,6 +6,7 @@ import { carryAuthParams } from "@/lib/safeRedirect";
 import { useAuthParams } from "@/lib/authDestination";
 import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
+import { useTurnstileSize } from "@/lib/useTurnstileSize";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +43,7 @@ const TRUST_CHIPS = [
 export default function SignUpPage() {
   const authParams = useAuthParams(); // keeps ?redirect=&action= when switching auth pages
   const router = useRouter();
+  const turnstileSize = useTurnstileSize();
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
@@ -248,7 +250,7 @@ export default function SignUpPage() {
               </Label>
             </div>
 
-            <Turnstile
+            <Turnstile key={turnstileSize} options={{ size: turnstileSize }}
               siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
               onSuccess={setTurnstileToken}
               onExpire={() => setTurnstileToken("")}

@@ -7,6 +7,7 @@ import { SPECIALTIES, TRIAGE_SEVERITIES, insuranceLabel, type TriageSeverity } f
 import { generateReferralCode } from "@/lib/referrals/server";
 import { getUserIdWithRole } from "@/lib/auth-guards";
 import { maxSeverity, screenRedFlags } from "@/lib/triage/redFlags";
+import { recordActivity } from "@/server/activity/activity.service";
 
 const ReferralInput = z.object({
   hospitalId: z.string().min(1, "Choose a hospital."),
@@ -86,7 +87,8 @@ export async function POST(req: Request) {
   // the hospital was told at the time of referral.
   const insuranceSnapshot = {
     provider: insurance?.provider ?? "NONE_CASH",
-    providerLabel: insuranceLabel(insurance?.provider ?? "NONE_CASH"),
+    providerLabel: insuranceLabel(insurance?.provider ?? "NONE_CASH", insurance?.otherProviderName),
+    otherProviderName: insurance?.otherProviderName ?? null,
     policyNumber: insurance?.policyNumber ?? null,
     principalMember: insurance?.principalMember ?? null,
     expiryDate: insurance?.expiryDate?.toISOString() ?? null,
@@ -107,6 +109,13 @@ export async function POST(req: Request) {
           referralCode: generateReferralCode(),
         },
         select: referralSelect,
+      });
+      await recordActivity({
+        userId,
+        type: "REFERRAL_CREATED",
+        title: `Created referral ${referral.referralCode} to ${referral.hospital.name}`,
+        details: { specialty: specialtyRequired, severity: triageSeverity },
+        ref: { type: "Referral", id: referral.id },
       });
       return NextResponse.json({ referral }, { status: 201 });
     } catch (error) {

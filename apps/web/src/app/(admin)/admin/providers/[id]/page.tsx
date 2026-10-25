@@ -94,7 +94,7 @@ export default async function ProviderDetailPage({ params }: PageProps) {
       {/* Dynamic Action Controls */}
       {(!isVerified || !isDeleted) && (
         <div className="flex justify-end items-center gap-3 pt-4 border-t">
-          {!isVerified && <VerifyButton providerId={providerUser.id} adminId={providerUser.id} />}
+          {!isVerified && <VerifyButton providerId={providerUser.id} />}
           {!isDeleted && <DeleteProviderButton providerId={providerUser.id} providerName={providerUser.name} />}
         </div>
       )}

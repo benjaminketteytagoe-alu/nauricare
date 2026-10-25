@@ -93,7 +93,7 @@ Tracking these patterns over 2–3 cycles builds a personalised performance and 
 // blank and insurance lists are a starting point: VERIFY both with each
 // hospital before production. The wizard hides an empty phone and tells
 // patients to confirm coverage before they visit.
-type SeedInsurance = "RSSB_RAMA" | "MMI" | "RADIANT" | "SANLAM" | "BRITAM" | "UAP_OLD_MUTUAL" | "OTHER_PRIVATE" | "NONE_CASH";
+type SeedInsurance = "RSSB_RAMA" | "MMI" | "RADIANT" | "SANLAM" | "BRITAM" | "UAP_OLD_MUTUAL" | "EDENCARE" | "OTHER_PRIVATE" | "NONE_CASH";
 const PUBLIC_COVER: SeedInsurance[] = ["RSSB_RAMA", "MMI", "RADIANT", "SANLAM", "BRITAM", "UAP_OLD_MUTUAL", "NONE_CASH"];
 const PRIVATE_COVER: SeedInsurance[] = ["RSSB_RAMA", "MMI", "RADIANT", "SANLAM", "BRITAM", "UAP_OLD_MUTUAL", "OTHER_PRIVATE", "NONE_CASH"];
 

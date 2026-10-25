@@ -8,6 +8,8 @@ import {
   ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
+import { AvatarPicker } from "@/components/AvatarPicker";
+import { communityAvatar, presetIdOf } from "@/lib/avatars";
 import { MentionText } from "@/components/MentionText";
 import { followUser, unfollowUser } from "./actions";
 
@@ -249,7 +251,7 @@ function CommentsThread({
   onCommentFailed,
 }: {
   postId: string;
-  currentUser: { name: string; avatarUrl: string | null };
+  currentUser: { name: string; avatarUrl: string | null; canPost: boolean };
   onCommentAdded: () => void;
   onCommentFailed: () => void;
 }) {
@@ -330,6 +332,9 @@ function CommentsThread({
         </div>
       )}
 
+      {!currentUser.canPost ? (
+        <p className="text-xs text-slate-500">Choose a community avatar at the top of the page to join the conversation.</p>
+      ) : (
       <div className="flex items-center gap-2">
         <input
           value={draft}
@@ -346,6 +351,7 @@ function CommentsThread({
           Send
         </button>
       </div>
+      )}
     </div>
   );
 }
@@ -390,7 +396,7 @@ function PostCard({
   onToggleFollow,
 }: {
   post: Post;
-  currentUser?: { id: string; name: string; avatarUrl: string | null };
+  currentUser?: { id: string; name: string; avatarUrl: string | null; canPost: boolean };
   onLike: (id: string) => void;
   onCommentCountChange: (postId: string, delta: number) => void;
   onToggleFollow: (authorId: string, isCurrentlyFollowing: boolean) => Promise<void>;
@@ -519,7 +525,7 @@ function PostCard({
       {showComments && (
         <CommentsThread
           postId={post.id}
-          currentUser={{ name: currentUser?.name ?? "You", avatarUrl: currentUser?.avatarUrl ?? null }}
+          currentUser={{ name: currentUser?.name ?? "You", avatarUrl: currentUser?.avatarUrl ?? null, canPost: currentUser?.canPost ?? false }}
           onCommentAdded={() => onCommentCountChange(post.id, 1)}
           onCommentFailed={() => onCommentCountChange(post.id, -1)}
         />
@@ -827,7 +833,10 @@ export default function CommunityPage() {
   }
 
   const userName = session?.user?.name ?? "You";
-  const userAvatarUrl = session?.user?.avatarUrl ?? null;
+  const role = session?.user?.role ?? "PATIENT";
+  const userAvatarUrl = communityAvatar(role, session?.user?.avatarUrl);
+  // Patients take part with a predefined avatar only (privacy in a health community).
+  const needsAvatar = !!session?.user && role === "PATIENT" && !presetIdOf(session.user.avatarUrl);
 
   return (
     <div className="max-w-[600px] mx-auto space-y-5 animate-in fade-in duration-500 pb-20">
@@ -843,6 +852,17 @@ export default function CommunityPage() {
         </div>
       </div>
 
+      {needsAvatar && (
+        <div className="card-surface border-2 border-nc-primary/30 p-5">
+          <AvatarPicker
+            name={userName}
+            avatarUrl={null}
+            heading="Choose your community avatar"
+            description="To protect your privacy, everyone in Community appears with an illustrated avatar, never a photo. Pick one to start posting."
+          />
+        </div>
+      )}
+
       {/* ── Story strip ── */}
       <div className="card-surface px-4 py-3.5 space-y-3">
         <div className="flex items-start gap-4 overflow-x-auto pb-1 scrollbar-hide">
@@ -850,7 +870,8 @@ export default function CommunityPage() {
           {/* Add Story button */}
           <button
             onClick={() => setShowStoryForm((v) => !v)}
-            className="flex flex-col items-center gap-1.5 shrink-0"
+            disabled={needsAvatar}
+            className="flex flex-col items-center gap-1.5 shrink-0 disabled:opacity-40"
           >
             <div className={`w-[60px] h-[60px] rounded-full border-2 border-dashed flex items-center justify-center transition-colors ${showStoryForm ? "border-rose-500 bg-rose-50 text-rose-600" : "border-rose-300 bg-gray-50 text-rose-400 hover:bg-rose-50"}`}>
               <Plus className="w-5 h-5" />
@@ -943,7 +964,8 @@ export default function CommunityPage() {
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Share something with the NauriCare community…"
+            placeholder={needsAvatar ? "Choose a community avatar above to start posting." : "Share something with the NauriCare community…"}
+            disabled={needsAvatar}
             rows={3}
             className="flex-1 resize-none text-sm text-gray-800 placeholder-gray-400 border border-gray-100 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all"
           />
@@ -988,7 +1010,7 @@ export default function CommunityPage() {
           </label>
           <button
             onClick={handlePost}
-            disabled={isPosting || (!draft.trim() && !selectedFile)}
+            disabled={needsAvatar || isPosting || (!draft.trim() && !selectedFile)}
             className="btn-brand active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-bold px-6 py-2 rounded-xl"
           >
             {uploadStage === "uploading" ? "Uploading…" : uploadStage === "posting" ? "Posting…" : "Post"}
@@ -1016,7 +1038,7 @@ export default function CommunityPage() {
               <PostCard
                 key={post.id}
                 post={post}
-                currentUser={session?.user?.id ? { id: session.user.id, name: userName, avatarUrl: userAvatarUrl } : undefined}
+                currentUser={session?.user?.id ? { id: session.user.id, name: userName, avatarUrl: userAvatarUrl, canPost: !needsAvatar } : undefined}
                 onLike={handleLike}
                 onCommentCountChange={handleCommentCountChange}
                 onToggleFollow={handleToggleFollow}

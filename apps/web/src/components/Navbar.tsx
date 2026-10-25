@@ -28,16 +28,16 @@ export default function Navbar() {
             alt="NauriCare Logo"
             width={150}
             height={40}
-            className="h-8 w-auto"
+            className="h-7 w-auto sm:h-8"
           />
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-4">
           {/* h-11 (44px) overrides the Button default h-9 to meet the minimum touch target */}
-          <Button variant="ghost" className="h-11 px-3 sm:px-4" asChild>
+          <Button variant="ghost" className="h-11 px-2.5 sm:px-4" asChild>
             <Link href="/login">Log in</Link>
           </Button>
-          <Button className="h-11 px-4 sm:px-6 bg-teal-600 hover:bg-teal-700" asChild>
+          <Button className="h-11 px-3 sm:px-6 bg-teal-600 hover:bg-teal-700" asChild>
             <Link href="/signup">Get Started</Link>
           </Button>
         </div>

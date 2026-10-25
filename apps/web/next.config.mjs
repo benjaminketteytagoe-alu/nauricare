@@ -14,7 +14,7 @@ const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://picsum.photos https://avatars.githubusercontent.com https://lh3.googleusercontent.com ${S3_HOSTS}`,
+  `img-src 'self' data: blob: https://tile.openstreetmap.org https://res.cloudinary.com https://images.unsplash.com https://picsum.photos https://avatars.githubusercontent.com https://lh3.googleusercontent.com ${S3_HOSTS}`,
   `media-src 'self' blob: https://res.cloudinary.com ${S3_HOSTS}`,
   "font-src 'self' data:",
   // Browser → API, Turnstile, and direct-to-S3 presigned uploads. Jitsi's
@@ -39,7 +39,9 @@ const SECURITY_HEADERS = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
   // Default: no sensitive device access anywhere.
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), display-capture=(), payment=(), usb=()" },
+  // geolocation=(self): the provider map asks for location. It must be site-wide
+  // because the policy is fixed per document and the app navigates client-side.
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self), display-capture=(), payment=(), usb=()" },
 ];
 
 // Consultation rooms embed Jitsi, which needs camera, mic and screen share.

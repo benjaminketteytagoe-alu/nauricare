@@ -20,6 +20,7 @@ type AuthedSession = Session & { user: NonNullable<Session["user"]> & { id: stri
 export async function requireRole(role: Role): Promise<AuthedSession> {
   await cookies(); // forces dynamic rendering — prevents cross-user cache leak
   const session = await getServerSession(authOptions);
+  if (session?.loginCodePending) redirect("/verify-code");
   if (!session?.user?.id) redirect("/login");
   if (session.user.role !== role) redirect(ROLE_HOME[session.user.role] ?? "/login");
   return session as AuthedSession;

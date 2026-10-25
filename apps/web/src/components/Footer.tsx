@@ -13,7 +13,7 @@ interface FooterLink {
 const PLATFORM_LINKS: FooterLink[] = [
   { href: "/", label: "Home" },
   { href: "/waitlist", label: "Join the Waitlist" },
-  { href: "/#nauri", label: "AI Symptom Guide" },
+  { href: "/#symptom-guide", label: "AI Symptom Guide" },
   { href: "/dashboard/referrals", label: "Hospital Referrals" },
   { href: "/dashboard/providers", label: "Telehealth" },
   { href: "/dashboard/articles", label: "Educational Hub" },

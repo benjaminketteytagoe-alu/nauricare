@@ -1,240 +1,179 @@
-// apps/web/src/app/dashboard/providers/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import { Stethoscope, Calendar, Clock, X, CheckCircle2, ShieldAlert } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { BadgeCheck, CalendarPlus, List, LocateFixed, Map as MapIcon, MapPin, MessageSquare, Search, ShieldAlert, Stethoscope } from "lucide-react";
+import { Avatar } from "@/components/Avatar";
+import { BookingDialog } from "@/components/providers/BookingDialog";
+import { Callout } from "@/components/ui/callout";
+import { distanceKm, formatDistance, type LatLng } from "@/lib/geo/distance";
+import { doctorName } from "@/lib/format";
+
+const ProviderMap = dynamic(() => import("@/components/providers/ProviderMap"), {
+  ssr: false,
+  loading: () => <div className="flex h-full items-center justify-center bg-slate-100 text-sm text-slate-500">Loading map…</div>,
+});
 
 interface ProviderListing {
   id: string;
   specialty: string;
-  bio?: string;
-  user: { name: string };
+  clinicName: string;
+  location: string | null;
+  bio: string | null;
+  yearsExperience: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  online: boolean;
+  user: { id: string; name: string; avatarUrl: string | null };
 }
 
-export default function ProvidersDirectoryPage() {
-  const router = useRouter();
-  const [providers, setProviders] = useState<ProviderListing[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+type View = "list" | "map";
 
-  // Booking Modal State
-  const [selectedProvider, setSelectedProvider] = useState<ProviderListing | null>(null);
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("09:00");
-  const [notes, setNotes] = useState("");
-  const [isBooking, setIsBooking] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+export default function ProvidersDirectoryPage() {
+  const [providers, setProviders] = useState<ProviderListing[] | null>(null);
+  const [loadError, setLoadError] = useState("");
+  const [view, setView] = useState<View>("list");
+  const [query, setQuery] = useState("");
+  const [me, setMe] = useState<LatLng | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [geoError, setGeoError] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [booking, setBooking] = useState<ProviderListing | null>(null);
 
   useEffect(() => {
     fetch("/api/providers")
-      .then(res => res.json())
-      .then(data => {
-        // DEFENSIVE CHECK: Ensure data is an array to prevent the .map() crash
-        if (Array.isArray(data)) {
-          setProviders(data);
-        } else {
-          console.error("API returned a non-array response. Here is what it sent:", data);
-          setProviders([]); // Fallback to an empty array
-        }
-        setIsLoading(false);
+      .then(async (res) => {
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !Array.isArray(data)) throw new Error("We couldn't load the specialist directory. Please refresh.");
+        setProviders(data);
       })
-      .catch(err => {
-        console.error("Fetch error:", err);
+      .catch((e: Error) => {
+        setLoadError(e.message);
         setProviders([]);
-        setIsLoading(false);
       });
   }, []);
 
-  const handleBookAppointment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedProvider) return;
-    setIsBooking(true);
-    setError("");
+  function locate() {
+    if (!("geolocation" in navigator)) return setGeoError("Your browser can't share your location.");
+    setLocating(true);
+    setGeoError("");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setMe({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocating(false);
+      },
+      (err) => {
+        setGeoError(err.code === err.PERMISSION_DENIED ? "Location permission was denied. You can still browse the map." : "We couldn't get your location.");
+        setLocating(false);
+      },
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
+    );
+  }
 
-    try {
-      // Combine date and time into a precise ISO start time
-      const startTime = new Date(`${date}T${time}:00`);
-      // Standard consultation length: 1 hour
-      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
-
-      if (startTime < new Date()) {
-        throw new Error("You cannot book an appointment in the past.");
-      }
-
-      const res = await fetch("/api/appointments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          practitionerProfileId: selectedProvider.id,
-          startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(),
-          notes
-        })
+  const listed = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const rows = (providers ?? [])
+      .filter((p) => !q || [p.user.name, p.specialty, p.clinicName, p.location ?? ""].some((v) => v.toLowerCase().includes(q)))
+      .map((p) => {
+        const pos = p.latitude != null && p.longitude != null ? { lat: p.latitude, lng: p.longitude } : null;
+        return { ...p, pos, km: me && pos ? distanceKm(me, pos) : null };
       });
+    // Nearest first when we know where you are; online providers first otherwise.
+    return rows.sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity) || Number(b.online) - Number(a.online));
+  }, [providers, query, me]);
 
-      if (!res.ok) {
-        // Errors are JSON ({ error }) or, from older paths, plain text.
-        const raw = await res.text();
-        let msg = raw;
-        try {
-          msg = JSON.parse(raw).error ?? raw;
-        } catch {
-          /* plain-text error */
-        }
-        throw new Error(msg || "Failed to book appointment.");
-      }
-
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        setSelectedProvider(null);
-        router.refresh(); // Refresh the layout to show the new appointment
-      }, 2000);
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to book appointment.");
-    } finally {
-      setIsBooking(false);
-    }
-  };
+  const mapped = listed.filter((p) => p.pos);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-          <Stethoscope className="w-8 h-8 text-rose-600" />
-          Specialist Directory
-        </h1>
-        <p className="text-gray-500 mt-1">Book a secure telehealth consultation with verified healthcare professionals.</p>
-      </div>
+    <div className="mx-auto max-w-6xl space-y-6 pb-12">
+      <header>
+        <h1 className="flex items-center gap-3 text-2xl font-bold text-nc-ink sm:text-3xl"><Stethoscope className="h-7 w-7 text-rose-600" aria-hidden /> Find a specialist</h1>
+        <p className="mt-1 text-slate-600">Verified gynaecologists and women&apos;s health specialists. Book a video consultation or send a message.</p>
+      </header>
 
-      {isLoading ? (
-        <div className="text-center py-12 text-gray-500">Loading specialists...</div>
-      ) : providers.length === 0 ? (
-        <div className="card-surface p-12 text-center">
-          <ShieldAlert className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-gray-900">No Providers Available</h3>
-          <p className="text-gray-500">There are currently no verified specialists available for booking. (Or there was an API error! Check the console).</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {providers.map((provider) => (
-            <div key={provider.id} className="card-surface overflow-hidden flex flex-col transition-all hover:shadow-md hover:border-rose-200">
-              <div className="p-6 flex-1">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="w-12 h-12 bg-rose-50 text-rose-700 rounded-full flex items-center justify-center font-bold text-xl">
-                    {provider.user.name.charAt(0)}
-                  </div>
-                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Verified
-                  </span>
-                </div>
-                <h3 className="text-lg font-bold text-gray-900">Dr. {provider.user.name}</h3>
-                <p className="text-rose-600 font-medium text-sm mb-3">{provider.specialty}</p>
-                <p className="text-gray-600 text-sm line-clamp-3">{provider.bio || "No biography provided."}</p>
-              </div>
-              <div className="p-4 border-t border-rose-50 bg-rose-50/30">
-                <button
-                  onClick={() => setSelectedProvider(provider)}
-                  className="w-full btn-brand font-medium py-2.5 rounded-xl text-sm"
-                >
-                  Book Consultation
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* --- BOOKING MODAL --- */}
-      {selectedProvider && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden relative">
-            <button 
-              onClick={() => setSelectedProvider(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="p-6 border-b border-rose-100 bg-rose-50/30">
-              <h2 className="text-xl font-bold text-gray-900">Book Appointment</h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Scheduling a telehealth session with Dr. {selectedProvider.user.name}
-              </p>
-            </div>
-
-            <form onSubmit={handleBookAppointment} className="p-6 space-y-5">
-              {success ? (
-                <div className="p-4 bg-emerald-50 text-emerald-700 rounded-xl flex items-center gap-3">
-                  <CheckCircle2 className="w-6 h-6" />
-                  <p className="font-medium">Appointment booked successfully!</p>
-                </div>
-              ) : (
-                <>
-                  {error && (
-                    <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4" />
-                      {error}
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-400" /> Date
-                      </label>
-                      <input
-                        type="date"
-                        required
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-gray-400" /> Time
-                      </label>
-                      <input
-                        type="time"
-                        required
-                        value={time}
-                        onChange={(e) => setTime(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Reason for Visit / Notes (Optional)
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Briefly describe what you'd like to discuss..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none resize-none"
-                    />
-                  </div>
-
-                  <div className="pt-2">
-                    <button
-                      type="submit"
-                      disabled={isBooking}
-                      className="w-full btn-brand font-medium py-3 rounded-xl disabled:opacity-50"
-                    >
-                      {isBooking ? "Confirming..." : "Confirm Booking"}
-                    </button>
-                  </div>
-                </>
-              )}
-            </form>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <label className="relative flex-1">
+          <span className="sr-only">Search specialists</span>
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
+          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name, specialty, clinic or area" className="m3-input pl-10" />
+        </label>
+        <div className="flex gap-2">
+          <button type="button" onClick={locate} disabled={locating} className="m3-btn-outlined flex-1 md:flex-none">
+            <LocateFixed className="h-4 w-4" aria-hidden /> {locating ? "Locating…" : me ? "Location on" : "Near me"}
+          </button>
+          <div role="tablist" aria-label="View" className="flex rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+            {(["list", "map"] as const).map((v) => (
+              <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)} className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold ${view === v ? "bg-nc-primary text-white" : "text-slate-600 hover:bg-slate-50"}`}>
+                {v === "list" ? <List className="h-4 w-4" aria-hidden /> : <MapIcon className="h-4 w-4" aria-hidden />} {v === "list" ? "List" : "Map"}
+              </button>
+            ))}
           </div>
         </div>
+      </div>
+
+      {geoError && <Callout tone="warning" role="status">{geoError}</Callout>}
+      {loadError && <Callout tone="danger" role="alert">{loadError}</Callout>}
+
+      {providers === null ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
+          {[0, 1, 2].map((i) => <div key={i} className="h-56 animate-pulse rounded-3xl bg-white" />)}
+        </div>
+      ) : listed.length === 0 ? (
+        <div className="card-surface p-12 text-center">
+          <ShieldAlert className="mx-auto mb-4 h-12 w-12 text-slate-300" aria-hidden />
+          <h2 className="text-lg font-bold text-nc-ink">{query ? "No specialists match your search" : "No specialists available yet"}</h2>
+          <p className="mt-1 text-slate-600">{query ? "Try another name, specialty or area." : "Please check back soon."}</p>
+        </div>
+      ) : (
+        <div className={view === "map" ? "grid gap-4 lg:grid-cols-[1.4fr_1fr]" : ""}>
+          {view === "map" && (
+            <div className="relative isolate h-[55dvh] min-h-[320px] overflow-hidden rounded-3xl border border-slate-200 shadow-sm lg:sticky lg:top-6 lg:h-[calc(100dvh-12rem)]">
+              <ProviderMap
+                providers={mapped.map((p) => ({ id: p.id, name: doctorName(p.user.name), specialty: p.specialty, clinic: p.clinicName, position: p.pos!, distanceLabel: p.km != null ? formatDistance(p.km) : undefined }))}
+                me={me}
+                selectedId={selectedId}
+                onSelect={(id) => {
+                  setSelectedId(id);
+                  document.getElementById(`provider-${id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                }}
+              />
+              {mapped.length < listed.length && (
+                <p className="absolute bottom-2 left-2 z-[400] rounded-full bg-white/95 px-3 py-1 text-xs text-slate-600 shadow">{listed.length - mapped.length} without a mapped location</p>
+              )}
+            </div>
+          )}
+          <ul className={view === "map" ? "space-y-3 lg:max-h-[calc(100dvh-12rem)] lg:overflow-y-auto lg:pr-1" : "grid gap-4 sm:grid-cols-2 xl:grid-cols-3"}>
+            {listed.map((p) => (
+              <li key={p.id} id={`provider-${p.id}`} className={`card-surface flex flex-col p-5 transition-shadow hover:shadow-md ${selectedId === p.id ? "ring-2 ring-nc-primary" : ""}`}>
+                <div className="flex items-start gap-3">
+                  <span className="relative shrink-0">
+                    <Avatar name={p.user.name} avatarUrl={p.user.avatarUrl} size="lg" />
+                    {p.online && <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500" aria-label="Online now" />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="flex items-center gap-1.5 font-bold text-nc-ink"><span className="truncate">{doctorName(p.user.name)}</span><BadgeCheck className="h-4 w-4 shrink-0 text-nc-primary" aria-label="Verified" /></p>
+                    <p className="text-sm font-medium text-rose-600">{p.specialty}</p>
+                    <p className="mt-1 flex items-start gap-1 text-xs text-slate-500"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden /><span>{[p.clinicName, p.location].filter(Boolean).join(" · ")}</span></p>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                  {p.yearsExperience != null && <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-700">{p.yearsExperience} years&apos; experience</span>}
+                  {p.km != null && <span className="rounded-full bg-nc-primary-container px-2.5 py-1 font-medium text-nc-primary">{formatDistance(p.km)}</span>}
+                  {p.online && <span className="rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">Online now</span>}
+                </div>
+                {p.bio && <p className="mt-3 line-clamp-3 text-sm text-slate-600">{p.bio}</p>}
+                <div className="mt-auto flex gap-2 pt-4">
+                  <button type="button" onClick={() => setBooking(p)} className="m3-btn-filled flex-1 px-4"><CalendarPlus className="h-4 w-4" aria-hidden /> Book</button>
+                  <Link href={`/dashboard/messages?with=${p.user.id}`} className="m3-btn-outlined flex-1 px-4"><MessageSquare className="h-4 w-4" aria-hidden /> Message</Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
+
+      {booking && <BookingDialog provider={{ id: booking.id, name: doctorName(booking.user.name) }} onClose={() => setBooking(null)} />}
     </div>
   );
 }
