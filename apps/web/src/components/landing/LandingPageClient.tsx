@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { Video, FileText, Users, ShieldCheck, ArrowRight } from "lucide-react";
-import { AgentChat } from "@/components/AgentChat";
+import { Video, FileText, Users, ArrowRight } from "lucide-react";
 import { NauriTriageCard } from "@/components/nauri/NauriTriageCard";
 
 // ─── Animation presets ────────────────────────────────────────────────────────
@@ -79,7 +78,7 @@ const CAROUSEL_MEDIA_PROPS = {
 };
 
 // Isolated into its own component so the 5s setInterval re-render is scoped
-// to this small subtree, not the entire LandingPageClient (AgentChat + §2-§5).
+// to this small subtree, not the entire LandingPageClient (§3-§5).
 function HeroCarousel() {
   const [heroIdx, setHeroIdx] = useState(0);
 
@@ -137,7 +136,7 @@ export default function LandingPageClient() {
         <div className="absolute inset-0 bg-gradient-to-b from-stone-900/75 via-stone-900/55 to-stone-950/85 pointer-events-none" />
 
         {/* Hero copy + Nauri front door */}
-        <div className="relative z-10 mx-auto grid w-full max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:py-16">
+        <div className="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-[minmax(0,1fr)] items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-14 lg:py-16">
           <motion.div
             initial="hidden"
             animate="visible"
@@ -187,7 +186,8 @@ export default function LandingPageClient() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="mx-auto w-full max-w-lg lg:max-w-none"
+            id="symptom-guide"
+            className="mx-auto w-full max-w-lg scroll-mt-24 lg:max-w-none"
           >
             <NauriTriageCard />
           </motion.div>
@@ -202,66 +202,6 @@ export default function LandingPageClient() {
               transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
             />
           </div>
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════════════════════════════════
-          §2  NAURI AI SECTION
-          ════════════════════════════════════════════════════════════════ */}
-      <section className="py-20 sm:py-28 px-4 sm:px-6 bg-gradient-to-b from-teal-950 via-teal-900 to-teal-950 relative overflow-hidden">
-        {/* Decorative blob */}
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-teal-700/10 rounded-full -mr-48 -mt-48 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/5 rounded-full -ml-32 -mb-32 blur-2xl pointer-events-none" />
-
-        <div className="max-w-5xl mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={stagger}
-            className="grid md:grid-cols-2 gap-14 items-center"
-          >
-            {/* Copy */}
-            <motion.div variants={fadeUp} className="space-y-6 text-white">
-              <span className="inline-flex items-center gap-2 bg-teal-700/40 border border-teal-600/50 text-teal-300 text-xs font-bold tracking-[0.18em] uppercase px-4 py-2 rounded-full">
-                AI-Powered Care
-              </span>
-
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight tracking-[-0.02em] text-balance">
-                Meet{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-cyan-300">
-                  Nauri,
-                </span>{" "}
-                your 24/7 care companion.
-              </h2>
-
-              <p className="text-teal-200/90 text-lg leading-relaxed">
-                Nauri understands the nuance of women&apos;s health. Ask about symptoms, cycle
-                patterns, treatment options — get warm, evidence-based answers in seconds, any time
-                of day or night.
-              </p>
-
-              <ul className="space-y-3">
-                {[
-                  "Available 24 hours, 7 days a week",
-                  "Evidence-based, specialist-reviewed guidance",
-                  "Completely private and encrypted",
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-teal-100">
-                    <div className="w-5 h-5 bg-teal-500/80 rounded-full flex items-center justify-center shrink-0">
-                      <ShieldCheck className="w-3 h-3 text-white" />
-                    </div>
-                    <span className="text-sm">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-
-            {/* Chat widget */}
-            <motion.div variants={scaleIn}>
-              <AgentChat />
-            </motion.div>
-          </motion.div>
         </div>
       </section>
 

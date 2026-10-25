@@ -3,12 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
+import { useTurnstileSize } from "@/lib/useTurnstileSize";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
 
 export default function ForgotPasswordPage() {
+  const turnstileSize = useTurnstileSize();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -49,7 +51,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8 space-y-6">
           {submitted ? (
             <div className="text-center space-y-4">
               <div className="flex justify-center">
@@ -100,7 +102,7 @@ export default function ForgotPasswordPage() {
                   />
                 </div>
 
-                <Turnstile
+                <Turnstile key={turnstileSize} options={{ size: turnstileSize }}
                   siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
                   onSuccess={setTurnstileToken}
                   onExpire={() => setTurnstileToken("")}

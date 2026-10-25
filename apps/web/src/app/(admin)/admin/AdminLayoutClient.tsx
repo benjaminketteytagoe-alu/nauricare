@@ -5,13 +5,14 @@ import { signOut } from "next-auth/react";
 import { AppSidebar, SidebarAction, SidebarMobileTrigger, SidebarProvider, type NavItem } from "@/components/navigation/AppSidebar";
 import { useState } from "react";
 import {
-  LayoutDashboard, Stethoscope, Store, ShieldAlert, LogOut,
+  LayoutDashboard, Stethoscope, SearchCheck, Store, ShieldAlert, LogOut,
   Settings, Bell, User, Lock, Sliders, CheckCircle, AlertTriangle, MessageSquareHeart
 } from "lucide-react";
 
 const navItems: NavItem[] = [
   { name: "Overview", href: "/admin", icon: LayoutDashboard },
   { name: "Providers", href: "/admin/providers", icon: Stethoscope },
+  { name: "Provider Sourcing", href: "/admin/sourcing", icon: SearchCheck },
   { name: "Pharmacies", href: "/admin/pharmacies", icon: Store },
   { name: "Feedback", href: "/admin/feedback", icon: MessageSquareHeart },
   { name: "Audit Logs", href: "/admin/audit", icon: ShieldAlert },

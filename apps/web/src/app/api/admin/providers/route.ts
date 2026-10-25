@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { geocodePractice } from "@/server/geo/geocode";
 import { passwordField } from "@/lib/validation/password";
 import bcrypt from "bcryptjs";
 
@@ -75,6 +76,8 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    // Coordinates for the patient map (best effort; never blocks onboarding).
+    const coords = await geocodePractice(location, clinicName);
 
     // select (not include) — see GET above: an unscoped include on User
     // returns passwordHash straight into the JSON response.
@@ -90,6 +93,8 @@ export async function POST(req: Request) {
             specialty,
             location,
             clinicName,
+            latitude: coords?.lat ?? null,
+            longitude: coords?.lng ?? null,
             isVerified: true,
           }
         }

@@ -5,11 +5,11 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { signOut } from "next-auth/react";
 import {
-  Activity, Calendar, Droplet, FileText, Hospital, LayoutDashboard, LogOut, MessageSquare, Pill, Settings, Users,
+  Activity, Calendar, Droplet, FileText, Hospital, LayoutDashboard, LogOut, MessageSquare, MessageSquarePlus, Pill, Settings, Users,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
-import { UserFeedbackModal } from "@/components/feedback/UserFeedbackModal";
 import { PendingTriageBanner } from "@/components/triage-gate/PendingTriageBanner";
+import { RealtimeProvider } from "@/components/realtime/RealtimeProvider";
 import { AppSidebar, SidebarAction, SidebarMobileTrigger, SidebarProvider, type NavItem } from "@/components/navigation/AppSidebar";
 
 const PATIENT_NAV: NavItem[] = [
@@ -22,6 +22,7 @@ const PATIENT_NAV: NavItem[] = [
   { name: "Prescriptions", href: "/dashboard/prescriptions", icon: Pill },
   { name: "Messages", href: "/dashboard/messages", icon: MessageSquare },
   { name: "Community", href: "/dashboard/community", icon: Users },
+  { name: "Feedback", href: "/dashboard/feedback", icon: MessageSquarePlus },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
@@ -29,6 +30,7 @@ const PATIENT_NAV: NavItem[] = [
 export function PatientShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
+      <RealtimeProvider>
       <div className="app-shell-canvas flex">
         {/* Mobile-only top bar */}
         <div className="nav-glass fixed inset-x-0 top-0 z-30 flex h-16 items-center justify-between border-b px-4 lg:hidden">
@@ -52,7 +54,6 @@ export function PatientShell({ children }: { children: ReactNode }) {
                 <NotificationBell />
                 {!iconOnly && <span className="text-sm font-medium">Notifications</span>}
               </div>
-              <UserFeedbackModal tone="light" collapsed={iconOnly} />
               <SidebarAction icon={LogOut} label="Sign Out" onClick={() => signOut({ callbackUrl: "/login" })} tone="light" collapsed={iconOnly} />
             </>
           )}
@@ -66,6 +67,7 @@ export function PatientShell({ children }: { children: ReactNode }) {
           </div>
         </main>
       </div>
+      </RealtimeProvider>
     </SidebarProvider>
   );
 }

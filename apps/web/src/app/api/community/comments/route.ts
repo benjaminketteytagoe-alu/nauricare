@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/server/notifications/notify";
 import { parseMentionsAndNotify } from "@/lib/mentions";
 import { z } from "zod";
 import { parseJson } from "@/lib/api";
 import { sanitizePlainText } from "@/lib/sanitize";
 import { idSchema } from "@/lib/validation/common";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { requireCommunityAvatar, scrubAuthor } from "@/server/community/avatars";
 
 const CommentInput = z.object({
   postId: idSchema,
@@ -31,7 +33,7 @@ export async function GET(req: Request) {
       },
     });
 
-    return NextResponse.json(comments);
+    return NextResponse.json(comments.map(scrubAuthor));
   } catch (error) {
     console.error("[COMMUNITY_COMMENTS_GET_ERROR]", error);
     return new NextResponse("Internal Server Error", { status: 500 });
@@ -45,6 +47,9 @@ export async function POST(req: Request) {
 
     const limit = rateLimit(`community-comment:${session.user.id}`, 30, 10 * 60_000);
     if (!limit.allowed) return rateLimitResponse(limit);
+
+    const noAvatar = await requireCommunityAvatar(session.user.id);
+    if (noAvatar) return noAvatar;
 
     const parsed = await parseJson(req, CommentInput);
     if (!parsed.ok) return parsed.response;
@@ -66,10 +71,21 @@ export async function POST(req: Request) {
       },
     });
 
+    await notify({
+      recipientId: post.authorId,
+      actorId: session.user.id,
+      type: "COMMUNITY_COMMENT",
+      title: `${session.user.name ?? "Someone"} commented on your post`,
+      body: content.slice(0, 140),
+      link: "/dashboard/community",
+      postId,
+      commentId: comment.id,
+    });
+
     // Fire-and-forget: parse @mentions in comment content and notify matched users.
     void parseMentionsAndNotify(comment.content, session.user.id, "MENTION_COMMENT", postId, comment.id);
 
-    return NextResponse.json(comment, { status: 201 });
+    return NextResponse.json(scrubAuthor(comment), { status: 201 });
   } catch (error) {
     console.error("[COMMUNITY_COMMENTS_POST_ERROR]", error);
     return new NextResponse("Internal Server Error", { status: 500 });

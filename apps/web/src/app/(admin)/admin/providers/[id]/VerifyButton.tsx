@@ -3,12 +3,12 @@
 import { useTransition } from "react";
 import { approveProviderProfile } from "../../actions";
 
-export function VerifyButton({ providerId, adminId }: { providerId: string; adminId: string }) {
+export function VerifyButton({ providerId }: { providerId: string }) {
   const [isPending, startTransition] = useTransition();
 
   const handleVerify = () => {
     startTransition(async () => {
-      const result = await approveProviderProfile(providerId, adminId, "127.0.0.1");
+      const result = await approveProviderProfile(providerId);
       
       if (result.success) {
         alert("Provider successfully verified! Audit ledger updated.");

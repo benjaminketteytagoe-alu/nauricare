@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { idSchema, firstIssue } from "@/lib/validation/common";
+import { notify } from "@/server/notifications/notify";
 
 const UpdateStatusInput = z.object({
   appointmentId: idSchema,
@@ -36,7 +37,7 @@ export async function updateAppointmentStatus(
 
   const appointment = await prisma.appointment.findUnique({
     where: { id: appointmentId },
-    select: { id: true, practitionerProfileId: true, status: true },
+    select: { id: true, practitionerProfileId: true, status: true, startTime: true, patient: { select: { userId: true } } },
   });
 
   if (!appointment || appointment.practitionerProfileId !== practitioner.id) {
@@ -50,6 +51,16 @@ export async function updateAppointmentStatus(
   await prisma.appointment.update({
     where: { id: appointment.id },
     data: { status: parsed.data.status },
+  });
+
+  const label = { COMPLETED: "completed", MISSED: "marked as missed", CANCELLED: "cancelled" }[parsed.data.status];
+  await notify({
+    recipientId: appointment.patient.userId,
+    actorId: session.user.id,
+    type: "APPOINTMENT_UPDATED",
+    title: `Your appointment was ${label}`,
+    body: `Consultation on ${appointment.startTime.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}.`,
+    link: "/dashboard/providers",
   });
 
   revalidatePath("/provider/roster");

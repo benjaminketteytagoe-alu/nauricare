@@ -15,11 +15,11 @@ export default async function AdminAuditLogsPage() {
   });
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6 sm:p-6">
       {/* Header Panel */}
-      <div className="border-b pb-4 flex items-start justify-between gap-4">
+      <div className="border-b pb-4 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Security & Compliance Audit Logs</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Security &amp; Compliance Audit Logs</h1>
           <p className="text-gray-500 mt-1">
             Immutable historic ledger capturing platform administrative transactions and validation adjustments.
           </p>

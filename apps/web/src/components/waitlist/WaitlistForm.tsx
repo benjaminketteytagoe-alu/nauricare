@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
+import { useTurnstileSize } from "@/lib/useTurnstileSize";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { Callout } from "@/components/ui/callout";
 import { useClientValue } from "@/lib/hooks/useClientValue";
@@ -23,6 +24,7 @@ function readSource(): string {
 export function WaitlistForm() {
   const source = useClientValue(readSource, "");
   const [role, setRole] = useState<WaitlistRole>("PATIENT");
+  const turnstileSize = useTurnstileSize();
   const [consent, setConsent] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [loading, setLoading] = useState(false);
@@ -156,7 +158,7 @@ export function WaitlistForm() {
         </span>
       </label>
 
-      <Turnstile
+      <Turnstile key={turnstileSize} options={{ size: turnstileSize }}
         siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
         onSuccess={setTurnstileToken}
         onExpire={() => setTurnstileToken("")}

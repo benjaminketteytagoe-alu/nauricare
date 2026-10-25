@@ -7,7 +7,11 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { getClientIp } from "@/lib/getClientIp";
+import { recordPatientActivity } from "@/server/activity/activity.service";
 import { rateLimit } from "@/lib/rateLimit";
+import { isGooglePhoto } from "@/lib/avatars";
+import { randomToken } from "@/server/security/sealing";
+import { consumeVerifiedLogin } from "@/server/auth/loginCode.service";
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -69,7 +73,7 @@ export const authOptions: AuthOptions = {
           where: { email: cleanEmail },
         });
 
-        if (!user || !user.passwordHash) {
+        if (!user || !user.passwordHash || user.deletedAt) {
           throw new Error("No account found with this email.");
         }
 
@@ -93,7 +97,7 @@ export const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (!account) {
         return true; // Pass through credentials logins safely
       }
@@ -103,7 +107,14 @@ export const authOptions: AuthOptions = {
           const cleanEmail = user.email.trim().toLowerCase();
           const existingUser = await prisma.user.findUnique({
             where: { email: cleanEmail },
+            select: { id: true, avatarUrl: true, deletedAt: true },
           });
+          if (existingUser?.deletedAt) return false;
+
+          // Google profile photo: the default avatar. It replaces the avatar
+          // only while the user hasn't picked a predefined one instead.
+          const picture = (profile as { picture?: unknown } | undefined)?.picture ?? user.image;
+          const googlePhotoUrl = typeof picture === "string" && isGooglePhoto(picture) ? picture : null;
 
           const userId = existingUser
             ? existingUser.id
@@ -114,9 +125,18 @@ export const authOptions: AuthOptions = {
                     name: user.name || "Google User",
                     passwordHash: "",
                     role: "PATIENT",
+                    googlePhotoUrl,
+                    avatarUrl: googlePhotoUrl,
                   },
                 })
               ).id;
+          if (existingUser && googlePhotoUrl) {
+            const useGooglePhoto = !existingUser.avatarUrl || isGooglePhoto(existingUser.avatarUrl);
+            await prisma.user.update({
+              where: { id: existingUser.id },
+              data: { googlePhotoUrl, ...(useGooglePhoto ? { avatarUrl: googlePhotoUrl } : {}) },
+            });
+          }
 
           // Pre-create the adapter's Account link row ourselves. Without this,
           // the adapter's own getUserByAccount() lookup (keyed on provider +
@@ -146,12 +166,23 @@ export const authOptions: AuthOptions = {
       }
       return true;
     },
-    async jwt({ token, user }) {
-      // 1. Initial execution on successful login
+    async jwt({ token, user, trigger, session }) {
+      // 1. Initial execution on successful login. Every sign-in starts locked
+      // until the emailed 6-digit code is entered (see loginCode.service).
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.mfaVerified = false;
+        token.mfaSid = randomToken();
         return token;
+      }
+      if (!token.mfaSid) token.mfaSid = randomToken(); // sessions from before sign-in codes
+
+      // 1b. Unlock: the client calls update({ loginCode: "verified" }) after
+      // /api/auth/code/verify succeeds. The flag is only set if the database
+      // holds a verified, unused code for this exact session.
+      if (trigger === "update" && (session as { loginCode?: string } | undefined)?.loginCode === "verified" && token.id && !token.mfaVerified) {
+        if (await consumeVerifiedLogin(token.id, token.mfaSid)) token.mfaVerified = true;
       }
 
       // 2. Background session syncs safety boundary checks
@@ -163,13 +194,18 @@ export const authOptions: AuthOptions = {
         const cleanEmail = token.email.trim().toLowerCase();
         const dbUser = await prisma.user.findUnique({
           where: { email: cleanEmail },
-          select: { id: true, role: true, avatarUrl: true }
+          select: { id: true, role: true, avatarUrl: true, deletedAt: true }
         });
 
-        if (dbUser) {
+        if (dbUser && !dbUser.deletedAt) {
           token.id = dbUser.id;
           token.role = dbUser.role;
           token.avatarUrl = dbUser.avatarUrl;
+        } else {
+          // Deleted (and anonymised) account: clear the identity so every
+          // guard treats this session as signed out.
+          token.id = "";
+          token.avatarUrl = null;
         }
       } catch (dbError) {
         console.error("NextAuth JWT Database Lookup Error:", dbError);
@@ -179,9 +215,13 @@ export const authOptions: AuthOptions = {
     },
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.id as string;
+        // Until the sign-in code is verified the session has no user id, so
+        // every guard (requireRole, getSessionUser, API routes) rejects it.
+        const verified = token.mfaVerified === true;
+        session.user.id = verified ? (token.id as string) : "";
         session.user.role = token.role;
-        session.user.avatarUrl = token.avatarUrl ?? null;
+        session.user.avatarUrl = verified ? (token.avatarUrl ?? null) : null;
+        session.loginCodePending = !verified && !!token.id;
       }
       return session;
     },
@@ -191,6 +231,14 @@ export const authOptions: AuthOptions = {
     // our own /verify-email flow does — so a successful passwordless sign-in
     // doubles as email verification for any account that hasn't completed it yet.
     async signIn({ user, account }) {
+      if (user?.id) {
+        const role = (await prisma.user.findUnique({ where: { id: user.id }, select: { role: true } }))?.role;
+        await recordPatientActivity(role, {
+          userId: user.id,
+          type: "SIGNED_IN",
+          title: `Signed in${account?.provider === "google" ? " with Google" : account?.provider === "email" ? " with an email link" : ""}`,
+        });
+      }
       if (account?.provider === "email" && user?.id) {
         await prisma.user.updateMany({
           where: { id: user.id, isEmailVerified: false },

@@ -239,6 +239,11 @@ jobs:
         id: taskdef
         env:
           IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          # Comma-separated app secrets stored in SSM Parameter Store under
+          # /nauricare/production/ (see .github/scripts/setup-reminder-scheduler.sh).
+          # Empty until the admin setup has run, so deploys never reference a
+          # parameter that doesn't exist (the task would fail to start).
+          APP_SSM_SECRETS: ${{ vars.APP_SSM_SECRETS }}
         run: |
           set -euo pipefail
           CURRENT_TD=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
@@ -261,10 +266,23 @@ jobs:
           # Pin the image to this commit. Add an ECS health check if the task
           # definition has none: without a load balancer it is the only signal
           # ECS (and the DNS sync) has that a task is actually serving.
-          jq --arg img "$IMAGE" --arg c "$CONTAINER" '
-            .containerDefinitions |= map(
+          # App secrets: ECS injects them at task start from SSM (by ARN); the
+          # values never pass through this workflow. Same-named plain env vars
+          # are dropped so the secret is the only source.
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          SECRETS=$(jq -nc --arg names "${APP_SSM_SECRETS:-}" \
+            --arg prefix "arn:aws:ssm:${AWS_REGION}:${ACCOUNT_ID}:parameter/nauricare/production/" '
+            [$names | split(",")[] | gsub("\\s"; "") | select(test("^[A-Z][A-Z0-9_]*$"))
+             | {name: ., valueFrom: ($prefix + .)}]')
+          echo "App secrets from SSM: $(jq -r 'map(.name) | join(", ") | if . == "" then "none" else . end' <<<"$SECRETS")"
+
+          jq --arg img "$IMAGE" --arg c "$CONTAINER" --argjson s "$SECRETS" '
+            ($s | map(.name)) as $names
+            | .containerDefinitions |= map(
               if .name == $c then
                 .image = $img
+                | .secrets = (((.secrets // []) | map(select(.name as $n | $names | index($n) | not))) + $s)
+                | .environment = ((.environment // []) | map(select(.name as $n | $names | index($n) | not)))
                 | .healthCheck //= {
                     command: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health >/dev/null || exit 1"],
                     interval: 15, timeout: 5, retries: 3, startPeriod: 30

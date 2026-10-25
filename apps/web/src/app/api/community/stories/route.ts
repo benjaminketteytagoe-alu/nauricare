@@ -7,6 +7,7 @@ import { parseJson } from "@/lib/api";
 import { sanitizePlainText } from "@/lib/sanitize";
 import { mediaUrlSchema } from "@/lib/validation/media";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { requireCommunityAvatar, scrubAuthor } from "@/server/community/avatars";
 
 const StoryInput = z
   .object({
@@ -59,7 +60,7 @@ export async function GET() {
         existing.storyCount++;
       } else {
         groupMap.set(s.authorId, {
-          author: s.author,
+          author: scrubAuthor(s).author,
           storyCount: 1,
           stories: [storyData],
         });
@@ -81,6 +82,9 @@ export async function POST(req: Request) {
     const limit = rateLimit(`community-story:${session.user.id}`, 10, 60 * 60_000);
     if (!limit.allowed) return rateLimitResponse(limit);
 
+    const noAvatar = await requireCommunityAvatar(session.user.id);
+    if (noAvatar) return noAvatar;
+
     const parsed = await parseJson(req, StoryInput);
     if (!parsed.ok) return parsed.response;
     const { imageUrl } = parsed.data;
@@ -98,7 +102,7 @@ export async function POST(req: Request) {
       include: { author: { select: { id: true, name: true, role: true, avatarUrl: true } } },
     });
 
-    return NextResponse.json(story, { status: 201 });
+    return NextResponse.json(scrubAuthor(story), { status: 201 });
   } catch (error) {
     console.error("[COMMUNITY_STORIES_POST_ERROR]", error);
     return new NextResponse("Internal Server Error", { status: 500 });

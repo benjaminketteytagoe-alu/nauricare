@@ -11,6 +11,8 @@ declare module "next-auth" {
       role: Role;
       avatarUrl: string | null;
     } & DefaultSession["user"];
+    /** Signed in, but the emailed sign-in code hasn't been entered yet. */
+    loginCodePending?: boolean;
   }
 
   interface User {
@@ -23,5 +25,7 @@ declare module "next-auth/jwt" {
     id: string;
     role: Role;
     avatarUrl: string | null;
+    mfaVerified?: boolean; // sign-in code entered for this session
+    mfaSid?: string; // random per-session key binding codes to this session
   }
 }

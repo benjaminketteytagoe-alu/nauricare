@@ -5,11 +5,11 @@ import { signOut } from "next-auth/react";
 import { AppSidebar, SidebarAction, SidebarMobileTrigger, SidebarProvider, type NavItem } from "@/components/navigation/AppSidebar";
 import { useState } from "react";
 import {
-  Activity, Users, Calendar, MessageSquare, LogOut,
+  Activity, Users, Calendar, MessageSquare, MessageSquarePlus, LogOut,
   Settings, User, Lock, Sliders, Pill,
 } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
-import { UserFeedbackModal } from "@/components/feedback/UserFeedbackModal";
+import { RealtimeProvider } from "@/components/realtime/RealtimeProvider";
 
 const navItems: NavItem[] = [
   { name: "Clinical Dashboard", href: "/provider",               icon: Activity },
@@ -17,6 +17,7 @@ const navItems: NavItem[] = [
   { name: "Appointments",       href: "/provider/schedule",      icon: Calendar },
   { name: "Prescriptions",      href: "/provider/prescriptions", icon: Pill },
   { name: "Messages",           href: "/provider/messages",      icon: MessageSquare },
+  { name: "Feedback",           href: "/provider/feedback",      icon: MessageSquarePlus },
 ];
 
 export default function ProviderLayoutClient({ children }: { children: React.ReactNode }) {
@@ -24,6 +25,7 @@ export default function ProviderLayoutClient({ children }: { children: React.Rea
 
   return (
     <SidebarProvider>
+    <RealtimeProvider>
     <div className="flex min-h-screen bg-gray-50">
       <AppSidebar
         items={navItems}
@@ -32,7 +34,6 @@ export default function ProviderLayoutClient({ children }: { children: React.Rea
         tone="dark"
         footer={(iconOnly) => (
             <>
-              <UserFeedbackModal tone="dark" collapsed={iconOnly} />
               <SidebarAction icon={LogOut} label="Sign Out" onClick={() => signOut({ callbackUrl: "/login" })} tone="dark" collapsed={iconOnly} />
             </>
         )}
@@ -81,6 +82,7 @@ export default function ProviderLayoutClient({ children }: { children: React.Rea
         </div>
       </main>
     </div>
+    </RealtimeProvider>
     </SidebarProvider>
   );
 }

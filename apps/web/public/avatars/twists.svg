@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Twists avatar">
+<rect width="160" height="160" fill="#FCE9C5"/>
+<path d="M104 54 q-6 20 0 40 q6 20 0 40" stroke="#17100D" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M112 54 q-6 20 0 40 q6 20 0 40" stroke="#17100D" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="104" cy="52" r="14" fill="#17100D"/>
+<path d="M26 160 C26 128 50 114 80 114 C110 114 134 128 134 160 Z" fill="#7A4A1E"/>
+<rect x="70" y="96" width="20" height="26" rx="9" fill="#8A5A3C"/><rect x="70" y="96" width="20" height="10" fill="#000" fill-opacity=".12"/><ellipse cx="53" cy="80" rx="5" ry="7" fill="#8A5A3C"/><ellipse cx="107" cy="80" rx="5" ry="7" fill="#8A5A3C"/>
+<ellipse cx="80" cy="76" rx="27" ry="31" fill="#8A5A3C"/>
+<path d="M52 72 C50 44 64 34 80 34 C96 34 110 44 108 72 C101 57 91 51 80 51 C69 51 59 57 52 72 Z" fill="#17100D"/>
+<path d="M64 69 q6 -4 12 0 M84 69 q6 -4 12 0" stroke="#140C09" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+<ellipse cx="70" cy="78" rx="2.8" ry="3.4" fill="#140C09"/><ellipse cx="90" cy="78" rx="2.8" ry="3.4" fill="#140C09"/>
+<circle cx="64" cy="88" r="5" fill="#E26D5A" fill-opacity=".18"/><circle cx="96" cy="88" r="5" fill="#E26D5A" fill-opacity=".18"/>
+<path d="M72 92 Q80 99 88 92" stroke="#2A1712" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+<circle cx="53" cy="92" r="4" fill="none" stroke="#E0A43B" stroke-width="2.2"/><circle cx="107" cy="92" r="4" fill="none" stroke="#E0A43B" stroke-width="2.2"/>
+</svg>

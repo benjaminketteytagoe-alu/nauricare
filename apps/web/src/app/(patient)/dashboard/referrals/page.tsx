@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Hospital, MapPin, Plus, Stethoscope } from "lucide-react";
 import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
+import { ReferralShareManager } from "@/components/referrals/ReferralShareManager";
 import { formatDate } from "@/lib/format";
 import { REFERRAL_STATUS_TONE, SEVERITY_TEXT, StatusChip } from "@/components/ui/status-chip";
 
@@ -72,6 +73,9 @@ export default async function ReferralsPage() {
                   <span className="font-semibold text-nc-ink">{r.specialtyRequired}</span>
                 </p>
               </div>
+              {(r.status === "PENDING" || r.status === "ACCEPTED") && (
+                <ReferralShareManager referralId={r.id} referralCode={r.referralCode} hospitalName={r.hospital.name} />
+              )}
             </li>
           ))}
         </ul>

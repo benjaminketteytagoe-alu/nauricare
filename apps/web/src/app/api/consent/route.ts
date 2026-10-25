@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getUserIdWithRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { logAdministrativeAction } from "@/lib/audit";
+import { recordActivity } from "@/server/activity/activity.service";
 import { getClientIp } from "@/lib/getClientIp";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { CURRENT_CONSENT_VERSION, getTriageConsent } from "@/lib/consent";
@@ -66,6 +67,7 @@ export async function POST(req: Request) {
     },
   });
 
+  await recordActivity({ userId, type: "CONSENT_GRANTED", title: "Agreed to AI triage consent", details: { version: CURRENT_CONSENT_VERSION } });
   return NextResponse.json({ consent: { valid: true, grantedAt, version: CURRENT_CONSENT_VERSION } });
 }
 
@@ -89,5 +91,6 @@ export async function DELETE(req: Request) {
     details: { withdrawnAt: new Date().toISOString() },
   });
 
+  await recordActivity({ userId, type: "CONSENT_WITHDRAWN", title: "Withdrew AI triage consent" });
   return NextResponse.json({ consent: { valid: false, grantedAt: null, version: null } });
 }

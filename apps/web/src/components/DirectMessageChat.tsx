@@ -1,19 +1,25 @@
 "use client";
 
-import { useState, useEffect, useRef, useTransition } from "react";
-import { Search, Send, Lock, MessageSquare } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { formatRelative } from "@/lib/format";
+import { ArrowLeft, Lock, MessageSquare, Plus, Search, Send, X } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
-import { getConversations, getDirectMessages, sendDirectMessage } from "@/actions/directMessage";
+import { useRealtime } from "@/components/realtime/RealtimeProvider";
+import { useClientValue } from "@/lib/hooks/useClientValue";
+import { getConversations, getDirectMessages, getMessageableProviders, sendDirectMessage } from "@/actions/directMessage";
 
 type Conversation = {
   partnerId: string;
   partnerName: string;
-  partnerEmail: string;
   partnerAvatarUrl: string | null;
+  partnerSubtitle: string | null;
+  online: boolean;
   lastMessage: string;
   lastMessageAt: Date | string;
   isRead: boolean;
 };
+
+type Contact = { id: string; name: string; avatarUrl: string | null; subtitle: string | null; online: boolean };
 
 type DM = {
   id: string;
@@ -23,108 +29,147 @@ type DM = {
   sender: { id: string; name: string };
 };
 
-function relTime(ts: Date | string) {
-  const diff = Date.now() - new Date(ts).getTime();
-  const m = Math.floor(diff / 60_000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
+const ACCENTS = {
+  blue: { ring: "focus:ring-blue-500", bg: "bg-blue-600", hover: "hover:bg-blue-700", time: "text-blue-100", text: "text-blue-600", soft: "bg-blue-50" },
+  teal: { ring: "focus:ring-teal-500", bg: "bg-teal-600", hover: "hover:bg-teal-700", time: "text-teal-100", text: "text-teal-600", soft: "bg-teal-50" },
+  rose: { ring: "focus:ring-rose-500", bg: "bg-rose-600", hover: "hover:bg-rose-700", time: "text-rose-100", text: "text-rose-600", soft: "bg-rose-50" },
+} as const;
+
+function OnlineDot({ online }: { online: boolean }) {
+  return online ? <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" aria-label="Online" /> : null;
 }
 
+/**
+ * Shared patient/provider messaging. Live via the realtime stream; on small
+ * screens it shows either the conversation list or the open thread.
+ */
 export function DirectMessageChat({
   currentUserId,
   accentColor = "teal",
+  canStartWithProviders = false,
 }: {
   currentUserId: string;
-  accentColor?: "teal" | "blue" | "rose";
+  accentColor?: keyof typeof ACCENTS;
+  canStartWithProviders?: boolean;
 }) {
-  const ACCENTS = {
-    blue: { ring: "ring-blue-500", bg: "bg-blue-600", hover: "hover:bg-blue-700", bubble: "bg-blue-600", time: "text-blue-200", border: "border-blue-600", text: "text-blue-600" },
-    teal: { ring: "ring-teal-500", bg: "bg-teal-600", hover: "hover:bg-teal-700", bubble: "bg-teal-600", time: "text-teal-200", border: "border-teal-600", text: "text-teal-600" },
-    rose: { ring: "ring-rose-500", bg: "bg-rose-600", hover: "hover:bg-rose-700", bubble: "bg-rose-600", time: "text-rose-200", border: "border-rose-600", text: "text-rose-600" },
-  } as const;
   const acc = ACCENTS[accentColor];
-
+  const deepLink = useClientValue(() => new URLSearchParams(window.location.search).get("with"), null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeName, setActiveName] = useState("");
-  const [activeAvatar, setActiveAvatar] = useState<string | null>(null);
+  const [chosen, setChosen] = useState<{ id: string; name: string; avatar: string | null; subtitle: string | null } | null>(null);
   const [messages, setMessages] = useState<DM[]>([]);
   const [draft, setDraft] = useState("");
   const [search, setSearch] = useState("");
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [loadingThread, setLoadingThread] = useState(false);
   const [gateError, setGateError] = useState("");
+  const [picker, setPicker] = useState<Contact[] | null>(null);
   const [isPending, startTransition] = useTransition();
   const endRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    getConversations()
-      .then((res) => { if (res.success) setConversations(res.data as Conversation[]); })
+  const refreshConversations = useCallback(() => {
+    return getConversations()
+      .then((res) => {
+        if (res.success) setConversations(res.data as Conversation[]);
+      })
       .catch(() => {})
       .finally(() => setLoadingConvs(false));
   }, []);
 
   useEffect(() => {
+    void refreshConversations();
+  }, [refreshConversations]);
+
+  // ?with=<provider> for a brand-new conversation: look the provider up.
+  useEffect(() => {
+    if (!deepLink || chosen || !canStartWithProviders || loadingConvs) return;
+    if (conversations.some((c) => c.partnerId === deepLink)) return;
+    let cancelled = false;
+    getMessageableProviders().then((res) => {
+      const p = res.success ? res.data.find((x) => x.id === deepLink) : undefined;
+      if (p && !cancelled) open(p.id, p.name, p.avatarUrl, p.subtitle);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [deepLink, chosen, canStartWithProviders, loadingConvs, conversations]);
+
+  // Open the conversation named in ?with= (e.g. from a notification).
+  const active = chosen ?? (deepLink ? (() => {
+    const c = conversations.find((x) => x.partnerId === deepLink);
+    return c ? { id: c.partnerId, name: c.partnerName, avatar: c.partnerAvatarUrl, subtitle: c.partnerSubtitle } : null;
+  })() : null);
+  const activeId = active?.id ?? null;
+
+  useEffect(() => {
     if (!activeId) return;
+    let cancelled = false;
     getDirectMessages(activeId)
       .then((res) => {
-        if (res.success) setMessages(res.data as DM[]);
-        else setGateError(res.error ?? "Cannot load thread.");
+        if (cancelled) return;
+        if (res.success) {
+          setMessages(res.data as DM[]);
+          setConversations((prev) => prev.map((c) => (c.partnerId === activeId ? { ...c, isRead: true } : c)));
+        } else setGateError(res.error ?? "Cannot load this conversation.");
       })
       .catch(() => {})
-      .finally(() => setLoadingThread(false));
-
-    const interval = setInterval(() => {
-      getDirectMessages(activeId).then((res) => {
-        if (res.success) setMessages(res.data as DM[]);
-      });
-    }, 10_000);
-    return () => clearInterval(interval);
+      .finally(() => !cancelled && setLoadingThread(false));
+    return () => {
+      cancelled = true;
+    };
   }, [activeId]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages]);
 
-  function selectConversation(id: string, name: string, avatar: string | null) {
-    setActiveId(id);
-    setActiveName(name);
-    setActiveAvatar(avatar);
+  // Live incoming (and own other-tab) messages.
+  useRealtime("message", (m) => {
+    const partnerId = m.senderId === currentUserId ? m.receiverId : m.senderId;
+    if (partnerId === activeId) {
+      setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
+      if (m.senderId !== currentUserId) void getDirectMessages(partnerId); // marks it read
+    }
+    setConversations((prev) => {
+      const existing = prev.find((c) => c.partnerId === partnerId);
+      if (!existing) {
+        void refreshConversations();
+        return prev;
+      }
+      const updated = { ...existing, lastMessage: m.content, lastMessageAt: m.createdAt, isRead: partnerId === activeId || m.senderId === currentUserId };
+      return [updated, ...prev.filter((c) => c.partnerId !== partnerId)];
+    });
+  });
+
+  function open(id: string, name: string, avatar: string | null, subtitle: string | null) {
+    setChosen({ id, name, avatar, subtitle });
     setMessages([]);
     setDraft("");
     setLoadingThread(true);
     setGateError("");
+    setPicker(null);
+  }
+
+  async function openPicker() {
+    const res = await getMessageableProviders();
+    setPicker(res.success ? res.data : []);
   }
 
   function handleSend() {
     const trimmed = draft.trim();
-    if (!activeId || !trimmed || isPending) return;
+    if (!active || !trimmed || isPending) return;
     setDraft("");
-
-    const optimistic: DM = {
-      id: `opt-${Date.now()}`,
-      senderId: currentUserId,
-      content: trimmed,
-      createdAt: new Date(),
-      sender: { id: currentUserId, name: "You" },
-    };
+    const optimistic: DM = { id: `opt-${Date.now()}`, senderId: currentUserId, content: trimmed, createdAt: new Date(), sender: { id: currentUserId, name: "You" } };
     setMessages((prev) => [...prev, optimistic]);
 
     startTransition(async () => {
-      const res = await sendDirectMessage(activeId, trimmed);
+      const res = await sendDirectMessage(active.id, trimmed);
       if (res.success) {
-        setMessages((prev) => prev.map((m) => (m.id === optimistic.id ? (res.data as DM) : m)));
+        const saved = res.data as DM;
+        setMessages((prev) => (prev.some((m) => m.id === saved.id) ? prev.filter((m) => m.id !== optimistic.id) : prev.map((m) => (m.id === optimistic.id ? saved : m))));
         setConversations((prev) => {
-          const exists = prev.find((c) => c.partnerId === activeId);
-          if (exists) {
-            return prev.map((c) =>
-              c.partnerId === activeId ? { ...c, lastMessage: trimmed, lastMessageAt: new Date(), isRead: true } : c,
-            );
-          }
-          return [{ partnerId: activeId, partnerName: activeName, partnerEmail: "", partnerAvatarUrl: activeAvatar, lastMessage: trimmed, lastMessageAt: new Date(), isRead: true }, ...prev];
+          const rest = prev.filter((c) => c.partnerId !== active.id);
+          const existing = prev.find((c) => c.partnerId === active.id);
+          return [{ partnerId: active.id, partnerName: active.name, partnerAvatarUrl: active.avatar, partnerSubtitle: active.subtitle, online: existing?.online ?? false, lastMessage: trimmed, lastMessageAt: new Date(), isRead: true }, ...rest];
         });
       } else {
         setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
@@ -133,162 +178,132 @@ export function DirectMessageChat({
     });
   }
 
-  const filtered = conversations.filter((c) =>
-    c.partnerName.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = useMemo(() => conversations.filter((c) => c.partnerName.toLowerCase().includes(search.toLowerCase())), [conversations, search]);
 
   return (
-    <div className="flex-1 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col md:flex-row min-h-0">
-      {/* Sidebar */}
-      <div className="w-full md:w-80 border-r border-slate-100 flex flex-col bg-slate-50/50 shrink-0">
-        <div className="p-4 border-b border-slate-100">
+    <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      {/* Conversation list (hidden on small screens while a thread is open) */}
+      <aside className={`${active ? "hidden md:flex" : "flex"} w-full flex-col border-r border-gray-100 md:w-80 md:shrink-0`}>
+        <div className="space-y-3 border-b border-gray-100 p-4">
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search conversations…"
-              className={`w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:${acc.ring} focus:ring-2 outline-none`}
-            />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
+            <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search conversations" aria-label="Search conversations" className={`w-full rounded-full border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 ${acc.ring}`} />
           </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          {loadingConvs ? (
-            <div className="p-6 space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-3 animate-pulse">
-                  <div className="w-10 h-10 rounded-full bg-slate-200 shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3 bg-slate-200 rounded w-3/4" />
-                    <div className="h-2.5 bg-slate-100 rounded w-full" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center text-center p-8 h-full">
-              <MessageSquare className="w-8 h-8 text-slate-300 mb-3" />
-              <p className="text-sm font-medium text-slate-900">No conversations yet</p>
-              <p className="text-xs text-slate-500 mt-1">
-                {search ? "No results." : "Secure messages with your care team appear here."}
-              </p>
-            </div>
-          ) : (
-            filtered.map((conv) => (
-              <button
-                key={conv.partnerId}
-                onClick={() => selectConversation(conv.partnerId, conv.partnerName, conv.partnerAvatarUrl)}
-                className={`w-full p-4 flex items-center gap-3 text-left transition-colors hover:bg-slate-100 border-l-2 ${
-                  activeId === conv.partnerId ? `bg-slate-100 ${acc.border}` : "border-transparent"
-                }`}
-              >
-                <Avatar name={conv.partnerName} avatarUrl={conv.partnerAvatarUrl} size="sm" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center gap-1">
-                    <span className="text-sm font-semibold text-slate-900 truncate">{conv.partnerName}</span>
-                    <span className="text-[10px] text-slate-400 shrink-0">{relTime(conv.lastMessageAt)}</span>
-                  </div>
-                  <p className="text-xs text-slate-500 truncate mt-0.5">{conv.lastMessage}</p>
-                  {!conv.isRead && <span className={`inline-block w-2 h-2 ${acc.bg} rounded-full mt-1.5`} />}
-                </div>
-              </button>
-            ))
+          {canStartWithProviders && (
+            <button type="button" onClick={openPicker} className={`flex w-full items-center justify-center gap-2 rounded-full ${acc.bg} ${acc.hover} px-4 py-2 text-sm font-semibold text-white`}>
+              <Plus className="h-4 w-4" aria-hidden /> Message a specialist
+            </button>
           )}
         </div>
-      </div>
 
-      {/* Chat panel */}
-      <div className="flex-1 flex flex-col min-h-0">
-        {activeId ? (
-          <>
-            <div className="p-4 border-b border-slate-100 flex items-center gap-3 shrink-0">
-              <Avatar name={activeName} avatarUrl={activeAvatar} size="sm" />
-              <div>
-                <h3 className="font-semibold text-slate-900">{activeName}</h3>
-                <p className="text-xs text-slate-500 flex items-center gap-1">
-                  <Lock className="w-3 h-3" /> End-to-end encrypted · polls every 10s
-                </p>
-              </div>
+        {picker ? (
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="flex items-center justify-between px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Verified specialists
+              <button type="button" onClick={() => setPicker(null)} aria-label="Close specialist list" className="rounded-full p-1 hover:bg-gray-100"><X className="h-4 w-4" aria-hidden /></button>
             </div>
+            <ul className="flex-1 overflow-y-auto">
+              {picker.length === 0 && <li className="p-6 text-center text-sm text-gray-500">No specialists are available right now.</li>}
+              {picker.map((p) => (
+                <li key={p.id}>
+                  <button type="button" onClick={() => open(p.id, p.name, p.avatarUrl, p.subtitle)} className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50">
+                    <span className="relative"><Avatar name={p.name} avatarUrl={p.avatarUrl} size="md" /><OnlineDot online={p.online} /></span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-gray-900">{p.name}</span>
+                      <span className="block truncate text-xs text-gray-500">{p.online ? "Online now" : p.subtitle}</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <ul className="flex-1 overflow-y-auto" aria-label="Conversations">
+            {loadingConvs && <li className="p-6 text-center text-sm text-gray-400">Loading…</li>}
+            {!loadingConvs && filtered.length === 0 && (
+              <li className="p-6 text-center text-sm text-gray-500">
+                <MessageSquare className="mx-auto mb-2 h-8 w-8 text-gray-300" aria-hidden />
+                No conversations yet.
+              </li>
+            )}
+            {filtered.map((c) => (
+              <li key={c.partnerId}>
+                <button type="button" onClick={() => open(c.partnerId, c.partnerName, c.partnerAvatarUrl, c.partnerSubtitle)} aria-current={activeId === c.partnerId} className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 ${activeId === c.partnerId ? acc.soft : ""}`}>
+                  <span className="relative shrink-0"><Avatar name={c.partnerName} avatarUrl={c.partnerAvatarUrl} size="md" /><OnlineDot online={c.online} /></span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center justify-between gap-2">
+                      <span className={`truncate text-sm ${c.isRead ? "font-medium text-gray-800" : "font-bold text-gray-900"}`}>{c.partnerName}</span>
+                      <span className="shrink-0 text-xs text-gray-400">{formatRelative(c.lastMessageAt)}</span>
+                    </span>
+                    <span className={`block truncate text-xs ${c.isRead ? "text-gray-500" : `font-semibold ${acc.text}`}`}>{c.lastMessage}</span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </aside>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {loadingThread && messages.length === 0 ? (
-                <div className="flex justify-center pt-8">
-                  <div className={`w-6 h-6 border-2 ${acc.border} border-t-transparent rounded-full animate-spin`} />
-                </div>
-              ) : gateError ? (
-                <div className="flex flex-col items-center justify-center h-full text-center pt-8 gap-2">
-                  <Lock className="w-6 h-6 text-rose-400" />
-                  <p className="text-sm text-rose-500 font-medium">{gateError}</p>
-                  <p className="text-xs text-slate-400">Messaging requires a shared appointment.</p>
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center pt-8">
-                  <p className="text-sm text-slate-400">No messages yet. Say hello.</p>
-                </div>
-              ) : (
-                messages.map((msg) => {
-                  const isMe = msg.senderId === currentUserId;
-                  return (
-                    <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                      <div
-                        className={`max-w-[72%] rounded-2xl px-4 py-2.5 ${
-                          isMe ? `${acc.bubble} text-white rounded-br-sm` : "bg-slate-100 text-slate-900 rounded-bl-sm"
-                        }`}
-                      >
-                        <p className="text-sm leading-relaxed">{msg.content}</p>
-                        <p className={`text-[10px] mt-1 ${isMe ? acc.time : "text-slate-400"}`}>
-                          {relTime(msg.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })
+      {/* Thread */}
+      <section className={`${active ? "flex" : "hidden md:flex"} min-w-0 flex-1 flex-col`}>
+        {!active ? (
+          <div className="flex flex-1 flex-col items-center justify-center p-8 text-center text-gray-400">
+            <MessageSquare className="mb-3 h-12 w-12 text-gray-200" aria-hidden />
+            <p className="text-sm">Select a conversation{canStartWithProviders ? " or message a specialist" : ""}.</p>
+          </div>
+        ) : (
+          <>
+            <header className="flex items-center gap-3 border-b border-gray-100 px-4 py-3">
+              <button type="button" onClick={() => setChosen(null)} className="rounded-full p-1.5 text-gray-500 hover:bg-gray-100 md:hidden" aria-label="Back to conversations"><ArrowLeft className="h-5 w-5" aria-hidden /></button>
+              <Avatar name={active.name} avatarUrl={active.avatar} size="md" />
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-gray-900">{active.name}</p>
+                {active.subtitle && <p className="truncate text-xs text-gray-500">{active.subtitle}</p>}
+              </div>
+            </header>
+
+            <div className="flex-1 space-y-3 overflow-y-auto bg-gray-50/60 p-4" aria-live="polite">
+              {loadingThread && <p className="text-center text-sm text-gray-400">Loading…</p>}
+              {gateError && <p className="mx-auto max-w-sm rounded-xl bg-amber-50 p-3 text-center text-sm text-amber-800">{gateError}</p>}
+              {!loadingThread && !gateError && messages.length === 0 && (
+                <p className="mx-auto max-w-sm text-center text-sm text-gray-500">Say hello. Please don&apos;t share emergencies here: call 112 / 912.</p>
               )}
+              {messages.map((m) => {
+                const mine = m.senderId === currentUserId;
+                return (
+                  <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm shadow-sm sm:max-w-[70%] ${mine ? `${acc.bg} rounded-br-sm text-white` : "rounded-bl-sm border border-gray-100 bg-white text-gray-800"}`}>
+                      <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                      <p className={`mt-1 text-[10px] ${mine ? acc.time : "text-gray-400"}`}>{formatRelative(m.createdAt)}</p>
+                    </div>
+                  </div>
+                );
+              })}
               <div ref={endRef} />
             </div>
 
-            <div className="p-4 border-t border-slate-100 bg-slate-50 shrink-0">
-              {gateError ? (
-                <p className="text-xs text-center text-slate-400">Messaging unavailable — no shared appointment.</p>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <input
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                    placeholder="Type a secure message… (Enter to send)"
-                    className={`flex-1 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:${acc.ring} transition-shadow`}
-                  />
-                  <button
-                    onClick={handleSend}
-                    disabled={!draft.trim() || isPending}
-                    className={`p-3 ${acc.bg} text-white rounded-xl ${acc.hover} disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors`}
-                    aria-label="Send"
-                  >
-                    {isPending ? (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Send className="w-5 h-5" />
-                    )}
-                  </button>
-                </div>
-              )}
-            </div>
+            <footer className="border-t border-gray-100 p-3">
+              <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex items-end gap-2">
+                <label htmlFor="dm-draft" className="sr-only">Message</label>
+                <textarea
+                  id="dm-draft"
+                  rows={1}
+                  value={draft}
+                  maxLength={4000}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                  placeholder="Write a message…"
+                  className={`max-h-32 min-h-[44px] flex-1 resize-none rounded-2xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${acc.ring}`}
+                />
+                <button type="submit" disabled={!draft.trim() || isPending} aria-label="Send message" className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${acc.bg} ${acc.hover} text-white disabled:opacity-50`}>
+                  <Send className="h-4 w-4" aria-hidden />
+                </button>
+              </form>
+              <p className="mt-2 flex items-center justify-center gap-1 text-[11px] text-gray-400"><Lock className="h-3 w-3" aria-hidden /> Private between you and {active.name}</p>
+            </footer>
           </>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <div className={`w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4`}>
-              <Send className="w-6 h-6 text-slate-300 ml-1" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-900">Select a Conversation</h3>
-            <p className="text-slate-500 mt-1 max-w-sm text-sm">
-              Choose a contact from the list to start messaging securely.
-            </p>
-          </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

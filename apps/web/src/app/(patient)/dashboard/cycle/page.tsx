@@ -1,26 +1,23 @@
 import { Droplet } from "lucide-react";
 import { requireRole } from "@/lib/auth-guards";
 import { getCycleData } from "./actions";
-import { CycleCalendarClient } from "./CycleCalendarClient";
+import { CycleTracker } from "./CycleTracker";
 
 export const dynamic = "force-dynamic";
 
 export default async function CyclePage() {
   await requireRole("PATIENT");
-
-
   const data = await getCycleData();
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-          <Droplet className="w-8 h-8 text-rose-600" />
-          My Cycle &amp; Body
+    <div className="mx-auto max-w-6xl space-y-6 pb-12">
+      <header>
+        <h1 className="flex items-center gap-3 text-2xl font-bold text-nc-ink sm:text-3xl">
+          <Droplet className="h-7 w-7 text-rose-600" aria-hidden /> My Cycle
         </h1>
-        <p className="text-gray-500 mt-1">Log your periods and see your predicted cycle at a glance.</p>
-      </div>
-      <CycleCalendarClient initialData={data} />
+        <p className="mt-1 text-slate-600">Track your period, log how you feel each day, and get guidance for every phase.</p>
+      </header>
+      <CycleTracker data={data} />
     </div>
   );
 }

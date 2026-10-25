@@ -3,6 +3,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/server/notifications/notify";
 import { revalidatePath } from "next/cache";
 
 export async function followUser(followingId: string) {
@@ -26,8 +27,7 @@ export async function followUser(followingId: string) {
     });
 
     if (!existing) {
-      void prisma.userNotification
-        .create({ data: { recipientId: followingId, actorId: session.user.id, type: "FOLLOW" } })
+      void notify({ recipientId: followingId, actorId: session.user.id, type: "FOLLOW", title: `${session.user.name ?? "Someone"} started following you`, link: "/dashboard/community" })
         .catch((err) => console.error("[FOLLOW_NOTIFICATION_ERROR]", err));
     }
 

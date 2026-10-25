@@ -6,6 +6,7 @@ import { z } from "zod";
 import { runTriage, toLegacyRiskLevel } from "@/lib/triage/engine";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { getTriageConsent } from "@/lib/consent";
+import { recordActivity } from "@/server/activity/activity.service";
 
 const SymptomInput = z.object({
   symptoms: z.array(z.string().trim().min(1).max(60)).min(1, "Select at least one symptom.").max(20),
@@ -48,6 +49,24 @@ export async function POST(req: Request) {
         answers: { symptoms, cycleDay, notes, triage: { ...triage } },
         riskLevel: toLegacyRiskLevel(triage.severity),
       },
+    });
+
+    await recordActivity({
+      userId: session.user.id,
+      type: "AI_TRIAGE",
+      title: `AI symptom check: ${triage.severity.toLowerCase()} urgency`,
+      details: {
+        prompt: { symptoms, cycleDay, notes },
+        response: {
+          severity: triage.severity,
+          summary: triage.summary,
+          recommendedSpecialty: triage.recommendedSpecialty,
+          redFlags: triage.redFlags,
+          seekCareWithin: triage.seekCareWithin,
+          engine: triage.engine,
+        },
+      },
+      ref: { type: "SymptomCheck", id: newSymptomLog.id },
     });
 
     return NextResponse.json(

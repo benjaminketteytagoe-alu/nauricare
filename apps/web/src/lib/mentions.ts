@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { notify } from "@/server/notifications/notify";
 import { UserNotificationType } from "@prisma/client";
 
 // \w = [a-zA-Z0-9_] — no catastrophic backtracking risk.
@@ -43,16 +44,20 @@ export async function parseMentionsAndNotify(
 
     if (users.length === 0) return;
 
-    await prisma.userNotification.createMany({
-      data: users.map((u) => ({
-        recipientId: u.id,
-        actorId,
-        type,
-        postId: postId ?? null,
-        commentId: commentId ?? null,
-      })),
-      skipDuplicates: true,
-    });
+    const label = type === "MENTION_COMMENT" ? "a comment" : "a post";
+    await Promise.all(
+      users.map((u) =>
+        notify({
+          recipientId: u.id,
+          actorId,
+          type,
+          title: `You were mentioned in ${label}`,
+          link: "/dashboard/community",
+          postId: postId ?? undefined,
+          commentId: commentId ?? undefined,
+        }),
+      ),
+    );
   } catch (err) {
     // Logging only — notification failures must never abort the parent write.
     console.error("[MENTION_NOTIFY_ERROR]", err);
