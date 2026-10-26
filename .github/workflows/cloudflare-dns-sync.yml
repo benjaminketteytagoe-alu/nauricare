@@ -34,9 +34,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     env:
-      AWS_REGION: us-east-1
-      ECS_CLUSTER: default
-      ECS_SERVICE: nauricare-api-0acf
+      AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+      ECS_CLUSTER: ${{ vars.ECS_CLUSTER || 'default' }}
+      ECS_SERVICE: ${{ vars.ECS_SERVICE || 'nauricare-api-0acf' }}
       DNS_NAMES: nauricare.org www.nauricare.org deploy-check.nauricare.org
       MODE: reconcile
       CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
