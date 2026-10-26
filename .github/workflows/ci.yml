@@ -23,7 +23,6 @@ env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: nauricare-api
   ECS_CLUSTER: default
-  ECS_SERVICE: nauricare-api-0acf
   PRISMA_SCHEMA: packages/database/prisma/schema.prisma
   # Hostnames pointed at the production ECS tasks through Cloudflare (read by
   # .github/scripts/cloudflare-ecs-dns.sh). deploy-check.* only ever points at
@@ -208,6 +207,7 @@ jobs:
       group: deploy-production
       cancel-in-progress: false
     env:
+      ECS_SERVICE: arn:aws:ecs:us-east-1:706162600712:service/default/nauricare-api-0acf
       CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
     steps:
