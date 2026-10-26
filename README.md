@@ -280,4 +280,5 @@ feature/*  →  develop  →  main
 3. **Staging Deploy** — from `develop`; pulls the image and runs `prisma migrate deploy` inside the container (Prisma pinned to `6.19.3`)
 4. **Production Deploy** — from `main`; same flow, targeting the production container
 
+
 All runtime secrets (`TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`, database credentials, etc.) are injected via `-e` flags / `--env-file` on `docker run` — never baked into the image.
