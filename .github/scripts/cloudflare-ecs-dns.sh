@@ -47,7 +47,8 @@ cf() { # cf METHOD PATH [JSON]  -> prints response body, fails on API error
 }
 
 # --- 1. Public IPs of healthy running tasks ---------------------------------
-mapfile -t TASK_ARNS < <(aws ecs list-tasks --cluster "$ECS_CLUSTER" --service-name "$ECS_SERVICE" \
+# ECS_SERVICE may be a short name or a full ARN; list-tasks takes only the name.
+mapfile -t TASK_ARNS < <(aws ecs list-tasks --cluster "$ECS_CLUSTER" --service-name "${ECS_SERVICE##*/}" \
   --desired-status RUNNING --query 'taskArns[]' --output text | tr '\t' '\n' | sed '/^$/d')
 if [ "${#TASK_ARNS[@]}" -eq 0 ]; then
   echo "::error::No running tasks for $ECS_SERVICE. DNS left unchanged."; exit 1
