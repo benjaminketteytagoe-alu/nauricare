@@ -44,7 +44,9 @@ export function FeedbackNotification(props: FeedbackNotificationProps) {
               <Text className="mb-1 mt-0 text-sm font-semibold text-gray-900">Message</Text>
               <Text className="mt-0 whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{props.message}</Text>
             </Section>
-            <Text className="text-center text-xs text-gray-400">Reply to this email to respond to the user directly.</Text>
+            <Text className="text-center text-xs text-gray-400">
+              Reply to this email to respond to the user directly.
+            </Text>
           </Container>
         </Body>
       </Tailwind>

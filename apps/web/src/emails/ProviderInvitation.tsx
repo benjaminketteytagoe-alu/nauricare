@@ -1,4 +1,16 @@
-import { Body, Button, Container, Head, Heading, Hr, Html, Preview, Section, Tailwind, Text } from "@react-email/components";
+import {
+  Body,
+  Button,
+  Container,
+  Head,
+  Heading,
+  Hr,
+  Html,
+  Preview,
+  Section,
+  Tailwind,
+  Text,
+} from "@react-email/components";
 
 export interface ProviderInvitationProps {
   name: string;
@@ -12,7 +24,11 @@ export function ProviderInvitation({ name, facility, claimUrl, alreadyListed, ex
   return (
     <Html lang="en">
       <Head />
-      <Preview>{alreadyListed ? "Set up your NauriCare provider account" : "You're invited to join NauriCare as a women's health specialist"}</Preview>
+      <Preview>
+        {alreadyListed
+          ? "Set up your NauriCare provider account"
+          : "You're invited to join NauriCare as a women's health specialist"}
+      </Preview>
       <Tailwind>
         <Body className="bg-gray-50 font-sans">
           <Container className="mx-auto max-w-lg px-4 py-8">
@@ -28,15 +44,19 @@ export function ProviderInvitation({ name, facility, claimUrl, alreadyListed, ex
                   : `NauriCare helps women in Rwanda find trusted gynaecologists, book consultations and get hospital referrals. We found your public professional listing${facility ? ` at ${facility}` : ""} and would like to invite you to join as a verified specialist.`}
               </Text>
               <Text className="text-sm leading-relaxed text-gray-700">
-                Your profile is only shown to patients after you accept. You can review the details we found before agreeing.
+                Your profile is only shown to patients after you accept. You can review the details we found before
+                agreeing.
               </Text>
-              <Button href={claimUrl} className="mt-2 rounded-full bg-[#1D4ED8] px-6 py-3 text-sm font-semibold text-white">
+              <Button
+                href={claimUrl}
+                className="mt-2 rounded-full bg-[#1D4ED8] px-6 py-3 text-sm font-semibold text-white"
+              >
                 {alreadyListed ? "Set up my account" : "Review and accept invitation"}
               </Button>
               <Hr className="my-6 border-gray-200" />
               <Text className="m-0 text-xs text-gray-500">
-                This link expires on {expiresOn}. If you don&apos;t want to be contacted again, simply ignore this email and we
-                will not list you.
+                This link expires on {expiresOn}. If you don&apos;t want to be contacted again, simply ignore this email
+                and we will not list you.
               </Text>
             </Section>
           </Container>

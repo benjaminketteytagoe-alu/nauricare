@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { ShieldAlert, HeartPulse } from "lucide-react";
+import { useState } from "react";
 
 export default function OnboardingPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -37,10 +37,9 @@ export default function OnboardingPage() {
         throw new Error(errData?.error || errData?.message || "Failed to save profile. Please try again.");
       }
 
-      // FIX 2: Force a hard browser navigation. This completely destroys the Next.js 
+      // FIX 2: Force a hard browser navigation. This completely destroys the Next.js
       // client-side cache and forces the server to evaluate your new database profile.
       window.location.href = "/dashboard";
-      
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save profile. Please try again.");
       setIsLoading(false);
@@ -53,12 +52,8 @@ export default function OnboardingPage() {
         <div className="flex justify-center">
           <HeartPulse className="w-12 h-12 text-teal-600" />
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Welcome to NauriCare
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Let&apos;s set up your health profile to get started.
-        </p>
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Welcome to NauriCare</h2>
+        <p className="mt-2 text-center text-sm text-gray-600">Let&apos;s set up your health profile to get started.</p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">

@@ -1,6 +1,6 @@
 import { apiSuccess, handle, unauthorized } from "@/lib/api";
-import { getUserIdWithRole } from "@/lib/auth-guards";
 import { logAdministrativeAction } from "@/lib/audit";
+import { getUserIdWithRole } from "@/lib/auth-guards";
 import { backfillCoordinates } from "@/server/geo/geocode";
 
 // Geocodes providers/hospitals missing coordinates (for the patient map).
@@ -10,7 +10,11 @@ export async function POST() {
   if (!adminId) return unauthorized();
   return handle(async () => {
     const result = await backfillCoordinates();
-    await logAdministrativeAction({ action: "ADMIN_SETTINGS_UPDATE", actorId: adminId, details: { op: "geo-backfill", ...result } });
+    await logAdministrativeAction({
+      action: "ADMIN_SETTINGS_UPDATE",
+      actorId: adminId,
+      details: { op: "geo-backfill", ...result },
+    });
     return apiSuccess(result);
   });
 }

@@ -1,3 +1,4 @@
+import "server-only";
 import type { PatientActivityType, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 

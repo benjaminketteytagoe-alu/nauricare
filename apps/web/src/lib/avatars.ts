@@ -32,7 +32,10 @@ export function isGooglePhoto(url: string | null | undefined): boolean {
   if (!url) return false;
   try {
     const u = new URL(url);
-    return u.protocol === "https:" && (u.hostname === "lh3.googleusercontent.com" || /^lh\d\.googleusercontent\.com$/.test(u.hostname));
+    return (
+      u.protocol === "https:" &&
+      (u.hostname === "lh3.googleusercontent.com" || /^lh\d\.googleusercontent\.com$/.test(u.hostname))
+    );
   } catch {
     return false;
   }

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { Shield, ArrowLeft, Loader2, Clock, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface AppointmentDetail {
   id: string;
@@ -80,11 +80,13 @@ export default function TelehealthRoomPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
-      
       {/* Header Panel */}
       <div className="card-surface p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-rose-700 transition-colors mb-2 font-medium">
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="flex items-center gap-2 text-sm text-gray-500 hover:text-rose-700 transition-colors mb-2 font-medium"
+          >
             <ArrowLeft className="w-4 h-4" /> Back to Dashboard
           </button>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -94,7 +96,8 @@ export default function TelehealthRoomPage() {
             </span>
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Dr. {appointment.practitioner?.user?.name ?? "Specialist"} &amp; {appointment.patient?.user?.name ?? "Patient"}
+            Dr. {appointment.practitioner?.user?.name ?? "Specialist"} &amp;{" "}
+            {appointment.patient?.user?.name ?? "Patient"}
           </p>
         </div>
 
@@ -103,7 +106,8 @@ export default function TelehealthRoomPage() {
           <div>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Scheduled Time</p>
             <p className="text-sm font-bold text-gray-900">
-              {startTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {startTime.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} at{" "}
+              {startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </p>
           </div>
         </div>
@@ -117,7 +121,7 @@ export default function TelehealthRoomPage() {
             Waiting for participants...
           </div>
         )}
-        
+
         <iframe
           src={meetingUrl}
           allow="camera; microphone; fullscreen; display-capture; autoplay"
@@ -128,10 +132,10 @@ export default function TelehealthRoomPage() {
 
       <div className="flex justify-center">
         <p className="text-xs text-gray-400 flex items-center gap-1">
-          <CheckCircle2 className="w-3 h-3" /> Powered by secure WebRTC infrastructure. Your video and audio are not recorded by NauriCare.
+          <CheckCircle2 className="w-3 h-3" /> Powered by secure WebRTC infrastructure. Your video and audio are not
+          recorded by NauriCare.
         </p>
       </div>
-
     </div>
   );
 }

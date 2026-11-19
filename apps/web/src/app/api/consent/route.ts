@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getUserIdWithRole } from "@/lib/auth-guards";
-import { prisma } from "@/lib/prisma";
 import { logAdministrativeAction } from "@/lib/audit";
-import { recordActivity } from "@/server/activity/activity.service";
-import { getClientIp } from "@/lib/getClientIp";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { getUserIdWithRole } from "@/lib/auth-guards";
 import { CURRENT_CONSENT_VERSION, getTriageConsent } from "@/lib/consent";
+import { getClientIp } from "@/lib/getClientIp";
+import { prisma } from "@/lib/prisma";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { recordActivity } from "@/server/activity/activity.service";
 
 // Each consent must be an explicit `true`. A missing or false value is
 // refused rather than treated as "no", so pre-ticked or defaulted consent
@@ -67,7 +67,12 @@ export async function POST(req: Request) {
     },
   });
 
-  await recordActivity({ userId, type: "CONSENT_GRANTED", title: "Agreed to AI triage consent", details: { version: CURRENT_CONSENT_VERSION } });
+  await recordActivity({
+    userId,
+    type: "CONSENT_GRANTED",
+    title: "Agreed to AI triage consent",
+    details: { version: CURRENT_CONSENT_VERSION },
+  });
   return NextResponse.json({ consent: { valid: true, grantedAt, version: CURRENT_CONSENT_VERSION } });
 }
 

@@ -10,20 +10,27 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "make-admin": "npx tsx apps/web/scripts/make-admin.ts"
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "make-admin": "tsx apps/web/scripts/make-admin.ts",
+    "prepare": "husky || true"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.6",
     "turbo": "2.9.16"
   },
-  "dependencies": {
-    "@21st-sdk/agent": "^0.0.18",
-    "@21st-sdk/nextjs": "^0.0.11",
-    "@google/generative-ai": "^0.24.1",
-    "@marsidev/react-turnstile": "^1.5.3",
-    "@next-auth/prisma-adapter": "^1.0.7",
-    "bcryptjs": "^3.0.3",
-    "framer-motion": "^12.40.0",
-    "zod": "^4.4.3"
+  "engines": {
+    "node": ">=22.12"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,cjs,json,css,md,yml,yaml}": "prettier --write --ignore-unknown"
   }
 }

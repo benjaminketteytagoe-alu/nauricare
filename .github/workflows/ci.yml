@@ -2,9 +2,9 @@ name: NauriCare Enterprise Pipeline
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: ["main", "develop"]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: ["main", "develop"]
 
 # Least privilege. AWS access uses the AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
 # secrets; switch to GitHub OIDC (and grant `id-token: write` only to the AWS
@@ -19,7 +19,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  NODE_VERSION: '24'
+  NODE_VERSION: "24"
   AWS_REGION: us-east-1
   ECR_REPOSITORY: nauricare-api
   ECS_CLUSTER: default
@@ -70,7 +70,7 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       # Installs exactly what package-lock.json records (same tree as the image).
       - name: Install Dependencies
@@ -93,8 +93,17 @@ jobs:
             exit 1
           fi
 
+      - name: Check Formatting
+        run: npm run format:check
+
       - name: Lint
-        run: npm run lint --workspace=web
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit Tests
+        run: npm test
 
       - name: Run Build Pipeline
         run: npm run build

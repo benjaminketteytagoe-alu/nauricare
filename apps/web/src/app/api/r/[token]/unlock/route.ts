@@ -16,7 +16,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   const parsed = await parseJson(req, Unlock);
   if (!parsed.ok) return parsed.response;
   const res = await handle(async () => {
-    const payload = await unlockShare((await params).token, parsed.data.code, { ip: ip === "unknown" ? null : ip, userAgent: req.headers.get("user-agent") });
+    const payload = await unlockShare((await params).token, parsed.data.code, {
+      ip: ip === "unknown" ? null : ip,
+      userAgent: req.headers.get("user-agent"),
+    });
     return apiSuccess({ referral: payload });
   });
   for (const [k, v] of Object.entries(NO_STORE)) res.headers.set(k, v);

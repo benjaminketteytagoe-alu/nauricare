@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
-import { parseMentionsAndNotify } from "@/lib/mentions";
 import { z } from "zod";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { parseJson } from "@/lib/api";
+import { parseMentionsAndNotify } from "@/lib/mentions";
+import { prisma } from "@/lib/prisma";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { sanitizePlainText } from "@/lib/sanitize";
 import { idSchema } from "@/lib/validation/common";
 import { mediaUrlSchema } from "@/lib/validation/media";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { requireCommunityAvatar, scrubAuthor } from "@/server/community/avatars";
 
 const PostInput = z
@@ -18,7 +18,9 @@ const PostInput = z
     mediaType: z.enum(["IMAGE", "VIDEO"]).optional().or(z.null()),
     repostOfId: idSchema.optional().or(z.literal("")).or(z.null()),
   })
-  .refine((v) => v.content.trim().length > 0 || !!v.mediaUrl || !!v.repostOfId, { message: "Post must have content or media" });
+  .refine((v) => v.content.trim().length > 0 || !!v.mediaUrl || !!v.repostOfId, {
+    message: "Post must have content or media",
+  });
 
 export async function GET(req: Request) {
   try {
@@ -142,7 +144,15 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      { ...scrubAuthor(post), repostOf: post.repostOf ? scrubAuthor(post.repostOf) : null, likeCount: 0, commentCount: 0, repostCount: 0, isLikedByMe: false, isFollowedByMe: false },
+      {
+        ...scrubAuthor(post),
+        repostOf: post.repostOf ? scrubAuthor(post.repostOf) : null,
+        likeCount: 0,
+        commentCount: 0,
+        repostCount: 0,
+        isLikedByMe: false,
+        isFollowedByMe: false,
+      },
       { status: 201 },
     );
   } catch (error) {

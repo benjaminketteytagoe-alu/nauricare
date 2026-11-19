@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export interface AuthVisualSlide {
   src: string;
@@ -69,9 +69,7 @@ export function AuthVisualPanel({ slides, quote, chips = [], intervalMs = 5000 }
               onClick={() => setActiveIdx(i)}
               aria-label={`View slide ${i + 1}`}
               className={`rounded-full transition-all duration-500 ${
-                i === activeIdx
-                  ? "w-7 h-2 bg-white"
-                  : "w-2 h-2 bg-white/35 hover:bg-white/60"
+                i === activeIdx ? "w-7 h-2 bg-white" : "w-2 h-2 bg-white/35 hover:bg-white/60"
               }`}
             />
           ))}

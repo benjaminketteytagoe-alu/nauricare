@@ -1,12 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
 import { User, Shield, Clock, Save, Plus, Trash2, AlertCircle, CheckCircle2 } from "lucide-react";
-import {
-  updateProviderProfile,
-  updateSecuritySettings,
-  upsertAvailabilitySlot,
-} from "@/actions/providerSettings";
+import { useState, useTransition } from "react";
+import { updateProviderProfile, updateSecuritySettings, upsertAvailabilitySlot } from "@/actions/providerSettings";
 
 type Tab = "profile" | "availability" | "security";
 
@@ -249,7 +245,11 @@ function AvailabilityTab({ initial }: { initial: AvailabilitySlot[] }) {
         </button>
       </div>
 
-      {msg && <p className="text-sm text-rose-600 flex items-center gap-2"><AlertCircle className="w-4 h-4" /> {msg}</p>}
+      {msg && (
+        <p className="text-sm text-rose-600 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4" /> {msg}
+        </p>
+      )}
 
       {dates.length === 0 ? (
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-10 text-center">
@@ -268,7 +268,10 @@ function AvailabilityTab({ initial }: { initial: AvailabilitySlot[] }) {
                 <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
                   <span className="text-sm font-bold text-slate-800">
                     {new Date(date + "T00:00:00").toLocaleDateString("en-US", {
-                      weekday: "long", year: "numeric", month: "long", day: "numeric",
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
                     })}
                   </span>
                   <button

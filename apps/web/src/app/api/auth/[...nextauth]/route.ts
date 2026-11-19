@@ -1,17 +1,17 @@
-import NextAuth, { AuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
-import EmailProvider from "next-auth/providers/email";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { verifyTurnstileToken } from "@/lib/turnstile";
-import { getClientIp } from "@/lib/getClientIp";
-import { recordPatientActivity } from "@/server/activity/activity.service";
-import { rateLimit } from "@/lib/rateLimit";
+import NextAuth, { type AuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import EmailProvider from "next-auth/providers/email";
+import GoogleProvider from "next-auth/providers/google";
 import { isGooglePhoto } from "@/lib/avatars";
-import { randomToken } from "@/server/security/sealing";
+import { getClientIp } from "@/lib/getClientIp";
+import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rateLimit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
+import { recordPatientActivity } from "@/server/activity/activity.service";
 import { consumeVerifiedLogin } from "@/server/auth/loginCode.service";
+import { randomToken } from "@/server/security/sealing";
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -181,7 +181,12 @@ export const authOptions: AuthOptions = {
       // 1b. Unlock: the client calls update({ loginCode: "verified" }) after
       // /api/auth/code/verify succeeds. The flag is only set if the database
       // holds a verified, unused code for this exact session.
-      if (trigger === "update" && (session as { loginCode?: string } | undefined)?.loginCode === "verified" && token.id && !token.mfaVerified) {
+      if (
+        trigger === "update" &&
+        (session as { loginCode?: string } | undefined)?.loginCode === "verified" &&
+        token.id &&
+        !token.mfaVerified
+      ) {
         if (await consumeVerifiedLogin(token.id, token.mfaSid)) token.mfaVerified = true;
       }
 
@@ -194,7 +199,7 @@ export const authOptions: AuthOptions = {
         const cleanEmail = token.email.trim().toLowerCase();
         const dbUser = await prisma.user.findUnique({
           where: { email: cleanEmail },
-          select: { id: true, role: true, avatarUrl: true, deletedAt: true }
+          select: { id: true, role: true, avatarUrl: true, deletedAt: true },
         });
 
         if (dbUser && !dbUser.deletedAt) {
@@ -249,7 +254,7 @@ export const authOptions: AuthOptions = {
   },
   pages: {
     signIn: "/login",
-    error: "/login", 
+    error: "/login",
   },
   session: {
     strategy: "jwt",

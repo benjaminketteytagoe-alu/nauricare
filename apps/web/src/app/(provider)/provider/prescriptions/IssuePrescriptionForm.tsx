@@ -1,8 +1,8 @@
 "use client";
 
+import { PlusCircle, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { createPrescription } from "@/actions/prescription";
-import { PlusCircle, AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface Patient {
   userId: string;
@@ -107,9 +107,7 @@ export default function IssuePrescriptionForm({
 
           {/* Medication name */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              Medication Name
-            </label>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Medication Name</label>
             <input
               required
               type="text"
@@ -122,9 +120,7 @@ export default function IssuePrescriptionForm({
 
           {/* Dosage */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              Dosage &amp; Frequency
-            </label>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Dosage &amp; Frequency</label>
             <input
               required
               type="text"
@@ -138,8 +134,7 @@ export default function IssuePrescriptionForm({
           {/* Instructions */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              Special Instructions{" "}
-              <span className="text-slate-400 font-normal">(optional)</span>
+              Special Instructions <span className="text-slate-400 font-normal">(optional)</span>
             </label>
             <textarea
               rows={3}
@@ -154,8 +149,7 @@ export default function IssuePrescriptionForm({
           {pharmacies.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                Suggest a Pharmacy{" "}
-                <span className="text-slate-400 font-normal">(optional — patient can override)</span>
+                Suggest a Pharmacy <span className="text-slate-400 font-normal">(optional — patient can override)</span>
               </label>
               <select
                 value={form.suggestedPharmacyId}

@@ -1,3 +1,4 @@
+import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
@@ -49,11 +50,16 @@ export async function deliver(c: Claim, steps: Steps): Promise<boolean> {
       await steps.email(`reminder/${c.dedupeKey}`.slice(0, 256));
       await prisma.reminderDispatch.update({ where: { id: c.id }, data: { emailedAt: new Date() } });
     }
-    await prisma.reminderDispatch.update({ where: { id: c.id }, data: { status: "SENT", sentAt: new Date(), lastError: null } });
+    await prisma.reminderDispatch.update({
+      where: { id: c.id },
+      data: { status: "SENT", sentAt: new Date(), lastError: null },
+    });
     return true;
   } catch (e) {
     const message = (e instanceof Error ? e.message : String(e)).slice(0, 300);
-    await prisma.reminderDispatch.update({ where: { id: c.id }, data: { status: "FAILED", lastError: message } }).catch(() => {});
+    await prisma.reminderDispatch
+      .update({ where: { id: c.id }, data: { status: "FAILED", lastError: message } })
+      .catch(() => {});
     console.error(`[REMINDER] ${c.dedupeKey} failed:`, message);
     return false;
   }

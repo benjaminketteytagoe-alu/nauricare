@@ -1,15 +1,15 @@
 "use server";
 
-import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { getSessionUser } from "@/lib/auth-guards";
+import { sendFeedbackEmail } from "@/lib/email";
+import { CSAT_SCALE, FEEDBACK_CATEGORY_LABELS, FEEDBACK_FORM_VALUES } from "@/lib/feedback/categories";
+import { formatDateTime } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
-import { getSessionUser } from "@/lib/auth-guards";
 import { sanitizePlainText } from "@/lib/sanitize";
-import { sendFeedbackEmail } from "@/lib/email";
 import { recordPatientActivity } from "@/server/activity/activity.service";
-import { formatDateTime } from "@/lib/format";
-import { CSAT_SCALE, FEEDBACK_CATEGORY_LABELS, FEEDBACK_FORM_VALUES } from "@/lib/feedback/categories";
 
 const feedbackSchema = z.object({
   rating: z.number().int().min(1, "Please choose how satisfied you are.").max(5),
@@ -65,7 +65,12 @@ export async function submitFeedback(input: SubmitFeedbackInput) {
       console.error("[FEEDBACK_EMAIL_ERROR]", emailError instanceof Error ? emailError.message : emailError);
     }
 
-    await recordPatientActivity(user.role, { userId: user.id, type: "FEEDBACK_SUBMITTED", title: "Sent feedback to NauriCare", details: { category: parsed.data.category, rating: parsed.data.rating } });
+    await recordPatientActivity(user.role, {
+      userId: user.id,
+      type: "FEEDBACK_SUBMITTED",
+      title: "Sent feedback to NauriCare",
+      details: { category: parsed.data.category, rating: parsed.data.rating },
+    });
 
     revalidatePath("/admin/feedback");
     return { success: true as const, data: { id: feedback.id } };

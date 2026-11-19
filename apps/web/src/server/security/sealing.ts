@@ -1,3 +1,4 @@
+import "server-only";
 import { createCipheriv, createDecipheriv, createHash, createHmac, hkdfSync, randomBytes } from "crypto";
 
 // One place for application-level encryption and opaque tokens.
@@ -15,7 +16,9 @@ function rootSecret(): string {
 }
 
 function keyFor(purpose: string): Buffer {
-  return Buffer.from(hkdfSync("sha256", rootSecret(), "nauricare-sealing", `nauricare:${purpose}:v${SEAL_VERSION}`, 32));
+  return Buffer.from(
+    hkdfSync("sha256", rootSecret(), "nauricare-sealing", `nauricare:${purpose}:v${SEAL_VERSION}`, 32),
+  );
 }
 
 /** Encrypts a JSON value for `purpose`. Output is URL-safe base64. */
@@ -51,5 +54,7 @@ export function hashToken(token: string): string {
 
 /** Keyed hash (HMAC-SHA256) for `purpose`; use for short secrets like OTP codes. */
 export function keyedHash(purpose: string, value: string): string {
-  return createHmac("sha256", keyFor(`hmac:${purpose}`)).update(value).digest("base64url");
+  return createHmac("sha256", keyFor(`hmac:${purpose}`))
+    .update(value)
+    .digest("base64url");
 }

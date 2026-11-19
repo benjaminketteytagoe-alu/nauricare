@@ -1,13 +1,19 @@
 "use client";
 
+import { Menu, PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { Menu, PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "lucide-react";
 import { Tooltip } from "@/components/ui/tooltip";
 
 // ─── Shared collapsible sidebar for the patient, provider and admin portals ──
@@ -200,12 +206,22 @@ function Brand({ homeHref, tone, compact }: { homeHref: string; tone: SidebarTon
   return (
     <Link href={homeHref} className="flex items-center transition-opacity hover:opacity-80" aria-label="NauriCare home">
       {compact ? (
-        <span className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg font-extrabold shadow-sm ${t.monogram}`} aria-hidden>
+        <span
+          className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg font-extrabold shadow-sm ${t.monogram}`}
+          aria-hidden
+        >
           N
         </span>
       ) : (
         <span className={tone === "dark" ? "rounded-lg bg-white p-1.5 shadow-sm" : ""}>
-          <Image src="/logo-horizontal.jpg" alt="NauriCare" width={160} height={40} className="h-8 w-auto object-contain" priority />
+          <Image
+            src="/logo-horizontal.jpg"
+            alt="NauriCare"
+            width={160}
+            height={40}
+            className="h-8 w-auto object-contain"
+            priority
+          />
         </span>
       )}
     </Link>
@@ -251,11 +267,15 @@ export function AppSidebar({
         ].join(" ")}
       >
         {/* Brand */}
-        <div className={`flex h-16 shrink-0 items-center justify-between border-b px-4 lg:h-20 ${t.divider} ${iconOnly ? "lg:justify-center lg:px-0" : ""}`}>
+        <div
+          className={`flex h-16 shrink-0 items-center justify-between border-b px-4 lg:h-20 ${t.divider} ${iconOnly ? "lg:justify-center lg:px-0" : ""}`}
+        >
           <div className="min-w-0">
             <Brand homeHref={homeHref} tone={tone} compact={iconOnly} />
             {!iconOnly && (
-              <p className={`ml-1 mt-1.5 hidden text-[10px] font-extrabold uppercase tracking-[0.2em] lg:block ${t.label}`}>
+              <p
+                className={`ml-1 mt-1.5 hidden text-[10px] font-extrabold uppercase tracking-[0.2em] lg:block ${t.label}`}
+              >
                 {portalLabel}
               </p>
             )}

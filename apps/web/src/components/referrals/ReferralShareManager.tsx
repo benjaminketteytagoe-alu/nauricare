@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
 import { Check, ChevronDown, ClipboardCopy, Link2, Loader2, ShieldCheck } from "lucide-react";
+import { useCallback, useState } from "react";
 import { Callout } from "@/components/ui/callout";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -19,7 +19,15 @@ interface Share {
 const STATE_TONE: Record<Share["state"], ChipTone> = { active: "primary", revoked: "muted", expired: "neutral" };
 
 /** Create, list and revoke hospital links for one referral. */
-export function ReferralShareManager({ referralId, referralCode, hospitalName }: { referralId: string; referralCode: string; hospitalName: string }) {
+export function ReferralShareManager({
+  referralId,
+  referralCode,
+  hospitalName,
+}: {
+  referralId: string;
+  referralCode: string;
+  hospitalName: string;
+}) {
   const [open, setOpen] = useState(false);
   const [shares, setShares] = useState<Share[] | null>(null);
   const [days, setDays] = useState(14);
@@ -91,40 +99,74 @@ export function ReferralShareManager({ referralId, referralCode, hospitalName }:
 
   return (
     <div className="mt-4 border-t border-nc-divider pt-4">
-      <button type="button" onClick={toggleOpen} aria-expanded={open} className="flex w-full items-center justify-between gap-2 text-left text-sm font-semibold text-nc-primary">
-        <span className="flex items-center gap-2"><Link2 className="h-4 w-4" aria-hidden /> Share with {hospitalName}</span>
+      <button
+        type="button"
+        onClick={toggleOpen}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-2 text-left text-sm font-semibold text-nc-primary"
+      >
+        <span className="flex items-center gap-2">
+          <Link2 className="h-4 w-4" aria-hidden /> Share with {hospitalName}
+        </span>
         <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>
 
       {open && (
         <div className="mt-4 space-y-4">
           <Callout tone="info" icon={ShieldCheck}>
-            The hospital gets a secure link to your referral, details, contact information and insurance, so they can book
-            you in. They must also enter your code <strong className="font-mono">{referralCode}</strong>, so give it to them
-            separately (for example by phone). You can revoke the link at any time.
+            The hospital gets a secure link to your referral, details, contact information and insurance, so they can
+            book you in. They must also enter your code <strong className="font-mono">{referralCode}</strong>, so give
+            it to them separately (for example by phone). You can revoke the link at any time.
           </Callout>
 
-          {error && <Callout tone="danger" role="alert">{error}</Callout>}
+          {error && (
+            <Callout tone="danger" role="alert">
+              {error}
+            </Callout>
+          )}
 
           {created ? (
             <div className="rounded-xl border border-nc-primary/30 bg-nc-primary-container p-4">
               <p className="text-sm font-semibold text-nc-ink">Your link is ready</p>
-              <p className="mt-1 text-xs text-slate-600">Copy it now: for your privacy we can&apos;t show it again. It expires on {formatDate(created.expiresAt, "long")}.</p>
+              <p className="mt-1 text-xs text-slate-600">
+                Copy it now: for your privacy we can&apos;t show it again. It expires on{" "}
+                {formatDate(created.expiresAt, "long")}.
+              </p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                <input readOnly value={created.url} className="m3-input font-mono text-xs" onFocus={(e) => e.currentTarget.select()} aria-label="Referral link" />
+                <input
+                  readOnly
+                  value={created.url}
+                  className="m3-input font-mono text-xs"
+                  onFocus={(e) => e.currentTarget.select()}
+                  aria-label="Referral link"
+                />
                 <button type="button" onClick={copy} className="m3-btn-filled shrink-0">
-                  {copied ? <Check className="h-4 w-4" aria-hidden /> : <ClipboardCopy className="h-4 w-4" aria-hidden />}
+                  {copied ? (
+                    <Check className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <ClipboardCopy className="h-4 w-4" aria-hidden />
+                  )}
                   {copied ? "Copied" : "Copy link"}
                 </button>
               </div>
-              <button type="button" onClick={() => setCreated(null)} className="mt-3 text-xs font-medium text-nc-primary hover:underline">Done</button>
+              <button
+                type="button"
+                onClick={() => setCreated(null)}
+                className="mt-3 text-xs font-medium text-nc-primary hover:underline"
+              >
+                Done
+              </button>
             </div>
           ) : (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
               <label className="flex-1 text-sm">
                 <span className="mb-1.5 block font-semibold text-nc-ink">Link expires after</span>
                 <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="m3-input">
-                  {[1, 3, 7, 14, 30].map((d) => <option key={d} value={d}>{d} day{d > 1 ? "s" : ""}</option>)}
+                  {[1, 3, 7, 14, 30].map((d) => (
+                    <option key={d} value={d}>
+                      {d} day{d > 1 ? "s" : ""}
+                    </option>
+                  ))}
                 </select>
               </label>
               <button type="button" onClick={create} disabled={busy} className="m3-btn-filled">
@@ -136,14 +178,19 @@ export function ReferralShareManager({ referralId, referralCode, hospitalName }:
           {shares && shares.length > 0 && (
             <ul className="space-y-2">
               {shares.map((s) => (
-                <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2.5 text-sm">
+                <li
+                  key={s.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2.5 text-sm"
+                >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <StatusChip tone={STATE_TONE[s.state]}>{s.state}</StatusChip>
                       <span className="text-slate-600">Created {formatDate(s.createdAt)}</span>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                      {s.accessCount > 0 ? `Opened ${s.accessCount} time${s.accessCount > 1 ? "s" : ""}, last ${formatDateTime(s.lastAccessedAt!)}` : "Not opened yet"}
+                      {s.accessCount > 0
+                        ? `Opened ${s.accessCount} time${s.accessCount > 1 ? "s" : ""}, last ${formatDateTime(s.lastAccessedAt!)}`
+                        : "Not opened yet"}
                       {s.failedAttempts > 0 && ` · ${s.failedAttempts} wrong code${s.failedAttempts > 1 ? "s" : ""}`}
                       {s.state === "active" && ` · expires ${formatDate(s.expiresAt)}`}
                     </p>
@@ -151,11 +198,30 @@ export function ReferralShareManager({ referralId, referralCode, hospitalName }:
                   {s.state === "active" &&
                     (confirmRevoke === s.id ? (
                       <span className="flex items-center gap-2">
-                        <button type="button" onClick={() => revoke(s.id)} disabled={busy} className="rounded-full bg-nc-berry px-3 py-1 text-xs font-semibold text-white">Revoke</button>
-                        <button type="button" onClick={() => setConfirmRevoke(null)} className="text-xs font-medium text-slate-600">Cancel</button>
+                        <button
+                          type="button"
+                          onClick={() => revoke(s.id)}
+                          disabled={busy}
+                          className="rounded-full bg-nc-berry px-3 py-1 text-xs font-semibold text-white"
+                        >
+                          Revoke
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmRevoke(null)}
+                          className="text-xs font-medium text-slate-600"
+                        >
+                          Cancel
+                        </button>
                       </span>
                     ) : (
-                      <button type="button" onClick={() => setConfirmRevoke(s.id)} className="text-xs font-semibold text-nc-berry hover:underline">Revoke</button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmRevoke(s.id)}
+                        className="text-xs font-semibold text-nc-berry hover:underline"
+                      >
+                        Revoke
+                      </button>
                     ))}
                 </li>
               ))}

@@ -1,3 +1,4 @@
+import "server-only";
 import type { UserNotificationType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { publish } from "@/server/realtime/bus";

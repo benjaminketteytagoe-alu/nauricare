@@ -1,11 +1,11 @@
+import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import { geocodePractice } from "@/server/geo/geocode";
 import { passwordField } from "@/lib/validation/password";
-import bcrypt from "bcryptjs";
+import { geocodePractice } from "@/server/geo/geocode";
 
 const onboardProviderSchema = z.object({
   name: z.string().trim().min(2).max(100),
@@ -96,8 +96,8 @@ export async function POST(req: Request) {
             latitude: coords?.lat ?? null,
             longitude: coords?.lng ?? null,
             isVerified: true,
-          }
-        }
+          },
+        },
       },
       select: {
         id: true,
@@ -114,8 +114,8 @@ export async function POST(req: Request) {
       data: {
         userId: session.user.id,
         action: "ONBOARD_PROVIDER",
-        details: { providerId: newProvider.id, email: newProvider.email }
-      }
+        details: { providerId: newProvider.id, email: newProvider.email },
+      },
     });
 
     return NextResponse.json(newProvider, { status: 201 });

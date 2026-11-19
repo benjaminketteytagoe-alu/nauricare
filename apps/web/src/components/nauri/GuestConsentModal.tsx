@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
-import dynamic from "next/dynamic";
-import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useEffect, useId, useState } from "react";
 import { ConsentToggle } from "@/components/triage-gate/ConsentToggle";
 import { SPRING, tactile } from "@/components/triage-gate/motion";
 import { CURRENT_CONSENT_VERSION } from "@/lib/consentVersion";
@@ -68,7 +68,12 @@ export function GuestConsentModal({
             transition={SPRING}
             className="font-friendly relative max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-[2rem] bg-[#FFFDF9] p-6 text-left shadow-xl sm:rounded-[2rem] sm:p-8"
           >
-            <button type="button" onClick={onDismiss} aria-label="Close" className="absolute right-4 top-4 rounded-full p-2 text-[#475569] hover:bg-[#FDF2F0]">
+            <button
+              type="button"
+              onClick={onDismiss}
+              aria-label="Close"
+              className="absolute right-4 top-4 rounded-full p-2 text-[#475569] hover:bg-[#FDF2F0]"
+            >
               <X className="h-5 w-5" aria-hidden />
             </button>
 
@@ -83,19 +88,42 @@ export function GuestConsentModal({
             </p>
 
             <div className="mt-6 space-y-3">
-              <ConsentToggle checked={privacy} onChange={setPrivacy} title="I agree to the processing of my health information">
+              <ConsentToggle
+                checked={privacy}
+                onChange={setPrivacy}
+                title="I agree to the processing of my health information"
+              >
                 What I type is processed to give me guidance. Nothing is saved to an account unless I sign up. See the{" "}
-                <Link href="/privacy" target="_blank" className="font-medium text-[#1D4ED8] underline underline-offset-2">Privacy Policy</Link>.
+                <Link
+                  href="/privacy"
+                  target="_blank"
+                  className="font-medium text-[#1D4ED8] underline underline-offset-2"
+                >
+                  Privacy Policy
+                </Link>
+                .
               </ConsentToggle>
               <ConsentToggle checked={triage} onChange={setTriage} title="I understand how AI triage works">
-                It is not a diagnosis and can be wrong. My text is sent to Google&apos;s MedGemma or Gemini models, which may
-                process it outside Rwanda. In an emergency I will call 112 / 912. See the{" "}
-                <Link href="/consent" target="_blank" className="font-medium text-[#1D4ED8] underline underline-offset-2">Informed Consent</Link>.
+                It is not a diagnosis and can be wrong. My text is sent to Google&apos;s MedGemma or Gemini models,
+                which may process it outside Rwanda. In an emergency I will call 112 / 912. See the{" "}
+                <Link
+                  href="/consent"
+                  target="_blank"
+                  className="font-medium text-[#1D4ED8] underline underline-offset-2"
+                >
+                  Informed Consent
+                </Link>
+                .
               </ConsentToggle>
             </div>
 
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <motion.button type="button" {...tactile} onClick={onDismiss} className="rounded-full px-6 py-3 text-sm font-semibold text-[#475569] hover:bg-[#FDF2F0]">
+              <motion.button
+                type="button"
+                {...tactile}
+                onClick={onDismiss}
+                className="rounded-full px-6 py-3 text-sm font-semibold text-[#475569] hover:bg-[#FDF2F0]"
+              >
                 Not now
               </motion.button>
               <motion.button

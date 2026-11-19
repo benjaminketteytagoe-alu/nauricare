@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -12,11 +12,7 @@ export function PasswordInput({ className, ...props }: PasswordInputProps) {
 
   return (
     <div className="relative">
-      <Input
-        type={showPassword ? "text" : "password"}
-        className={cn("pr-11", className)}
-        {...props}
-      />
+      <Input type={showPassword ? "text" : "password"} className={cn("pr-11", className)} {...props} />
       <button
         type="button"
         onClick={() => setShowPassword((prev) => !prev)}

@@ -30,26 +30,21 @@ export function PatientBookingConfirmation({
   return (
     <Html lang="en">
       <Head />
-      <Preview>Your NauriCare appointment with {providerName} is confirmed for {date}</Preview>
+      <Preview>
+        Your NauriCare appointment with {providerName} is confirmed for {date}
+      </Preview>
       <Tailwind>
         <Body className="bg-gray-50 font-sans">
           <Container className="mx-auto max-w-lg py-8 px-4">
-
             {/* Header */}
             <Section className="bg-teal-700 rounded-t-2xl px-8 py-6 text-center">
-              <Heading className="text-white text-2xl font-bold m-0">
-                NauriCare
-              </Heading>
-              <Text className="text-teal-100 text-sm mt-1 mb-0">
-                Women&apos;s Health Platform
-              </Text>
+              <Heading className="text-white text-2xl font-bold m-0">NauriCare</Heading>
+              <Text className="text-teal-100 text-sm mt-1 mb-0">Women&apos;s Health Platform</Text>
             </Section>
 
             {/* Body card */}
             <Section className="bg-white rounded-b-2xl px-8 py-8 shadow-sm border border-gray-100">
-              <Heading className="text-gray-900 text-xl font-semibold mt-0 mb-2">
-                Appointment Confirmed ✓
-              </Heading>
+              <Heading className="text-gray-900 text-xl font-semibold mt-0 mb-2">Appointment Confirmed ✓</Heading>
               <Text className="text-gray-600 text-sm leading-relaxed mt-0">
                 Hi {patientName}, your telehealth appointment has been booked successfully.
               </Text>
@@ -80,8 +75,8 @@ export function PatientBookingConfirmation({
               </Section>
 
               <Text className="text-gray-600 text-sm leading-relaxed mb-6">
-                Your consultation will take place via secure video call. Use the button below
-                to join at your scheduled time — no downloads required.
+                Your consultation will take place via secure video call. Use the button below to join at your scheduled
+                time — no downloads required.
               </Text>
 
               <Button
@@ -92,8 +87,8 @@ export function PatientBookingConfirmation({
               </Button>
 
               <Text className="text-gray-400 text-xs mt-6 mb-0">
-                If you need to reschedule, please contact us at least 24 hours in advance
-                through your NauriCare dashboard.
+                If you need to reschedule, please contact us at least 24 hours in advance through your NauriCare
+                dashboard.
               </Text>
             </Section>
 
@@ -103,7 +98,6 @@ export function PatientBookingConfirmation({
               <br />
               You&apos;re receiving this because you booked an appointment on NauriCare.
             </Text>
-
           </Container>
         </Body>
       </Tailwind>

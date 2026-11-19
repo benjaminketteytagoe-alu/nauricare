@@ -1,19 +1,15 @@
 "use client";
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { usePathname } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
   const pathname = usePathname();
 
   // Hide the public navbar inside the private application workspaces
-  if (
-    pathname?.startsWith("/admin") || 
-    pathname?.startsWith("/provider") || 
-    pathname?.startsWith("/dashboard")
-  ) {
+  if (pathname?.startsWith("/admin") || pathname?.startsWith("/provider") || pathname?.startsWith("/dashboard")) {
     return null;
   }
 

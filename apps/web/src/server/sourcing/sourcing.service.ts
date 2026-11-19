@@ -1,17 +1,18 @@
-import bcrypt from "bcryptjs";
+import "server-only";
 import { randomBytes } from "crypto";
 import type { Prisma, ProviderCandidate, ProviderCandidateStatus } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 import { ServiceError as SourcingError } from "@/lib/api";
 import { logAdministrativeAction } from "@/lib/audit";
 import { sendProviderInvitationEmail } from "@/lib/email";
 import { formatDate } from "@/lib/format";
+import { prisma } from "@/lib/prisma";
 import { SITE_URL } from "@/lib/site";
-import { hashToken, randomToken } from "@/server/security/sealing";
+import { geocodePractice } from "@/server/geo/geocode";
 import { isPublicAddress } from "@/server/net/safeFetch";
+import { hashToken, randomToken } from "@/server/security/sealing";
 import { fetchRemoteImage, rehostImage } from "@/server/storage/images";
 import { crawlSite, type CrawledPage } from "./crawler";
-import { geocodePractice } from "@/server/geo/geocode";
 import { extractCandidates, toDocument, type ExtractedCandidate } from "./extract";
 
 // Provider sourcing: admin-managed sources -> background crawl -> candidates
@@ -20,7 +21,6 @@ import { extractCandidates, toDocument, type ExtractedCandidate } from "./extrac
 const INVITE_TTL_MS = 14 * 24 * 60 * 60_000;
 const STALE_RUN_MS = 30 * 60_000;
 const MAX_CONCURRENT_RUNS = 2;
-
 
 // ── Sources ──────────────────────────────────────────────────────────────────
 
@@ -31,9 +31,15 @@ export function assertCrawlableUrl(raw: string): string {
   } catch {
     throw new SourcingError("Enter a full URL, starting with https://");
   }
-  if (url.protocol !== "https:" && url.protocol !== "http:") throw new SourcingError("Only http(s) URLs can be crawled.");
+  if (url.protocol !== "https:" && url.protocol !== "http:")
+    throw new SourcingError("Only http(s) URLs can be crawled.");
   const host = url.hostname.replace(/^\[|\]$/g, "");
-  if (host === "localhost" || host.endsWith(".local") || host.endsWith(".internal") || (/^[\d.:a-f]+$/i.test(host) && !isPublicAddress(host))) {
+  if (
+    host === "localhost" ||
+    host.endsWith(".local") ||
+    host.endsWith(".internal") ||
+    (/^[\d.:a-f]+$/i.test(host) && !isPublicAddress(host))
+  ) {
     throw new SourcingError("That address is not a public website.");
   }
   url.hash = "";
@@ -44,14 +50,26 @@ export async function createSource(adminId: string, input: { name: string; url: 
   const url = assertCrawlableUrl(input.url);
   const existing = await prisma.providerSource.findUnique({ where: { url } });
   if (existing) throw new SourcingError("That page is already a source.", 409);
-  const source = await prisma.providerSource.create({ data: { name: input.name, url, notes: input.notes || null, createdById: adminId } });
-  await logAdministrativeAction({ action: "PROVIDER_SOURCE_CHANGE", actorId: adminId, targetId: source.id, details: { op: "create", url } });
+  const source = await prisma.providerSource.create({
+    data: { name: input.name, url, notes: input.notes || null, createdById: adminId },
+  });
+  await logAdministrativeAction({
+    action: "PROVIDER_SOURCE_CHANGE",
+    actorId: adminId,
+    targetId: source.id,
+    details: { op: "create", url },
+  });
   return source;
 }
 
 export async function setSourceActive(adminId: string, id: string, isActive: boolean) {
   const source = await prisma.providerSource.update({ where: { id }, data: { isActive } });
-  await logAdministrativeAction({ action: "PROVIDER_SOURCE_CHANGE", actorId: adminId, targetId: id, details: { op: isActive ? "enable" : "disable" } });
+  await logAdministrativeAction({
+    action: "PROVIDER_SOURCE_CHANGE",
+    actorId: adminId,
+    targetId: id,
+    details: { op: isActive ? "enable" : "disable" },
+  });
   return source;
 }
 
@@ -80,12 +98,22 @@ export async function startScrapeRun(adminId: string, sourceId: string) {
   const source = await prisma.providerSource.findUnique({ where: { id: sourceId } });
   if (!source) throw new SourcingError("Source not found.", 404);
   if (!source.isActive) throw new SourcingError("This source is disabled.");
-  const active = await prisma.providerScrapeRun.findMany({ where: { status: { in: ["QUEUED", "RUNNING"] } }, select: { sourceId: true } });
-  if (active.some((r) => r.sourceId === sourceId)) throw new SourcingError("A crawl is already running for this source.", 409);
-  if (active.length >= MAX_CONCURRENT_RUNS) throw new SourcingError("Too many crawls are running. Try again in a few minutes.", 429);
+  const active = await prisma.providerScrapeRun.findMany({
+    where: { status: { in: ["QUEUED", "RUNNING"] } },
+    select: { sourceId: true },
+  });
+  if (active.some((r) => r.sourceId === sourceId))
+    throw new SourcingError("A crawl is already running for this source.", 409);
+  if (active.length >= MAX_CONCURRENT_RUNS)
+    throw new SourcingError("Too many crawls are running. Try again in a few minutes.", 429);
 
   const run = await prisma.providerScrapeRun.create({ data: { sourceId, triggeredById: adminId } });
-  await logAdministrativeAction({ action: "PROVIDER_SCRAPE_RUN", actorId: adminId, targetId: run.id, details: { sourceId, url: source.url } });
+  await logAdministrativeAction({
+    action: "PROVIDER_SCRAPE_RUN",
+    actorId: adminId,
+    targetId: run.id,
+    details: { sourceId, url: source.url },
+  });
   // Runs in the background of this server process; progress is persisted so
   // the admin UI can poll it, and a restart is detected as a stale run.
   void executeRun(run.id, source.url, source.name, sourceId);
@@ -98,8 +126,15 @@ export function getRun(id: string) {
 
 function dedupeKeyFor(c: ExtractedCandidate, host: string): string {
   if (c.email) return `email:${c.email.toLowerCase()}`;
-  const name = c.fullName.toLowerCase().replace(/^(dr\.?|doctor|prof\.?)\s+/, "").replace(/[^a-z]+/g, " ").trim();
-  return `name:${name}|${(c.facilityName ?? host).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()}`;
+  const name = c.fullName
+    .toLowerCase()
+    .replace(/^(dr\.?|doctor|prof\.?)\s+/, "")
+    .replace(/[^a-z]+/g, " ")
+    .trim();
+  return `name:${name}|${(c.facilityName ?? host)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()}`;
 }
 
 /**
@@ -121,7 +156,9 @@ export async function ingestPages(
       const dedupeKey = dedupeKeyFor(c, ctx.host);
       const existing = await prisma.providerCandidate.findUnique({ where: { dedupeKey } });
       if (existing && existing.status !== "PENDING_REVIEW") continue; // never overwrite a reviewed candidate
-      const alreadyUser = c.email ? await prisma.user.findUnique({ where: { email: c.email }, select: { id: true } }) : null;
+      const alreadyUser = c.email
+        ? await prisma.user.findUnique({ where: { email: c.email }, select: { id: true } })
+        : null;
       const data = {
         sourceId: ctx.sourceId,
         runId: ctx.runId,
@@ -154,7 +191,12 @@ async function executeRun(runId: string, url: string, sourceName: string, source
   let pagesFetched = 0;
   let candidatesFound = 0;
   const flush = (extra: Prisma.ProviderScrapeRunUpdateInput = {}) =>
-    prisma.providerScrapeRun.update({ where: { id: runId }, data: { log: lines.slice(-200).join("\n"), pagesFetched, candidatesFound, ...extra } }).catch(() => {});
+    prisma.providerScrapeRun
+      .update({
+        where: { id: runId },
+        data: { log: lines.slice(-200).join("\n"), pagesFetched, candidatesFound, ...extra },
+      })
+      .catch(() => {});
   const log = (l: string) => {
     lines.push(`${new Date().toISOString().slice(11, 19)} ${l}`);
   };
@@ -165,13 +207,19 @@ async function executeRun(runId: string, url: string, sourceName: string, source
     const pages = await crawlSite(url, { log });
     pagesFetched = pages.length;
     await flush();
-    candidatesFound = await ingestPages({ runId, sourceId, sourceName, host: new URL(url).hostname }, pages, log, () => flush());
+    candidatesFound = await ingestPages({ runId, sourceId, sourceName, host: new URL(url).hostname }, pages, log, () =>
+      flush(),
+    );
     log(`done: ${pagesFetched} page(s), ${candidatesFound} candidate(s)`);
     await flush({ status: "SUCCEEDED", finishedAt: new Date() });
     await prisma.providerSource.update({ where: { id: sourceId }, data: { lastRunAt: new Date() } });
   } catch (e) {
     log(`failed: ${e instanceof Error ? e.message : String(e)}`);
-    await flush({ status: "FAILED", finishedAt: new Date(), error: e instanceof Error ? e.message.slice(0, 500) : "Crawl failed" });
+    await flush({
+      status: "FAILED",
+      finishedAt: new Date(),
+      error: e instanceof Error ? e.message.slice(0, 500) : "Crawl failed",
+    });
   }
 }
 
@@ -179,7 +227,10 @@ async function executeRun(runId: string, url: string, sourceName: string, source
 
 /** A candidate as returned to the admin UI: the invite-token hash never leaves the server. */
 export function toAdminCandidate<T extends { inviteTokenHash?: string | null; photoSourceUrl?: string | null }>(c: T) {
-  const copy: Omit<T, "inviteTokenHash"> & { inviteTokenHash?: unknown; hasPhoto: boolean } = { ...c, hasPhoto: !!c.photoSourceUrl };
+  const copy: Omit<T, "inviteTokenHash"> & { inviteTokenHash?: unknown; hasPhoto: boolean } = {
+    ...c,
+    hasPhoto: !!c.photoSourceUrl,
+  };
   delete copy.inviteTokenHash;
   return copy;
 }
@@ -208,15 +259,31 @@ export async function updateCandidate(adminId: string, id: string, patch: Candid
   const c = await prisma.providerCandidate.findUnique({ where: { id } });
   if (!c) throw new SourcingError("Candidate not found.", 404);
   if (c.status !== "PENDING_REVIEW") throw new SourcingError("Only candidates awaiting review can be edited.");
-  const updated = await prisma.providerCandidate.update({ where: { id }, data: { ...patch, email: patch.email === undefined ? undefined : patch.email?.toLowerCase() || null } });
-  await logAdministrativeAction({ action: "PROVIDER_CANDIDATE_REVIEW", actorId: adminId, targetId: id, details: { op: "edit", fields: Object.keys(patch) } });
+  const updated = await prisma.providerCandidate.update({
+    where: { id },
+    data: { ...patch, email: patch.email === undefined ? undefined : patch.email?.toLowerCase() || null },
+  });
+  await logAdministrativeAction({
+    action: "PROVIDER_CANDIDATE_REVIEW",
+    actorId: adminId,
+    targetId: id,
+    details: { op: "edit", fields: Object.keys(patch) },
+  });
   return updated;
 }
 
 const stripTitle = (name: string) => name.replace(/^(dr\.?|doctor|prof\.?)\s+/i, "").trim();
 
 async function uniqueHandle(name: string): Promise<string> {
-  const base = ("dr-" + stripTitle(name).toLowerCase().replace(/[^a-z0-9]+/g, "-")).replace(/^-+|-+$/g, "").slice(0, 24) || "dr";
+  const base =
+    (
+      "dr-" +
+      stripTitle(name)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+    )
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 24) || "dr";
   for (let i = 0; i < 20; i++) {
     const handle = i === 0 ? base : `${base}-${i + 1}`;
     if (!(await prisma.user.findUnique({ where: { handle }, select: { id: true } }))) return handle;
@@ -231,7 +298,10 @@ async function createProviderAccount(c: ProviderCandidate, passwordHash: string,
     throw new SourcingError("Someone already uses this email on NauriCare.", 409);
   }
   const avatarUrl = c.photoSourceUrl ? await rehostImage(c.photoSourceUrl, "providers").catch(() => null) : null;
-  const coords = c.latitude != null && c.longitude != null ? { lat: c.latitude, lng: c.longitude } : await geocodePractice(c.practiceLocation, c.facilityName);
+  const coords =
+    c.latitude != null && c.longitude != null
+      ? { lat: c.latitude, lng: c.longitude }
+      : await geocodePractice(c.practiceLocation, c.facilityName);
   const handle = await uniqueHandle(c.fullName);
   return prisma.user.create({
     data: {
@@ -263,7 +333,10 @@ async function createProviderAccount(c: ProviderCandidate, passwordHash: string,
 async function issueInvite(c: ProviderCandidate, alreadyListed: boolean) {
   const token = randomToken();
   const inviteExpiresAt = new Date(Date.now() + INVITE_TTL_MS);
-  await prisma.providerCandidate.update({ where: { id: c.id }, data: { inviteTokenHash: hashToken(token), inviteExpiresAt, invitedAt: new Date() } });
+  await prisma.providerCandidate.update({
+    where: { id: c.id },
+    data: { inviteTokenHash: hashToken(token), inviteExpiresAt, invitedAt: new Date() },
+  });
   try {
     await sendProviderInvitationEmail({
       to: c.email!,
@@ -289,8 +362,16 @@ export async function reviewCandidate(adminId: string, id: string, action: Revie
   const reviewed = { reviewedById: adminId, reviewedAt: new Date(), reviewNote: note || null };
 
   if (action === "reject" || action === "duplicate") {
-    const updated = await prisma.providerCandidate.update({ where: { id }, data: { ...reviewed, status: action === "reject" ? "REJECTED" : "DUPLICATE" } });
-    await logAdministrativeAction({ action: "PROVIDER_CANDIDATE_REVIEW", actorId: adminId, targetId: id, details: { op: action, note } });
+    const updated = await prisma.providerCandidate.update({
+      where: { id },
+      data: { ...reviewed, status: action === "reject" ? "REJECTED" : "DUPLICATE" },
+    });
+    await logAdministrativeAction({
+      action: "PROVIDER_CANDIDATE_REVIEW",
+      actorId: adminId,
+      targetId: id,
+      details: { op: action, note },
+    });
     return { candidate: updated, emailSent: null };
   }
 
@@ -299,21 +380,39 @@ export async function reviewCandidate(adminId: string, id: string, action: Revie
   if (action === "invite") {
     await prisma.providerCandidate.update({ where: { id }, data: { ...reviewed, status: "INVITED" } });
     const { emailSent } = await issueInvite(c, false);
-    await logAdministrativeAction({ action: "PROVIDER_CANDIDATE_REVIEW", actorId: adminId, targetId: id, details: { op: "invite", emailSent } });
+    await logAdministrativeAction({
+      action: "PROVIDER_CANDIDATE_REVIEW",
+      actorId: adminId,
+      targetId: id,
+      details: { op: "invite", emailSent },
+    });
     return { candidate: await prisma.providerCandidate.findUnique({ where: { id } }), emailSent };
   }
 
   // publish: the admin attests the doctor consented offline. The account goes
   // live now with an unusable password; the invitation lets them set one.
-  if (!note || note.trim().length < 10) throw new SourcingError("Describe how consent was obtained (who, when, how) before publishing.");
+  if (!note || note.trim().length < 10)
+    throw new SourcingError("Describe how consent was obtained (who, when, how) before publishing.");
   const unusable = await bcrypt.hash(randomToken(), 10);
   const user = await createProviderAccount(c, unusable, false);
   await prisma.providerCandidate.update({
     where: { id },
-    data: { ...reviewed, status: "PUBLISHED", publishedUserId: user.id, consentSource: "ADMIN_ATTESTED", consentRecordedAt: new Date(), consentNote: note.trim() },
+    data: {
+      ...reviewed,
+      status: "PUBLISHED",
+      publishedUserId: user.id,
+      consentSource: "ADMIN_ATTESTED",
+      consentRecordedAt: new Date(),
+      consentNote: note.trim(),
+    },
   });
   const { emailSent } = await issueInvite(c, true);
-  await logAdministrativeAction({ action: "PROVIDER_CANDIDATE_PUBLISH", actorId: adminId, targetId: user.id, details: { candidateId: id, consent: "ADMIN_ATTESTED", emailSent } });
+  await logAdministrativeAction({
+    action: "PROVIDER_CANDIDATE_PUBLISH",
+    actorId: adminId,
+    targetId: user.id,
+    details: { candidateId: id, consent: "ADMIN_ATTESTED", emailSent },
+  });
   return { candidate: await prisma.providerCandidate.findUnique({ where: { id } }), emailSent };
 }
 
@@ -356,8 +455,11 @@ export async function getInvitation(token: string) {
 
 export async function claimInvitation(token: string, input: { password: string; licenseNumber: string }) {
   const c = await candidateForToken(token);
-  if (!c) throw new SourcingError("This invitation link is invalid or has expired. Ask NauriCare to send a new one.", 410);
-  if (await prisma.providerProfile.findUnique({ where: { licenseNumber: input.licenseNumber }, select: { id: true } })) {
+  if (!c)
+    throw new SourcingError("This invitation link is invalid or has expired. Ask NauriCare to send a new one.", 410);
+  if (
+    await prisma.providerProfile.findUnique({ where: { licenseNumber: input.licenseNumber }, select: { id: true } })
+  ) {
     throw new SourcingError("That licence number is already registered on NauriCare.", 409);
   }
   const passwordHash = await bcrypt.hash(input.password, 12);
@@ -374,7 +476,14 @@ export async function claimInvitation(token: string, input: { password: string; 
     prisma.providerProfile.upsert({
       where: { userId },
       update: { licenseNumber: input.licenseNumber },
-      create: { userId, specialty: c.specialty, licenseNumber: input.licenseNumber, verificationStatus: "APPROVED", verifiedAt: new Date(), verifiedById: c.reviewedById },
+      create: {
+        userId,
+        specialty: c.specialty,
+        licenseNumber: input.licenseNumber,
+        verificationStatus: "APPROVED",
+        verifiedAt: new Date(),
+        verifiedById: c.reviewedById,
+      },
     }),
     prisma.providerCandidate.update({
       where: { id: c.id },
@@ -385,10 +494,17 @@ export async function claimInvitation(token: string, input: { password: string; 
         inviteExpiresAt: null,
         consentSource: c.consentSource ?? "INVITE_CLAIMED",
         consentRecordedAt: c.consentRecordedAt ?? new Date(),
-        consentNote: c.consentNote ? `${c.consentNote}\nConfirmed by the provider when claiming the account.` : "Accepted by the provider via invitation.",
+        consentNote: c.consentNote
+          ? `${c.consentNote}\nConfirmed by the provider when claiming the account.`
+          : "Accepted by the provider via invitation.",
       },
     }),
   ]);
-  await logAdministrativeAction({ action: "PROVIDER_REGISTER", actorId: userId, targetId: userId, details: { via: "sourcing-invitation", candidateId: c.id } });
+  await logAdministrativeAction({
+    action: "PROVIDER_REGISTER",
+    actorId: userId,
+    targetId: userId,
+    details: { via: "sourcing-invitation", candidateId: c.id },
+  });
   return { email: c.email! };
 }

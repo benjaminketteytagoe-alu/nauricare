@@ -1,0 +1,11 @@
+node_modules
+.next
+.turbo
+coverage
+dist
+build
+package-lock.json
+packages/database/prisma/migrations
+apps/web/public
+*.json.lottie
+apps/web/src/components/triage-gate/calm-breath.json

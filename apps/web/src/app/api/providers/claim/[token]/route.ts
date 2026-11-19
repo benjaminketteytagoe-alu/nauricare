@@ -7,7 +7,12 @@ import { claimInvitation, getInvitation } from "@/server/sourcing/sourcing.servi
 
 const Claim = z.object({
   password: passwordField,
-  licenseNumber: z.string().trim().min(3, "Enter your medical licence number.").max(40).regex(/^[A-Za-z0-9/ -]+$/, "Use letters, numbers, spaces, / or - only."),
+  licenseNumber: z
+    .string()
+    .trim()
+    .min(3, "Enter your medical licence number.")
+    .max(40)
+    .regex(/^[A-Za-z0-9/ -]+$/, "Use letters, numbers, spaces, / or - only."),
   acceptTerms: z.literal(true, { error: "Please accept the Terms of Service." }),
   consentToListing: z.literal(true, { error: "Please agree to be listed for patients." }),
 });
@@ -28,7 +33,10 @@ export async function POST(req: Request, { params }: Ctx) {
   if (!parsed.ok) return parsed.response;
   const token = (await params).token;
   return handle(async () => {
-    const { email } = await claimInvitation(token, { password: parsed.data.password, licenseNumber: parsed.data.licenseNumber.toUpperCase() });
+    const { email } = await claimInvitation(token, {
+      password: parsed.data.password,
+      licenseNumber: parsed.data.licenseNumber.toUpperCase(),
+    });
     return apiSuccess({ ok: true, email }, 201);
   });
 }

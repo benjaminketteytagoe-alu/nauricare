@@ -1,11 +1,7 @@
 "use client";
 
 import { CalendarPlus } from "lucide-react";
-import {
-  generateGoogleCalendarUrl,
-  generateIcsFile,
-  type AppointmentForCalendar,
-} from "@/lib/calendar";
+import { generateGoogleCalendarUrl, generateIcsFile, type AppointmentForCalendar } from "@/lib/calendar";
 
 interface Props {
   appointment: AppointmentForCalendar;
@@ -31,8 +27,8 @@ export function CalendarButtons({ appointment, title, variant = "slate" }: Props
     variant === "teal"
       ? "border border-teal-300/50 text-teal-100 hover:bg-teal-700/50"
       : variant === "rose"
-      ? "border border-rose-300/50 text-rose-100 hover:bg-rose-700/50"
-      : "border border-slate-200 text-slate-700 hover:bg-slate-50";
+        ? "border border-rose-300/50 text-rose-100 hover:bg-rose-700/50"
+        : "border border-slate-200 text-slate-700 hover:bg-slate-50";
 
   return (
     <div className="flex items-center gap-1.5">

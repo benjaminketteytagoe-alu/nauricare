@@ -1,41 +1,36 @@
-import { requireRole } from "@/lib/auth-guards";
-import { prisma } from "@/lib/prisma";
 import { Calendar, Search, Clock, Video, MapPin, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { CalendarButtons } from "@/components/CalendarButtons";
+import { requireRole } from "@/lib/auth-guards";
+import { prisma } from "@/lib/prisma";
 
 export default async function ProviderSchedulePage() {
   const session = await requireRole("PROVIDER");
 
-
   // 1. Get the Practitioner Profile
   const practitioner = await prisma.practitionerProfile.findUnique({
-    where: { userId: session.user.id }
+    where: { userId: session.user.id },
   });
 
   if (!practitioner) {
-    return (
-      <div className="p-8 text-center text-gray-500">
-        Practitioner profile not found.
-      </div>
-    );
+    return <div className="p-8 text-center text-gray-500">Practitioner profile not found.</div>;
   }
 
   // 2. Fetch upcoming appointments
   const appointments = await prisma.appointment.findMany({
-    where: { 
+    where: {
       practitionerProfileId: practitioner.id,
       // Filter for upcoming dates if desired, e.g., startTime: { gte: new Date() }
     },
     include: {
       patient: {
         include: {
-          user: { select: { name: true, email: true } }
-        }
-      }
+          user: { select: { name: true, email: true } },
+        },
+      },
     },
-    orderBy: { startTime: 'asc' },
-    take: 10
+    orderBy: { startTime: "asc" },
+    take: 10,
   });
 
   return (
@@ -49,13 +44,13 @@ export default async function ProviderSchedulePage() {
           </h1>
           <p className="text-slate-500 mt-1">Manage your daily schedule and upcoming consultations.</p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input 
-              type="text" 
-              placeholder="Search appointments..." 
+            <input
+              type="text"
+              placeholder="Search appointments..."
               className="pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none w-64 bg-white"
             />
           </div>
@@ -74,29 +69,31 @@ export default async function ProviderSchedulePage() {
       ) : (
         <div className="space-y-4">
           {appointments.map((appt) => (
-            <div key={appt.id} className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-sm hover:shadow-md transition-shadow">
-              
+            <div
+              key={appt.id}
+              className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-sm hover:shadow-md transition-shadow"
+            >
               <div className="flex items-center gap-5">
                 <div className="hidden sm:flex flex-col items-center justify-center w-16 h-16 bg-blue-50 rounded-xl border border-blue-100">
                   <span className="text-xs font-bold text-blue-600 uppercase">
-                    {new Date(appt.startTime).toLocaleDateString('en-US', { month: 'short' })}
+                    {new Date(appt.startTime).toLocaleDateString("en-US", { month: "short" })}
                   </span>
-                  <span className="text-xl font-black text-blue-900">
-                    {new Date(appt.startTime).getDate()}
-                  </span>
+                  <span className="text-xl font-black text-blue-900">{new Date(appt.startTime).getDate()}</span>
                 </div>
-                
+
                 <div>
-                  <h4 className="text-lg font-bold text-slate-900">
-                    {appt.patient?.user?.name || "Unknown Patient"}
-                  </h4>
+                  <h4 className="text-lg font-bold text-slate-900">{appt.patient?.user?.name || "Unknown Patient"}</h4>
                   <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-slate-600">
                     <span className="flex items-center gap-1.5 font-medium text-slate-800">
-                      <Clock className="w-4 h-4 text-blue-500" /> 
-                      {new Date(appt.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <Clock className="w-4 h-4 text-blue-500" />
+                      {new Date(appt.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </span>
                     <span className="flex items-center gap-1.5">
-                      {appt.meetingLink ? <Video className="w-4 h-4 text-slate-400" /> : <MapPin className="w-4 h-4 text-slate-400" />}
+                      {appt.meetingLink ? (
+                        <Video className="w-4 h-4 text-slate-400" />
+                      ) : (
+                        <MapPin className="w-4 h-4 text-slate-400" />
+                      )}
                       {appt.meetingLink ? "Virtual Consultation" : "In-person Consultation"}
                     </span>
                     <span className="flex items-center gap-1.5">
@@ -133,12 +130,14 @@ export default async function ProviderSchedulePage() {
                     <Video className="w-4 h-4" /> Join Room
                   </a>
                 ) : (
-                  <button disabled className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-200 text-slate-400 rounded-xl text-sm font-medium cursor-not-allowed">
+                  <button
+                    disabled
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-200 text-slate-400 rounded-xl text-sm font-medium cursor-not-allowed"
+                  >
                     <Video className="w-4 h-4" /> No Link
                   </button>
                 )}
               </div>
-
             </div>
           ))}
         </div>

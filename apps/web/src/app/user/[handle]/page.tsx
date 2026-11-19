@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { Avatar } from "@/components/Avatar";
+import { prisma } from "@/lib/prisma";
 
 interface Props {
   params: Promise<{ handle: string }>;
@@ -30,18 +30,14 @@ export default async function UserHandlePage({ params }: Props) {
 
   if (!user) notFound();
 
-  const subtitle = user.practitionerProfile?.specialty
-    ?? user.patientProfile?.country
-    ?? null;
+  const subtitle = user.practitionerProfile?.specialty ?? user.patientProfile?.country ?? null;
 
   return (
     <div className="max-w-xl mx-auto py-12 px-4">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
         <Avatar name={user.name ?? "?"} avatarUrl={user.avatarUrl} size="lg" />
         <h1 className="mt-4 text-xl font-bold text-gray-900">{user.name}</h1>
-        {user.handle && (
-          <p className="text-sm text-teal-600 font-medium">@{user.handle}</p>
-        )}
+        {user.handle && <p className="text-sm text-teal-600 font-medium">@{user.handle}</p>}
         {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
         {user.role === "PROVIDER" && (
           <span className="inline-block mt-2 text-[11px] font-extrabold tracking-wide px-3 py-1 rounded-full bg-teal-50 text-teal-700 border border-teal-100">

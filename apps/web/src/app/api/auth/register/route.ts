@@ -1,13 +1,13 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
-import { z } from "zod";
 import { randomBytes, createHash } from "crypto";
-import { verifyTurnstileToken } from "@/lib/turnstile";
-import { getClientIp } from "@/lib/getClientIp";
-import { passwordField } from "@/lib/validation/password";
+import bcrypt from "bcryptjs";
+import { NextResponse } from "next/server";
+import { z } from "zod";
 import { sendVerificationEmail } from "@/lib/email";
+import { getClientIp } from "@/lib/getClientIp";
+import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
+import { passwordField } from "@/lib/validation/password";
 
 const privacyField = z.boolean().refine((v) => v === true, {
   message: "You must consent to the privacy policy",
@@ -56,15 +56,9 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    const isHuman = await verifyTurnstileToken(
-      body?.turnstileToken ?? "",
-      ip,
-    );
+    const isHuman = await verifyTurnstileToken(body?.turnstileToken ?? "", ip);
     if (!isHuman) {
-      return NextResponse.json(
-        { error: "Security verification failed. Please try again." },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: "Security verification failed. Please try again." }, { status: 403 });
     }
 
     // Sanitize phone before validation — strip spaces, dashes, parens that a
@@ -170,15 +164,9 @@ export async function POST(req: Request) {
       console.error("[VERIFICATION_EMAIL_ERROR]", emailError);
     }
 
-    return NextResponse.json(
-      { message: "User registered successfully", user: userWithoutPassword },
-      { status: 201 }
-    );
+    return NextResponse.json({ message: "User registered successfully", user: userWithoutPassword }, { status: 201 });
   } catch (error) {
     console.error("Registration error:", error);
-    return NextResponse.json(
-      { error: "An error occurred during registration" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "An error occurred during registration" }, { status: 500 });
   }
 }

@@ -1,7 +1,7 @@
+import type { Role } from "@prisma/client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getServerSession, type Session } from "next-auth";
-import type { Role } from "@prisma/client";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export const ROLE_HOME: Record<Role, string> = {
@@ -27,7 +27,12 @@ export async function requireRole(role: Role): Promise<AuthedSession> {
 }
 
 /** Route handler / server action helper: the caller's user, or null. */
-export async function getSessionUser(): Promise<{ id: string; role: Role; email?: string | null; name?: string | null } | null> {
+export async function getSessionUser(): Promise<{
+  id: string;
+  role: Role;
+  email?: string | null;
+  name?: string | null;
+} | null> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
   return {

@@ -1,3 +1,4 @@
+import "server-only";
 import { safeGet } from "@/server/net/safeFetch";
 
 // Minimal robots.txt support (RFC 9309): pick the group for our agent, else
@@ -48,7 +49,14 @@ function parse(text: string): Rule[] {
 function matches(pattern: string, path: string): boolean {
   const anchored = pattern.endsWith("$");
   const body = anchored ? pattern.slice(0, -1) : pattern;
-  const re = new RegExp("^" + body.split("*").map((p) => p.replace(/[.+?^${}()|[\]\\]/g, "\\$&")).join(".*") + (anchored ? "$" : ""));
+  const re = new RegExp(
+    "^" +
+      body
+        .split("*")
+        .map((p) => p.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
+        .join(".*") +
+      (anchored ? "$" : ""),
+  );
   return re.test(path);
 }
 
@@ -66,7 +74,10 @@ export async function loadRobots(origin: string): Promise<RobotsPolicy> {
       const path = url.pathname + url.search;
       let best: Rule | null = null;
       for (const rule of rules) {
-        if (matches(rule.path, path) && (!best || rule.path.length > best.path.length || (rule.path.length === best.path.length && rule.allow))) {
+        if (
+          matches(rule.path, path) &&
+          (!best || rule.path.length > best.path.length || (rule.path.length === best.path.length && rule.allow))
+        ) {
           best = rule;
         }
       }

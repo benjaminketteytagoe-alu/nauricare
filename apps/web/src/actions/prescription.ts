@@ -1,13 +1,13 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth/next";
+import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { sanitizePlainText } from "@/lib/sanitize";
-import { recordActivity } from "@/server/activity/activity.service";
 import { firstIssue, idSchema } from "@/lib/validation/common";
+import { recordActivity } from "@/server/activity/activity.service";
 
 const CreatePrescriptionInput = z.object({
   patientId: idSchema,
@@ -78,7 +78,10 @@ export async function createPrescription(data: {
 
   // An unknown pharmacy id would otherwise fail on the foreign key.
   if (data.suggestedPharmacyId) {
-    const pharmacy = await prisma.pharmacy.findUnique({ where: { id: data.suggestedPharmacyId }, select: { id: true } });
+    const pharmacy = await prisma.pharmacy.findUnique({
+      where: { id: data.suggestedPharmacyId },
+      select: { id: true },
+    });
     if (!pharmacy) return { success: false, error: "Suggested pharmacy not found" };
   }
 
@@ -133,7 +136,12 @@ export async function routeToPharmacy(prescriptionId: string, pharmacyId: string
     data: { pharmacyId, status: "ROUTED" },
   });
   if (routed.count === 0) return { success: false, error: "Prescription has already been routed" };
-  await recordActivity({ userId: session.user.id, type: "PRESCRIPTION_ROUTED", title: "Sent a prescription to a pharmacy", ref: { type: "Prescription", id: prescriptionId } });
+  await recordActivity({
+    userId: session.user.id,
+    type: "PRESCRIPTION_ROUTED",
+    title: "Sent a prescription to a pharmacy",
+    ref: { type: "Prescription", id: prescriptionId },
+  });
 
   revalidatePath("/dashboard/prescriptions");
   return { success: true };

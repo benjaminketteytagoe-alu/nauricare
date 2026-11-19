@@ -131,16 +131,21 @@ function rulesOnlyResult(floor: TriageSeverity, flags: string[]): TriageResult {
       "Some of what you described can be a sign of a medical emergency. Please seek care today. If symptoms are severe, call emergency services now.",
     MODERATE:
       "What you described is worth having checked by a clinician in the next few days. Keep noting how your symptoms change.",
-    LOW:
-      "We saved your log. Our AI assistant is unavailable right now, so we could not add a personalised insight. Nothing you entered matched our urgent warning signs.",
+    LOW: "We saved your log. Our AI assistant is unavailable right now, so we could not add a personalised insight. Nothing you entered matched our urgent warning signs.",
   };
   return {
     severity: floor,
     summary: summaries[floor],
-    recommendedSpecialty: floor === "URGENT" ? "Emergency Medicine" : floor === "MODERATE" ? "Obstetrics & Gynecology" : "General Practitioner",
+    recommendedSpecialty:
+      floor === "URGENT"
+        ? "Emergency Medicine"
+        : floor === "MODERATE"
+          ? "Obstetrics & Gynecology"
+          : "General Practitioner",
     redFlags: flags,
     selfCare: [],
-    seekCareWithin: floor === "URGENT" ? "Today" : floor === "MODERATE" ? "Within 3 days" : "At your next routine visit",
+    seekCareWithin:
+      floor === "URGENT" ? "Today" : floor === "MODERATE" ? "Within 3 days" : "At your next routine visit",
     engine: "rules",
   };
 }

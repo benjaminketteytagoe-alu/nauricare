@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
 import { logAdministrativeAction } from "@/lib/audit";
+import { prisma } from "@/lib/prisma";
 
 const createRecordSchema = z.object({
   patientProfileId: z.string().min(1),
@@ -112,7 +112,7 @@ export async function POST(req: Request) {
     const { patientProfileId, type, content, notes, documentUrl } = parsed.data;
 
     const practitioner = await prisma.practitionerProfile.findUnique({
-      where: { userId: session.user.id }
+      where: { userId: session.user.id },
     });
 
     if (!practitioner) return new NextResponse("Practitioner not found", { status: 404 });
@@ -135,7 +135,7 @@ export async function POST(req: Request) {
         content,
         notes: notes || null,
         documentUrl: documentUrl || null,
-      }
+      },
     });
 
     return NextResponse.json(record, { status: 201 });

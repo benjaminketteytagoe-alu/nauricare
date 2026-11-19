@@ -25,15 +25,10 @@ export function VerifyEmail({ name, verifyUrl }: VerifyEmailProps) {
       <Tailwind>
         <Body className="bg-gray-50 font-sans">
           <Container className="mx-auto max-w-lg py-8 px-4">
-
             {/* Header */}
             <Section className="bg-teal-700 rounded-t-2xl px-8 py-6 text-center">
-              <Heading className="text-white text-2xl font-bold m-0">
-                NauriCare
-              </Heading>
-              <Text className="text-teal-100 text-sm mt-1 mb-0">
-                Women&apos;s Health Platform
-              </Text>
+              <Heading className="text-white text-2xl font-bold m-0">NauriCare</Heading>
+              <Text className="text-teal-100 text-sm mt-1 mb-0">Women&apos;s Health Platform</Text>
             </Section>
 
             {/* Body card */}
@@ -42,8 +37,7 @@ export function VerifyEmail({ name, verifyUrl }: VerifyEmailProps) {
                 Welcome to NauriCare, {name} 👋
               </Heading>
               <Text className="text-gray-600 text-sm leading-relaxed mt-0">
-                Thanks for joining NauriCare. Please verify your email address to activate
-                your account and get started.
+                Thanks for joining NauriCare. Please verify your email address to activate your account and get started.
               </Text>
 
               <Hr className="border-gray-100 my-6" />
@@ -56,8 +50,8 @@ export function VerifyEmail({ name, verifyUrl }: VerifyEmailProps) {
               </Button>
 
               <Text className="text-gray-400 text-xs mt-6 mb-0">
-                This link expires in 24 hours. If you didn&apos;t create a NauriCare account,
-                you can safely ignore this email.
+                This link expires in 24 hours. If you didn&apos;t create a NauriCare account, you can safely ignore this
+                email.
               </Text>
             </Section>
 
@@ -67,7 +61,6 @@ export function VerifyEmail({ name, verifyUrl }: VerifyEmailProps) {
               <br />
               You&apos;re receiving this because this email was used to register a NauriCare account.
             </Text>
-
           </Container>
         </Body>
       </Tailwind>

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { runTriage, toLegacyRiskLevel } from "@/lib/triage/engine";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getTriageConsent } from "@/lib/consent";
+import { prisma } from "@/lib/prisma";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { runTriage, toLegacyRiskLevel } from "@/lib/triage/engine";
 import { recordActivity } from "@/server/activity/activity.service";
 
 const SymptomInput = z.object({
@@ -25,7 +25,10 @@ export async function POST(req: Request) {
     const consent = await getTriageConsent(session.user.id);
     if (!consent.valid) {
       return NextResponse.json(
-        { error: "Please review and accept the AI triage consent before using the symptom checker.", code: "CONSENT_REQUIRED" },
+        {
+          error: "Please review and accept the AI triage consent before using the symptom checker.",
+          code: "CONSENT_REQUIRED",
+        },
         { status: 403 },
       );
     }
@@ -78,13 +81,9 @@ export async function POST(req: Request) {
       },
       { status: 201 },
     );
-
   } catch (error) {
     console.error("Detailed Backend Error:", error instanceof Error ? error.message : error);
-    return NextResponse.json(
-      { error: "Failed to process symptoms. Check terminal for details." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to process symptoms. Check terminal for details." }, { status: 500 });
   }
 }
 

@@ -1,12 +1,27 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import {
-  Activity, Bot, CalendarCheck, ChevronDown, FileHeart, Hospital, Link2, Link2Off, LogIn,
-  MessageSquareHeart, Pill, ShieldCheck, ShieldOff, UserCog, Droplet, Eye, type LucideIcon,
-} from "lucide-react";
 import type { PatientActivityType } from "@prisma/client";
+import {
+  Activity,
+  Bot,
+  CalendarCheck,
+  ChevronDown,
+  FileHeart,
+  Hospital,
+  Link2,
+  Link2Off,
+  LogIn,
+  MessageSquareHeart,
+  Pill,
+  ShieldCheck,
+  ShieldOff,
+  UserCog,
+  Droplet,
+  Eye,
+  type LucideIcon,
+} from "lucide-react";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { Callout } from "@/components/ui/callout";
 import { SEVERITY_TONE, StatusChip } from "@/components/ui/status-chip";
 import { formatDate, formatTime } from "@/lib/format";
@@ -42,9 +57,21 @@ export const ACTIVITY_FILTERS: { label: string; types: PatientActivityType[] }[]
   { label: "All", types: [] },
   { label: "AI", types: ["AI_TRIAGE"] },
   { label: "Bookings", types: ["APPOINTMENT_BOOKED", "PRESCRIPTION_ROUTED"] },
-  { label: "Referrals", types: ["REFERRAL_CREATED", "REFERRAL_SHARED", "REFERRAL_SHARE_OPENED", "REFERRAL_SHARE_REVOKED", "INSURANCE_UPDATED"] },
+  {
+    label: "Referrals",
+    types: [
+      "REFERRAL_CREATED",
+      "REFERRAL_SHARED",
+      "REFERRAL_SHARE_OPENED",
+      "REFERRAL_SHARE_REVOKED",
+      "INSURANCE_UPDATED",
+    ],
+  },
   { label: "Health log", types: ["CYCLE_LOGGED"] },
-  { label: "Account", types: ["SIGNED_IN", "CONSENT_GRANTED", "CONSENT_WITHDRAWN", "PROFILE_UPDATED", "FEEDBACK_SUBMITTED"] },
+  {
+    label: "Account",
+    types: ["SIGNED_IN", "CONSENT_GRANTED", "CONSENT_WITHDRAWN", "PROFILE_UPDATED", "FEEDBACK_SUBMITTED"],
+  },
 ];
 
 const REF_LINKS: Record<string, string> = {
@@ -55,7 +82,13 @@ const REF_LINKS: Record<string, string> = {
 
 function AiDetails({ details }: { details: Record<string, unknown> }) {
   const prompt = (details.prompt ?? {}) as { symptoms?: string[]; notes?: string; cycleDay?: number };
-  const response = (details.response ?? {}) as { severity?: string; summary?: string; recommendedSpecialty?: string; redFlags?: string[]; engine?: string };
+  const response = (details.response ?? {}) as {
+    severity?: string;
+    summary?: string;
+    recommendedSpecialty?: string;
+    redFlags?: string[];
+    engine?: string;
+  };
   return (
     <div className="mt-3 space-y-3 text-sm">
       <div className="rounded-xl bg-slate-50 p-3">
@@ -67,14 +100,27 @@ function AiDetails({ details }: { details: Record<string, unknown> }) {
       <div className="rounded-xl border border-nc-divider p-3">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">AI answered</p>
-          {response.severity && <StatusChip tone={SEVERITY_TONE[response.severity] ?? "neutral"}>{response.severity}</StatusChip>}
-          {response.engine && <span className="text-xs text-slate-400">via {response.engine === "medgemma" ? "MedGemma" : response.engine === "gemini" ? "Gemini" : "safety rules"}</span>}
+          {response.severity && (
+            <StatusChip tone={SEVERITY_TONE[response.severity] ?? "neutral"}>{response.severity}</StatusChip>
+          )}
+          {response.engine && (
+            <span className="text-xs text-slate-400">
+              via{" "}
+              {response.engine === "medgemma" ? "MedGemma" : response.engine === "gemini" ? "Gemini" : "safety rules"}
+            </span>
+          )}
         </div>
         {response.summary && <p className="mt-2 leading-relaxed text-slate-700">{response.summary}</p>}
-        {response.recommendedSpecialty && <p className="mt-2 text-slate-600">Suggested specialist: <span className="font-medium text-nc-ink">{response.recommendedSpecialty}</span></p>}
+        {response.recommendedSpecialty && (
+          <p className="mt-2 text-slate-600">
+            Suggested specialist: <span className="font-medium text-nc-ink">{response.recommendedSpecialty}</span>
+          </p>
+        )}
         {response.redFlags?.length ? (
           <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600">
-            {response.redFlags.map((f) => <li key={f}>{f}</li>)}
+            {response.redFlags.map((f) => (
+              <li key={f}>{f}</li>
+            ))}
           </ul>
         ) : null}
       </div>
@@ -83,7 +129,15 @@ function AiDetails({ details }: { details: Record<string, unknown> }) {
 }
 
 /** Patient activity timeline. `types` fixes the filter (e.g. AI history); otherwise filter chips are shown. */
-export function ActivityTimeline({ types, expandAi = false, emptyText }: { types?: PatientActivityType[]; expandAi?: boolean; emptyText?: string }) {
+export function ActivityTimeline({
+  types,
+  expandAi = false,
+  emptyText,
+}: {
+  types?: PatientActivityType[];
+  expandAi?: boolean;
+  emptyText?: string;
+}) {
   const [filter, setFilter] = useState(0);
   const [items, setItems] = useState<ActivityItem[] | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -93,14 +147,17 @@ export function ActivityTimeline({ types, expandAi = false, emptyText }: { types
   const activeTypes = types ?? ACTIVITY_FILTERS[filter].types;
   const typeKey = activeTypes.join(",");
 
-  const load = useCallback(async (after: string | null) => {
-    const qs = new URLSearchParams();
-    if (typeKey) qs.set("types", typeKey);
-    if (after) qs.set("cursor", after);
-    const res = await fetch(`/api/activity?${qs}`);
-    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Could not load your activity.");
-    return (await res.json()) as { items: ActivityItem[]; nextCursor: string | null };
-  }, [typeKey]);
+  const load = useCallback(
+    async (after: string | null) => {
+      const qs = new URLSearchParams();
+      if (typeKey) qs.set("types", typeKey);
+      if (after) qs.set("cursor", after);
+      const res = await fetch(`/api/activity?${qs}`);
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "Could not load your activity.");
+      return (await res.json()) as { items: ActivityItem[]; nextCursor: string | null };
+    },
+    [typeKey],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -131,12 +188,13 @@ export function ActivityTimeline({ types, expandAi = false, emptyText }: { types
     }
   }
 
-  const toggle = (id: string) => setOpen((s) => {
-    const n = new Set(s);
-    if (n.has(id)) n.delete(id);
-    else n.add(id);
-    return n;
-  });
+  const toggle = (id: string) =>
+    setOpen((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
 
   // Group by calendar day for a readable timeline.
   const groups: { day: string; items: ActivityItem[] }[] = [];
@@ -152,23 +210,40 @@ export function ActivityTimeline({ types, expandAi = false, emptyText }: { types
       {!types && (
         <div className="flex flex-wrap gap-2" role="group" aria-label="Filter activity">
           {ACTIVITY_FILTERS.map((f, i) => (
-            <button key={f.label} type="button" aria-pressed={filter === i} onClick={() => { setItems(null); setFilter(i); }} className="m3-chip">
+            <button
+              key={f.label}
+              type="button"
+              aria-pressed={filter === i}
+              onClick={() => {
+                setItems(null);
+                setFilter(i);
+              }}
+              className="m3-chip"
+            >
               {f.label}
             </button>
           ))}
         </div>
       )}
 
-      {error && <Callout tone="danger" role="alert">{error}</Callout>}
+      {error && (
+        <Callout tone="danger" role="alert">
+          {error}
+        </Callout>
+      )}
 
       {items === null && !error ? (
         <div className="space-y-3" aria-busy="true">
-          {[0, 1, 2].map((i) => <div key={i} className="h-16 animate-pulse rounded-2xl bg-white" />)}
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-16 animate-pulse rounded-2xl bg-white" />
+          ))}
         </div>
       ) : items && items.length === 0 ? (
         <div className="card-surface p-10 text-center">
           <Activity className="mx-auto h-10 w-10 text-slate-300" aria-hidden />
-          <p className="mt-3 text-sm text-slate-600">{emptyText ?? "Nothing here yet. Your actions on NauriCare will appear here."}</p>
+          <p className="mt-3 text-sm text-slate-600">
+            {emptyText ?? "Nothing here yet. Your actions on NauriCare will appear here."}
+          </p>
         </div>
       ) : (
         groups.map((g) => (
@@ -188,11 +263,31 @@ export function ActivityTimeline({ types, expandAi = false, emptyText }: { types
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-nc-ink">{it.title}</p>
-                        <p className="text-xs text-slate-500">{formatTime(it.createdAt)}{href && <> · <Link href={href} className="font-medium text-nc-primary hover:underline">View</Link></>}</p>
+                        <p className="text-xs text-slate-500">
+                          {formatTime(it.createdAt)}
+                          {href && (
+                            <>
+                              {" "}
+                              ·{" "}
+                              <Link href={href} className="font-medium text-nc-primary hover:underline">
+                                View
+                              </Link>
+                            </>
+                          )}
+                        </p>
                       </div>
                       {isAi && !expandAi && (
-                        <button type="button" onClick={() => toggle(it.id)} aria-expanded={expanded} className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label={expanded ? "Hide details" : "Show what you asked and the AI's answer"}>
-                          <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} aria-hidden />
+                        <button
+                          type="button"
+                          onClick={() => toggle(it.id)}
+                          aria-expanded={expanded}
+                          className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                          aria-label={expanded ? "Hide details" : "Show what you asked and the AI's answer"}
+                        >
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+                            aria-hidden
+                          />
                         </button>
                       )}
                     </div>
@@ -207,7 +302,9 @@ export function ActivityTimeline({ types, expandAi = false, emptyText }: { types
 
       {cursor && (
         <div className="text-center">
-          <button type="button" onClick={loadMore} disabled={loadingMore} className="m3-btn-outlined">{loadingMore ? "Loading…" : "Load older activity"}</button>
+          <button type="button" onClick={loadMore} disabled={loadingMore} className="m3-btn-outlined">
+            {loadingMore ? "Loading…" : "Load older activity"}
+          </button>
         </div>
       )}
     </div>

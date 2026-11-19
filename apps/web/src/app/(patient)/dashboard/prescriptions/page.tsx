@@ -1,11 +1,8 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { Pill, Store, CheckCircle2, Clock, Truck, ChevronDown, AlertCircle, Sparkles } from "lucide-react";
 import { useSession } from "next-auth/react";
-import {
-  Pill, Store, CheckCircle2, Clock, Truck,
-  ChevronDown, AlertCircle, Sparkles,
-} from "lucide-react";
+import { useState, useEffect, useTransition } from "react";
 import { routeToPharmacy } from "@/actions/prescription";
 
 interface PharmacyOption {
@@ -27,10 +24,7 @@ interface Prescription {
   suggestedPharmacy: { id: string; name: string; address: string } | null;
 }
 
-const STATUS_BADGE: Record<
-  Prescription["status"],
-  { label: string; class: string; icon: React.ReactNode }
-> = {
+const STATUS_BADGE: Record<Prescription["status"], { label: string; class: string; icon: React.ReactNode }> = {
   PENDING: {
     label: "Awaiting Routing",
     class: "bg-amber-50 text-amber-700 border-amber-200",
@@ -61,10 +55,7 @@ export default function PatientPrescriptionsPage() {
 
   useEffect(() => {
     if (!session?.user?.id) return;
-    Promise.all([
-      fetch("/api/prescriptions").then((r) => r.json()),
-      fetch("/api/pharmacies").then((r) => r.json()),
-    ])
+    Promise.all([fetch("/api/prescriptions").then((r) => r.json()), fetch("/api/pharmacies").then((r) => r.json())])
       .then(([rxData, phData]) => {
         const rxList: Prescription[] = Array.isArray(rxData) ? rxData : [];
         const phList: PharmacyOption[] = Array.isArray(phData) ? phData : [];
@@ -103,9 +94,7 @@ export default function PatientPrescriptionsPage() {
               ? {
                   ...rx,
                   status: "ROUTED",
-                  pharmacy: pharmacy
-                    ? { id: pharmacy.id, name: pharmacy.name, address: pharmacy.address }
-                    : null,
+                  pharmacy: pharmacy ? { id: pharmacy.id, name: pharmacy.name, address: pharmacy.address } : null,
                 }
               : rx,
           ),
@@ -118,11 +107,7 @@ export default function PatientPrescriptionsPage() {
   };
 
   if (isFetching) {
-    return (
-      <div className="max-w-3xl mx-auto p-8 text-center text-gray-400">
-        Loading your prescriptions…
-      </div>
-    );
+    return <div className="max-w-3xl mx-auto p-8 text-center text-gray-400">Loading your prescriptions…</div>;
   }
 
   return (
@@ -143,9 +128,7 @@ export default function PatientPrescriptionsPage() {
             <Pill className="w-8 h-8 text-rose-400" />
           </div>
           <h3 className="text-lg font-bold text-gray-900">No Prescriptions Yet</h3>
-          <p className="text-gray-500 mt-1 text-sm">
-            Your provider will issue prescriptions after a consultation.
-          </p>
+          <p className="text-gray-500 mt-1 text-sm">Your provider will issue prescriptions after a consultation.</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -157,10 +140,7 @@ export default function PatientPrescriptionsPage() {
             const isSuggestionSelected = suggested && selectedId === suggested.id;
 
             return (
-              <div
-                key={rx.id}
-                className="card-surface overflow-hidden"
-              >
+              <div key={rx.id} className="card-surface overflow-hidden">
                 {/* Header */}
                 <div className="p-5 border-b border-gray-50">
                   <div className="flex items-start justify-between gap-4">
@@ -184,8 +164,7 @@ export default function PatientPrescriptionsPage() {
                   </div>
                   <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
                     <span>
-                      Issued by{" "}
-                      <span className="font-medium text-gray-700">Dr. {rx.provider.name}</span>
+                      Issued by <span className="font-medium text-gray-700">Dr. {rx.provider.name}</span>
                     </span>
                     <span>
                       {new Date(rx.createdAt).toLocaleDateString("en-US", {
@@ -227,9 +206,7 @@ export default function PatientPrescriptionsPage() {
                         <div className="relative flex-1">
                           <select
                             value={selectedId}
-                            onChange={(e) =>
-                              setSelections((prev) => ({ ...prev, [rx.id]: e.target.value }))
-                            }
+                            onChange={(e) => setSelections((prev) => ({ ...prev, [rx.id]: e.target.value }))}
                             className="w-full appearance-none pl-3 pr-8 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-rose-500"
                           >
                             <option value="">— Choose a pharmacy —</option>

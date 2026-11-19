@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { useTurnstileSize } from "@/lib/useTurnstileSize";
+import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { useTurnstileSize } from "@/lib/useTurnstileSize";
 
 export default function ForgotPasswordPage() {
   const turnstileSize = useTurnstileSize();
@@ -61,10 +61,14 @@ export default function ForgotPasswordPage() {
               </div>
               <h2 className="text-2xl font-bold text-gray-900">Check your email</h2>
               <p className="text-gray-500 text-sm leading-relaxed">
-                If an account exists for <span className="font-medium text-gray-700">{email}</span>, we&apos;ve sent a password reset link. Check your inbox and spam folder.
+                If an account exists for <span className="font-medium text-gray-700">{email}</span>, we&apos;ve sent a
+                password reset link. Check your inbox and spam folder.
               </p>
               <p className="text-xs text-gray-400">The link expires in 1 hour.</p>
-              <Link href="/login" className="inline-flex items-center gap-2 text-sm text-teal-600 hover:underline font-medium mt-4">
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 text-sm text-teal-600 hover:underline font-medium mt-4"
+              >
                 <ArrowLeft className="w-4 h-4" />
                 Back to login
               </Link>
@@ -78,16 +82,12 @@ export default function ForgotPasswordPage() {
                   </div>
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900">Forgot your password?</h2>
-                <p className="text-gray-500 text-sm">
-                  Enter your email and we&apos;ll send you a secure reset link.
-                </p>
+                <p className="text-gray-500 text-sm">Enter your email and we&apos;ll send you a secure reset link.</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
-                  <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-200">
-                    {error}
-                  </div>
+                  <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-200">{error}</div>
                 )}
                 <div className="space-y-1.5">
                   <Label htmlFor="email">Email Address</Label>
@@ -102,7 +102,9 @@ export default function ForgotPasswordPage() {
                   />
                 </div>
 
-                <Turnstile key={turnstileSize} options={{ size: turnstileSize }}
+                <Turnstile
+                  key={turnstileSize}
+                  options={{ size: turnstileSize }}
                   siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
                   onSuccess={setTurnstileToken}
                   onExpire={() => setTurnstileToken("")}
@@ -119,7 +121,10 @@ export default function ForgotPasswordPage() {
               </form>
 
               <p className="text-center">
-                <Link href="/login" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-teal-600 transition-colors">
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-teal-600 transition-colors"
+                >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   Back to login
                 </Link>

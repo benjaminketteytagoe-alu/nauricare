@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> | { id: string } }) {
   try {
-
     const resolvedParams = await params;
     const appointmentId = resolvedParams.id;
 
@@ -16,8 +15,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       where: { id: appointmentId },
       include: {
         patient: { include: { user: { select: { name: true, email: true } } } },
-        practitioner: { include: { user: { select: { name: true, email: true } } } }
-      }
+        practitioner: { include: { user: { select: { name: true, email: true } } } },
+      },
     });
 
     if (!appointment) return new NextResponse("Appointment not found", { status: 404 });

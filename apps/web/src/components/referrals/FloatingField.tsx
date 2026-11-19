@@ -30,9 +30,13 @@ export function FloatingField({
         </label>
       </div>
       {error ? (
-        <p id={`${id}-error`} className="mt-1 px-1 text-xs font-medium text-nc-berry">{error}</p>
+        <p id={`${id}-error`} className="mt-1 px-1 text-xs font-medium text-nc-berry">
+          {error}
+        </p>
       ) : hint ? (
-        <p id={`${id}-hint`} className="mt-1 px-1 text-xs text-slate-500">{hint}</p>
+        <p id={`${id}-hint`} className="mt-1 px-1 text-xs text-slate-500">
+          {hint}
+        </p>
       ) : null}
     </div>
   );

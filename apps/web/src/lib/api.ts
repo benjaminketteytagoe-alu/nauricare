@@ -33,7 +33,11 @@ export async function parseJson<S extends z.ZodType>(
 
 /** Error a service can throw to choose the HTTP status and user-facing message. */
 export class ServiceError extends Error {
-  constructor(message: string, public status = 400, public code?: string) {
+  constructor(
+    message: string,
+    public status = 400,
+    public code?: string,
+  ) {
     super(message);
   }
 }

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
-
 import { SITE_URL as BASE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -9,8 +8,7 @@ export const metadata: Metadata = {
 
   title: {
     template: "%s | NauriCare",
-    default:
-      "NauriCare — Secure Telemedicine & Women’s Health Platform in Kigali, Rwanda",
+    default: "NauriCare — Secure Telemedicine & Women’s Health Platform in Kigali, Rwanda",
   },
 
   description:

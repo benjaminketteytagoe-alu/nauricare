@@ -20,8 +20,8 @@ export async function GET() {
     const profile = await prisma.patientProfile.findUnique({
       where: { userId: session.user.id },
       include: {
-        user: { select: { name: true, email: true, phoneNumber: true, avatarUrl: true, googlePhotoUrl: true } }
-      }
+        user: { select: { name: true, email: true, phoneNumber: true, avatarUrl: true, googlePhotoUrl: true } },
+      },
     });
 
     if (!profile) return new NextResponse("Profile not found", { status: 404 });
@@ -33,7 +33,7 @@ export async function GET() {
       googlePhotoUrl: profile.user.googlePhotoUrl,
       healthGoals: profile.healthGoals,
       menstrualCycle: profile.menstrualCycle || "28",
-      emergencyContact: profile.emergencyContact || ""
+      emergencyContact: profile.emergencyContact || "",
     });
   } catch (error) {
     console.error("[GET_SETTINGS_ERROR]", error);
@@ -69,7 +69,11 @@ export async function POST(req: Request) {
       },
     });
 
-    await recordActivity({ userId: session.user.id, type: "PROFILE_UPDATED", title: "Updated health profile settings" });
+    await recordActivity({
+      userId: session.user.id,
+      type: "PROFILE_UPDATED",
+      title: "Updated health profile settings",
+    });
     return NextResponse.json(updatedProfile);
   } catch (error) {
     console.error("[POST_SETTINGS_ERROR]", error);

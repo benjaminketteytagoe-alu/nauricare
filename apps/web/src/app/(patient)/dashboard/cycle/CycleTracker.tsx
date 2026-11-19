@@ -1,21 +1,22 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { CalendarRange, ChevronLeft, ChevronRight, Droplet, Loader2, Trash2, X } from "lucide-react";
-import { addDays, diffInDays, localDateKey, parseDateKey, toDateKey } from "@/lib/cycleDates";
-import { phaseForDay, PHASES } from "@/lib/cycle/catalog";
-import { Callout } from "@/components/ui/callout";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
+import { CycleInsights } from "@/components/cycle/CycleInsights";
 import { CycleRing } from "@/components/cycle/CycleRing";
 import { DayLogPanel } from "@/components/cycle/DayLogPanel";
 import { PhaseCard } from "@/components/cycle/PhaseCard";
-import { CycleInsights } from "@/components/cycle/CycleInsights";
+import { Callout } from "@/components/ui/callout";
+import { phaseForDay, PHASES } from "@/lib/cycle/catalog";
+import { addDays, diffInDays, localDateKey, parseDateKey, toDateKey } from "@/lib/cycleDates";
 import { deletePeriod, endPeriod, logPeriodRange, startPeriod, type CycleData } from "./actions";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 const MAX_PERIOD_DAYS = 14;
-const fmt = (key: string, opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" }) => parseDateKey(key).toLocaleDateString("en-GB", { ...opts, timeZone: "UTC" });
+const fmt = (key: string, opts: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" }) =>
+  parseDateKey(key).toLocaleDateString("en-GB", { ...opts, timeZone: "UTC" });
 const inRange = (k: string, a: string, b: string) => k >= a && k <= b;
 
 function monthGrid(year: number, month: number) {
@@ -31,12 +32,20 @@ function monthGrid(year: number, month: number) {
 // The viewer's local date; null during server render (avoids hydration mismatch).
 const subscribe = () => () => {};
 function useTodayKey() {
-  return useSyncExternalStore(subscribe, () => localDateKey(), () => null);
+  return useSyncExternalStore(
+    subscribe,
+    () => localDateKey(),
+    () => null,
+  );
 }
 
 export function CycleTracker({ data }: { data: CycleData }) {
   const todayKey = useTodayKey();
-  return todayKey ? <Tracker data={data} todayKey={todayKey} /> : <p className="py-16 text-center text-slate-500">Loading your cycle…</p>;
+  return todayKey ? (
+    <Tracker data={data} todayKey={todayKey} />
+  ) : (
+    <p className="py-16 text-center text-slate-500">Loading your cycle…</p>
+  );
 }
 
 function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
@@ -54,9 +63,13 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
   // Ongoing = the latest period, with no end date, started within 14 days.
   // Older rows without an end date are shown at the average period length.
   const latest = logs[0];
-  const openPeriod = latest && !latest.endDate && diffInDays(parseDateKey(todayKey), parseDateKey(latest.startDate)) < MAX_PERIOD_DAYS ? latest : null;
+  const openPeriod =
+    latest && !latest.endDate && diffInDays(parseDateKey(todayKey), parseDateKey(latest.startDate)) < MAX_PERIOD_DAYS
+      ? latest
+      : null;
   const endOf = (l: (typeof logs)[number]) =>
-    l.endDate ?? (l === openPeriod ? todayKey : toDateKey(addDays(parseDateKey(l.startDate), averages.periodLength - 1)));
+    l.endDate ??
+    (l === openPeriod ? todayKey : toDateKey(addDays(parseDateKey(l.startDate), averages.periodLength - 1)));
   const cells = useMemo(() => monthGrid(view.y, view.m), [view]);
 
   // Where today sits in the cycle.
@@ -65,7 +78,12 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
   const stale = cycleDay !== null && cycleDay > averages.cycleLength * 2; // old data: don't guess a phase
   const daysToNext = prediction ? diffInDays(parseDateKey(prediction.nextStart), parseDateKey(todayKey)) : null;
   const onPeriod = !!openPeriod || logs.some((l) => inRange(todayKey, l.startDate, endOf(l)));
-  const phase = cycleDay && !stale ? (onPeriod ? "menstrual" : phaseForDay(Math.min(cycleDay, averages.cycleLength), averages.cycleLength, averages.periodLength)) : null;
+  const phase =
+    cycleDay && !stale
+      ? onPeriod
+        ? "menstrual"
+        : phaseForDay(Math.min(cycleDay, averages.cycleLength), averages.cycleLength, averages.periodLength)
+      : null;
 
   let headline = "Welcome";
   let subline = "Log your period to see your cycle.";
@@ -117,62 +135,145 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
     return { logged, predicted, fertile, ovulation, ranged };
   };
 
-  const monthLabel = new Date(Date.UTC(view.y, view.m, 1)).toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
-  const selectedLabel = selected === todayKey ? "Today" : fmt(selected, { weekday: "short", day: "numeric", month: "short" });
-  const heavy = [...dayLogs.values()].filter((d) => d.flow === "HEAVY" && diffInDays(parseDateKey(todayKey), parseDateKey(d.date)) < 10).length >= 3;
+  const monthLabel = new Date(Date.UTC(view.y, view.m, 1)).toLocaleDateString("en-GB", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+  const selectedLabel =
+    selected === todayKey ? "Today" : fmt(selected, { weekday: "short", day: "numeric", month: "short" });
+  const heavy =
+    [...dayLogs.values()].filter(
+      (d) => d.flow === "HEAVY" && diffInDays(parseDateKey(todayKey), parseDateKey(d.date)) < 10,
+    ).length >= 3;
 
   return (
     <div className="space-y-6">
-      {error && <Callout tone="danger" role="alert">{error}</Callout>}
+      {error && (
+        <Callout tone="danger" role="alert">
+          {error}
+        </Callout>
+      )}
       {heavy && (
         <Callout tone="warning" title="Heavy bleeding for several days">
-          If you&apos;re soaking a pad or tampon every hour, passing large clots, or feeling dizzy or faint, please get medical advice. Heavy periods can be a sign of fibroids and are treatable.{" "}
-          <Link href="/dashboard/symptoms" className="font-semibold underline">Check your symptoms</Link>
+          If you&apos;re soaking a pad or tampon every hour, passing large clots, or feeling dizzy or faint, please get
+          medical advice. Heavy periods can be a sign of fibroids and are treatable.{" "}
+          <Link href="/dashboard/symptoms" className="font-semibold underline">
+            Check your symptoms
+          </Link>
         </Callout>
       )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
         {/* Ring + quick actions */}
-        <section aria-label="Your cycle today" className={`card-surface flex flex-col items-center gap-5 p-5 sm:p-6 ${phase ? PHASES[phase].tone.bg : ""}`}>
-          <CycleRing cycleDay={stale ? null : cycleDay} cycleLength={averages.cycleLength} periodLength={averages.periodLength} headline={headline} subline={subline} phase={phase} />
-          {phase && <p className={`rounded-full bg-white/80 px-4 py-1.5 text-sm font-semibold ${PHASES[phase].tone.text}`}>{PHASES[phase].name}</p>}
+        <section
+          aria-label="Your cycle today"
+          className={`card-surface flex flex-col items-center gap-5 p-5 sm:p-6 ${phase ? PHASES[phase].tone.bg : ""}`}
+        >
+          <CycleRing
+            cycleDay={stale ? null : cycleDay}
+            cycleLength={averages.cycleLength}
+            periodLength={averages.periodLength}
+            headline={headline}
+            subline={subline}
+            phase={phase}
+          />
+          {phase && (
+            <p className={`rounded-full bg-white/80 px-4 py-1.5 text-sm font-semibold ${PHASES[phase].tone.text}`}>
+              {PHASES[phase].name}
+            </p>
+          )}
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-center">
             {openPeriod ? (
-              <button type="button" disabled={pending} onClick={() => run(() => endPeriod(todayKey))} className="m3-btn-filled">
-                {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Droplet className="h-4 w-4" aria-hidden />} Period ended today
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => run(() => endPeriod(todayKey))}
+                className="m3-btn-filled"
+              >
+                {pending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <Droplet className="h-4 w-4" aria-hidden />
+                )}{" "}
+                Period ended today
               </button>
             ) : (
-              <button type="button" disabled={pending} onClick={() => run(() => startPeriod(todayKey))} className="m3-btn-filled">
-                {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Droplet className="h-4 w-4" aria-hidden />} My period started today
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => run(() => startPeriod(todayKey))}
+                className="m3-btn-filled"
+              >
+                {pending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <Droplet className="h-4 w-4" aria-hidden />
+                )}{" "}
+                My period started today
               </button>
             )}
-            <button type="button" onClick={() => (rangeMode ? exitRange() : setRangeMode(true))} className="m3-btn-outlined">
+            <button
+              type="button"
+              onClick={() => (rangeMode ? exitRange() : setRangeMode(true))}
+              className="m3-btn-outlined"
+            >
               <CalendarRange className="h-4 w-4" aria-hidden /> {rangeMode ? "Cancel" : "Log a past period"}
             </button>
           </div>
           <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-slate-600">
-            <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" /> Period</li>
-            <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-teal-300" /> Fertile window</li>
-            <li className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-teal-700" /> Ovulation</li>
+            <li className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-500" /> Period
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-teal-300" /> Fertile window
+            </li>
+            <li className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-teal-700" /> Ovulation
+            </li>
           </ul>
         </section>
 
         {/* Calendar */}
         <section aria-labelledby="calendar-heading" className="card-surface p-4 sm:p-6">
           <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 id="calendar-heading" className="text-lg font-bold text-nc-ink">{monthLabel}</h2>
+            <h2 id="calendar-heading" className="text-lg font-bold text-nc-ink">
+              {monthLabel}
+            </h2>
             <div className="flex gap-1">
-              <button type="button" aria-label="Previous month" onClick={() => setView((v) => (v.m === 0 ? { y: v.y - 1, m: 11 } : { y: v.y, m: v.m - 1 }))} className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><ChevronLeft className="h-5 w-5" aria-hidden /></button>
-              <button type="button" aria-label="Next month" onClick={() => setView((v) => (v.m === 11 ? { y: v.y + 1, m: 0 } : { y: v.y, m: v.m + 1 }))} className="rounded-full p-2 text-slate-500 hover:bg-slate-100"><ChevronRight className="h-5 w-5" aria-hidden /></button>
+              <button
+                type="button"
+                aria-label="Previous month"
+                onClick={() => setView((v) => (v.m === 0 ? { y: v.y - 1, m: 11 } : { y: v.y, m: v.m - 1 }))}
+                className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
+              >
+                <ChevronLeft className="h-5 w-5" aria-hidden />
+              </button>
+              <button
+                type="button"
+                aria-label="Next month"
+                onClick={() => setView((v) => (v.m === 11 ? { y: v.y + 1, m: 0 } : { y: v.y, m: v.m + 1 }))}
+                className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
+              >
+                <ChevronRight className="h-5 w-5" aria-hidden />
+              </button>
             </div>
           </div>
           {rangeMode && (
             <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-800">
-              {!rangeStart ? "Tap the day your period started." : !rangeEnd ? "Now tap the day it ended." : `${fmt(rangeStart)} to ${fmt(rangeEnd)}`}
+              {!rangeStart
+                ? "Tap the day your period started."
+                : !rangeEnd
+                  ? "Now tap the day it ended."
+                  : `${fmt(rangeStart)} to ${fmt(rangeEnd)}`}
             </p>
           )}
           <div className="grid grid-cols-7 text-center text-xs font-semibold text-slate-400" aria-hidden>
-            {WEEKDAYS.map((d, i) => <div key={i} className="py-1">{d}</div>)}
+            {WEEKDAYS.map((d, i) => (
+              <div key={i} className="py-1">
+                {d}
+              </div>
+            ))}
           </div>
           <div className="grid grid-cols-7 gap-y-1">
             {cells.map((c) => {
@@ -195,14 +296,29 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
                     className={[
                       "flex h-9 w-9 items-center justify-center rounded-full text-sm transition-colors sm:h-10 sm:w-10",
                       !c.inMonth ? "opacity-40" : "",
-                      filled ? "bg-rose-500 font-bold text-white" : s.predicted ? "border-2 border-dashed border-rose-400 text-rose-700" : s.ovulation ? "bg-teal-700 font-bold text-white" : s.fertile ? "bg-teal-100 text-teal-900" : future ? "text-slate-300" : "text-slate-700 group-hover:bg-slate-100",
+                      filled
+                        ? "bg-rose-500 font-bold text-white"
+                        : s.predicted
+                          ? "border-2 border-dashed border-rose-400 text-rose-700"
+                          : s.ovulation
+                            ? "bg-teal-700 font-bold text-white"
+                            : s.fertile
+                              ? "bg-teal-100 text-teal-900"
+                              : future
+                                ? "text-slate-300"
+                                : "text-slate-700 group-hover:bg-slate-100",
                       c.key === todayKey && !filled ? "font-extrabold underline decoration-2 underline-offset-4" : "",
                       isSel ? "ring-2 ring-nc-primary ring-offset-2" : "",
                     ].join(" ")}
                   >
                     {c.day}
                   </span>
-                  {log && <span className={`absolute bottom-0 h-1.5 w-1.5 rounded-full ${log.flow && log.flow !== "NONE" ? "bg-rose-500" : "bg-violet-500"}`} aria-hidden />}
+                  {log && (
+                    <span
+                      className={`absolute bottom-0 h-1.5 w-1.5 rounded-full ${log.flow && log.flow !== "NONE" ? "bg-rose-500" : "bg-violet-500"}`}
+                      aria-hidden
+                    />
+                  )}
                 </button>
               );
             })}
@@ -214,10 +330,15 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
               onClick={() => run(() => logPeriodRange({ startDate: rangeStart, endDate: rangeEnd }), exitRange)}
               className="m3-btn-filled mt-4 w-full"
             >
-              {pending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Save period ({diffInDays(parseDateKey(rangeEnd), parseDateKey(rangeStart)) + 1} days)
+              {pending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Save period (
+              {diffInDays(parseDateKey(rangeEnd), parseDateKey(rangeStart)) + 1} days)
             </button>
           )}
-          {!rangeMode && <p className="mt-3 text-center text-xs text-slate-500">Tap a day to log how you felt. Dots mark days you&apos;ve logged.</p>}
+          {!rangeMode && (
+            <p className="mt-3 text-center text-xs text-slate-500">
+              Tap a day to log how you felt. Dots mark days you&apos;ve logged.
+            </p>
+          )}
         </section>
       </div>
 
@@ -229,7 +350,9 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
       <div className="grid gap-6 lg:grid-cols-2">
         <CycleInsights data={data} todayKey={todayKey} />
         <section aria-labelledby="history-heading" className="card-surface p-5 sm:p-6">
-          <h2 id="history-heading" className="text-lg font-bold text-nc-ink">Period history</h2>
+          <h2 id="history-heading" className="text-lg font-bold text-nc-ink">
+            Period history
+          </h2>
           {logs.length === 0 ? (
             <p className="mt-2 text-sm text-slate-500">No periods logged yet.</p>
           ) : (
@@ -237,10 +360,22 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
               {logs.slice(0, 8).map((l) => (
                 <li key={l.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
                   <span className="text-slate-700">
-                    <span className="font-semibold text-nc-ink">{fmt(l.startDate, { day: "numeric", month: "short", year: "numeric" })}</span>
-                    {l.endDate ? ` · ${diffInDays(parseDateKey(l.endDate), parseDateKey(l.startDate)) + 1} days` : l === openPeriod ? " · ongoing" : " · end not logged"}
+                    <span className="font-semibold text-nc-ink">
+                      {fmt(l.startDate, { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                    {l.endDate
+                      ? ` · ${diffInDays(parseDateKey(l.endDate), parseDateKey(l.startDate)) + 1} days`
+                      : l === openPeriod
+                        ? " · ongoing"
+                        : " · end not logged"}
                   </span>
-                  <button type="button" disabled={pending} onClick={() => confirm("Delete this period?") && run(() => deletePeriod(l.id))} aria-label={`Delete period starting ${fmt(l.startDate)}`} className="rounded-full p-2 text-slate-400 hover:bg-red-50 hover:text-red-600">
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => confirm("Delete this period?") && run(() => deletePeriod(l.id))}
+                    aria-label={`Delete period starting ${fmt(l.startDate)}`}
+                    className="rounded-full p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                  >
                     <Trash2 className="h-4 w-4" aria-hidden />
                   </button>
                 </li>
@@ -248,7 +383,11 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
             </ul>
           )}
           {selected !== todayKey && !rangeMode && (
-            <button type="button" onClick={() => setSelected(todayKey)} className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-nc-primary hover:underline">
+            <button
+              type="button"
+              onClick={() => setSelected(todayKey)}
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-nc-primary hover:underline"
+            >
               <X className="h-4 w-4" aria-hidden /> Back to today
             </button>
           )}

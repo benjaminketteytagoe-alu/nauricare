@@ -1,0 +1,4 @@
+# Default reviewers for everything. Add domain owners as the team grows, e.g.
+# /packages/database/   @data-owner
+# /infra/               @platform-owner
+*                       @benjaminketteytagoe-alu

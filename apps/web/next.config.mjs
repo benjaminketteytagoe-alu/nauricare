@@ -41,14 +41,18 @@ const SECURITY_HEADERS = [
   // Default: no sensitive device access anywhere.
   // geolocation=(self): the provider map asks for location. It must be site-wide
   // because the policy is fixed per document and the app navigates client-side.
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self), display-capture=(), payment=(), usb=()" },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=(self), display-capture=(), payment=(), usb=()",
+  },
 ];
 
 // Consultation rooms embed Jitsi, which needs camera, mic and screen share.
 // Same header key as above: Next.js applies the LAST matching entry.
 const CONSULTATION_PERMISSIONS = {
   key: "Permissions-Policy",
-  value: 'camera=(self "https://meet.jit.si"), microphone=(self "https://meet.jit.si"), display-capture=(self "https://meet.jit.si"), fullscreen=(self "https://meet.jit.si"), geolocation=(), payment=(), usb=()',
+  value:
+    'camera=(self "https://meet.jit.si"), microphone=(self "https://meet.jit.si"), display-capture=(self "https://meet.jit.si"), fullscreen=(self "https://meet.jit.si"), geolocation=(), payment=(), usb=()',
 };
 
 const nextConfig = {

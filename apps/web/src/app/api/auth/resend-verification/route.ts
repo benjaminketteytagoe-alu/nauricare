@@ -1,9 +1,9 @@
+import { randomBytes, createHash } from "crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
-import { randomBytes, createHash } from "crypto";
 import { sendVerificationEmail } from "@/lib/email";
 import { getClientIp } from "@/lib/getClientIp";
+import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 const schema = z.object({ email: z.email() });
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
     // Rotate: delete any outstanding tokens, issue a fresh one.
     await prisma.emailVerificationToken.deleteMany({ where: { userId: user.id } });
 
-    const rawToken  = randomBytes(32).toString("hex");
+    const rawToken = randomBytes(32).toString("hex");
     const tokenHash = createHash("sha256").update(rawToken).digest("hex");
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 

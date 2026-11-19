@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { ReferralWizard, type WizardInsurance, type WizardPrefill } from "@/components/referrals/ReferralWizard";
 import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { SPECIALTIES, TRIAGE_SEVERITIES, type Specialty, type TriageSeverity } from "@/lib/referrals/constants";
 import { knownPrivateInsurers } from "@/server/insurance/insurers";
-import { ReferralWizard, type WizardInsurance, type WizardPrefill } from "@/components/referrals/ReferralWizard";
 
 export const dynamic = "force-dynamic";
 
@@ -56,12 +56,17 @@ export default async function NewReferralPage({ searchParams }: { searchParams: 
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-12">
-      <Link href="/dashboard/referrals" className="flex w-fit items-center gap-2 font-medium text-nc-primary hover:underline">
+      <Link
+        href="/dashboard/referrals"
+        className="flex w-fit items-center gap-2 font-medium text-nc-primary hover:underline"
+      >
         <ArrowLeft className="h-4 w-4" aria-hidden /> My referrals
       </Link>
       <header>
         <h1 className="text-2xl font-bold text-nc-ink sm:text-3xl">New hospital referral</h1>
-        <p className="mt-1 text-slate-600">Four short steps. Your answers are saved securely to your NauriCare record.</p>
+        <p className="mt-1 text-slate-600">
+          Four short steps. Your answers are saved securely to your NauriCare record.
+        </p>
       </header>
       <ReferralWizard prefill={prefill} initialInsurance={initialInsurance} knownInsurers={knownInsurers} />
     </div>

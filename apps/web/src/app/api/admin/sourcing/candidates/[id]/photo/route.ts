@@ -12,6 +12,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const image = await candidatePhoto(id.data);
   if (!image) return notFound("No photo");
   return new Response(new Uint8Array(image.body), {
-    headers: { "Content-Type": image.contentType, "Cache-Control": "private, max-age=3600", "X-Content-Type-Options": "nosniff" },
+    headers: {
+      "Content-Type": image.contentType,
+      "Cache-Control": "private, max-age=3600",
+      "X-Content-Type-Options": "nosniff",
+    },
   });
 }

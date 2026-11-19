@@ -32,7 +32,7 @@ export async function GET() {
         csvEscape(log.targetId),
         csvEscape(log.ipAddress),
         csvEscape(log.details ? JSON.stringify(log.details) : ""),
-      ].join(",")
+      ].join(","),
     );
 
     const csv = [header, ...rows].join("\r\n");

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { EmergencyBanner } from "@/components/triage/EmergencyBanner";
-
 import { SUPPORT_EMAIL } from "@/lib/site";
 
 export const LEGAL_CONTACT_EMAIL = SUPPORT_EMAIL;
@@ -61,7 +60,9 @@ export function LegalDocument({
                 <ul className="space-y-1.5 text-sm">
                   {RELATED.filter((r) => r.href !== current).map((r) => (
                     <li key={r.href}>
-                      <Link href={r.href} className="font-medium text-nc-primary hover:underline">{r.label}</Link>
+                      <Link href={r.href} className="font-medium text-nc-primary hover:underline">
+                        {r.label}
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -85,7 +86,10 @@ export function LegalDocument({
               <EmergencyBanner />
               <p className="mt-6 text-sm text-slate-600">
                 Questions about this document? Email{" "}
-                <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="font-medium text-nc-primary underline underline-offset-2">
+                <a
+                  href={`mailto:${LEGAL_CONTACT_EMAIL}`}
+                  className="font-medium text-nc-primary underline underline-offset-2"
+                >
                   {LEGAL_CONTACT_EMAIL}
                 </a>
                 .

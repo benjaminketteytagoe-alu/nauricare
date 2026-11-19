@@ -70,16 +70,18 @@ export default async function AdminAuditLogsPage() {
                         second: "2-digit",
                       })}
                     </td>
-                    
+
                     {/* Action event tag indicator with dynamic badge values */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-bold border ${
-                        log.action === "PROVIDER_VERIFY"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                          : log.action === "PROVIDER_REGISTER"
-                          ? "bg-teal-50 text-teal-700 border-teal-100"
-                          : "bg-slate-50 text-slate-700 border-slate-100"
-                      }`}>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-bold border ${
+                          log.action === "PROVIDER_VERIFY"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                            : log.action === "PROVIDER_REGISTER"
+                              ? "bg-teal-50 text-teal-700 border-teal-100"
+                              : "bg-slate-50 text-slate-700 border-slate-100"
+                        }`}
+                      >
                         {log.action}
                       </span>
                     </td>

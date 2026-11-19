@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, Check, Hospital, Loader2, RotateCcw, Send, Siren, Stethoscope } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, Hospital, Loader2, RotateCcw, Send, Siren, Stethoscope } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 import { tactile } from "@/components/triage-gate/motion";
 import { Callout } from "@/components/ui/callout";
 import { SEVERITY_TONE, StatusChip } from "@/components/ui/status-chip";
@@ -24,9 +24,15 @@ const SYMPTOM_PILLS = [
 ];
 
 const OUTCOME_COPY: Record<TriageOutcome, { title: string; body: string }> = {
-  SPECIALIST_REQUIRED: { title: "Specialist care needed", body: "Please see a specialist soon. If symptoms are severe, get emergency care now." },
+  SPECIALIST_REQUIRED: {
+    title: "Specialist care needed",
+    body: "Please see a specialist soon. If symptoms are severe, get emergency care now.",
+  },
   ROUTINE_CONSULT: { title: "Book a consultation", body: "A clinician should look at this in the next few days." },
-  SELF_CARE: { title: "Self-care for now", body: "Nothing you shared matches our warning signs. Keep tracking how you feel." },
+  SELF_CARE: {
+    title: "Self-care for now",
+    body: "Nothing you shared matches our warning signs. Keep tracking how you feel.",
+  },
 };
 
 interface GuestTriageResponse {
@@ -45,13 +51,16 @@ export function NauriTriageCard() {
   const [error, setError] = useState("");
   const [result, setResult] = useState<GuestTriageResponse | null>(null);
   const [consentOpen, setConsentOpen] = useState(false);
-  const pendingAction = useRef<(() => void) | null>(null);
+  const pendingAction = useRef<(() => unknown) | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Runs `action` now if consent is already on record, otherwise after the
   // visitor accepts in the consent modal.
-  function withConsent(action: () => void) {
-    if (hasGuestConsent(CURRENT_CONSENT_VERSION)) return action();
+  function withConsent(action: () => unknown) {
+    if (hasGuestConsent(CURRENT_CONSENT_VERSION)) {
+      void action();
+      return;
+    }
     pendingAction.current = action;
     // Move focus off the page so keystrokes can't land behind the modal.
     (document.activeElement as HTMLElement | null)?.blur();
@@ -60,7 +69,7 @@ export function NauriTriageCard() {
 
   const onAccept = useCallback(() => {
     setConsentOpen(false);
-    pendingAction.current?.();
+    void pendingAction.current?.();
     pendingAction.current = null;
   }, []);
   const onDismiss = useCallback(() => {
@@ -135,15 +144,23 @@ export function NauriTriageCard() {
   }
 
   return (
-    <div id="nauri" className="scroll-mt-24 w-full rounded-3xl border border-white/60 bg-white text-left text-slate-900 shadow-xl">
+    <div
+      id="nauri"
+      className="scroll-mt-24 w-full rounded-3xl border border-white/60 bg-white text-left text-slate-900 shadow-xl"
+    >
       {/* Persona header */}
       <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-600 text-lg font-extrabold text-white shadow-sm" aria-hidden>
+        <span
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-600 text-lg font-extrabold text-white shadow-sm"
+          aria-hidden
+        >
           N
         </span>
         <div className="min-w-0">
           <p className="font-bold leading-tight text-nc-ink">Nauri</p>
-          <p className="truncate text-xs text-slate-500">AI clinical health assistant · reproductive & maternal health</p>
+          <p className="truncate text-xs text-slate-500">
+            AI clinical health assistant · reproductive & maternal health
+          </p>
         </div>
         <span className="ml-auto flex items-center gap-1.5 text-xs font-medium text-emerald-600">
           <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden /> Online
@@ -153,10 +170,17 @@ export function NauriTriageCard() {
       <div className="p-5" aria-live="polite">
         <AnimatePresence mode="wait" initial={false}>
           {!result ? (
-            <motion.form key="ask" onSubmit={submit} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
+            <motion.form
+              key="ask"
+              onSubmit={submit}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="space-y-4"
+            >
               <p className="rounded-2xl rounded-tl-sm bg-rose-50 px-4 py-3 text-sm leading-relaxed text-slate-700">
-                Hi, I&apos;m Nauri. Tell me what&apos;s going on and I&apos;ll help you understand how soon to get care, and
-                who can help.
+                Hi, I&apos;m Nauri. Tell me what&apos;s going on and I&apos;ll help you understand how soon to get care,
+                and who can help.
               </p>
 
               <div className="flex flex-wrap gap-2" role="group" aria-label="Common symptoms">
@@ -170,7 +194,9 @@ export function NauriTriageCard() {
                       aria-pressed={on}
                       onClick={() => togglePill(p)}
                       className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm ${
-                        on ? "border-nc-primary bg-nc-primary text-white" : "border-slate-200 bg-white text-slate-700 hover:border-nc-primary/40 hover:bg-nc-primary-container"
+                        on
+                          ? "border-nc-primary bg-nc-primary text-white"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-nc-primary/40 hover:bg-nc-primary-container"
                       }`}
                     >
                       {on && <Check className="h-3.5 w-3.5" aria-hidden />}
@@ -181,7 +207,9 @@ export function NauriTriageCard() {
               </div>
 
               <div className="relative">
-                <label htmlFor="nauri-notes" className="sr-only">Describe your symptoms</label>
+                <label htmlFor="nauri-notes" className="sr-only">
+                  Describe your symptoms
+                </label>
                 <textarea
                   id="nauri-notes"
                   ref={textareaRef}
@@ -200,19 +228,37 @@ export function NauriTriageCard() {
                   aria-label="Ask Nauri"
                   className="absolute bottom-2.5 right-2.5 flex h-10 w-10 items-center justify-center rounded-full bg-nc-primary text-white shadow-sm hover:bg-nc-primary-hover disabled:opacity-60"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Send className="h-4 w-4" aria-hidden />}
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  ) : (
+                    <Send className="h-4 w-4" aria-hidden />
+                  )}
                 </motion.button>
               </div>
 
               {loading && <p className="text-sm text-slate-500">Nauri is reviewing what you shared…</p>}
-              {error && <Callout tone="danger" role="alert">{error}</Callout>}
+              {error && (
+                <Callout tone="danger" role="alert">
+                  {error}
+                </Callout>
+              )}
 
               <p className="text-xs leading-relaxed text-slate-500">
-                Not a diagnosis. In an emergency call SAMU Rwanda on <a href="tel:912" className="font-semibold text-nc-berry">{EMERGENCY_NUMBERS}</a>.
+                Not a diagnosis. In an emergency call SAMU Rwanda on{" "}
+                <a href="tel:912" className="font-semibold text-nc-berry">
+                  {EMERGENCY_NUMBERS}
+                </a>
+                .
               </p>
             </motion.form>
           ) : (
-            <motion.div key="result" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="space-y-4">
+            <motion.div
+              key="result"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="space-y-4"
+            >
               <div className="flex flex-wrap items-center gap-2">
                 <StatusChip tone={SEVERITY_TONE[result.triage.severity]}>{result.triage.severity} severity</StatusChip>
                 <span className="text-sm font-semibold text-nc-ink">{OUTCOME_COPY[result.triageOutcome].title}</span>
@@ -220,7 +266,11 @@ export function NauriTriageCard() {
 
               {result.triage.severity === "URGENT" && (
                 <Callout tone="danger" icon={Siren} role="alert" title="This may need emergency care">
-                  Call SAMU Rwanda on <a href="tel:912" className="font-bold underline">{EMERGENCY_NUMBERS}</a> or go to the nearest emergency department.
+                  Call SAMU Rwanda on{" "}
+                  <a href="tel:912" className="font-bold underline">
+                    {EMERGENCY_NUMBERS}
+                  </a>{" "}
+                  or go to the nearest emergency department.
                 </Callout>
               )}
 
@@ -236,19 +286,37 @@ export function NauriTriageCard() {
               <p className="text-xs text-slate-500">{OUTCOME_COPY[result.triageOutcome].body}</p>
 
               {result.triageOutcome !== "SELF_CARE" ? (
-                <motion.button type="button" {...tactile} onClick={() => handOver("referral")} className="m3-btn-filled w-full py-3">
+                <motion.button
+                  type="button"
+                  {...tactile}
+                  onClick={() => handOver("referral")}
+                  className="m3-btn-filled w-full py-3"
+                >
                   <Hospital className="h-4 w-4" aria-hidden /> Save Triage &amp; Book Specialist Referral
                 </motion.button>
               ) : (
-                <motion.button type="button" {...tactile} onClick={() => handOver("save")} className="m3-btn-filled w-full py-3">
+                <motion.button
+                  type="button"
+                  {...tactile}
+                  onClick={() => handOver("save")}
+                  className="m3-btn-filled w-full py-3"
+                >
                   Save to my health log <ArrowRight className="h-4 w-4" aria-hidden />
                 </motion.button>
               )}
 
-              {error && <Callout tone="danger" role="alert">{error}</Callout>}
+              {error && (
+                <Callout tone="danger" role="alert">
+                  {error}
+                </Callout>
+              )}
 
               <div className="flex items-center justify-between text-xs text-slate-500">
-                <button type="button" onClick={reset} className="inline-flex items-center gap-1 font-medium hover:text-nc-primary">
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="inline-flex items-center gap-1 font-medium hover:text-nc-primary"
+                >
                   <RotateCcw className="h-3.5 w-3.5" aria-hidden /> Start over
                 </button>
                 {status !== "authenticated" && (

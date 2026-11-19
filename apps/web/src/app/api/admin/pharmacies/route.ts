@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { parseJson } from "@/lib/api";
+import { prisma } from "@/lib/prisma";
 import { sanitizePlainText } from "@/lib/sanitize";
 
 const PharmacyInput = z.object({
   name: z.string().trim().min(1, "name and address are required").max(200),
   address: z.string().trim().min(1, "name and address are required").max(300),
-  contactEmail: z.union([z.literal(""), z.email("Enter a valid contact email")]).optional().or(z.null()),
+  contactEmail: z
+    .union([z.literal(""), z.email("Enter a valid contact email")])
+    .optional()
+    .or(z.null()),
   tags: z.array(z.string().trim().min(1).max(40)).max(20).optional().or(z.null()),
 });
 

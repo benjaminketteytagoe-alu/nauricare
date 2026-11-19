@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { Bell, Check } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { NotificationItem } from "@/components/notifications/NotificationItem";
 import { useNotifications } from "@/components/notifications/useNotifications";
 
@@ -45,7 +45,11 @@ export function NotificationBell({ notificationsHref = "/dashboard/notifications
           <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/60 px-4 py-3">
             <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
             {unread > 0 && (
-              <button type="button" onClick={markAll} className="flex items-center gap-1 text-xs font-medium text-nc-primary hover:underline">
+              <button
+                type="button"
+                onClick={markAll}
+                className="flex items-center gap-1 text-xs font-medium text-nc-primary hover:underline"
+              >
                 <Check className="h-3 w-3" aria-hidden /> Mark all read
               </button>
             )}
@@ -54,13 +58,22 @@ export function NotificationBell({ notificationsHref = "/dashboard/notifications
             {items === null ? (
               <p className="py-8 text-center text-sm text-gray-400">Loading…</p>
             ) : items.length === 0 ? (
-              <p className="py-8 text-center text-sm text-gray-400"><Bell className="mx-auto mb-2 h-6 w-6 opacity-30" aria-hidden />No notifications yet</p>
+              <p className="py-8 text-center text-sm text-gray-400">
+                <Bell className="mx-auto mb-2 h-6 w-6 opacity-30" aria-hidden />
+                No notifications yet
+              </p>
             ) : (
               items.map((n) => <NotificationItem key={n.id} n={n} onRead={markOne} compact />)
             )}
           </div>
           <div className="border-t border-gray-50 bg-gray-50/60 p-3 text-center">
-            <Link href={notificationsHref} onClick={() => setOpen(false)} className="text-xs font-medium text-nc-primary hover:underline">View all notifications</Link>
+            <Link
+              href={notificationsHref}
+              onClick={() => setOpen(false)}
+              className="text-xs font-medium text-nc-primary hover:underline"
+            >
+              View all notifications
+            </Link>
           </div>
         </div>
       )}

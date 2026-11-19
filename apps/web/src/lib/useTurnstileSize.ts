@@ -13,5 +13,9 @@ const subscribe = (cb: () => void) => {
 };
 
 export function useTurnstileSize(): "compact" | "normal" {
-  return useSyncExternalStore(subscribe, () => (window.matchMedia(QUERY).matches ? "compact" : "normal"), () => "normal");
+  return useSyncExternalStore(
+    subscribe,
+    () => (window.matchMedia(QUERY).matches ? "compact" : "normal"),
+    () => "normal",
+  );
 }

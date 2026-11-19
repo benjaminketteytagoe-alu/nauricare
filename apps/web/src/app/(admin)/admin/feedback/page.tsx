@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { Star, Search, MessageSquareHeart, TrendingUp, Users, Loader2 } from "lucide-react";
 import type { FeedbackCategory, FeedbackStatus } from "@prisma/client";
-import { FEEDBACK_CATEGORY_LABELS, FEEDBACK_CATEGORY_TONES } from "@/lib/feedback/categories";
+import { Star, Search, MessageSquareHeart, TrendingUp, Users, Loader2 } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
 import { StatusChip } from "@/components/ui/status-chip";
+import { FEEDBACK_CATEGORY_LABELS, FEEDBACK_CATEGORY_TONES } from "@/lib/feedback/categories";
 
 type Category = FeedbackCategory;
 type Status = FeedbackStatus;
@@ -39,7 +39,10 @@ function StarRow({ rating, size = "w-4 h-4" }: { rating: number; size?: string }
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((n) => (
-        <Star key={n} className={`${size} ${n <= Math.round(rating) ? "fill-amber-400 text-amber-400" : "text-gray-200"}`} />
+        <Star
+          key={n}
+          className={`${size} ${n <= Math.round(rating) ? "fill-amber-400 text-amber-400" : "text-gray-200"}`}
+        />
       ))}
     </div>
   );
@@ -136,7 +139,8 @@ export default function AdminFeedbackPage() {
             <span className="text-2xl font-extrabold text-gray-900">{stats?.total ?? 0}</span>
           </div>
           <p className="text-xs text-gray-400 mt-1">
-            {stats?.byStatus.NEW ?? 0} new · {stats?.byStatus.REVIEWED ?? 0} reviewed · {stats?.byStatus.ACTIONED ?? 0} actioned
+            {stats?.byStatus.NEW ?? 0} new · {stats?.byStatus.REVIEWED ?? 0} reviewed · {stats?.byStatus.ACTIONED ?? 0}{" "}
+            actioned
           </p>
         </div>
 
@@ -172,7 +176,9 @@ export default function AdminFeedbackPage() {
         >
           <option value="">All Ratings</option>
           {[5, 4, 3, 2, 1].map((r) => (
-            <option key={r} value={r}>{r} Star{r === 1 ? "" : "s"}</option>
+            <option key={r} value={r}>
+              {r} Star{r === 1 ? "" : "s"}
+            </option>
           ))}
         </select>
 
@@ -183,7 +189,9 @@ export default function AdminFeedbackPage() {
         >
           <option value="">All Categories</option>
           {(Object.keys(CATEGORY_LABELS) as Category[]).map((cat) => (
-            <option key={cat} value={cat}>{CATEGORY_LABELS[cat]}</option>
+            <option key={cat} value={cat}>
+              {CATEGORY_LABELS[cat]}
+            </option>
           ))}
         </select>
 
@@ -221,14 +229,20 @@ export default function AdminFeedbackPage() {
                       <StatusChip tone={FEEDBACK_CATEGORY_TONES[item.category]} className="text-[10px]">
                         {CATEGORY_LABELS[item.category]}
                       </StatusChip>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_BADGE[item.status]}`}>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_BADGE[item.status]}`}
+                      >
                         {item.status}
                       </span>
                     </div>
                     <p className="text-sm text-gray-800 mt-2 leading-relaxed">{item.comment}</p>
                     <p className="text-xs text-gray-400 mt-2">
                       {item.user.name} ({item.user.email}) · {item.user.role} ·{" "}
-                      {new Date(item.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      {new Date(item.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
                     </p>
                   </div>
 

@@ -9,7 +9,10 @@ const text = (max: number) => z.string().trim().max(max).transform(sanitizePlain
 const Patch = z.object({
   fullName: text(120).pipe(z.string().min(3)).optional(),
   specialty: text(120).pipe(z.string().min(3)).optional(),
-  email: z.union([z.literal(""), z.email()]).nullable().optional(),
+  email: z
+    .union([z.literal(""), z.email()])
+    .nullable()
+    .optional(),
   phone: z.string().trim().max(40).nullable().optional(),
   yearsExperience: z.number().int().min(0).max(70).nullable().optional(),
   facilityName: text(160).nullable().optional(),

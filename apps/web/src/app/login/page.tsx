@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { useTurnstileSize } from "@/lib/useTurnstileSize";
+import { ShieldCheck, Lock } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signIn, getSession } from "next-auth/react";
+import { useState } from "react";
+import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { postAuthDestination, useAuthParams } from "@/lib/authDestination";
-import { PasswordInput } from "@/components/auth/PasswordInput";
-import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
-import { ShieldCheck, Lock } from "lucide-react";
+import { useTurnstileSize } from "@/lib/useTurnstileSize";
 
 // ─── Trust panel data ─────────────────────────────────────────────────────────
 
@@ -32,7 +32,7 @@ const TRUST_SLIDES: AuthVisualSlide[] = [
 
 const TRUST_CHIPS = [
   { Icon: ShieldCheck, label: "Law Nº 058/2021 Aligned" },
-  { Icon: Lock,        label: "End-to-End Encrypted" },
+  { Icon: Lock, label: "End-to-End Encrypted" },
 ];
 
 export default function LoginPage() {
@@ -44,14 +44,16 @@ export default function LoginPage() {
   const [error, setError] = useState(() => {
     if (typeof window === "undefined") return "";
     const params = window.location.search;
-    if (params.includes("verified=expired")) return "Your verification link has expired. Please sign up again to receive a new one.";
+    if (params.includes("verified=expired"))
+      return "Your verification link has expired. Please sign up again to receive a new one.";
     if (params.includes("verified=error")) return "Invalid or already-used verification link.";
     return "";
   });
   const [successMsg, setSuccessMsg] = useState(() => {
     if (typeof window === "undefined") return "";
     const params = window.location.search;
-    if (params.includes("registered=true")) return "Account created! Check your email for a verification link before logging in.";
+    if (params.includes("registered=true"))
+      return "Account created! Check your email for a verification link before logging in.";
     if (params.includes("verified=true")) return "Email verified successfully! You can now log in.";
     return "";
   });
@@ -157,37 +159,50 @@ export default function LoginPage() {
 
           {!useMagicLink ? (
             <form onSubmit={handleSubmit} className="space-y-5">
-              {error && (
-                error.toLowerCase().includes("verify your email") ? (
+              {error &&
+                (error.toLowerCase().includes("verify your email") ? (
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm space-y-2">
                     <p className="font-semibold text-amber-800">Email not yet verified</p>
-                    <p className="text-amber-700">Please check your inbox for the verification link we sent when you signed up.</p>
-                    <a
-                      href="/verify-email"
-                      className="inline-block text-teal-600 hover:underline font-medium"
-                    >
+                    <p className="text-amber-700">
+                      Please check your inbox for the verification link we sent when you signed up.
+                    </p>
+                    <a href="/verify-email" className="inline-block text-teal-600 hover:underline font-medium">
                       Didn&apos;t get the email? Request a new link →
                     </a>
                   </div>
                 ) : (
                   <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{error}</div>
-                )
+                ))}
+              {successMsg && (
+                <div className="bg-teal-50 text-teal-700 p-3 rounded-md text-sm border border-teal-200 font-medium">
+                  {successMsg}
+                </div>
               )}
-              {successMsg && <div className="bg-teal-50 text-teal-700 p-3 rounded-md text-sm border border-teal-200 font-medium">{successMsg}</div>}
 
               <div className="space-y-1">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" required placeholder="jane@example.com" className="h-11 focus-visible:ring-teal-600" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="jane@example.com"
+                  className="h-11 focus-visible:ring-teal-600"
+                />
               </div>
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <Link href="/forgot-password" className="text-xs text-teal-600 hover:underline">Forgot password?</Link>
+                  <Link href="/forgot-password" className="text-xs text-teal-600 hover:underline">
+                    Forgot password?
+                  </Link>
                 </div>
                 <PasswordInput id="password" name="password" required className="h-11 focus-visible:ring-teal-600" />
               </div>
 
-              <Turnstile key={turnstileSize} options={{ size: turnstileSize }}
+              <Turnstile
+                key={turnstileSize}
+                options={{ size: turnstileSize }}
                 siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
                 onSuccess={setTurnstileToken}
                 onExpire={() => setTurnstileToken("")}
@@ -200,7 +215,11 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => { setUseMagicLink(true); setError(""); setSuccessMsg(""); }}
+                onClick={() => {
+                  setUseMagicLink(true);
+                  setError("");
+                  setSuccessMsg("");
+                }}
                 className="w-full text-center text-sm text-teal-600 hover:underline font-medium"
               >
                 Email me a login link instead
@@ -213,27 +232,45 @@ export default function LoginPage() {
             </div>
           ) : (
             <form onSubmit={handleMagicLinkSubmit} className="space-y-5">
-              {magicError && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{magicError}</div>}
+              {magicError && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{magicError}</div>
+              )}
 
               <div className="space-y-1">
                 <Label htmlFor="magic-email">Email</Label>
-                <Input id="magic-email" name="email" type="email" required placeholder="jane@example.com" className="h-11 focus-visible:ring-teal-600" />
+                <Input
+                  id="magic-email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="jane@example.com"
+                  className="h-11 focus-visible:ring-teal-600"
+                />
               </div>
 
-              <Turnstile key={turnstileSize} options={{ size: turnstileSize }}
+              <Turnstile
+                key={turnstileSize}
+                options={{ size: turnstileSize }}
                 siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
                 onSuccess={setMagicTurnstileToken}
                 onExpire={() => setMagicTurnstileToken("")}
                 onError={() => setMagicTurnstileToken("")}
               />
 
-              <Button type="submit" className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white" disabled={magicLoading}>
+              <Button
+                type="submit"
+                className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white"
+                disabled={magicLoading}
+              >
                 {magicLoading ? "Sending..." : "Send Login Link"}
               </Button>
 
               <button
                 type="button"
-                onClick={() => { setUseMagicLink(false); setMagicError(""); }}
+                onClick={() => {
+                  setUseMagicLink(false);
+                  setMagicError("");
+                }}
                 className="w-full text-center text-sm text-teal-600 hover:underline font-medium"
               >
                 Use my password instead
@@ -242,10 +279,16 @@ export default function LoginPage() {
           )}
 
           <p className="text-center text-sm text-gray-600">
-            Don&apos;t have an account? <Link href={`/signup${authParams}`} className="text-teal-600 hover:underline font-semibold">Sign up</Link>
+            Don&apos;t have an account?{" "}
+            <Link href={`/signup${authParams}`} className="text-teal-600 hover:underline font-semibold">
+              Sign up
+            </Link>
           </p>
           <p className="text-center text-sm text-gray-600">
-            Are you a provider? <Link href="/signup/provider" className="text-teal-600 hover:underline font-semibold">Register your practice</Link>
+            Are you a provider?{" "}
+            <Link href="/signup/provider" className="text-teal-600 hover:underline font-semibold">
+              Register your practice
+            </Link>
           </p>
         </div>
       </div>

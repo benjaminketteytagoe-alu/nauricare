@@ -1,10 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/server/notifications/notify";
-import { revalidatePath } from "next/cache";
 
 export async function followUser(followingId: string) {
   try {
@@ -27,8 +27,13 @@ export async function followUser(followingId: string) {
     });
 
     if (!existing) {
-      void notify({ recipientId: followingId, actorId: session.user.id, type: "FOLLOW", title: `${session.user.name ?? "Someone"} started following you`, link: "/dashboard/community" })
-        .catch((err) => console.error("[FOLLOW_NOTIFICATION_ERROR]", err));
+      void notify({
+        recipientId: followingId,
+        actorId: session.user.id,
+        type: "FOLLOW",
+        title: `${session.user.name ?? "Someone"} started following you`,
+        link: "/dashboard/community",
+      }).catch((err) => console.error("[FOLLOW_NOTIFICATION_ERROR]", err));
     }
 
     revalidatePath("/dashboard/community");

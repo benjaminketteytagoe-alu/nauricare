@@ -15,13 +15,14 @@ run (up to 5 attempts). Emails also carry a Resend idempotency key.
 
 ## Secrets
 
-| Name | Where it lives | Who can read it |
-|---|---|---|
-| `DATA_ENCRYPTION_KEY` | SSM `/nauricare/production/DATA_ENCRYPTION_KEY` (SecureString) | ECS task execution role, at task start |
-| `CRON_SECRET` | SSM `/nauricare/production/CRON_SECRET` and the EventBridge connection (its own Secrets Manager secret) | ECS execution role; EventBridge |
-| `CRON_SECRET_PREVIOUS` | SSM, only during a rotation | ECS execution role |
+| Name                   | Where it lives                                                                                          | Who can read it                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `DATA_ENCRYPTION_KEY`  | SSM `/nauricare/production/DATA_ENCRYPTION_KEY` (SecureString)                                          | ECS task execution role, at task start |
+| `CRON_SECRET`          | SSM `/nauricare/production/CRON_SECRET` and the EventBridge connection (its own Secrets Manager secret) | ECS execution role; EventBridge        |
+| `CRON_SECRET_PREVIOUS` | SSM, only during a rotation                                                                             | ECS execution role                     |
 
 Rules:
+
 - Never put these values in the repo, `.env` files, GitHub variables, chat, tickets or logs. The setup script reads them from hidden input or generates them, and passes them to AWS on stdin only.
 - **Never change `DATA_ENCRYPTION_KEY`** once data exists: referral share links and claim tokens sealed with it become unreadable. Rotating it needs a re-encryption migration.
 - Use a different key in development. Don't copy production values to a laptop.
@@ -65,10 +66,10 @@ curl -X POST "https://nauricare.org/api/cron/execute?wait=1" -H "Authorization: 
 
 ## Troubleshooting
 
-| Symptom | Likely cause |
-|---|---|
-| 404 from the endpoint | `CRON_SECRET` not set in the running task (check `APP_SSM_SECRETS`, redeploy) |
-| 401 | EventBridge connection holds an old secret: run `schedule` |
-| 403 / challenge page in DLQ | Cloudflare WAF rule missing |
-| Task fails to start after deploy | A name in `APP_SSM_SECRETS` has no SSM parameter, or the execution role lacks `ssm:GetParameters`: run `secrets` |
-| Reminders `FAILED` with Resend errors | Daily quota or unverified sender domain; they retry automatically (5 attempts) |
+| Symptom                               | Likely cause                                                                                                     |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| 404 from the endpoint                 | `CRON_SECRET` not set in the running task (check `APP_SSM_SECRETS`, redeploy)                                    |
+| 401                                   | EventBridge connection holds an old secret: run `schedule`                                                       |
+| 403 / challenge page in DLQ           | Cloudflare WAF rule missing                                                                                      |
+| Task fails to start after deploy      | A name in `APP_SSM_SECRETS` has no SSM parameter, or the execution role lacks `ssm:GetParameters`: run `secrets` |
+| Reminders `FAILED` with Resend errors | Daily quota or unverified sender domain; they retry automatically (5 attempts)                                   |

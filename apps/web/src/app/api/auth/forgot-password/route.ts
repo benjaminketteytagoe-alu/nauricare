@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { z } from "zod";
 import { randomBytes, createHash } from "crypto";
-import { verifyTurnstileToken } from "@/lib/turnstile";
-import { getClientIp } from "@/lib/getClientIp";
+import { NextResponse } from "next/server";
+import { z } from "zod";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { getClientIp } from "@/lib/getClientIp";
+import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 const schema = z.object({
   email: z.string().email(),
@@ -22,10 +22,7 @@ export async function POST(req: Request) {
 
     const isHuman = await verifyTurnstileToken(body?.turnstileToken ?? "", ip);
     if (!isHuman) {
-      return NextResponse.json(
-        { error: "Security verification failed. Please try again." },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: "Security verification failed. Please try again." }, { status: 403 });
     }
 
     const parsed = schema.safeParse(body);

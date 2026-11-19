@@ -1,8 +1,8 @@
 "use client";
 
-import { useId, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
+import { useId, type ReactNode } from "react";
 import { SPRING, tactile } from "./motion";
 
 /** Flo-style explicit consent row. Never pre-ticked: the caller owns `checked`. */
@@ -27,7 +27,13 @@ export function ConsentToggle({
         checked ? "border-[#1D4ED8]/40 bg-blue-50/60" : "border-[#FFE4E6] bg-white"
       }`}
     >
-      <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="sr-only" />
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="sr-only"
+      />
       <motion.span
         aria-hidden
         animate={{ scale: checked ? 1 : 0.92, backgroundColor: checked ? "#1D4ED8" : "#FFFFFF" }}

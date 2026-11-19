@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { createHash } from "crypto";
 import { CheckCircle2, XCircle, Mail } from "lucide-react";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { ResendVerificationForm } from "./ResendVerificationForm";
 
@@ -20,9 +20,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
         <div className="text-center mb-8">
           <span className="text-2xl font-extrabold text-teal-700 tracking-tight">NauriCare</span>
         </div>
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-8 py-10 space-y-6">
-          {children}
-        </div>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-8 py-10 space-y-6">{children}</div>
       </div>
     </div>
   );

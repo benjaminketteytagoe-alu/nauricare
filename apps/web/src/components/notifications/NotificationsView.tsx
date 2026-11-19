@@ -13,14 +13,18 @@ export function NotificationsView() {
     <div className="mx-auto max-w-3xl space-y-6 pb-16">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="flex items-center gap-3 text-2xl font-bold text-nc-ink sm:text-3xl"><Bell className="h-7 w-7 text-rose-600" aria-hidden /> Notifications</h1>
+          <h1 className="flex items-center gap-3 text-2xl font-bold text-nc-ink sm:text-3xl">
+            <Bell className="h-7 w-7 text-rose-600" aria-hidden /> Notifications
+          </h1>
           <p className="mt-1 flex items-center gap-2 text-sm text-slate-600">
             <span className={`h-2 w-2 rounded-full ${live ? "bg-emerald-500" : "bg-slate-300"}`} aria-hidden />
             {live ? "Live: bookings, messages and other updates appear instantly." : "Connecting for live updates…"}
           </p>
         </div>
         {unread > 0 && (
-          <button type="button" onClick={markAll} className="m3-btn-outlined"><Check className="h-4 w-4" aria-hidden /> Mark all read ({unread})</button>
+          <button type="button" onClick={markAll} className="m3-btn-outlined">
+            <Check className="h-4 w-4" aria-hidden /> Mark all read ({unread})
+          </button>
         )}
       </header>
 

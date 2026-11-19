@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { useTurnstileSize } from "@/lib/useTurnstileSize";
+import type { WaitlistRole } from "@prisma/client";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import { Callout } from "@/components/ui/callout";
 import { useClientValue } from "@/lib/hooks/useClientValue";
+import { useTurnstileSize } from "@/lib/useTurnstileSize";
 import { WAITLIST_ROLES } from "@/lib/waitlist";
-import type { WaitlistRole } from "@prisma/client";
 
 // Where the visitor came from: ?utm_source=… if present, else the referrer host.
 function readSource(): string {
@@ -74,35 +74,76 @@ export function WaitlistForm() {
         <p className="mx-auto mt-2 max-w-sm text-slate-600">
           Thank you for joining. We&apos;ll email you as soon as NauriCare opens to new members.
         </p>
-        <Link href="/" className="m3-btn-outlined mt-6">Back to NauriCare</Link>
+        <Link href="/" className="m3-btn-outlined mt-6">
+          Back to NauriCare
+        </Link>
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="m3-card space-y-5 p-6 sm:p-8">
-      {error && <Callout tone="danger" role="alert">{error}</Callout>}
+      {error && (
+        <Callout tone="danger" role="alert">
+          {error}
+        </Callout>
+      )}
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label htmlFor="wl-name" className="mb-1.5 block text-sm font-semibold text-nc-ink">Full name</label>
-          <input id="wl-name" name="name" required minLength={2} maxLength={120} autoComplete="name" className="m3-input" />
+          <label htmlFor="wl-name" className="mb-1.5 block text-sm font-semibold text-nc-ink">
+            Full name
+          </label>
+          <input
+            id="wl-name"
+            name="name"
+            required
+            minLength={2}
+            maxLength={120}
+            autoComplete="name"
+            className="m3-input"
+          />
         </div>
         <div className="sm:col-span-2">
-          <label htmlFor="wl-email" className="mb-1.5 block text-sm font-semibold text-nc-ink">Email</label>
-          <input id="wl-email" name="email" type="email" required maxLength={254} autoComplete="email" className="m3-input" />
+          <label htmlFor="wl-email" className="mb-1.5 block text-sm font-semibold text-nc-ink">
+            Email
+          </label>
+          <input
+            id="wl-email"
+            name="email"
+            type="email"
+            required
+            maxLength={254}
+            autoComplete="email"
+            className="m3-input"
+          />
         </div>
         <div>
           <label htmlFor="wl-phone" className="mb-1.5 block text-sm font-semibold text-nc-ink">
             Phone <span className="font-normal text-slate-500">(optional)</span>
           </label>
-          <input id="wl-phone" name="phone" type="tel" maxLength={30} autoComplete="tel" placeholder="+250 7XX XXX XXX" className="m3-input" />
+          <input
+            id="wl-phone"
+            name="phone"
+            type="tel"
+            maxLength={30}
+            autoComplete="tel"
+            placeholder="+250 7XX XXX XXX"
+            className="m3-input"
+          />
         </div>
         <div>
           <label htmlFor="wl-country" className="mb-1.5 block text-sm font-semibold text-nc-ink">
             Country <span className="font-normal text-slate-500">(optional)</span>
           </label>
-          <input id="wl-country" name="country" maxLength={80} autoComplete="country-name" placeholder="Rwanda" className="m3-input" />
+          <input
+            id="wl-country"
+            name="country"
+            maxLength={80}
+            autoComplete="country-name"
+            placeholder="Rwanda"
+            className="m3-input"
+          />
         </div>
       </div>
 
@@ -113,7 +154,9 @@ export function WaitlistForm() {
             <label
               key={r.value}
               className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition-colors ${
-                role === r.value ? "border-nc-primary bg-nc-primary-container text-nc-ink" : "border-slate-300 text-slate-700 hover:bg-slate-50"
+                role === r.value
+                  ? "border-nc-primary bg-nc-primary-container text-nc-ink"
+                  : "border-slate-300 text-slate-700 hover:bg-slate-50"
               }`}
             >
               <input
@@ -153,12 +196,16 @@ export function WaitlistForm() {
         />
         <span>
           I agree that NauriCare may store these details and contact me about the launch, as described in the{" "}
-          <Link href="/privacy" target="_blank" className="font-medium text-nc-primary underline underline-offset-2">Privacy Policy</Link>.
-          I can ask to be removed at any time.
+          <Link href="/privacy" target="_blank" className="font-medium text-nc-primary underline underline-offset-2">
+            Privacy Policy
+          </Link>
+          . I can ask to be removed at any time.
         </span>
       </label>
 
-      <Turnstile key={turnstileSize} options={{ size: turnstileSize }}
+      <Turnstile
+        key={turnstileSize}
+        options={{ size: turnstileSize }}
         siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
         onSuccess={setTurnstileToken}
         onExpire={() => setTurnstileToken("")}
