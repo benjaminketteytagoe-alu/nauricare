@@ -12,11 +12,15 @@ export const DURATION = { fast: 0.15, base: 0.32, slow: 0.48 } as const;
 
 export const transition: Transition = { duration: DURATION.base, ease: EASE_EDITORIAL };
 
-/** Fade and lift by 8px: section and card entrances. */
-export const rise: Variants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: { opacity: 1, y: 0, transition: { duration: DURATION.slow, ease: EASE_EDITORIAL } },
-};
+/** Fade and lift by 8px, starting after `delay` seconds: section and card entrances. */
+export function riseAfter(delay = 0): Variants {
+  return {
+    hidden: { opacity: 0, y: 8 },
+    visible: { opacity: 1, y: 0, transition: { duration: DURATION.slow, ease: EASE_EDITORIAL, delay } },
+  };
+}
+
+export const rise: Variants = riseAfter();
 
 export const fade: Variants = {
   hidden: { opacity: 0 },

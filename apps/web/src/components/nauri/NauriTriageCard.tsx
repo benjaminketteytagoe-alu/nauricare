@@ -144,10 +144,7 @@ export function NauriTriageCard() {
   }
 
   return (
-    <div
-      id="nauri"
-      className="scroll-mt-24 w-full rounded-3xl border border-white/60 bg-white text-left text-slate-900 shadow-xl"
-    >
+    <div id="nauri" className="w-full rounded-3xl border border-hairline bg-surface text-left text-ink shadow-raised">
       {/* Persona header */}
       <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
         <span

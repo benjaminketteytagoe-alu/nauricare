@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
-import { lineReveal, rise, stagger } from "@/lib/motion";
+import { lineReveal, rise, riseAfter, stagger } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 // Motion blocks. Reduced motion is handled globally by <MotionConfig
@@ -42,7 +42,10 @@ export function TextReveal({
   );
 }
 
-/** Fade-and-rise on first scroll into view. */
+/**
+ * Fade-and-rise on first scroll into view. Renders one <div> that takes
+ * `className`, so it can be the layout element itself (flex, grid, card).
+ */
 export function Reveal({
   children,
   className,
@@ -58,9 +61,9 @@ export function Reveal({
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-10% 0px" }}
-      variants={stagger(0.06, delay)}
+      variants={delay ? riseAfter(delay) : rise}
     >
-      <motion.div variants={rise}>{children}</motion.div>
+      {children}
     </motion.div>
   );
 }
