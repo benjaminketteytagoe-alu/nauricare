@@ -23,6 +23,8 @@ export async function GET(req: Request) {
   if (!q.success) return apiError("Invalid filter.", 400);
   return handle(async () => {
     const page = await listActivity(userId, { types: q.data.types, cursor: q.data.cursor });
-    return apiSuccess({ ...page, ...(q.data.counts ? { counts: await activityCounts(userId) } : {}) }, 200, { "Cache-Control": "private, no-store" });
+    return apiSuccess({ ...page, ...(q.data.counts ? { counts: await activityCounts(userId) } : {}) }, 200, {
+      "Cache-Control": "private, no-store",
+    });
   });
 }

@@ -28,8 +28,15 @@ export function maskEmail(email: string): string {
 }
 
 /** Create a fresh code for this session and email it. Previous unused codes stop working. */
-export async function sendLoginCode(userId: string, sid: string, ipAddress?: string | null): Promise<{ maskedEmail: string; expiresAt: Date }> {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true, deletedAt: true } });
+export async function sendLoginCode(
+  userId: string,
+  sid: string,
+  ipAddress?: string | null,
+): Promise<{ maskedEmail: string; expiresAt: Date }> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true, name: true, deletedAt: true },
+  });
   if (!user || user.deletedAt) throw new ServiceError("Account not found.", 404);
 
   const key = sessionKey(sid);
@@ -45,14 +52,20 @@ export async function sendLoginCode(userId: string, sid: string, ipAddress?: str
     const wait = Math.ceil((RESEND_COOLDOWN_MS - (Date.now() - lastHere.createdAt.getTime())) / 1000);
     throw new ServiceError(`Please wait ${wait} seconds before requesting another code.`, 429);
   }
-  if (recent.length >= MAX_SENDS_PER_HOUR) throw new ServiceError("Too many codes requested. Please try again in an hour.", 429);
+  if (recent.length >= MAX_SENDS_PER_HOUR)
+    throw new ServiceError("Too many codes requested. Please try again in an hour.", 429);
 
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   const expiresAt = new Date(Date.now() + CODE_TTL_MS);
 
   const challenge = await prisma.$transaction(async (tx) => {
-    await tx.loginChallenge.updateMany({ where: { userId, sessionKeyHash: key, verifiedAt: null, expiresAt: { gt: new Date() } }, data: { expiresAt: new Date() } });
-    const c = await tx.loginChallenge.create({ data: { userId, sessionKeyHash: key, codeHash: "pending", expiresAt, ipAddress: ipAddress ?? null } });
+    await tx.loginChallenge.updateMany({
+      where: { userId, sessionKeyHash: key, verifiedAt: null, expiresAt: { gt: new Date() } },
+      data: { expiresAt: new Date() },
+    });
+    const c = await tx.loginChallenge.create({
+      data: { userId, sessionKeyHash: key, codeHash: "pending", expiresAt, ipAddress: ipAddress ?? null },
+    });
     return tx.loginChallenge.update({ where: { id: c.id }, data: { codeHash: codeHash(c.id, code) } });
   });
 
@@ -61,7 +74,12 @@ export async function sendLoginCode(userId: string, sid: string, ipAddress?: str
   const devLog = process.env.NODE_ENV !== "production" && process.env.LOGIN_CODE_DEV_LOG === "1";
   if (devLog) console.info(`[LOGIN_CODE_DEV] ${user.email} ${code}`);
   try {
-    await sendLoginCodeEmail({ to: user.email, name: user.name.split(" ")[0] || "there", code, minutes: CODE_TTL_MS / 60_000 });
+    await sendLoginCodeEmail({
+      to: user.email,
+      name: user.name.split(" ")[0] || "there",
+      code,
+      minutes: CODE_TTL_MS / 60_000,
+    });
   } catch (e) {
     console.error("[LOGIN_CODE_EMAIL]", e instanceof Error ? e.message : e);
     if (!devLog) {
@@ -76,7 +94,13 @@ export async function sendLoginCode(userId: string, sid: string, ipAddress?: str
 export async function verifyLoginCode(userId: string, sid: string, code: string): Promise<void> {
   if (!/^\d{6}$/.test(code)) throw new ServiceError("Enter the 6-digit code from your email.", 400);
   const challenge = await prisma.loginChallenge.findFirst({
-    where: { userId, sessionKeyHash: sessionKey(sid), verifiedAt: null, expiresAt: { gt: new Date() }, attempts: { lt: MAX_ATTEMPTS } },
+    where: {
+      userId,
+      sessionKeyHash: sessionKey(sid),
+      verifiedAt: null,
+      expiresAt: { gt: new Date() },
+      attempts: { lt: MAX_ATTEMPTS },
+    },
     orderBy: { createdAt: "desc" },
   });
   if (!challenge) throw new ServiceError("This code has expired. Request a new one.", 410);
@@ -85,12 +109,23 @@ export async function verifyLoginCode(userId: string, sid: string, code: string)
   const given = Buffer.from(codeHash(challenge.id, code));
   const match = expected.length === given.length && timingSafeEqual(expected, given);
   if (!match) {
-    const updated = await prisma.loginChallenge.update({ where: { id: challenge.id }, data: { attempts: { increment: 1 } } });
+    const updated = await prisma.loginChallenge.update({
+      where: { id: challenge.id },
+      data: { attempts: { increment: 1 } },
+    });
     const left = MAX_ATTEMPTS - updated.attempts;
-    throw new ServiceError(left > 0 ? `That code isn't right. ${left} attempt${left === 1 ? "" : "s"} left.` : "Too many wrong attempts. Request a new code.", left > 0 ? 400 : 429);
+    throw new ServiceError(
+      left > 0
+        ? `That code isn't right. ${left} attempt${left === 1 ? "" : "s"} left.`
+        : "Too many wrong attempts. Request a new code.",
+      left > 0 ? 400 : 429,
+    );
   }
   // Conditional update: a code can be verified exactly once.
-  const { count } = await prisma.loginChallenge.updateMany({ where: { id: challenge.id, verifiedAt: null }, data: { verifiedAt: new Date() } });
+  const { count } = await prisma.loginChallenge.updateMany({
+    where: { id: challenge.id, verifiedAt: null },
+    data: { verifiedAt: new Date() },
+  });
   if (count === 0) throw new ServiceError("This code has already been used.", 410);
 }
 
@@ -100,11 +135,19 @@ export async function verifyLoginCode(userId: string, sid: string, code: string)
  */
 export async function consumeVerifiedLogin(userId: string, sid: string): Promise<boolean> {
   const challenge = await prisma.loginChallenge.findFirst({
-    where: { userId, sessionKeyHash: sessionKey(sid), verifiedAt: { gt: new Date(Date.now() - UNLOCK_WINDOW_MS) }, consumedAt: null },
+    where: {
+      userId,
+      sessionKeyHash: sessionKey(sid),
+      verifiedAt: { gt: new Date(Date.now() - UNLOCK_WINDOW_MS) },
+      consumedAt: null,
+    },
     orderBy: { verifiedAt: "desc" },
     select: { id: true },
   });
   if (!challenge) return false;
-  const { count } = await prisma.loginChallenge.updateMany({ where: { id: challenge.id, consumedAt: null }, data: { consumedAt: new Date() } });
+  const { count } = await prisma.loginChallenge.updateMany({
+    where: { id: challenge.id, consumedAt: null },
+    data: { consumedAt: new Date() },
+  });
   return count === 1;
 }

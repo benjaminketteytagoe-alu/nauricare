@@ -25,10 +25,7 @@ export async function GET() {
     }
 
     const prescriptions = await prisma.prescription.findMany({
-      where:
-        role === "PATIENT"
-          ? { patientId: userId }
-          : { providerId: userId },
+      where: role === "PATIENT" ? { patientId: userId } : { providerId: userId },
       orderBy: { createdAt: "desc" },
       include: {
         patient: { select: { id: true, name: true, email: true } },

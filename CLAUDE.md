@@ -35,6 +35,7 @@ docker-compose up -d
 ```
 
 Required environment variables (`apps/web/.env.local`):
+
 - `DATABASE_URL` — PostgreSQL connection string
 - `NEXTAUTH_SECRET` — JWT signing secret
 - `NEXTAUTH_URL` — e.g. `http://localhost:3000`
@@ -64,18 +65,18 @@ packages/
 docs/adr/          — architecture decision records (read before changing design, avatars, tracking, AI, infra)
 ```
 
-Modules in `apps/web/src/server/**` start with `import "server-only"` so they can never be bundled into client code. Client components may import only *types* from them.
+Modules in `apps/web/src/server/**` start with `import "server-only"` so they can never be bundled into client code. Client components may import only _types_ from them.
 
 ### Route groups (Next.js App Router)
 
 The app uses route groups to scope layouts per role:
 
-| Group | Path prefix | Role required |
-|---|---|---|
-| `(public)` | `/` | None |
-| `(patient)` | `/dashboard` | `PATIENT` |
-| `(provider)` | `/provider` | `PROVIDER` |
-| `(admin)` | `/admin` | `ADMIN` |
+| Group        | Path prefix  | Role required |
+| ------------ | ------------ | ------------- |
+| `(public)`   | `/`          | None          |
+| `(patient)`  | `/dashboard` | `PATIENT`     |
+| `(provider)` | `/provider`  | `PROVIDER`    |
+| `(admin)`    | `/admin`     | `ADMIN`       |
 
 Proxy (Next 16's renamed middleware) at `apps/web/src/proxy.ts` enforces role boundaries: unauthenticated requests are rejected; authenticated users hitting `/dashboard` are redirected to their role-specific root. Each layout and protected page adds a second layer via `requireRole(role)` from `src/lib/auth-guards.ts` (forces dynamic rendering, requires a session, bounces other roles to their portal).
 
@@ -94,6 +95,7 @@ NextAuth v4 with JWT strategy. Two auth providers: Google OAuth and email/passwo
 PostgreSQL via Prisma. Schema: `packages/database/prisma/schema.prisma`.
 
 Core models:
+
 - `User` — base identity with `role: PATIENT | PROVIDER | ADMIN`; has `isEmailVerified Boolean` flag
 - `PatientProfile` — one-to-one with User for patients; holds health data
 - `PractitionerProfile` — one-to-one with User for providers; includes `verificationStatus`
@@ -138,6 +140,7 @@ Admin mutations use Next.js Server Actions (e.g., `(admin)/admin/actions.ts`). T
 ### Cloudflare Turnstile enforcement
 
 All credential-auth flows verify the widget token server-side:
+
 - **Login**: token passed as `turnstileToken` credential to NextAuth's `CredentialsProvider`, verified in `authorize()`.
 - **Register** (`api/auth/register`): verified before Zod schema parsing.
 - **Forgot-password** (`api/auth/forgot-password`): verified before DB lookup.
@@ -161,6 +164,7 @@ Use `error.issues[0]` not `error.errors[0]` — the property was renamed in v4. 
 ## CI/CD
 
 GitHub Actions pipeline (`.github/workflows/ci.yml`):
+
 1. **Build & test**: runs on all pushes and PRs. It applies every migration to a throwaway Postgres and fails on schema drift, then runs lint and build.
 2. **Image**: on every push, it builds the image and pushes it to AWS ECR, tagged with the commit SHA (plus `latest` for main or `develop` for develop).
 3. **Staging**: deploys from `develop`. This is still a placeholder; see ADR-0005 and the upgrade plan.

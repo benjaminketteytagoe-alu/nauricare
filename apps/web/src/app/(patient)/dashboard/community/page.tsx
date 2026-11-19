@@ -1,9 +1,15 @@
 "use client";
 
 import {
-  Heart, MessageCircle, Repeat2,
-  Image as ImageIcon, X, Plus, Users,
-  ChevronLeft, ChevronRight,
+  Heart,
+  MessageCircle,
+  Repeat2,
+  Image as ImageIcon,
+  X,
+  Plus,
+  Users,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -98,23 +104,14 @@ function RoleTag({ role }: { role: string }) {
 
 // ─── Story Ring ───────────────────────────────────────────────────────────────
 
-function StoryRingItem({
-  group,
-  onClick,
-}: {
-  group: StoryGroup;
-  onClick: () => void;
-}) {
+function StoryRingItem({ group, onClick }: { group: StoryGroup; onClick: () => void }) {
   const multiStory = group.storyCount > 1;
 
   return (
     <button onClick={onClick} className="flex flex-col items-center gap-1.5 shrink-0 group">
       <div className="relative">
         {/* Gradient ring — conic for multi-story segmentation visual */}
-        <div
-          style={{ background: "#e11d48" }}
-          className="p-[2.5px] rounded-full"
-        >
+        <div style={{ background: "#e11d48" }} className="p-[2.5px] rounded-full">
           <div className="bg-white p-[2px] rounded-full">
             <Avatar name={group.author.name} avatarUrl={group.author.avatarUrl} size="lg" />
           </div>
@@ -136,27 +133,18 @@ function StoryRingItem({
 
 // ─── Story Viewer Modal ───────────────────────────────────────────────────────
 
-function StoryViewer({
-  group,
-  onClose,
-}: {
-  group: StoryGroup;
-  onClose: () => void;
-}) {
+function StoryViewer({ group, onClose }: { group: StoryGroup; onClose: () => void }) {
   const [idx, setIdx] = useState(0);
   const story = group.stories[idx];
 
   const prev = useCallback(() => setIdx((i) => Math.max(0, i - 1)), []);
   const next = useCallback(
     () => (idx < group.stories.length - 1 ? setIdx(idx + 1) : onClose()),
-    [idx, group.stories.length, onClose]
+    [idx, group.stories.length, onClose],
   );
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4" onClick={onClose}>
       <div
         className="relative bg-gray-900 rounded-2xl overflow-hidden w-full max-w-sm shadow-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -165,9 +153,7 @@ function StoryViewer({
         <div className="absolute top-3 left-3 right-3 flex gap-1 z-20">
           {group.stories.map((_, i) => (
             <div key={i} className="flex-1 h-0.5 rounded-full overflow-hidden bg-white/30">
-              <div
-                className={`h-full bg-white rounded-full ${i < idx ? "w-full" : i === idx ? "w-full" : "w-0"}`}
-              />
+              <div className={`h-full bg-white rounded-full ${i < idx ? "w-full" : i === idx ? "w-full" : "w-0"}`} />
             </div>
           ))}
         </div>
@@ -192,19 +178,13 @@ function StoryViewer({
         {/* Media */}
         {story.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={story.imageUrl}
-            alt=""
-            className="w-full aspect-[9/16] object-cover max-h-[500px]"
-          />
+          <img src={story.imageUrl} alt="" className="w-full aspect-[9/16] object-cover max-h-[500px]" />
         ) : (
           <div
             className="w-full aspect-[9/16] max-h-[500px] flex items-center justify-center"
             style={{ background: avatarColor(group.author.name) }}
           >
-            <p className="text-white text-xl font-bold px-6 text-center leading-relaxed">
-              {story.content}
-            </p>
+            <p className="text-white text-xl font-bold px-6 text-center leading-relaxed">{story.content}</p>
           </div>
         )}
 
@@ -218,14 +198,20 @@ function StoryViewer({
         {/* Tap zones for navigation */}
         <div className="absolute inset-0 flex">
           <button
-            onClick={(e) => { e.stopPropagation(); prev(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              prev();
+            }}
             className="flex-1 flex items-center justify-start pl-2 opacity-0 hover:opacity-100 transition-opacity"
             disabled={idx === 0}
           >
             {idx > 0 && <ChevronLeft className="w-6 h-6 text-white drop-shadow" />}
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); next(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              next();
+            }}
             className="flex-1 flex items-center justify-end pr-2 opacity-0 hover:opacity-100 transition-opacity"
           >
             <ChevronRight className="w-6 h-6 text-white drop-shadow" />
@@ -325,7 +311,9 @@ function CommentsThread({
               <Avatar name={c.author.name} avatarUrl={c.author.avatarUrl} size="xs" />
               <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2">
                 <p className="text-xs font-bold text-gray-800">{c.author.name}</p>
-                <p className="text-xs text-gray-600 leading-relaxed"><MentionText text={c.content} /></p>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  <MentionText text={c.content} />
+                </p>
               </div>
             </div>
           ))}
@@ -333,24 +321,28 @@ function CommentsThread({
       )}
 
       {!currentUser.canPost ? (
-        <p className="text-xs text-slate-500">Choose a community avatar at the top of the page to join the conversation.</p>
+        <p className="text-xs text-slate-500">
+          Choose a community avatar at the top of the page to join the conversation.
+        </p>
       ) : (
-      <div className="flex items-center gap-2">
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") void handleSubmit(); }}
-          placeholder="Write a comment…"
-          className="flex-1 text-sm border border-gray-100 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-300"
-        />
-        <button
-          onClick={handleSubmit}
-          disabled={!draft.trim() || isSubmitting}
-          className="text-sm font-bold text-rose-600 hover:text-rose-800 disabled:opacity-40 disabled:cursor-not-allowed px-2"
-        >
-          Send
-        </button>
-      </div>
+        <div className="flex items-center gap-2">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void handleSubmit();
+            }}
+            placeholder="Write a comment…"
+            className="flex-1 text-sm border border-gray-100 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-300"
+          />
+          <button
+            onClick={handleSubmit}
+            disabled={!draft.trim() || isSubmitting}
+            className="text-sm font-bold text-rose-600 hover:text-rose-800 disabled:opacity-40 disabled:cursor-not-allowed px-2"
+          >
+            Send
+          </button>
+        </div>
       )}
     </div>
   );
@@ -358,13 +350,7 @@ function CommentsThread({
 
 // ─── Post Card ────────────────────────────────────────────────────────────────
 
-function FollowButton({
-  isFollowing,
-  onToggle,
-}: {
-  isFollowing: boolean;
-  onToggle: () => Promise<void>;
-}) {
+function FollowButton({ isFollowing, onToggle }: { isFollowing: boolean; onToggle: () => Promise<void> }) {
   const [isPending, setIsPending] = useState(false);
 
   async function handleClick() {
@@ -405,7 +391,6 @@ function PostCard({
 
   return (
     <article className="card-surface overflow-hidden">
-
       {/* ① Card header */}
       <div className="flex items-center gap-3 px-4 py-3">
         <Avatar name={post.author.name} avatarUrl={post.author.avatarUrl} />
@@ -418,8 +403,8 @@ function PostCard({
             {post.author.practitionerProfile?.specialty
               ? post.author.practitionerProfile.specialty + " · "
               : post.author.patientProfile?.country
-              ? post.author.patientProfile.country + " · "
-              : ""}
+                ? post.author.patientProfile.country + " · "
+                : ""}
             {relativeTime(post.createdAt)} ago
           </p>
         </div>
@@ -441,49 +426,34 @@ function PostCard({
               <span className="text-[9px] font-bold text-purple-600">Specialist</span>
             )}
           </div>
-          <p className="text-xs text-gray-600 line-clamp-2"><MentionText text={post.repostOf.content} /></p>
-          {post.repostOf.mediaUrl && (
-            post.repostOf.mediaType === "VIDEO" ? (
+          <p className="text-xs text-gray-600 line-clamp-2">
+            <MentionText text={post.repostOf.content} />
+          </p>
+          {post.repostOf.mediaUrl &&
+            (post.repostOf.mediaType === "VIDEO" ? (
               <video src={post.repostOf.mediaUrl} className="mt-2 w-full h-28 object-cover rounded-lg" muted />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={post.repostOf.mediaUrl}
-                alt=""
-                className="mt-2 w-full h-28 object-cover rounded-lg"
-              />
-            )
-          )}
+              <img src={post.repostOf.mediaUrl} alt="" className="mt-2 w-full h-28 object-cover rounded-lg" />
+            ))}
         </div>
       )}
 
       {/* ③ Media — full-bleed, no horizontal padding */}
-      {post.mediaUrl && (
-        post.mediaType === "VIDEO" ? (
-          <video
-            src={post.mediaUrl}
-            controls
-            className="w-full object-cover max-h-[480px] bg-black"
-          />
+      {post.mediaUrl &&
+        (post.mediaType === "VIDEO" ? (
+          <video src={post.mediaUrl} controls className="w-full object-cover max-h-[480px] bg-black" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={post.mediaUrl}
-            alt=""
-            className="w-full object-cover max-h-[480px]"
-            loading="lazy"
-          />
-        )
-      )}
+          <img src={post.mediaUrl} alt="" className="w-full object-cover max-h-[480px]" loading="lazy" />
+        ))}
 
       {/* ④ Interaction bar */}
       <div className="flex items-center gap-1 px-3 pt-2 pb-1">
         <button
           onClick={() => onLike(post.id)}
           className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
-            post.isLikedByMe
-              ? "text-rose-500 bg-rose-50"
-              : "text-gray-400 hover:text-rose-400 hover:bg-rose-50"
+            post.isLikedByMe ? "text-rose-500 bg-rose-50" : "text-gray-400 hover:text-rose-400 hover:bg-rose-50"
           }`}
           aria-label={post.isLikedByMe ? "Unlike" : "Like"}
         >
@@ -525,7 +495,11 @@ function PostCard({
       {showComments && (
         <CommentsThread
           postId={post.id}
-          currentUser={{ name: currentUser?.name ?? "You", avatarUrl: currentUser?.avatarUrl ?? null, canPost: currentUser?.canPost ?? false }}
+          currentUser={{
+            name: currentUser?.name ?? "You",
+            avatarUrl: currentUser?.avatarUrl ?? null,
+            canPost: currentUser?.canPost ?? false,
+          }}
           onCommentAdded={() => onCommentCountChange(post.id, 1)}
           onCommentFailed={() => onCommentCountChange(post.id, -1)}
         />
@@ -564,31 +538,31 @@ function FeedSkeleton() {
 export default function CommunityPage() {
   const { data: session } = useSession();
 
-  const [posts, setPosts]             = useState<Post[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [storyGroups, setStoryGroups] = useState<StoryGroup[]>([]);
   const [isLoadingFeed, setIsLoadingFeed] = useState(true);
-  const [page, setPage]               = useState(1);
-  const [hasMore, setHasMore]         = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Story viewer
-  const [activeGroup, setActiveGroup]   = useState<StoryGroup | null>(null);
+  const [activeGroup, setActiveGroup] = useState<StoryGroup | null>(null);
 
   // Compose post
-  const [draft, setDraft]               = useState("");
+  const [draft, setDraft] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl]     = useState<string | null>(null);
-  const [isPosting, setIsPosting]       = useState(false);
-  const [uploadStage, setUploadStage]   = useState<"idle" | "uploading" | "posting">("idle");
-  const [postError, setPostError]       = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isPosting, setIsPosting] = useState(false);
+  const [uploadStage, setUploadStage] = useState<"idle" | "uploading" | "posting">("idle");
+  const [postError, setPostError] = useState("");
 
   // Story creation
   const [showStoryForm, setShowStoryForm] = useState(false);
-  const [storyText, setStoryText]       = useState("");
-  const [storyFile, setStoryFile]       = useState<File | null>(null);
+  const [storyText, setStoryText] = useState("");
+  const [storyFile, setStoryFile] = useState<File | null>(null);
   const [storyPreviewUrl, setStoryPreviewUrl] = useState<string | null>(null);
   const [isPostingStory, setIsPostingStory] = useState(false);
-  const [storyError, setStoryError]     = useState("");
+  const [storyError, setStoryError] = useState("");
 
   // Initial load: fetch feed + stories in parallel
   useEffect(() => {
@@ -714,8 +688,8 @@ export default function CommunityPage() {
       prev.map((p) =>
         p.id === postId
           ? { ...p, isLikedByMe: !p.isLikedByMe, likeCount: p.isLikedByMe ? p.likeCount - 1 : p.likeCount + 1 }
-          : p
-      )
+          : p,
+      ),
     );
     const res = await fetch("/api/community/like", {
       method: "POST",
@@ -728,31 +702,25 @@ export default function CommunityPage() {
         prev.map((p) =>
           p.id === postId
             ? { ...p, isLikedByMe: !p.isLikedByMe, likeCount: p.isLikedByMe ? p.likeCount - 1 : p.likeCount + 1 }
-            : p
-        )
+            : p,
+        ),
       );
     }
   }
 
   function handleCommentCountChange(postId: string, delta: number) {
-    setPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, commentCount: p.commentCount + delta } : p))
-    );
+    setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, commentCount: p.commentCount + delta } : p)));
   }
 
   async function handleToggleFollow(authorId: string, isCurrentlyFollowing: boolean) {
     // Optimistic: flip every post by this author at once, since the button
     // appears once per author but the feed can show several of their posts.
     const applyFollowState = (followed: boolean) =>
-      setPosts((prev) =>
-        prev.map((p) => (p.authorId === authorId ? { ...p, isFollowedByMe: followed } : p))
-      );
+      setPosts((prev) => prev.map((p) => (p.authorId === authorId ? { ...p, isFollowedByMe: followed } : p)));
 
     applyFollowState(!isCurrentlyFollowing);
 
-    const result = isCurrentlyFollowing
-      ? await unfollowUser(authorId)
-      : await followUser(authorId);
+    const result = isCurrentlyFollowing ? await unfollowUser(authorId) : await followUser(authorId);
 
     if (!result.success) {
       applyFollowState(isCurrentlyFollowing); // revert
@@ -795,7 +763,11 @@ export default function CommunityPage() {
         if (!presignRes.ok) throw new Error("Failed to prepare upload.");
         const { uploadUrl, publicUrl } = await presignRes.json();
 
-        const putRes = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": storyFile.type }, body: storyFile });
+        const putRes = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": storyFile.type },
+          body: storyFile,
+        });
         if (!putRes.ok) throw new Error("Upload to storage failed.");
         imageUrl = publicUrl;
       }
@@ -807,20 +779,19 @@ export default function CommunityPage() {
       });
       if (!res.ok) throw new Error("Failed to share story.");
 
-      const newStory: StoryItem & { author: { id: string; name: string; role: string; avatarUrl: string | null; handle: string | null } } = await res.json();
+      const newStory: StoryItem & {
+        author: { id: string; name: string; role: string; avatarUrl: string | null; handle: string | null };
+      } = await res.json();
       setStoryGroups((prev) => {
         const existing = prev.find((g) => g.author.id === newStory.author.id);
         if (existing) {
           return prev.map((g) =>
             g.author.id === newStory.author.id
               ? { ...g, storyCount: g.storyCount + 1, stories: [newStory, ...g.stories] }
-              : g
+              : g,
           );
         }
-        return [
-          { author: newStory.author, storyCount: 1, stories: [newStory] },
-          ...prev,
-        ];
+        return [{ author: newStory.author, storyCount: 1, stories: [newStory] }, ...prev];
       });
       setStoryText("");
       handleStoryFileSelect(null);
@@ -840,7 +811,6 @@ export default function CommunityPage() {
 
   return (
     <div className="max-w-[600px] mx-auto space-y-5 animate-in fade-in duration-500 pb-20">
-
       {/* ── Page header ── */}
       <div className="flex items-center justify-between">
         <div>
@@ -866,14 +836,15 @@ export default function CommunityPage() {
       {/* ── Story strip ── */}
       <div className="card-surface px-4 py-3.5 space-y-3">
         <div className="flex items-start gap-4 overflow-x-auto pb-1 scrollbar-hide">
-
           {/* Add Story button */}
           <button
             onClick={() => setShowStoryForm((v) => !v)}
             disabled={needsAvatar}
             className="flex flex-col items-center gap-1.5 shrink-0 disabled:opacity-40"
           >
-            <div className={`w-[60px] h-[60px] rounded-full border-2 border-dashed flex items-center justify-center transition-colors ${showStoryForm ? "border-rose-500 bg-rose-50 text-rose-600" : "border-rose-300 bg-gray-50 text-rose-400 hover:bg-rose-50"}`}>
+            <div
+              className={`w-[60px] h-[60px] rounded-full border-2 border-dashed flex items-center justify-center transition-colors ${showStoryForm ? "border-rose-500 bg-rose-50 text-rose-600" : "border-rose-300 bg-gray-50 text-rose-400 hover:bg-rose-50"}`}
+            >
               <Plus className="w-5 h-5" />
             </div>
             <span className="text-[11px] text-gray-500 font-semibold">Your Story</span>
@@ -882,16 +853,10 @@ export default function CommunityPage() {
           {/* Story rings */}
           {storyGroups.length > 0 ? (
             storyGroups.map((group) => (
-              <StoryRingItem
-                key={group.author.id}
-                group={group}
-                onClick={() => setActiveGroup(group)}
-              />
+              <StoryRingItem key={group.author.id} group={group} onClick={() => setActiveGroup(group)} />
             ))
           ) : (
-            <p className="text-sm text-gray-400 italic self-center py-2">
-              No active stories — be the first!
-            </p>
+            <p className="text-sm text-gray-400 italic self-center py-2">No active stories — be the first!</p>
           )}
         </div>
 
@@ -939,7 +904,10 @@ export default function CommunityPage() {
               </label>
               <div className="flex gap-2">
                 <button
-                  onClick={() => { setShowStoryForm(false); handleStoryFileSelect(null); }}
+                  onClick={() => {
+                    setShowStoryForm(false);
+                    handleStoryFileSelect(null);
+                  }}
                   className="text-sm text-gray-400 hover:text-gray-600 px-3 py-1.5 transition-colors"
                 >
                   Cancel
@@ -964,16 +932,18 @@ export default function CommunityPage() {
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder={needsAvatar ? "Choose a community avatar above to start posting." : "Share something with the NauriCare community…"}
+            placeholder={
+              needsAvatar
+                ? "Choose a community avatar above to start posting."
+                : "Share something with the NauriCare community…"
+            }
             disabled={needsAvatar}
             rows={3}
             className="flex-1 resize-none text-sm text-gray-800 placeholder-gray-400 border border-gray-100 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all"
           />
         </div>
 
-        {postError && (
-          <p className="text-xs text-rose-500 font-medium px-1">{postError}</p>
-        )}
+        {postError && <p className="text-xs text-rose-500 font-medium px-1">{postError}</p>}
 
         {previewUrl && selectedFile && (
           <div className="relative rounded-xl overflow-hidden border border-gray-100">
@@ -1038,7 +1008,11 @@ export default function CommunityPage() {
               <PostCard
                 key={post.id}
                 post={post}
-                currentUser={session?.user?.id ? { id: session.user.id, name: userName, avatarUrl: userAvatarUrl, canPost: !needsAvatar } : undefined}
+                currentUser={
+                  session?.user?.id
+                    ? { id: session.user.id, name: userName, avatarUrl: userAvatarUrl, canPost: !needsAvatar }
+                    : undefined
+                }
                 onLike={handleLike}
                 onCommentCountChange={handleCommentCountChange}
                 onToggleFollow={handleToggleFollow}
@@ -1062,9 +1036,7 @@ export default function CommunityPage() {
       )}
 
       {/* Story viewer modal */}
-      {activeGroup && (
-        <StoryViewer group={activeGroup} onClose={() => setActiveGroup(null)} />
-      )}
+      {activeGroup && <StoryViewer group={activeGroup} onClose={() => setActiveGroup(null)} />}
     </div>
   );
 }

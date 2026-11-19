@@ -1,9 +1,14 @@
 "use client";
 
 const PALETTE = [
-  "bg-teal-500",    "bg-violet-500", "bg-rose-500",
-  "bg-amber-500",   "bg-sky-500",    "bg-pink-500",
-  "bg-emerald-500", "bg-indigo-500",
+  "bg-teal-500",
+  "bg-violet-500",
+  "bg-rose-500",
+  "bg-amber-500",
+  "bg-sky-500",
+  "bg-pink-500",
+  "bg-emerald-500",
+  "bg-indigo-500",
 ];
 
 function avatarColor(name: string) {
@@ -11,7 +16,12 @@ function avatarColor(name: string) {
 }
 
 function initials(name: string) {
-  return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 const SIZES = {
@@ -38,16 +48,14 @@ export function Avatar({
   if (avatarUrl) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={avatarUrl}
-        alt={name}
-        className={`${sz} rounded-full object-cover shrink-0 ${className}`}
-      />
+      <img src={avatarUrl} alt={name} className={`${sz} rounded-full object-cover shrink-0 ${className}`} />
     );
   }
 
   return (
-    <div className={`${sz} ${avatarColor(name)} rounded-full flex items-center justify-center text-white font-bold shrink-0 ${className}`}>
+    <div
+      className={`${sz} ${avatarColor(name)} rounded-full flex items-center justify-center text-white font-bold shrink-0 ${className}`}
+    >
       {initials(name)}
     </div>
   );

@@ -1,8 +1,14 @@
 "use client";
 
 import {
-  FlaskConical, ScanSearch, Pill, FileText,
-  Stethoscope, ExternalLink, ShieldCheck, Download,
+  FlaskConical,
+  ScanSearch,
+  Pill,
+  FileText,
+  Stethoscope,
+  ExternalLink,
+  ShieldCheck,
+  Download,
 } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -29,22 +35,49 @@ type TypeConfig = {
 };
 
 const TYPE_CONFIG: Record<string, TypeConfig> = {
-  "Lab Result":    { Icon: FlaskConical,  badge: "bg-blue-50 text-blue-700",   dot: "border-blue-400 text-blue-500",   accent: "border-l-blue-300" },
-  "Imaging":       { Icon: ScanSearch,    badge: "bg-purple-50 text-purple-700",dot: "border-purple-400 text-purple-500",accent: "border-l-purple-300" },
-  "Prescription":  { Icon: Pill,          badge: "bg-green-50 text-green-700",  dot: "border-green-400 text-green-500", accent: "border-l-green-300" },
-  "Clinical Note": { Icon: FileText,      badge: "bg-teal-50 text-teal-700",    dot: "border-teal-400 text-teal-500",   accent: "border-l-teal-300" },
-  "Consultation":  { Icon: Stethoscope,   badge: "bg-amber-50 text-amber-700",  dot: "border-amber-400 text-amber-500", accent: "border-l-amber-300" },
+  "Lab Result": {
+    Icon: FlaskConical,
+    badge: "bg-blue-50 text-blue-700",
+    dot: "border-blue-400 text-blue-500",
+    accent: "border-l-blue-300",
+  },
+  Imaging: {
+    Icon: ScanSearch,
+    badge: "bg-purple-50 text-purple-700",
+    dot: "border-purple-400 text-purple-500",
+    accent: "border-l-purple-300",
+  },
+  Prescription: {
+    Icon: Pill,
+    badge: "bg-green-50 text-green-700",
+    dot: "border-green-400 text-green-500",
+    accent: "border-l-green-300",
+  },
+  "Clinical Note": {
+    Icon: FileText,
+    badge: "bg-teal-50 text-teal-700",
+    dot: "border-teal-400 text-teal-500",
+    accent: "border-l-teal-300",
+  },
+  Consultation: {
+    Icon: Stethoscope,
+    badge: "bg-amber-50 text-amber-700",
+    dot: "border-amber-400 text-amber-500",
+    accent: "border-l-amber-300",
+  },
 };
 const DEFAULT_CONFIG: TypeConfig = {
   Icon: FileText,
   badge: "bg-gray-100 text-gray-600",
-  dot:   "border-gray-300 text-gray-400",
-  accent:"border-l-gray-200",
+  dot: "border-gray-300 text-gray-400",
+  accent: "border-l-gray-200",
 };
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
-    year: "numeric", month: "long", day: "numeric",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 }
 
@@ -71,23 +104,23 @@ function ClinicalRecordsPanel() {
 
   useEffect(() => {
     fetch("/api/records")
-      .then((r) => r.ok ? r.json() : [])
-      .then((data) => { setRecords(data); setIsLoading(false); })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        setRecords(data);
+        setIsLoading(false);
+      })
       .catch(() => setIsLoading(false));
   }, []);
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-500 pb-16">
-
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
           <ShieldCheck className="w-8 h-8 text-rose-600" />
           My Health Timeline
         </h1>
-        <p className="text-gray-500 mt-1">
-          A complete, chronological record of your clinical history.
-        </p>
+        <p className="text-gray-500 mt-1">A complete, chronological record of your clinical history.</p>
       </div>
 
       {/* Timeline */}
@@ -107,9 +140,7 @@ function ClinicalRecordsPanel() {
             Your health records will appear here after your first consultation with a NauriCare provider.
           </p>
           <Link href="/dashboard/providers">
-            <button className="mt-6 btn-brand text-sm font-bold px-6 py-3 rounded-xl">
-              Book a Consultation
-            </button>
+            <button className="mt-6 btn-brand text-sm font-bold px-6 py-3 rounded-xl">Book a Consultation</button>
           </Link>
         </div>
       ) : (
@@ -121,7 +152,6 @@ function ClinicalRecordsPanel() {
 
             return (
               <div key={record.id} className="flex gap-6 pb-8">
-
                 {/* Timeline spine: dot + vertical line */}
                 <div className="flex flex-col items-center shrink-0 w-12">
                   <div
@@ -129,9 +159,7 @@ function ClinicalRecordsPanel() {
                   >
                     <Icon className="w-5 h-5" />
                   </div>
-                  {!isLast && (
-                    <div className="flex-1 w-0.5 bg-gray-200 mt-2" />
-                  )}
+                  {!isLast && <div className="flex-1 w-0.5 bg-gray-200 mt-2" />}
                 </div>
 
                 {/* Record card */}
@@ -139,16 +167,13 @@ function ClinicalRecordsPanel() {
                   className={`flex-1 bg-white/90 backdrop-blur-sm rounded-2xl border border-rose-100 shadow-sm border-l-4 ${config.accent} overflow-hidden mb-2`}
                 >
                   <div className="p-6 space-y-4">
-
                     {/* Card header */}
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <span className={`text-xs font-bold px-3 py-1 rounded-full ${config.badge}`}>
                           {record.type}
                         </span>
-                        <span className="text-xs text-gray-400 font-medium">
-                          {formatDate(record.createdAt)}
-                        </span>
+                        <span className="text-xs text-gray-400 font-medium">{formatDate(record.createdAt)}</span>
                       </div>
                       <span className="text-xs text-gray-400">
                         Dr. {record.practitioner?.user?.name ?? "Unknown Provider"}
@@ -158,9 +183,7 @@ function ClinicalRecordsPanel() {
                     {/* Notes (abstract) */}
                     {record.notes && (
                       <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                          Clinical Notes
-                        </p>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Clinical Notes</p>
                         <p className="text-sm text-gray-700 leading-relaxed">{record.notes}</p>
                       </div>
                     )}
@@ -168,12 +191,8 @@ function ClinicalRecordsPanel() {
                     {/* Content preview */}
                     {record.content && (
                       <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-                          Record Summary
-                        </p>
-                        <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
-                          {record.content}
-                        </p>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Record Summary</p>
+                        <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">{record.content}</p>
                       </div>
                     )}
 
@@ -194,7 +213,6 @@ function ClinicalRecordsPanel() {
                     )}
                   </div>
                 </div>
-
               </div>
             );
           })}
@@ -211,7 +229,6 @@ function ClinicalRecordsPanel() {
     </div>
   );
 }
-
 
 const RECORD_TABS = [
   { id: "clinical", label: "Clinical records" },
@@ -236,7 +253,11 @@ export default function RecordsPage() {
 
   return (
     <div className="space-y-6">
-      <div role="tablist" aria-label="Records" className="mx-auto flex max-w-3xl gap-1 overflow-x-auto rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+      <div
+        role="tablist"
+        aria-label="Records"
+        className="mx-auto flex max-w-3xl gap-1 overflow-x-auto rounded-full border border-slate-200 bg-white p-1 shadow-sm"
+      >
         {RECORD_TABS.map((t) => (
           <button
             key={t.id}
@@ -255,7 +276,10 @@ export default function RecordsPage() {
         <div className="mx-auto max-w-3xl space-y-4 pb-16">
           <header>
             <h1 className="text-2xl font-bold text-nc-ink sm:text-3xl">Your activity</h1>
-            <p className="mt-1 text-slate-600">Everything you have done on NauriCare: bookings, referrals, consent changes and sign-ins. Only you can see this.</p>
+            <p className="mt-1 text-slate-600">
+              Everything you have done on NauriCare: bookings, referrals, consent changes and sign-ins. Only you can see
+              this.
+            </p>
           </header>
           <ActivityTimeline />
         </div>

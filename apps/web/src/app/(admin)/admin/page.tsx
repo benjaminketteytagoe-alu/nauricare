@@ -23,14 +23,14 @@ export default async function AdminOverviewPage() {
 
   // 2. Analytics Aggregation: Group audit events to see where engagement is happening
   const eventStats = await prisma.auditEvent.groupBy({
-    by: ['action'],
+    by: ["action"],
     _count: {
       action: true,
     },
     orderBy: {
-      _count: { action: 'desc' }
+      _count: { action: "desc" },
     },
-    take: 5 // Top 5 actions
+    take: 5, // Top 5 actions
   });
 
   // Calculate total for percentage rendering
@@ -41,7 +41,8 @@ export default async function AdminOverviewPage() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">System Overview</h1>
         <p className="text-gray-500 mt-1">
-          Welcome back, <span className="font-semibold text-teal-700">{session?.user?.name || "Administrator"}</span>. Here is what is happening across NauriCare today.
+          Welcome back, <span className="font-semibold text-teal-700">{session?.user?.name || "Administrator"}</span>.
+          Here is what is happening across NauriCare today.
         </p>
       </div>
 
@@ -105,40 +106,36 @@ export default async function AdminOverviewPage() {
         </div>
 
         {eventStats.length === 0 ? (
-           <div className="h-48 flex flex-col items-center justify-center text-gray-400">
-             <Activity className="w-8 h-8 mb-2 opacity-50" />
-             <p>Not enough data to generate chart.</p>
-           </div>
+          <div className="h-48 flex flex-col items-center justify-center text-gray-400">
+            <Activity className="w-8 h-8 mb-2 opacity-50" />
+            <p>Not enough data to generate chart.</p>
+          </div>
         ) : (
           <div className="space-y-5">
             {eventStats.map((stat, index) => {
               const percentage = Math.round((stat._count.action / totalTrackedActions) * 100);
-              
+
               // Dynamic coloring based on index
-              const colors = [
-                "bg-teal-500", 
-                "bg-blue-500", 
-                "bg-purple-500", 
-                "bg-rose-500", 
-                "bg-amber-500"
-              ];
-              
+              const colors = ["bg-teal-500", "bg-blue-500", "bg-purple-500", "bg-rose-500", "bg-amber-500"];
+
               return (
                 <div key={stat.action} className="relative">
                   <div className="flex justify-between text-sm mb-1.5">
                     <span className="font-medium text-gray-700 capitalize">
-                      {stat.action.replace(/_/g, ' ').toLowerCase()}
+                      {stat.action.replace(/_/g, " ").toLowerCase()}
                     </span>
-                    <span className="text-gray-500 font-mono text-xs">{percentage}% ({stat._count.action})</span>
+                    <span className="text-gray-500 font-mono text-xs">
+                      {percentage}% ({stat._count.action})
+                    </span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                    <div 
+                    <div
                       className={`h-2.5 rounded-full ${colors[index % colors.length]} transition-all duration-1000 ease-out`}
                       style={{ width: `${percentage}%` }}
                     ></div>
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         )}

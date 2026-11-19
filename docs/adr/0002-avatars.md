@@ -9,7 +9,7 @@ Users need recognisable avatars that aren't real photos, to protect privacy in C
 ## Decision
 
 - Render DiceBear inside our own app with `@dicebear/core` and `@dicebear/collection`.
-- Store an avatar *reference* (`dicebear:<style>:<seed>`), validated against an allow-list of styles and options.
+- Store an avatar _reference_ (`dicebear:<style>:<seed>`), validated against an allow-list of styles and options.
 - The default seed is an HMAC of the user id, so ids are never exposed.
 - The 12 hand-made cultural presets stay as the "Signature" set.
 - Google photos are still never shown to other patients in Community.

@@ -14,7 +14,7 @@ const HabitInput = z.object({
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  
+
   if (!session?.user?.id || session.user.role !== "PATIENT") {
     return new NextResponse("Unauthorized", { status: 401 });
   }
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   const patientProfile = await prisma.patientProfile.findUnique({
     where: { userId: session.user.id },
   });
-  
+
   if (!patientProfile) {
     return new NextResponse("Profile not found", { status: 404 });
   }

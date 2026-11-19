@@ -1,7 +1,7 @@
 // apps/web/src/app/api/providers/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; 
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { isOnline } from "@/server/messaging/policy";
 
@@ -34,7 +34,11 @@ export async function GET() {
       orderBy: { createdAt: "asc" },
     });
 
-    const directory = providers.map(({ user: { lastSeenAt, ...user }, ...p }) => ({ ...p, user, online: isOnline(lastSeenAt) }));
+    const directory = providers.map(({ user: { lastSeenAt, ...user }, ...p }) => ({
+      ...p,
+      user,
+      online: isOnline(lastSeenAt),
+    }));
     return NextResponse.json(directory, { status: 200 });
   } catch (error) {
     console.error("Fetch Directory Error:", error);

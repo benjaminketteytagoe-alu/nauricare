@@ -75,8 +75,14 @@ export function TriageGate({ firstName, version }: { firstName: string; version:
   return (
     <div className="font-friendly relative isolate overflow-hidden rounded-[2.5rem] bg-[#FFFDF9] px-5 py-10 sm:px-10 sm:py-14">
       {/* Soft organic blush shapes, solid colours only, no gradients */}
-      <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 -z-10 h-72 w-72 rounded-full bg-[#FDF2F0]" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-20 -z-10 h-80 w-80 rounded-full bg-[#FDF2F0]" />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-24 -top-24 -z-10 h-72 w-72 rounded-full bg-[#FDF2F0]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-32 -left-20 -z-10 h-80 w-80 rounded-full bg-[#FDF2F0]"
+      />
 
       <motion.div
         variants={stagger}
@@ -99,8 +105,8 @@ export function TriageGate({ firstName, version }: { firstName: string; version:
             Hi {firstName}, let&apos;s take a breath together
           </h1>
           <p className="mx-auto mt-4 max-w-lg text-lg leading-relaxed text-[#475569]">
-            Whatever you&apos;re feeling, you&apos;re not alone. Before we look at your symptoms, here is how we care for
-            what you tell us.
+            Whatever you&apos;re feeling, you&apos;re not alone. Before we look at your symptoms, here is how we care
+            for what you tell us.
           </p>
         </motion.header>
 
@@ -130,23 +136,25 @@ export function TriageGate({ firstName, version }: { firstName: string; version:
               <HeartHandshake className="h-5 w-5" aria-hidden />
             </span>
             <div>
-              <h2 id="consent-heading" className="text-xl font-bold text-[#0F172A]">Your consent</h2>
+              <h2 id="consent-heading" className="text-xl font-bold text-[#0F172A]">
+                Your consent
+              </h2>
               <p className="text-sm text-[#475569]">Required by Rwanda&apos;s data protection law (Nº 058/2021)</p>
             </div>
           </div>
 
           <div className="mt-6 space-y-3">
             <ConsentToggle checked={privacy} onChange={setPrivacy} title="I agree to the processing of my health data">
-              NauriCare may process sensitive health data I enter here, such as symptoms, cycle details and notes, to give
-              me triage guidance and keep it in my health record, as set out in the{" "}
+              NauriCare may process sensitive health data I enter here, such as symptoms, cycle details and notes, to
+              give me triage guidance and keep it in my health record, as set out in the{" "}
               <Link href="/privacy" target="_blank" className="font-medium text-[#1D4ED8] underline underline-offset-2">
                 Privacy Policy
               </Link>
               .
             </ConsentToggle>
             <ConsentToggle checked={triage} onChange={setTriage} title="I understand how AI triage works">
-              AI triage is not a diagnosis and can be wrong. My symptom text, without my name or contact details, is sent
-              to Google&apos;s MedGemma or Gemini models, which may process it outside Rwanda. See the{" "}
+              AI triage is not a diagnosis and can be wrong. My symptom text, without my name or contact details, is
+              sent to Google&apos;s MedGemma or Gemini models, which may process it outside Rwanda. See the{" "}
               <Link href="/consent" target="_blank" className="font-medium text-[#1D4ED8] underline underline-offset-2">
                 Informed Consent
               </Link>

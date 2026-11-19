@@ -19,7 +19,8 @@ export interface CrawlOptions {
   log?: (line: string) => void;
 }
 
-const DOCTOR_HINT = /doctor|physician|specialist|consultant|staff|team|gyn|obstet|ob-?gyn|women|maternity|our-people|medical-team|faculty|department/i;
+const DOCTOR_HINT =
+  /doctor|physician|specialist|consultant|staff|team|gyn|obstet|ob-?gyn|women|maternity|our-people|medical-team|faculty|department/i;
 const SKIP_EXT = /\.(pdf|jpe?g|png|gif|webp|svg|zip|docx?|xlsx?|pptx?|mp4|mp3|ico|css|js)(\?|$)/i;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

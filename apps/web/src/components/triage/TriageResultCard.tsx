@@ -95,7 +95,10 @@ export function TriageResultCard({ triage, symptomCheckId }: { triage: TriageVie
 
         {needsCare && (
           <div className="flex flex-wrap gap-3 border-t border-nc-divider pt-5">
-            <Link href={`/dashboard/referrals/new?checkId=${encodeURIComponent(symptomCheckId)}`} className="m3-btn-filled">
+            <Link
+              href={`/dashboard/referrals/new?checkId=${encodeURIComponent(symptomCheckId)}`}
+              className="m3-btn-filled"
+            >
               <Hospital className="h-4 w-4" aria-hidden /> Create hospital referral
             </Link>
             <Link href="/dashboard/providers" className="m3-btn-outlined">

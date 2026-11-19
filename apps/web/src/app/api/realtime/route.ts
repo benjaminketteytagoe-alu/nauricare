@@ -62,7 +62,16 @@ export async function GET(req: Request) {
             take: 50,
           }),
         ]).catch(() => [[], []] as const);
-        for (const m of messages) deliver({ type: "message", id: m.id, senderId: m.senderId, receiverId: m.receiverId, content: m.content, createdAt: m.createdAt.toISOString(), sender: m.sender });
+        for (const m of messages)
+          deliver({
+            type: "message",
+            id: m.id,
+            senderId: m.senderId,
+            receiverId: m.receiverId,
+            content: m.content,
+            createdAt: m.createdAt.toISOString(),
+            sender: m.sender,
+          });
         for (const n of notifications) deliver({ type: "notification", id: n.id });
       };
 

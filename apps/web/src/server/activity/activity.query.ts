@@ -20,5 +20,7 @@ export async function listActivity(userId: string, opts: { types?: PatientActivi
 
 export async function activityCounts(userId: string) {
   const grouped = await prisma.patientActivity.groupBy({ by: ["type"], where: { userId }, _count: { _all: true } });
-  return Object.fromEntries(grouped.map((g) => [g.type, g._count._all])) as Partial<Record<PatientActivityType, number>>;
+  return Object.fromEntries(grouped.map((g) => [g.type, g._count._all])) as Partial<
+    Record<PatientActivityType, number>
+  >;
 }

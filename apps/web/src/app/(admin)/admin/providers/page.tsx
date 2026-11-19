@@ -51,10 +51,8 @@ export default function AdminProvidersPage() {
       if (result.success) {
         setProviders((prev) =>
           prev.map((p) =>
-            p.id === target.id
-              ? { ...p, practitionerProfile: { ...p.practitionerProfile, isActive: false } }
-              : p
-          )
+            p.id === target.id ? { ...p, practitionerProfile: { ...p.practitionerProfile, isActive: false } } : p,
+          ),
         );
         showToast({ type: "success", message: "Provider successfully deleted" });
       } else {
@@ -72,7 +70,7 @@ export default function AdminProvidersPage() {
     "Pelvic Floor Physical Therapist",
     "Obstetrician",
     "Holistic Wellness Coach (PCOS/Fibroids)",
-    "General Practice"
+    "General Practice",
   ];
 
   const [formData, setFormData] = useState({
@@ -81,13 +79,13 @@ export default function AdminProvidersPage() {
     password: "",
     specialty: WOMEN_HEALTH_SPECIALTIES[0],
     location: "",
-    clinicName: ""
+    clinicName: "",
   });
 
   const fetchProviders = async () => {
     try {
       const res = await fetch("/api/admin/providers");
-      if (res.ok) setProviders(await res.json() as ProviderRow[]);
+      if (res.ok) setProviders((await res.json()) as ProviderRow[]);
     } catch {
       console.error("Failed to fetch providers");
     }
@@ -95,7 +93,7 @@ export default function AdminProvidersPage() {
 
   useEffect(() => {
     fetch("/api/admin/providers")
-      .then(res => res.ok ? res.json() : Promise.reject(new Error()))
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error())))
       .then((data: ProviderRow[]) => setProviders(data))
       .catch(() => console.error("Failed to fetch providers"));
   }, []);
@@ -113,7 +111,14 @@ export default function AdminProvidersPage() {
 
       if (res.ok) {
         setIsModalOpen(false);
-        setFormData({ name: "", email: "", password: "", specialty: WOMEN_HEALTH_SPECIALTIES[0], location: "", clinicName: "" });
+        setFormData({
+          name: "",
+          email: "",
+          password: "",
+          specialty: WOMEN_HEALTH_SPECIALTIES[0],
+          location: "",
+          clinicName: "",
+        });
         await fetchProviders(); // Instantly refresh the table
         alert("Provider successfully onboarded!");
       } else {
@@ -128,10 +133,11 @@ export default function AdminProvidersPage() {
   };
 
   // Filter providers by Name, Email, or ID
-  const filteredProviders = providers.filter(provider => 
-    provider.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    provider.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    provider.email.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredProviders = providers.filter(
+    (provider) =>
+      provider.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      provider.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      provider.email.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -141,7 +147,7 @@ export default function AdminProvidersPage() {
           <h1 className="text-3xl font-bold text-gray-900">Provider Management</h1>
           <p className="text-gray-500 mt-1">Onboard and manage healthcare practitioners.</p>
         </div>
-        <Button 
+        <Button
           onClick={() => setIsModalOpen(true)}
           className="bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-2"
         >
@@ -155,16 +161,16 @@ export default function AdminProvidersPage() {
         <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
           <div className="relative w-full max-w-md">
             <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Search by name, email, or ID..." 
+            <input
+              type="text"
+              placeholder="Search by name, email, or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
@@ -180,14 +186,16 @@ export default function AdminProvidersPage() {
             <tbody>
               {filteredProviders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-gray-500"> {/* Increased colSpan to 6 */}
+                  <td colSpan={6} className="p-8 text-center text-gray-500">
+                    {" "}
+                    {/* Increased colSpan to 6 */}
                     <Stethoscope className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                     <h3 className="text-lg font-medium text-gray-900">No Providers Found</h3>
                     <p className="text-sm mt-1">Try adjusting your search query or onboard a new provider.</p>
                   </td>
                 </tr>
               ) : (
-                filteredProviders.map(provider => (
+                filteredProviders.map((provider) => (
                   <tr key={provider.id} className="border-b border-gray-50 hover:bg-gray-50/50">
                     <td className="px-6 py-4 font-medium text-gray-900">{provider.name}</td>
                     <td className="px-6 py-4 text-gray-500">
@@ -200,7 +208,9 @@ export default function AdminProvidersPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-gray-600">
-                      <div className="font-medium text-gray-900">{provider.practitionerProfile?.clinicName || "Independent"}</div>
+                      <div className="font-medium text-gray-900">
+                        {provider.practitionerProfile?.clinicName || "Independent"}
+                      </div>
                       <div className="text-xs">{provider.practitionerProfile?.location || "N/A"}</div>
                     </td>
                     {/* Status reflects the real isVerified boolean — set by approveProviderProfile() on both User and PractitionerProfile */}
@@ -216,11 +226,13 @@ export default function AdminProvidersPage() {
                           );
                         }
                         return (
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            isVerified
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : "bg-amber-50 text-amber-700 border border-amber-200"
-                          }`}>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              isVerified
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : "bg-amber-50 text-amber-700 border border-amber-200"
+                            }`}
+                          >
                             {isVerified ? "APPROVED" : "PENDING"}
                           </span>
                         );
@@ -264,46 +276,79 @@ export default function AdminProvidersPage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input required type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full p-2 border rounded-md" />
+                <input
+                  required
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full p-2 border rounded-md"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input required type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full p-2 border rounded-md" />
+                <input
+                  required
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full p-2 border rounded-md"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Temporary Password</label>
-                <input required type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full p-2 border rounded-md" />
+                <input
+                  required
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full p-2 border rounded-md"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
-                <select 
-                  required 
-                  value={formData.specialty} 
-                  onChange={(e) => setFormData({...formData, specialty: e.target.value})} 
+                <select
+                  required
+                  value={formData.specialty}
+                  onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
                   className="w-full p-2 border rounded-md bg-white"
                 >
-                  {WOMEN_HEALTH_SPECIALTIES.map(spec => (
-                    <option key={spec} value={spec}>{spec}</option>
+                  {WOMEN_HEALTH_SPECIALTIES.map((spec) => (
+                    <option key={spec} value={spec}>
+                      {spec}
+                    </option>
                   ))}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Clinic Name</label>
-                  <input type="text" value={formData.clinicName} onChange={(e) => setFormData({...formData, clinicName: e.target.value})} className="w-full p-2 border rounded-md" />
+                  <input
+                    type="text"
+                    value={formData.clinicName}
+                    onChange={(e) => setFormData({ ...formData, clinicName: e.target.value })}
+                    className="w-full p-2 border rounded-md"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">City/Location</label>
-                  <input required type="text" value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} className="w-full p-2 border rounded-md" />
+                  <input
+                    required
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    className="w-full p-2 border rounded-md"
+                  />
                 </div>
               </div>
-              
+
               <div className="pt-4 flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+                  Cancel
+                </Button>
                 <Button type="submit" disabled={isLoading} className="bg-teal-600 hover:bg-teal-700 text-white">
                   {isLoading ? "Creating..." : "Save Provider"}
                 </Button>
@@ -329,8 +374,8 @@ export default function AdminProvidersPage() {
             </div>
             <div className="p-6 space-y-4">
               <p className="text-sm text-gray-600">
-                Are you sure you want to delete <span className="font-semibold text-gray-900">{deleteTarget.name}</span>?
-                This action cannot be undone.
+                Are you sure you want to delete <span className="font-semibold text-gray-900">{deleteTarget.name}</span>
+                ? This action cannot be undone.
               </p>
               <div className="flex justify-end gap-3 pt-2">
                 <Button type="button" variant="outline" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
@@ -364,16 +409,10 @@ export default function AdminProvidersPage() {
       {toast && (
         <div
           className={`fixed bottom-6 right-6 z-[60] flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-sm font-medium ${
-            toast.type === "success"
-              ? "bg-emerald-600 text-white"
-              : "bg-red-600 text-white"
+            toast.type === "success" ? "bg-emerald-600 text-white" : "bg-red-600 text-white"
           }`}
         >
-          {toast.type === "success" ? (
-            <CheckCircle2 className="w-4 h-4" />
-          ) : (
-            <AlertCircle className="w-4 h-4" />
-          )}
+          {toast.type === "success" ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
           {toast.message}
         </div>
       )}

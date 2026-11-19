@@ -17,7 +17,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!parsed.ok) return parsed.response;
   return handle(async () => {
     const id = idSchema.parse((await params).id);
-    const result = await reviewCandidate(adminId, id, parsed.data.action, parsed.data.note ? sanitizePlainText(parsed.data.note) : undefined);
-    return apiSuccess({ candidate: result.candidate ? toAdminCandidate(result.candidate) : null, emailSent: result.emailSent });
+    const result = await reviewCandidate(
+      adminId,
+      id,
+      parsed.data.action,
+      parsed.data.note ? sanitizePlainText(parsed.data.note) : undefined,
+    );
+    return apiSuccess({
+      candidate: result.candidate ? toAdminCandidate(result.candidate) : null,
+      emailSent: result.emailSent,
+    });
   });
 }

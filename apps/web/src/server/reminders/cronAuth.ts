@@ -16,7 +16,9 @@ export function isAuthorizedCron(authorization: string | null): boolean {
   if (!authorization || !cronConfigured()) return false;
   const presented = authorization.startsWith("Bearer ") ? authorization.slice(7) : authorization;
   const given = digest(presented);
-  const secrets = [process.env.CRON_SECRET, process.env.CRON_SECRET_PREVIOUS].filter((s): s is string => !!s && s.length >= 32);
+  const secrets = [process.env.CRON_SECRET, process.env.CRON_SECRET_PREVIOUS].filter(
+    (s): s is string => !!s && s.length >= 32,
+  );
   let ok = false;
   for (const s of secrets) ok = timingSafeEqual(given, digest(s)) || ok; // check all, no early exit
   return ok;

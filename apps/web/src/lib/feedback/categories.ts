@@ -15,7 +15,10 @@ export const FEEDBACK_FORM_CATEGORIES = [
 
 export type FeedbackFormCategory = (typeof FEEDBACK_FORM_CATEGORIES)[number]["value"];
 
-export const FEEDBACK_FORM_VALUES = FEEDBACK_FORM_CATEGORIES.map((c) => c.value) as [FeedbackFormCategory, ...FeedbackFormCategory[]];
+export const FEEDBACK_FORM_VALUES = FEEDBACK_FORM_CATEGORIES.map((c) => c.value) as [
+  FeedbackFormCategory,
+  ...FeedbackFormCategory[],
+];
 
 /** Every stored category, including legacy ones, for admin views and filters. */
 export const FEEDBACK_CATEGORY_LABELS: Record<FeedbackCategory, string> = {

@@ -29,7 +29,8 @@ export async function POST(req: Request) {
   if (!consent.valid) return apiError("Please confirm your consent first.", 403, "CONSENT_REQUIRED");
 
   const payload = openGuestTriage(parsed.data.claimToken);
-  if (!payload) return apiError("This assessment has expired. Please run the symptom guide again.", 410, "CLAIM_EXPIRED");
+  if (!payload)
+    return apiError("This assessment has expired. Please run the symptom guide again.", 410, "CLAIM_EXPIRED");
 
   // Idempotent: claiming the same token twice returns the same record.
   const existing = await prisma.symptomCheck.findFirst({

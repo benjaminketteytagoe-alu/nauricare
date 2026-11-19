@@ -8,7 +8,14 @@ import { recordPatientActivity } from "@/server/activity/activity.service";
 import { verifyLoginCode } from "@/server/auth/loginCode.service";
 import { pendingLogin } from "@/server/auth/pendingLogin";
 
-const Input = z.object({ code: z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code from your email.") }).strict();
+const Input = z
+  .object({
+    code: z
+      .string()
+      .trim()
+      .regex(/^\d{6}$/, "Enter the 6-digit code from your email."),
+  })
+  .strict();
 
 /**
  * Check the code. On success the client calls NextAuth update({ loginCode:
@@ -27,9 +34,19 @@ export async function POST(req: NextRequest) {
   return handle(async () => {
     await verifyLoginCode(login.userId, login.sid, body.data.code);
     if (login.role === "PATIENT") {
-      await recordPatientActivity("PATIENT", { userId: login.userId, type: "SIGNED_IN", title: "Confirmed sign-in with an emailed code" });
+      await recordPatientActivity("PATIENT", {
+        userId: login.userId,
+        type: "SIGNED_IN",
+        title: "Confirmed sign-in with an emailed code",
+      });
     } else {
-      await logAdministrativeAction({ action: "USER_LOGIN", actorId: login.userId, targetId: login.userId, details: { secondFactor: "email-code" }, ipAddress: ip ?? undefined });
+      await logAdministrativeAction({
+        action: "USER_LOGIN",
+        actorId: login.userId,
+        targetId: login.userId,
+        details: { secondFactor: "email-code" },
+        ipAddress: ip ?? undefined,
+      });
     }
     return apiSuccess({ verified: true }, 200, { "Cache-Control": "no-store" });
   });

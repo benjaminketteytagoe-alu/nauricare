@@ -15,16 +15,30 @@ const TONES: Record<ChipTone, string> = {
   success: "bg-emerald-50 text-emerald-700 border-emerald-200",
 };
 
-export function StatusChip({ tone, children, className = "" }: { tone: ChipTone; children: ReactNode; className?: string }) {
+export function StatusChip({
+  tone,
+  children,
+  className = "",
+}: {
+  tone: ChipTone;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-xs font-semibold ${TONES[tone]} ${className}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-xs font-semibold ${TONES[tone]} ${className}`}
+    >
       {children}
     </span>
   );
 }
 
 export const SEVERITY_TONE: Record<string, ChipTone> = { LOW: "primary", MODERATE: "amber", URGENT: "berry" };
-export const SEVERITY_TEXT: Record<string, string> = { LOW: "text-nc-primary", MODERATE: "text-nc-amber", URGENT: "text-nc-berry" };
+export const SEVERITY_TEXT: Record<string, string> = {
+  LOW: "text-nc-primary",
+  MODERATE: "text-nc-amber",
+  URGENT: "text-nc-berry",
+};
 
 export const REFERRAL_STATUS_TONE: Record<string, ChipTone> = {
   PENDING: "amber",

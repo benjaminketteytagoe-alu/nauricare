@@ -12,13 +12,15 @@ import { runTriage, toTriageOutcome } from "@/lib/triage/engine";
 // which requests are answered by the deterministic safety rules only, so a
 // distributed flood cannot run up unbounded model costs.
 
-const GuestTriageInput = z.object({
-  symptoms: z.array(z.string().trim().min(1).max(60)).max(10).default([]),
-  notes: z.string().max(1000, "Please keep your description under 1000 characters.").default(""),
-  consentVersion: z.string().max(20),
-}).refine((v) => v.symptoms.length > 0 || v.notes.trim().length >= 3, {
-  message: "Tell Nauri a little about how you're feeling.",
-});
+const GuestTriageInput = z
+  .object({
+    symptoms: z.array(z.string().trim().min(1).max(60)).max(10).default([]),
+    notes: z.string().max(1000, "Please keep your description under 1000 characters.").default(""),
+    consentVersion: z.string().max(20),
+  })
+  .refine((v) => v.symptoms.length > 0 || v.notes.trim().length >= 3, {
+    message: "Tell Nauri a little about how you're feeling.",
+  });
 
 const GLOBAL_GUEST_MODEL_BUDGET_PER_HOUR = 300;
 

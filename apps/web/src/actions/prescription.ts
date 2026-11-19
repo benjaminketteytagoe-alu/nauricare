@@ -78,7 +78,10 @@ export async function createPrescription(data: {
 
   // An unknown pharmacy id would otherwise fail on the foreign key.
   if (data.suggestedPharmacyId) {
-    const pharmacy = await prisma.pharmacy.findUnique({ where: { id: data.suggestedPharmacyId }, select: { id: true } });
+    const pharmacy = await prisma.pharmacy.findUnique({
+      where: { id: data.suggestedPharmacyId },
+      select: { id: true },
+    });
     if (!pharmacy) return { success: false, error: "Suggested pharmacy not found" };
   }
 
@@ -133,7 +136,12 @@ export async function routeToPharmacy(prescriptionId: string, pharmacyId: string
     data: { pharmacyId, status: "ROUTED" },
   });
   if (routed.count === 0) return { success: false, error: "Prescription has already been routed" };
-  await recordActivity({ userId: session.user.id, type: "PRESCRIPTION_ROUTED", title: "Sent a prescription to a pharmacy", ref: { type: "Prescription", id: prescriptionId } });
+  await recordActivity({
+    userId: session.user.id,
+    type: "PRESCRIPTION_ROUTED",
+    title: "Sent a prescription to a pharmacy",
+    ref: { type: "Prescription", id: prescriptionId },
+  });
 
   revalidatePath("/dashboard/prescriptions");
   return { success: true };

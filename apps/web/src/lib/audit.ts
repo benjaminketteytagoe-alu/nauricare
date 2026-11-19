@@ -3,22 +3,16 @@ import { prisma } from "@/lib/prisma";
 
 interface AuditLogPayload {
   action: AuditAction;
-  actorId: string;       
-  targetId?: string;     
+  actorId: string;
+  targetId?: string;
   details?: Record<string, unknown>;
-  ipAddress?: string; 
+  ipAddress?: string;
 }
 
 /**
  * Commits a structured operational transaction record to the immutable database log ledger.
  */
-export async function logAdministrativeAction({
-  action,
-  actorId,
-  targetId,
-  details,
-  ipAddress,
-}: AuditLogPayload) {
+export async function logAdministrativeAction({ action, actorId, targetId, details, ipAddress }: AuditLogPayload) {
   try {
     return await prisma.auditLog.create({
       data: {

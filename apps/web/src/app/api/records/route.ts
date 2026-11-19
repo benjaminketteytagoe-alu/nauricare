@@ -112,7 +112,7 @@ export async function POST(req: Request) {
     const { patientProfileId, type, content, notes, documentUrl } = parsed.data;
 
     const practitioner = await prisma.practitionerProfile.findUnique({
-      where: { userId: session.user.id }
+      where: { userId: session.user.id },
     });
 
     if (!practitioner) return new NextResponse("Practitioner not found", { status: 404 });
@@ -135,7 +135,7 @@ export async function POST(req: Request) {
         content,
         notes: notes || null,
         documentUrl: documentUrl || null,
-      }
+      },
     });
 
     return NextResponse.json(record, { status: 201 });

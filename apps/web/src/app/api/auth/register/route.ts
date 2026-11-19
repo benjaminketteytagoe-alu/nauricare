@@ -56,15 +56,9 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    const isHuman = await verifyTurnstileToken(
-      body?.turnstileToken ?? "",
-      ip,
-    );
+    const isHuman = await verifyTurnstileToken(body?.turnstileToken ?? "", ip);
     if (!isHuman) {
-      return NextResponse.json(
-        { error: "Security verification failed. Please try again." },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: "Security verification failed. Please try again." }, { status: 403 });
     }
 
     // Sanitize phone before validation — strip spaces, dashes, parens that a
@@ -170,15 +164,9 @@ export async function POST(req: Request) {
       console.error("[VERIFICATION_EMAIL_ERROR]", emailError);
     }
 
-    return NextResponse.json(
-      { message: "User registered successfully", user: userWithoutPassword },
-      { status: 201 }
-    );
+    return NextResponse.json({ message: "User registered successfully", user: userWithoutPassword }, { status: 201 });
   } catch (error) {
     console.error("Registration error:", error);
-    return NextResponse.json(
-      { error: "An error occurred during registration" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "An error occurred during registration" }, { status: 500 });
   }
 }

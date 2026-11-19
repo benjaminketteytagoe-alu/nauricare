@@ -27,7 +27,9 @@ function ResetPasswordForm() {
           </div>
         </div>
         <h2 className="text-xl font-bold text-gray-900">Invalid Reset Link</h2>
-        <p className="text-gray-500 text-sm">This password reset link is missing a token. Please request a new reset link.</p>
+        <p className="text-gray-500 text-sm">
+          This password reset link is missing a token. Please request a new reset link.
+        </p>
         <Link href="/forgot-password" className="text-sm text-teal-600 hover:underline font-medium">
           Request new link
         </Link>
@@ -83,11 +85,7 @@ function ResetPasswordForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-200">
-            {error}
-          </div>
-        )}
+        {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-200">{error}</div>}
         <div className="space-y-1.5">
           <Label htmlFor="password">New Password</Label>
           <PasswordInput
@@ -101,11 +99,7 @@ function ResetPasswordForm() {
           />
         </div>
 
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white"
-        >
+        <Button type="submit" disabled={loading} className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white">
           {loading ? "Updating password…" : "Update Password"}
         </Button>
       </form>

@@ -63,8 +63,13 @@ export default function Footer() {
               </p>
               <p className="mt-1 text-sm leading-relaxed">
                 Call SAMU Rwanda:{" "}
-                <a href="tel:112" className="font-bold underline underline-offset-2">112</a> /{" "}
-                <a href="tel:912" className="font-bold underline underline-offset-2">912</a>
+                <a href="tel:112" className="font-bold underline underline-offset-2">
+                  112
+                </a>{" "}
+                /{" "}
+                <a href="tel:912" className="font-bold underline underline-offset-2">
+                  912
+                </a>
               </p>
             </div>
           </div>
@@ -80,7 +85,10 @@ export default function Footer() {
             <h2 className="text-sm font-semibold text-nc-ink">Contact & Support</h2>
             <ul className="mt-4 space-y-3 text-sm text-slate-600">
               <li>
-                <a href={`mailto:${SUPPORT_EMAIL}`} className="inline-flex items-center gap-2 transition-colors hover:text-nc-primary">
+                <a
+                  href={`mailto:${SUPPORT_EMAIL}`}
+                  className="inline-flex items-center gap-2 transition-colors hover:text-nc-primary"
+                >
                   <Mail className="h-4 w-4 shrink-0 text-nc-primary" aria-hidden /> {SUPPORT_EMAIL}
                 </a>
               </li>

@@ -17,10 +17,7 @@ type AppointmentStatus = "SCHEDULED" | "COMPLETED" | "CANCELLED" | "MISSED";
 
 const TERMINAL_STATUSES: AppointmentStatus[] = ["COMPLETED", "CANCELLED", "MISSED"];
 
-export async function updateAppointmentStatus(
-  appointmentId: string,
-  status: "COMPLETED" | "MISSED" | "CANCELLED",
-) {
+export async function updateAppointmentStatus(appointmentId: string, status: "COMPLETED" | "MISSED" | "CANCELLED") {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id || session.user.role !== "PROVIDER") {
     return { success: false, error: "Unauthorized" };
@@ -37,7 +34,13 @@ export async function updateAppointmentStatus(
 
   const appointment = await prisma.appointment.findUnique({
     where: { id: appointmentId },
-    select: { id: true, practitionerProfileId: true, status: true, startTime: true, patient: { select: { userId: true } } },
+    select: {
+      id: true,
+      practitionerProfileId: true,
+      status: true,
+      startTime: true,
+      patient: { select: { userId: true } },
+    },
   });
 
   if (!appointment || appointment.practitionerProfileId !== practitioner.id) {

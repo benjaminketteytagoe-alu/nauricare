@@ -18,7 +18,13 @@ export interface MapProvider {
   distanceLabel?: string;
 }
 
-const initials = (name: string) => name.split(/\s+/).filter((w) => w && !/^dr\.?$/i.test(w)).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("");
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter((w) => w && !/^dr\.?$/i.test(w))
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
 const escape = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 function providerIcon(name: string, active: boolean) {
@@ -63,7 +69,13 @@ export default function ProviderMap({
 }) {
   const points = [...providers.map((p) => p.position), ...(me ? [me] : [])];
   return (
-    <MapContainer center={[KIGALI.lat, KIGALI.lng]} zoom={12} scrollWheelZoom={false} className="h-full w-full" aria-label="Map of specialists">
+    <MapContainer
+      center={[KIGALI.lat, KIGALI.lng]}
+      zoom={12}
+      scrollWheelZoom={false}
+      className="h-full w-full"
+      aria-label="Map of specialists"
+    >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -72,7 +84,13 @@ export default function ProviderMap({
       <FitToMarkers points={points} />
       {me && <Marker position={[me.lat, me.lng]} icon={meIcon} title="You are here" />}
       {providers.map((p) => (
-        <Marker key={p.id} position={[p.position.lat, p.position.lng]} icon={providerIcon(p.name, p.id === selectedId)} eventHandlers={{ click: () => onSelect(p.id) }} title={p.name}>
+        <Marker
+          key={p.id}
+          position={[p.position.lat, p.position.lng]}
+          icon={providerIcon(p.name, p.id === selectedId)}
+          eventHandlers={{ click: () => onSelect(p.id) }}
+          title={p.name}
+        >
           <Popup>
             <strong>{p.name}</strong>
             <br />

@@ -4,7 +4,8 @@ import { LegalDocument, LEGAL_CONTACT_EMAIL, type LegalSection } from "@/compone
 
 export const metadata: Metadata = {
   title: "Informed Consent | NauriCare",
-  description: "What you agree to when you use NauriCare's AI triage, electronic health records and remote consultations.",
+  description:
+    "What you agree to when you use NauriCare's AI triage, electronic health records and remote consultations.",
 };
 
 const sections: LegalSection[] = [
@@ -15,10 +16,12 @@ const sections: LegalSection[] = [
       <>
         <p>
           When you log symptoms, NauriCare sends them to an AI model to estimate how urgently you should seek care. Our
-          primary model is Google&apos;s <strong>MedGemma</strong>, with Gemini as a backup. Fixed safety rules run every
-          time as well. They can raise the urgency, but never lower it.
+          primary model is Google&apos;s <strong>MedGemma</strong>, with Gemini as a backup. Fixed safety rules run
+          every time as well. They can raise the urgency, but never lower it.
         </p>
-        <p><strong>You understand that AI triage:</strong></p>
+        <p>
+          <strong>You understand that AI triage:</strong>
+        </p>
         <ul>
           <li>is not a diagnosis, and cannot examine you or run tests;</li>
           <li>can be wrong, including under- or over-estimating urgency;</li>
@@ -37,12 +40,24 @@ const sections: LegalSection[] = [
     title: "Electronic health records",
     body: (
       <>
-        <p>NauriCare keeps an electronic record of your symptom logs, uploaded documents, appointments, prescriptions and referrals. Access works like this:</p>
+        <p>
+          NauriCare keeps an electronic record of your symptom logs, uploaded documents, appointments, prescriptions and
+          referrals. Access works like this:
+        </p>
         <ul>
-          <li><strong>You</strong> can always see your own record.</li>
-          <li><strong>Providers</strong> can see it only when they have an appointment with you, and only for your care.</li>
-          <li><strong>Administrators</strong> may access records only for support, safety or legal reasons. That access is recorded in an audit log.</li>
-          <li><strong>Hospitals</strong> receive referral details only for the referrals you create.</li>
+          <li>
+            <strong>You</strong> can always see your own record.
+          </li>
+          <li>
+            <strong>Providers</strong> can see it only when they have an appointment with you, and only for your care.
+          </li>
+          <li>
+            <strong>Administrators</strong> may access records only for support, safety or legal reasons. That access is
+            recorded in an audit log.
+          </li>
+          <li>
+            <strong>Hospitals</strong> receive referral details only for the referrals you create.
+          </li>
         </ul>
       </>
     ),
@@ -93,7 +108,12 @@ export default function ConsentPage() {
       eyebrow="Legal"
       title="Informed Consent"
       current="/consent"
-      intro={<p>Before you use AI triage, health records or remote consultations, here is what each one involves and what its limits are.</p>}
+      intro={
+        <p>
+          Before you use AI triage, health records or remote consultations, here is what each one involves and what its
+          limits are.
+        </p>
+      }
       sections={sections}
     />
   );

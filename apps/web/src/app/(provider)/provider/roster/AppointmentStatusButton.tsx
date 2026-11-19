@@ -22,18 +22,20 @@ export function AppointmentStatusButton({
   if (TERMINAL.includes(status)) {
     const styles: Record<string, string> = {
       COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      CANCELLED:  "bg-slate-100 text-slate-500 border-slate-200",
-      MISSED:     "bg-rose-50 text-rose-600 border-rose-200",
+      CANCELLED: "bg-slate-100 text-slate-500 border-slate-200",
+      MISSED: "bg-rose-50 text-rose-600 border-rose-200",
     };
     const labels: Record<string, string> = {
       COMPLETED: "Completed",
-      CANCELLED:  "Cancelled",
-      MISSED:     "Did Not Attend",
+      CANCELLED: "Cancelled",
+      MISSED: "Did Not Attend",
     };
     return (
-      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border ${styles[status]}`}>
+      <span
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border ${styles[status]}`}
+      >
         {status === "COMPLETED" && <CheckCircle2 className="w-3.5 h-3.5" />}
-        {status === "MISSED"    && <AlertTriangle className="w-3.5 h-3.5" />}
+        {status === "MISSED" && <AlertTriangle className="w-3.5 h-3.5" />}
         {labels[status]}
       </span>
     );

@@ -59,7 +59,10 @@ export async function getReminderPrefs(userId: string): Promise<ReminderPrefs> {
   return row ?? REMINDER_DEFAULTS;
 }
 
-export async function updateReminderPrefs(userId: string, patch: z.infer<typeof ReminderPrefsPatch>): Promise<ReminderPrefs> {
+export async function updateReminderPrefs(
+  userId: string,
+  patch: z.infer<typeof ReminderPrefsPatch>,
+): Promise<ReminderPrefs> {
   return prisma.reminderPreference.upsert({
     where: { userId },
     create: { userId, ...patch },

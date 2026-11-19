@@ -10,7 +10,7 @@ import { NauriTriageCard } from "@/components/nauri/NauriTriageCard";
 // ─── Animation presets ────────────────────────────────────────────────────────
 
 const fadeUp = {
-  hidden:  { opacity: 0, y: 36 },
+  hidden: { opacity: 0, y: 36 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: "easeOut" as const } },
 };
 
@@ -20,7 +20,7 @@ const stagger = {
 };
 
 const scaleIn = {
-  hidden:  { opacity: 0, scale: 0.94 },
+  hidden: { opacity: 0, scale: 0.94 },
   visible: { opacity: 1, scale: 1, transition: { duration: 0.7, ease: "easeOut" as const } },
 };
 
@@ -72,7 +72,7 @@ const FEATURES = [
 const CAROUSEL_MEDIA_PROPS = {
   initial: { opacity: 0 },
   animate: { opacity: 1 },
-  exit:    { opacity: 0 },
+  exit: { opacity: 0 },
   transition: { duration: 2.5, ease: "easeInOut" as const },
   className: "absolute inset-0 w-full h-full object-cover",
 };
@@ -92,15 +92,7 @@ function HeroCarousel() {
   return (
     <AnimatePresence mode="sync">
       {slide.type === "video" ? (
-        <motion.video
-          key={slide.src}
-          autoPlay
-          loop
-          muted
-          playsInline
-          aria-hidden="true"
-          {...CAROUSEL_MEDIA_PROPS}
-        >
+        <motion.video key={slide.src} autoPlay loop muted playsInline aria-hidden="true" {...CAROUSEL_MEDIA_PROPS}>
           <source src={slide.src} type="video/mp4" />
         </motion.video>
       ) : (
@@ -109,7 +101,9 @@ function HeroCarousel() {
           src={slide.src}
           alt=""
           aria-hidden="true"
-          onError={(e) => { e.currentTarget.style.display = "none"; }}
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+          }}
           {...CAROUSEL_MEDIA_PROPS}
         />
       )}
@@ -122,13 +116,11 @@ function HeroCarousel() {
 export default function LandingPageClient() {
   return (
     <div className="overflow-x-hidden bg-white">
-
       {/* ════════════════════════════════════════════════════════════════
           §1  HERO — live video background
           ════════════════════════════════════════════════════════════════ */}
       {/* dvh minus navbar height (4rem) and the variable notch inset so the hero never overflows */}
       <section className="relative min-h-[calc(100dvh-4rem-env(safe-area-inset-top))] flex items-center justify-center overflow-hidden">
-
         {/* Crossfade hero background — isolated component, re-renders only this subtree */}
         <HeroCarousel />
 
@@ -147,19 +139,17 @@ export default function LandingPageClient() {
               variants={fadeUp}
               className="text-4xl sm:text-6xl lg:text-[4.25rem] font-extrabold tracking-[-0.02em] leading-[1.06] drop-shadow-2xl text-balance"
             >
-              Your body,{" "}
-              <span className="text-rose-300">understood.</span>
+              Your body, <span className="text-rose-300">understood.</span>
               <br />
-              Your health,{" "}
-              <span className="text-amber-300">connected.</span>
+              Your health, <span className="text-amber-300">connected.</span>
             </motion.h1>
 
             <motion.p
               variants={fadeUp}
               className="mx-auto max-w-xl text-lg leading-relaxed text-amber-50/90 drop-shadow-lg text-pretty md:text-xl lg:mx-0"
             >
-              Compassionate, evidence-based care for PCOS, fibroids, and women&apos;s reproductive
-              health. Ask Nauri how soon to get care, then book a verified specialist or hospital referral.
+              Compassionate, evidence-based care for PCOS, fibroids, and women&apos;s reproductive health. Ask Nauri how
+              soon to get care, then book a verified specialist or hospital referral.
             </motion.p>
 
             <motion.div
@@ -260,9 +250,7 @@ export default function LandingPageClient() {
                   {/* Card copy */}
                   <div className="p-6 space-y-3">
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs font-extrabold px-2.5 py-1 rounded-full ${badge}`}>
-                        {label}
-                      </span>
+                      <span className={`text-xs font-extrabold px-2.5 py-1 rounded-full ${badge}`}>{label}</span>
                     </div>
                     <h3 className="text-xl font-extrabold text-teal-900">{label}</h3>
                     <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
@@ -286,12 +274,8 @@ export default function LandingPageClient() {
             variants={stagger}
           >
             <div className="grid lg:grid-cols-2 overflow-hidden rounded-[2.5rem] shadow-2xl bg-gradient-to-br from-teal-900 to-teal-950">
-
               {/* ── Image side ── */}
-              <motion.div
-                variants={scaleIn}
-                className="relative min-h-[360px] lg:min-h-[520px] overflow-hidden"
-              >
+              <motion.div variants={scaleIn} className="relative min-h-[360px] lg:min-h-[520px] overflow-hidden">
                 {/* Cloudinary image — priority false since it's below the fold */}
                 <Image
                   src="https://res.cloudinary.com/dl2fjmhft/image/upload/Agahozo_Shalom_Logo_geocaj"
@@ -324,21 +308,17 @@ export default function LandingPageClient() {
                 </h2>
 
                 <p className="text-teal-200/90 leading-relaxed">
-                  NauriCare was built on a simple belief: access to quality women&apos;s healthcare
-                  should know no borders. In close partnership with the young innovators of the{" "}
-                  <span className="text-white font-semibold">
-                    Agahozo-Shalom Youth Village (ASYV)
-                  </span>{" "}
-                  in Rwanda, we are co-creating technology that is equitable, accessible, and deeply
-                  rooted in community.
+                  NauriCare was built on a simple belief: access to quality women&apos;s healthcare should know no
+                  borders. In close partnership with the young innovators of the{" "}
+                  <span className="text-white font-semibold">Agahozo-Shalom Youth Village (ASYV)</span> in Rwanda, we
+                  are co-creating technology that is equitable, accessible, and deeply rooted in community.
                 </p>
 
                 <p className="text-teal-200/80 leading-relaxed text-sm">
-                  Together, we train the next generation of healthcare innovators, embed local
-                  knowledge directly into our platform, and ensure that NauriCare is built{" "}
-                  <em>with</em> communities — not just <em>for</em> them. Every feature, every
-                  decision, every design choice is informed by the lived experiences of women across
-                  Africa.
+                  Together, we train the next generation of healthcare innovators, embed local knowledge directly into
+                  our platform, and ensure that NauriCare is built <em>with</em> communities — not just <em>for</em>{" "}
+                  them. Every feature, every decision, every design choice is informed by the lived experiences of women
+                  across Africa.
                 </p>
 
                 <div className="flex items-center gap-3 pt-2">

@@ -4,12 +4,12 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
 const TAG_COLORS: Record<string, string> = {
-  PCOS:           "bg-violet-100 text-violet-700",
-  Fibroids:       "bg-rose-100 text-rose-700",
-  Endometriosis:  "bg-pink-100 text-pink-700",
-  General:        "bg-teal-100 text-teal-700",
-  HORMONES:       "bg-amber-100 text-amber-700",
-  PAIN:           "bg-orange-100 text-orange-700",
+  PCOS: "bg-violet-100 text-violet-700",
+  Fibroids: "bg-rose-100 text-rose-700",
+  Endometriosis: "bg-pink-100 text-pink-700",
+  General: "bg-teal-100 text-teal-700",
+  HORMONES: "bg-amber-100 text-amber-700",
+  PAIN: "bg-orange-100 text-orange-700",
 };
 
 function readingTime(content: string) {
@@ -28,17 +28,13 @@ function RichParagraph({ text }: { text: string }) {
           </strong>
         ) : (
           <span key={i}>{part}</span>
-        )
+        ),
       )}
     </p>
   );
 }
 
-export default async function ArticleDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function ArticleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   const article = await prisma.article.findFirst({
@@ -60,7 +56,6 @@ export default async function ArticleDetailPage({
 
   return (
     <div className="max-w-3xl mx-auto pb-16 animate-in fade-in duration-500">
-
       {/* Back navigation */}
       <Link
         href="/dashboard/articles"
@@ -88,9 +83,7 @@ export default async function ArticleDetailPage({
         </div>
 
         {/* Title */}
-        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight">
-          {article.title}
-        </h1>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight">{article.title}</h1>
 
         {/* Meta row */}
         <div className="flex items-center gap-5 text-sm text-gray-400 border-b border-gray-100 pb-6">
@@ -109,9 +102,7 @@ export default async function ArticleDetailPage({
           if (para.startsWith("-") || para.startsWith("*")) {
             const items = para
               .split("\n")
-              .map((line) =>
-                line.replace(/^[-*]\s?/, "").replace(/\*\*/g, "")
-              )
+              .map((line) => line.replace(/^[-*]\s?/, "").replace(/\*\*/g, ""))
               .filter(Boolean);
             return (
               <ul key={i} className="space-y-2 pl-2">
@@ -136,9 +127,7 @@ export default async function ArticleDetailPage({
           <p className="text-sm text-rose-700 mt-0.5">Book a secure telehealth consultation.</p>
         </div>
         <Link href="/dashboard/providers">
-          <button className="shrink-0 btn-brand text-sm font-bold px-6 py-3 rounded-xl">
-            Find a Specialist
-          </button>
+          <button className="shrink-0 btn-brand text-sm font-bold px-6 py-3 rounded-xl">Find a Specialist</button>
         </Link>
       </div>
     </div>

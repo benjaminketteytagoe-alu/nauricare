@@ -20,9 +20,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
         <div className="text-center mb-8">
           <span className="text-2xl font-extrabold text-teal-700 tracking-tight">NauriCare</span>
         </div>
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-8 py-10 space-y-6">
-          {children}
-        </div>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-8 py-10 space-y-6">{children}</div>
       </div>
     </div>
   );

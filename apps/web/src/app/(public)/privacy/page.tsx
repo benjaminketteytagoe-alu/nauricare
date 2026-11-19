@@ -14,9 +14,9 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          NauriCare is a digital women&apos;s health platform. It connects patients with independent, licensed healthcare
-          providers for PCOS, fibroids, endometriosis and menstrual health. This policy covers the NauriCare website,
-          the patient and provider portals, and any NauriCare emails.
+          NauriCare is a digital women&apos;s health platform. It connects patients with independent, licensed
+          healthcare providers for PCOS, fibroids, endometriosis and menstrual health. This policy covers the NauriCare
+          website, the patient and provider portals, and any NauriCare emails.
         </p>
         <p>
           NauriCare is the <strong>data controller</strong> for the personal data described here. Providers who consult
@@ -31,14 +31,15 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          We process personal data in line with Rwanda&apos;s <strong>Law N° 058/2021 of 13/10/2021 relating to the
-          protection of personal data and privacy</strong>, which is supervised by the National Cyber Security Authority.
+          We process personal data in line with Rwanda&apos;s{" "}
+          <strong>Law N° 058/2021 of 13/10/2021 relating to the protection of personal data and privacy</strong>, which
+          is supervised by the National Cyber Security Authority.
         </p>
         <p>
           We also design our controls to align with two international standards, the EU General Data Protection
-          Regulation (GDPR) and the US HIPAA Privacy and Security Rules. We follow their principles of data minimisation,
-          access control, audit logging and breach response. Alignment is a design commitment. It does not mean those
-          laws apply to every user, or that a regulator has certified us.
+          Regulation (GDPR) and the US HIPAA Privacy and Security Rules. We follow their principles of data
+          minimisation, access control, audit logging and breach response. Alignment is a design commitment. It does not
+          mean those laws apply to every user, or that a regulator has certified us.
         </p>
       </>
     ),
@@ -48,11 +49,26 @@ const sections: LegalSection[] = [
     title: "Data we collect",
     body: (
       <ul>
-        <li><strong>Account data:</strong> name, email, phone number, date of birth, country and password. We store passwords only as a one-way bcrypt hash.</li>
-        <li><strong>Health data:</strong> symptom logs, cycle and habit tracking, health records you upload, prescriptions, appointment notes and AI triage results.</li>
-        <li><strong>Referral and insurance data:</strong> your insurer, policy number, principal member and card expiry date, plus the referrals you create.</li>
-        <li><strong>Communications:</strong> messages with providers, community posts and comments, and feedback you send us.</li>
-        <li><strong>Technical data:</strong> IP address, device and browser details, and security signals used to block automated abuse.</li>
+        <li>
+          <strong>Account data:</strong> name, email, phone number, date of birth, country and password. We store
+          passwords only as a one-way bcrypt hash.
+        </li>
+        <li>
+          <strong>Health data:</strong> symptom logs, cycle and habit tracking, health records you upload,
+          prescriptions, appointment notes and AI triage results.
+        </li>
+        <li>
+          <strong>Referral and insurance data:</strong> your insurer, policy number, principal member and card expiry
+          date, plus the referrals you create.
+        </li>
+        <li>
+          <strong>Communications:</strong> messages with providers, community posts and comments, and feedback you send
+          us.
+        </li>
+        <li>
+          <strong>Technical data:</strong> IP address, device and browser details, and security signals used to block
+          automated abuse.
+        </li>
       </ul>
     ),
   },
@@ -62,15 +78,18 @@ const sections: LegalSection[] = [
     body: (
       <>
         <ul>
-          <li>To provide care: booking teleconsultations, sharing records with the providers you consult, and issuing hospital referrals.</li>
+          <li>
+            To provide care: booking teleconsultations, sharing records with the providers you consult, and issuing
+            hospital referrals.
+          </li>
           <li>To run AI triage on the symptoms you log, so we can suggest how urgently to seek care.</li>
           <li>To keep the platform secure, prevent fraud and meet our legal obligations.</li>
           <li>To improve NauriCare using aggregated, de-identified statistics.</li>
         </ul>
         <p>
-          Health data is sensitive personal data. We process it on the basis of your <strong>explicit consent</strong> and
-          for the provision of healthcare. <strong>We never sell your data, and we never use your health data for
-          advertising.</strong>
+          Health data is sensitive personal data. We process it on the basis of your <strong>explicit consent</strong>{" "}
+          and for the provision of healthcare.{" "}
+          <strong>We never sell your data, and we never use your health data for advertising.</strong>
         </p>
       </>
     ),
@@ -81,14 +100,22 @@ const sections: LegalSection[] = [
     body: (
       <>
         <ul>
-          <li><strong>Your providers:</strong> clinicians can see your records only when they have an appointment with you.</li>
-          <li><strong>Hospitals you choose:</strong> when you create a referral, the hospital receives your referral reason, triage severity and insurance details.</li>
+          <li>
+            <strong>Your providers:</strong> clinicians can see your records only when they have an appointment with
+            you.
+          </li>
+          <li>
+            <strong>Hospitals you choose:</strong> when you create a referral, the hospital receives your referral
+            reason, triage severity and insurance details.
+          </li>
           <li>
             <strong>Service providers</strong> who process data on our instructions under contract: database and file
             hosting, email delivery, video consultation, bot protection, and AI model providers (Google MedGemma and
             Gemini) for triage.
           </li>
-          <li><strong>Authorities</strong>, only when the law requires it.</li>
+          <li>
+            <strong>Authorities</strong>, only when the law requires it.
+          </li>
         </ul>
         <p>
           Some service providers process data outside Rwanda. Where they do, we rely on the safeguards for cross-border
@@ -102,11 +129,23 @@ const sections: LegalSection[] = [
     title: "How we protect it",
     body: (
       <ul>
-        <li><strong>Encryption in transit:</strong> all traffic to NauriCare uses HTTPS (TLS).</li>
-        <li><strong>Encryption at rest:</strong> our database and file storage providers encrypt stored data.</li>
-        <li><strong>Access control:</strong> role-based access separates patients, providers and administrators. Each portal is checked again on the server.</li>
-        <li><strong>Audit trail:</strong> administrative and provider access to records is logged for compliance review.</li>
-        <li><strong>Account security:</strong> password-reset links expire after one hour, and we store only a hash of each reset token.</li>
+        <li>
+          <strong>Encryption in transit:</strong> all traffic to NauriCare uses HTTPS (TLS).
+        </li>
+        <li>
+          <strong>Encryption at rest:</strong> our database and file storage providers encrypt stored data.
+        </li>
+        <li>
+          <strong>Access control:</strong> role-based access separates patients, providers and administrators. Each
+          portal is checked again on the server.
+        </li>
+        <li>
+          <strong>Audit trail:</strong> administrative and provider access to records is logged for compliance review.
+        </li>
+        <li>
+          <strong>Account security:</strong> password-reset links expire after one hour, and we store only a hash of
+          each reset token.
+        </li>
       </ul>
     ),
   },
@@ -137,7 +176,8 @@ const sections: LegalSection[] = [
     body: (
       <p>
         We keep your data while your account is active. We keep clinical records for as long as Rwandan health
-        regulations require, even after you close your account. When data is no longer needed, we delete or anonymise it.
+        regulations require, even after you close your account. When data is no longer needed, we delete or anonymise
+        it.
       </p>
     ),
   },
@@ -172,8 +212,8 @@ export default function PrivacyPage() {
       current="/privacy"
       intro={
         <p>
-          Your health information is personal. This policy explains what we collect, why we collect it, how we protect it,
-          and how you stay in control.
+          Your health information is personal. This policy explains what we collect, why we collect it, how we protect
+          it, and how you stay in control.
         </p>
       }
       sections={sections}

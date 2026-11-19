@@ -1,16 +1,10 @@
-"use client"
+"use client";
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { deleteProviderProfile } from "../../actions";
 
-export function DeleteProviderButton({
-  providerId,
-  providerName,
-}: {
-  providerId: string;
-  providerName: string;
-}) {
+export function DeleteProviderButton({ providerId, providerName }: { providerId: string; providerName: string }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 

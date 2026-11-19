@@ -33,7 +33,10 @@ export function matchListedInsurer(name: string): InsuranceProvider | null {
   const key = insurerKey(name);
   if (!key) return null;
   const hit = INSURANCE_OPTIONS.find(
-    (o) => o.value !== "OTHER_PRIVATE" && o.value !== "NONE_CASH" && (insurerKey(o.label) === key || insurerKey(o.value) === key),
+    (o) =>
+      o.value !== "OTHER_PRIVATE" &&
+      o.value !== "NONE_CASH" &&
+      (insurerKey(o.label) === key || insurerKey(o.value) === key),
   );
   return hit?.value ?? null;
 }

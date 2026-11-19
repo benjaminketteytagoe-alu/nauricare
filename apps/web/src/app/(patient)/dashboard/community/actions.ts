@@ -27,8 +27,13 @@ export async function followUser(followingId: string) {
     });
 
     if (!existing) {
-      void notify({ recipientId: followingId, actorId: session.user.id, type: "FOLLOW", title: `${session.user.name ?? "Someone"} started following you`, link: "/dashboard/community" })
-        .catch((err) => console.error("[FOLLOW_NOTIFICATION_ERROR]", err));
+      void notify({
+        recipientId: followingId,
+        actorId: session.user.id,
+        type: "FOLLOW",
+        title: `${session.user.name ?? "Someone"} started following you`,
+        link: "/dashboard/community",
+      }).catch((err) => console.error("[FOLLOW_NOTIFICATION_ERROR]", err));
     }
 
     revalidatePath("/dashboard/community");

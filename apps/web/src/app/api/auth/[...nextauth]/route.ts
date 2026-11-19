@@ -181,7 +181,12 @@ export const authOptions: AuthOptions = {
       // 1b. Unlock: the client calls update({ loginCode: "verified" }) after
       // /api/auth/code/verify succeeds. The flag is only set if the database
       // holds a verified, unused code for this exact session.
-      if (trigger === "update" && (session as { loginCode?: string } | undefined)?.loginCode === "verified" && token.id && !token.mfaVerified) {
+      if (
+        trigger === "update" &&
+        (session as { loginCode?: string } | undefined)?.loginCode === "verified" &&
+        token.id &&
+        !token.mfaVerified
+      ) {
         if (await consumeVerifiedLogin(token.id, token.mfaSid)) token.mfaVerified = true;
       }
 
@@ -194,7 +199,7 @@ export const authOptions: AuthOptions = {
         const cleanEmail = token.email.trim().toLowerCase();
         const dbUser = await prisma.user.findUnique({
           where: { email: cleanEmail },
-          select: { id: true, role: true, avatarUrl: true, deletedAt: true }
+          select: { id: true, role: true, avatarUrl: true, deletedAt: true },
         });
 
         if (dbUser && !dbUser.deletedAt) {
@@ -249,7 +254,7 @@ export const authOptions: AuthOptions = {
   },
   pages: {
     signIn: "/login",
-    error: "/login", 
+    error: "/login",
   },
   session: {
     strategy: "jwt",

@@ -65,7 +65,12 @@ export async function submitFeedback(input: SubmitFeedbackInput) {
       console.error("[FEEDBACK_EMAIL_ERROR]", emailError instanceof Error ? emailError.message : emailError);
     }
 
-    await recordPatientActivity(user.role, { userId: user.id, type: "FEEDBACK_SUBMITTED", title: "Sent feedback to NauriCare", details: { category: parsed.data.category, rating: parsed.data.rating } });
+    await recordPatientActivity(user.role, {
+      userId: user.id,
+      type: "FEEDBACK_SUBMITTED",
+      title: "Sent feedback to NauriCare",
+      details: { category: parsed.data.category, rating: parsed.data.rating },
+    });
 
     revalidatePath("/admin/feedback");
     return { success: true as const, data: { id: feedback.id } };

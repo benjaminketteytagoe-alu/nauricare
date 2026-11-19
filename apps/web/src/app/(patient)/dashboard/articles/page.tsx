@@ -15,12 +15,12 @@ type Article = {
 const FILTER_TAGS = ["All", "PCOS", "Fibroids", "Endometriosis", "General", "HORMONES", "PAIN"];
 
 const TAG_COLORS: Record<string, string> = {
-  PCOS:           "bg-violet-100 text-violet-700",
-  Fibroids:       "bg-rose-100 text-rose-700",
-  Endometriosis:  "bg-pink-100 text-pink-700",
-  General:        "bg-teal-100 text-teal-700",
-  HORMONES:       "bg-amber-100 text-amber-700",
-  PAIN:           "bg-orange-100 text-orange-700",
+  PCOS: "bg-violet-100 text-violet-700",
+  Fibroids: "bg-rose-100 text-rose-700",
+  Endometriosis: "bg-pink-100 text-pink-700",
+  General: "bg-teal-100 text-teal-700",
+  HORMONES: "bg-amber-100 text-amber-700",
+  PAIN: "bg-orange-100 text-orange-700",
 };
 
 function readingTime(content: string) {
@@ -63,8 +63,8 @@ export default function ArticleLibraryPage() {
 
   useEffect(() => {
     void Promise.all([
-      fetch("/api/articles").then((r) => r.ok ? r.json() : []),
-      fetch("/api/settings").then((r) => r.ok ? r.json() : null),
+      fetch("/api/articles").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/settings").then((r) => (r.ok ? r.json() : null)),
     ]).then(([arts, settings]) => {
       setArticles(arts);
       setHealthGoals(settings?.healthGoals ?? []);
@@ -74,9 +74,8 @@ export default function ArticleLibraryPage() {
 
   // Select the featured article: first one whose tags intersect with health goals,
   // falling back to the newest article in the list.
-  const featured = articles.find((a) =>
-    healthGoals.length > 0 && a.tags.some((t) => healthGoals.includes(t))
-  ) ?? articles[0];
+  const featured =
+    articles.find((a) => healthGoals.length > 0 && a.tags.some((t) => healthGoals.includes(t))) ?? articles[0];
 
   const grid = articles.filter((a) => {
     if (a.id === featured?.id) return false;
@@ -86,7 +85,6 @@ export default function ArticleLibraryPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
-
       {/* Page header */}
       <div className="flex items-end justify-between">
         <div>
@@ -119,12 +117,8 @@ export default function ArticleLibraryPage() {
                   </span>
                 ))}
               </div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-white leading-snug">
-                {featured.title}
-              </h2>
-              <p className="text-sm text-rose-100 leading-relaxed max-w-xl">
-                {excerpt(featured.content, 160)}
-              </p>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-white leading-snug">{featured.title}</h2>
+              <p className="text-sm text-rose-100 leading-relaxed max-w-xl">{excerpt(featured.content, 160)}</p>
               <div className="flex items-center gap-4 pt-1">
                 <span className="flex items-center gap-1.5 text-xs text-rose-200">
                   <Clock className="w-3.5 h-3.5" /> {readingTime(featured.content)} min read
@@ -185,9 +179,7 @@ export default function ArticleLibraryPage() {
                 <h3 className="text-base font-bold text-gray-900 group-hover:text-rose-700 transition-colors leading-snug">
                   {article.title}
                 </h3>
-                <p className="text-sm text-gray-500 flex-1 leading-relaxed">
-                  {excerpt(article.content)}
-                </p>
+                <p className="text-sm text-gray-500 flex-1 leading-relaxed">{excerpt(article.content)}</p>
                 <div className="flex items-center justify-between pt-1 border-t border-gray-50">
                   <span className="flex items-center gap-1 text-xs text-gray-400">
                     <Clock className="w-3 h-3" /> {readingTime(article.content)} min read

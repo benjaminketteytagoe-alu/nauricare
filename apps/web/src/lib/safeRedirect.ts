@@ -23,7 +23,10 @@ export function resolveAuthRedirect(search: string, origin: string): string | nu
   const redirect = params.get("redirect");
   if (redirect) {
     const action = params.get("action");
-    const target = action && /^[a-z-]{1,20}$/.test(action) ? `${redirect}${redirect.includes("?") ? "&" : "?"}action=${action}` : redirect;
+    const target =
+      action && /^[a-z-]{1,20}$/.test(action)
+        ? `${redirect}${redirect.includes("?") ? "&" : "?"}action=${action}`
+        : redirect;
     const safe = safeRedirect(target, "");
     if (safe) return safe;
   }

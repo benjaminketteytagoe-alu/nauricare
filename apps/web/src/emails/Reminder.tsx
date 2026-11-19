@@ -1,4 +1,16 @@
-import { Body, Button, Container, Head, Heading, Hr, Html, Preview, Section, Tailwind, Text } from "@react-email/components";
+import {
+  Body,
+  Button,
+  Container,
+  Head,
+  Heading,
+  Hr,
+  Html,
+  Preview,
+  Section,
+  Tailwind,
+  Text,
+} from "@react-email/components";
 
 export interface ReminderEmailProps {
   name: string;
@@ -24,13 +36,20 @@ export function ReminderEmail({ name, heading, body, ctaLabel, ctaUrl, settingsU
             </Section>
             <Section className="rounded-b-2xl border border-gray-100 bg-white px-8 py-6">
               <Text className="mt-0 text-base text-gray-800">Hi {name},</Text>
-              <Heading as="h2" className="text-lg font-bold text-gray-900">{heading}</Heading>
+              <Heading as="h2" className="text-lg font-bold text-gray-900">
+                {heading}
+              </Heading>
               <Text className="text-sm leading-relaxed text-gray-700">{body}</Text>
-              <Button href={ctaUrl} className="mt-2 rounded-full bg-[#1D4ED8] px-6 py-3 text-sm font-semibold text-white">{ctaLabel}</Button>
+              <Button
+                href={ctaUrl}
+                className="mt-2 rounded-full bg-[#1D4ED8] px-6 py-3 text-sm font-semibold text-white"
+              >
+                {ctaLabel}
+              </Button>
               <Hr className="my-6 border-gray-200" />
               <Text className="m-0 text-xs text-gray-500">
-                You&apos;re receiving this because reminders are on in your NauriCare settings. You can change or turn them off at{" "}
-                {settingsUrl}.
+                You&apos;re receiving this because reminders are on in your NauriCare settings. You can change or turn
+                them off at {settingsUrl}.
               </Text>
             </Section>
           </Container>

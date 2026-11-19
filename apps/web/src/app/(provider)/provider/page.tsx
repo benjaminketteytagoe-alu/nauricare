@@ -10,7 +10,8 @@ export default async function ProviderDashboardPage() {
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Clinical Dashboard</h1>
         <p className="text-slate-500 mt-1">
-          Welcome to your portal, <span className="font-semibold text-blue-700">Dr. {session?.user?.name || "Provider"}</span>.
+          Welcome to your portal,{" "}
+          <span className="font-semibold text-blue-700">Dr. {session?.user?.name || "Provider"}</span>.
         </p>
       </div>
 
@@ -68,7 +69,8 @@ export default async function ProviderDashboardPage() {
         </div>
         <h3 className="text-xl font-bold text-slate-900">No Upcoming Consultations</h3>
         <p className="text-slate-500 mt-2 max-w-md mx-auto">
-          Your schedule is currently clear. When patients book virtual or in-person appointments with you, they will appear right here.
+          Your schedule is currently clear. When patients book virtual or in-person appointments with you, they will
+          appear right here.
         </p>
       </div>
     </div>

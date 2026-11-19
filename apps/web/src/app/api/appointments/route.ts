@@ -12,7 +12,10 @@ import { idSchema } from "@/lib/validation/common";
 import { recordActivity } from "@/server/activity/activity.service";
 import { notify } from "@/server/notifications/notify";
 
-const isoDate = z.string().max(40).refine((v) => !Number.isNaN(Date.parse(v)), "Invalid date.");
+const isoDate = z
+  .string()
+  .max(40)
+  .refine((v) => !Number.isNaN(Date.parse(v)), "Invalid date.");
 const BookingInput = z
   .object({
     practitionerProfileId: idSchema,
@@ -20,7 +23,9 @@ const BookingInput = z
     endTime: isoDate,
     notes: z.string().max(2000, "Notes must be under 2000 characters.").optional().or(z.null()),
   })
-  .refine((v) => Date.parse(v.endTime) > Date.parse(v.startTime), { message: "The appointment must end after it starts." })
+  .refine((v) => Date.parse(v.endTime) > Date.parse(v.startTime), {
+    message: "The appointment must end after it starts.",
+  })
   .refine((v) => Date.parse(v.startTime) > Date.now() - 5 * 60_000, { message: "Please choose a time in the future." });
 
 export async function POST(req: Request) {
@@ -56,9 +61,7 @@ export async function POST(req: Request) {
 
     const start = new Date(startTime);
     const dateLabel =
-      start.toDateString() +
-      " at " +
-      start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      start.toDateString() + " at " + start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
     // Atomic booking: create appointment → derive meetingLink → notify both parties.
     // All four writes succeed together or none do.
@@ -119,22 +122,32 @@ export async function POST(req: Request) {
     // allSettled (not all) so a failure on one side doesn't hide the other's
     // outcome — Promise.all only ever surfaces the first rejection.
     const emailJobs = [
-      { label: "patient", to: session.user.email, fn: () => sendPatientConfirmationEmail({
-          to: session.user.email!,
-          patientName: session.user.name ?? "Patient",
-          providerName: practitioner.user.name ?? "Your Provider",
-          date: apptDate,
-          time: apptTime,
-          meetingLink: appointment.meetingLink ?? "",
-        }) },
-      { label: "provider", to: practitioner.user.email, fn: () => sendProviderAlertEmail({
-          to: practitioner.user.email,
-          providerName: practitioner.user.name ?? "Provider",
-          patientName: session.user.name ?? "Patient",
-          date: apptDate,
-          time: apptTime,
-          meetingLink: appointment.meetingLink ?? "",
-        }) },
+      {
+        label: "patient",
+        to: session.user.email,
+        fn: () =>
+          sendPatientConfirmationEmail({
+            to: session.user.email!,
+            patientName: session.user.name ?? "Patient",
+            providerName: practitioner.user.name ?? "Your Provider",
+            date: apptDate,
+            time: apptTime,
+            meetingLink: appointment.meetingLink ?? "",
+          }),
+      },
+      {
+        label: "provider",
+        to: practitioner.user.email,
+        fn: () =>
+          sendProviderAlertEmail({
+            to: practitioner.user.email,
+            providerName: practitioner.user.name ?? "Provider",
+            patientName: session.user.name ?? "Patient",
+            date: apptDate,
+            time: apptTime,
+            meetingLink: appointment.meetingLink ?? "",
+          }),
+      },
     ];
 
     const results = await Promise.allSettled(emailJobs.map((job) => job.fn()));
@@ -180,20 +193,20 @@ export async function GET() {
     // --- SCENARIO A: The user is a DOCTOR (Provider) ---
     if (session.user.role === "PROVIDER") {
       const practitionerProfile = await prisma.practitionerProfile.findUnique({
-        where: { userId: session.user.id }
+        where: { userId: session.user.id },
       });
       if (!practitionerProfile) return NextResponse.json([]); // No profile yet
 
       const doctorSchedule = await prisma.appointment.findMany({
-        where: { 
+        where: {
           practitionerProfileId: practitionerProfile.id,
-          startTime: { gte: new Date() } // Only future appointments
+          startTime: { gte: new Date() }, // Only future appointments
         },
         include: {
           // Pull the patient's name and email so the doctor knows who they are seeing
-          patient: { include: { user: { select: { name: true, email: true } } } }
+          patient: { include: { user: { select: { name: true, email: true } } } },
         },
-        orderBy: { startTime: 'asc' }
+        orderBy: { startTime: "asc" },
       });
       return NextResponse.json(doctorSchedule);
     }
@@ -202,20 +215,19 @@ export async function GET() {
     const patientProfile = await prisma.patientProfile.findUnique({
       where: { userId: session.user.id },
     });
-    if (!patientProfile) return NextResponse.json([]); 
+    if (!patientProfile) return NextResponse.json([]);
 
     const patientSchedule = await prisma.appointment.findMany({
-      where: { 
+      where: {
         patientProfileId: patientProfile.id,
-        startTime: { gte: new Date() } 
+        startTime: { gte: new Date() },
       },
       include: {
-        practitioner: { include: { user: { select: { name: true, email: true } } } }
+        practitioner: { include: { user: { select: { name: true, email: true } } } },
       },
-      orderBy: { startTime: 'asc' }
+      orderBy: { startTime: "asc" },
     });
     return NextResponse.json(patientSchedule);
-
   } catch (error) {
     console.error("[APPOINTMENT_FETCH_ERROR]", error);
     return new NextResponse("Internal Server Error", { status: 500 });

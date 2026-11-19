@@ -82,7 +82,11 @@ export function ConsentStatusBar({ grantedAt }: { grantedAt: string }) {
           )}
         </AnimatePresence>
       </div>
-      {error && <p role="alert" className="mt-2 text-sm font-medium text-[#BE123C]">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-2 text-sm font-medium text-[#BE123C]">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

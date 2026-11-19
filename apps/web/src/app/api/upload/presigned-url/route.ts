@@ -15,7 +15,7 @@ const UploadInput = z.object({
   context: z.enum(["avatar", "community"]).optional(),
 });
 
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;  // 5MB
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // 50MB
 
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
@@ -99,10 +99,7 @@ export async function POST(req: Request) {
       uploadUrl = await getSignedUrl(s3, command, { expiresIn: 60 });
     } catch (s3Error) {
       console.error("PRODUCTION S3 UPLOAD FAILURE STACK:", s3Error);
-      return NextResponse.json(
-        { error: "Could not generate upload URL. Please try again." },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: "Could not generate upload URL. Please try again." }, { status: 500 });
     }
 
     // Construct the public URL from the same constants used above so it is

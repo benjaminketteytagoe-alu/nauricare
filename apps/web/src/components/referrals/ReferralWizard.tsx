@@ -2,8 +2,17 @@
 
 import type { InsuranceProvider } from "@prisma/client";
 import {
-  ArrowLeft, ArrowRight, Check, CheckCircle2, ClipboardCopy, Hospital as HospitalIcon,
-  Loader2, MapPin, Phone, ShieldCheck, Stethoscope,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  ClipboardCopy,
+  Hospital as HospitalIcon,
+  Loader2,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  Stethoscope,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -11,8 +20,13 @@ import { EmergencyBanner } from "@/components/triage/EmergencyBanner";
 import { Callout } from "@/components/ui/callout";
 import { SEVERITY_TONE, StatusChip } from "@/components/ui/status-chip";
 import {
-  INSURANCE_OPTIONS, KIGALI_DISTRICTS, SPECIALTIES, insuranceLabel, insurerKey,
-  type Specialty, type TriageSeverity,
+  INSURANCE_OPTIONS,
+  KIGALI_DISTRICTS,
+  SPECIALTIES,
+  insuranceLabel,
+  insurerKey,
+  type Specialty,
+  type TriageSeverity,
 } from "@/lib/referrals/constants";
 import { FloatingField } from "./FloatingField";
 
@@ -56,7 +70,11 @@ function Stepper({ current }: { current: number }) {
         const done = i < current;
         const active = i === current;
         return (
-          <li key={label} className="flex flex-1 items-center gap-2 last:flex-none" aria-current={active ? "step" : undefined}>
+          <li
+            key={label}
+            className="flex flex-1 items-center gap-2 last:flex-none"
+            aria-current={active ? "step" : undefined}
+          >
             <span
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
                 done || active ? "bg-nc-primary text-white" : "border border-slate-300 bg-white text-slate-500"
@@ -64,7 +82,9 @@ function Stepper({ current }: { current: number }) {
             >
               {done ? <Check className="h-4 w-4" aria-hidden /> : i + 1}
             </span>
-            <span className={`hidden text-sm font-medium sm:inline ${active ? "text-nc-ink" : "text-slate-500"}`}>{label}</span>
+            <span className={`hidden text-sm font-medium sm:inline ${active ? "text-nc-ink" : "text-slate-500"}`}>
+              {label}
+            </span>
             {i < STEPS.length - 1 && (
               <span className={`h-px flex-1 ${done ? "bg-nc-primary" : "bg-nc-divider"}`} aria-hidden />
             )}
@@ -103,7 +123,13 @@ export function ReferralWizard({
 
   // Step 2
   const [insurance, setInsurance] = useState<WizardInsurance>(
-    initialInsurance ?? { provider: "NONE_CASH", otherProviderName: "", policyNumber: "", principalMember: "", expiryDate: "" },
+    initialInsurance ?? {
+      provider: "NONE_CASH",
+      otherProviderName: "",
+      policyNumber: "",
+      principalMember: "",
+      expiryDate: "",
+    },
   );
 
   // Listed insurers, then ones patients have added, then "another" and cash.
@@ -112,15 +138,28 @@ export function ReferralWizard({
     const option = (v: InsuranceProvider) => INSURANCE_OPTIONS.find((o) => o.value === v)!;
     return [
       ...listed.map((o) => ({ id: o.value, label: o.label, hint: o.hint, provider: o.value })),
-      ...knownInsurers.map((name) => ({ id: `other:${name}`, label: name, hint: "Private insurer", provider: "OTHER_PRIVATE" as const, otherName: name })),
-      { id: "OTHER_PRIVATE", label: "Another private insurer", hint: "Type your insurer's name", provider: "OTHER_PRIVATE" },
+      ...knownInsurers.map((name) => ({
+        id: `other:${name}`,
+        label: name,
+        hint: "Private insurer",
+        provider: "OTHER_PRIVATE" as const,
+        otherName: name,
+      })),
+      {
+        id: "OTHER_PRIVATE",
+        label: "Another private insurer",
+        hint: "Type your insurer's name",
+        provider: "OTHER_PRIVATE",
+      },
       { id: "NONE_CASH", label: option("NONE_CASH").label, hint: option("NONE_CASH").hint, provider: "NONE_CASH" },
     ];
   }, [knownInsurers]);
-  const knownMatch = insurance.provider === "OTHER_PRIVATE"
-    ? knownInsurers.find((n) => insurerKey(n) === insurerKey(insurance.otherProviderName))
-    : undefined;
-  const selectedChoiceId = insurance.provider !== "OTHER_PRIVATE" ? insurance.provider : knownMatch ? `other:${knownMatch}` : "OTHER_PRIVATE";
+  const knownMatch =
+    insurance.provider === "OTHER_PRIVATE"
+      ? knownInsurers.find((n) => insurerKey(n) === insurerKey(insurance.otherProviderName))
+      : undefined;
+  const selectedChoiceId =
+    insurance.provider !== "OTHER_PRIVATE" ? insurance.provider : knownMatch ? `other:${knownMatch}` : "OTHER_PRIVATE";
   const [otherNameError, setOtherNameError] = useState("");
   const [policyError, setPolicyError] = useState("");
 
@@ -182,7 +221,11 @@ export function ReferralWizard({
       if (!res.ok) throw new Error(data.error || "Could not save your insurance details.");
       // The server may file a typed name under a listed insurer ("Britam").
       if (data.insurance) {
-        setInsurance((i) => ({ ...i, provider: data.insurance.provider, otherProviderName: data.insurance.otherProviderName ?? "" }));
+        setInsurance((i) => ({
+          ...i,
+          provider: data.insurance.provider,
+          otherProviderName: data.insurance.otherProviderName ?? "",
+        }));
       }
       setHospitals(null);
       go(2);
@@ -245,8 +288,12 @@ export function ReferralWizard({
         </div>
         {created.triageSeverity === "URGENT" && <EmergencyBanner className="mx-auto mt-6 max-w-lg text-left" />}
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="/dashboard/referrals" className="m3-btn-filled">View my referrals</Link>
-          <Link href="/dashboard" className="m3-btn-outlined">Back to dashboard</Link>
+          <Link href="/dashboard/referrals" className="m3-btn-filled">
+            View my referrals
+          </Link>
+          <Link href="/dashboard" className="m3-btn-outlined">
+            Back to dashboard
+          </Link>
         </div>
       </div>
     );
@@ -262,7 +309,9 @@ export function ReferralWizard({
 
       <div className="m3-card p-5 sm:p-8">
         {error && (
-          <Callout tone="danger" role="alert" className="mb-6">{error}</Callout>
+          <Callout tone="danger" role="alert" className="mb-6">
+            {error}
+          </Callout>
         )}
 
         {/* ── Step 1: Reason ─────────────────────────────────────────────── */}
@@ -284,7 +333,13 @@ export function ReferralWizard({
               <legend className="mb-3 text-sm font-semibold text-nc-ink">Specialist needed</legend>
               <div className="flex flex-wrap gap-2">
                 {SPECIALTIES.map((s) => (
-                  <button key={s} type="button" aria-pressed={specialty === s} onClick={() => setSpecialty(s)} className="m3-chip">
+                  <button
+                    key={s}
+                    type="button"
+                    aria-pressed={specialty === s}
+                    onClick={() => setSpecialty(s)}
+                    className="m3-chip"
+                  >
                     {specialty === s && <Check className="h-4 w-4" aria-hidden />}
                     {s}
                   </button>
@@ -293,7 +348,9 @@ export function ReferralWizard({
             </fieldset>
 
             <div>
-              <label htmlFor="reason" className="mb-2 block text-sm font-semibold text-nc-ink">Reason for referral</label>
+              <label htmlFor="reason" className="mb-2 block text-sm font-semibold text-nc-ink">
+                Reason for referral
+              </label>
               <textarea
                 id="reason"
                 rows={6}
@@ -324,7 +381,9 @@ export function ReferralWizard({
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-bold text-nc-ink">How will you pay?</h2>
-              <p className="mt-1 text-sm text-slate-600">We save this to your profile and show hospitals that accept it.</p>
+              <p className="mt-1 text-sm text-slate-600">
+                We save this to your profile and show hospitals that accept it.
+              </p>
             </div>
 
             <fieldset>
@@ -349,7 +408,9 @@ export function ReferralWizard({
                             ...i,
                             provider: opt.provider,
                             // A named insurer fills the name; "another" starts blank.
-                            otherProviderName: opt.otherName ?? (opt.provider === "OTHER_PRIVATE" && !knownMatch ? i.otherProviderName : ""),
+                            otherProviderName:
+                              opt.otherName ??
+                              (opt.provider === "OTHER_PRIVATE" && !knownMatch ? i.otherProviderName : ""),
                           }))
                         }
                         className="mt-1 h-4 w-4 accent-nc-primary"
@@ -432,7 +493,13 @@ export function ReferralWizard({
 
             <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by district">
               {["", ...KIGALI_DISTRICTS].map((d) => (
-                <button key={d || "all"} type="button" aria-pressed={district === d} onClick={() => setDistrict(d)} className="m3-chip">
+                <button
+                  key={d || "all"}
+                  type="button"
+                  aria-pressed={district === d}
+                  onClick={() => setDistrict(d)}
+                  className="m3-chip"
+                >
                   {d || "All districts"}
                 </button>
               ))}
@@ -479,7 +546,10 @@ export function ReferralWizard({
                             )}
                             <span className="mt-2 flex flex-wrap gap-1.5">
                               {h.supportedInsurances.map((p) => (
-                                <span key={p} className="rounded-md bg-nc-amber-container px-2 py-0.5 text-xs font-medium text-nc-amber">
+                                <span
+                                  key={p}
+                                  className="rounded-md bg-nc-amber-container px-2 py-0.5 text-xs font-medium text-nc-amber"
+                                >
                                   {insuranceLabel(p)}
                                 </span>
                               ))}
@@ -524,7 +594,9 @@ export function ReferralWizard({
                 <ShieldCheck className="mt-0.5 h-5 w-5 text-nc-primary" aria-hidden />
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Payment</dt>
-                  <dd className="font-semibold text-nc-ink">{insuranceLabel(insurance.provider, insurance.otherProviderName)}</dd>
+                  <dd className="font-semibold text-nc-ink">
+                    {insuranceLabel(insurance.provider, insurance.otherProviderName)}
+                  </dd>
                   {insurance.policyNumber && insurance.provider !== "NONE_CASH" && (
                     <dd className="text-sm text-slate-600">Policy {insurance.policyNumber}</dd>
                   )}
@@ -535,7 +607,9 @@ export function ReferralWizard({
                 <div>
                   <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Hospital</dt>
                   <dd className="font-semibold text-nc-ink">{selectedHospital.name}</dd>
-                  <dd className="text-sm text-slate-600">{selectedHospital.address} · {selectedHospital.district}</dd>
+                  <dd className="text-sm text-slate-600">
+                    {selectedHospital.address} · {selectedHospital.district}
+                  </dd>
                 </div>
               </div>
             </dl>
@@ -548,12 +622,21 @@ export function ReferralWizard({
                 className="mt-1 h-4 w-4 accent-nc-primary"
               />
               <span className="text-sm text-slate-700">
-                I agree to share my referral reason and insurance details with {selectedHospital.name}, as described in the{" "}
-                <Link href="/consent" target="_blank" className="font-medium text-nc-primary underline underline-offset-2">
+                I agree to share my referral reason and insurance details with {selectedHospital.name}, as described in
+                the{" "}
+                <Link
+                  href="/consent"
+                  target="_blank"
+                  className="font-medium text-nc-primary underline underline-offset-2"
+                >
                   informed consent
                 </Link>{" "}
                 and{" "}
-                <Link href="/privacy" target="_blank" className="font-medium text-nc-primary underline underline-offset-2">
+                <Link
+                  href="/privacy"
+                  target="_blank"
+                  className="font-medium text-nc-primary underline underline-offset-2"
+                >
                   privacy policy
                 </Link>
                 .

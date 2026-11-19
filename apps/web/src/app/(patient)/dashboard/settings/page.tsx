@@ -114,7 +114,9 @@ function SettingsContent() {
                 aria-selected={activeTab === id}
                 onClick={() => selectTab(id)}
                 className={`flex shrink-0 items-center gap-3 whitespace-nowrap rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
-                  activeTab === id ? "bg-rose-50 text-rose-700" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                  activeTab === id
+                    ? "bg-rose-50 text-rose-700"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
                 <Icon className="h-5 w-5" aria-hidden /> {label}
@@ -130,8 +132,18 @@ function SettingsContent() {
                 <h2 className="text-xl font-bold text-nc-ink">Cycle baselines</h2>
                 <label className="block">
                   <span className="mb-1 block text-sm font-semibold text-slate-700">Average cycle length (days)</span>
-                  <span className="mb-3 block text-xs text-slate-500">Used to predict your next period until you&apos;ve logged two or more periods.</span>
-                  <input type="number" inputMode="numeric" min={15} max={60} value={cycleLength} onChange={(e) => setCycleLength(e.target.value)} className="m3-input" />
+                  <span className="mb-3 block text-xs text-slate-500">
+                    Used to predict your next period until you&apos;ve logged two or more periods.
+                  </span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={15}
+                    max={60}
+                    value={cycleLength}
+                    onChange={(e) => setCycleLength(e.target.value)}
+                    className="m3-input"
+                  />
                 </label>
               </div>
             )}
@@ -139,7 +151,9 @@ function SettingsContent() {
             {activeTab === "goals" && (
               <div>
                 <h2 className="text-xl font-bold text-nc-ink">Personalised focus</h2>
-                <p className="mb-6 mt-1 text-sm text-slate-500">Choose the areas you want your dashboard to focus on.</p>
+                <p className="mb-6 mt-1 text-sm text-slate-500">
+                  Choose the areas you want your dashboard to focus on.
+                </p>
                 <div className="grid gap-3">
                   {AVAILABLE_GOALS.map((goal) => {
                     const isSelected = selectedGoals.includes(goal.id);
@@ -150,14 +164,24 @@ function SettingsContent() {
                         aria-pressed={isSelected}
                         onClick={() => toggleGoal(goal.id)}
                         className={`flex items-center justify-between gap-4 rounded-xl border-2 p-4 text-left transition-colors ${
-                          isSelected ? "border-rose-500 bg-rose-50" : "border-slate-100 hover:border-rose-200 hover:bg-slate-50"
+                          isSelected
+                            ? "border-rose-500 bg-rose-50"
+                            : "border-slate-100 hover:border-rose-200 hover:bg-slate-50"
                         }`}
                       >
                         <span>
-                          <span className={`block font-bold ${isSelected ? "text-rose-900" : "text-nc-ink"}`}>{goal.label}</span>
-                          <span className={`mt-0.5 block text-xs ${isSelected ? "text-rose-700" : "text-slate-500"}`}>{goal.desc}</span>
+                          <span className={`block font-bold ${isSelected ? "text-rose-900" : "text-nc-ink"}`}>
+                            {goal.label}
+                          </span>
+                          <span className={`mt-0.5 block text-xs ${isSelected ? "text-rose-700" : "text-slate-500"}`}>
+                            {goal.desc}
+                          </span>
                         </span>
-                        {isSelected ? <CheckCircle2 className="h-6 w-6 shrink-0 text-rose-500" aria-hidden /> : <span className="h-6 w-6 shrink-0 rounded-full border-2 border-slate-200" aria-hidden />}
+                        {isSelected ? (
+                          <CheckCircle2 className="h-6 w-6 shrink-0 text-rose-500" aria-hidden />
+                        ) : (
+                          <span className="h-6 w-6 shrink-0 rounded-full border-2 border-slate-200" aria-hidden />
+                        )}
                       </button>
                     );
                   })}
@@ -171,21 +195,39 @@ function SettingsContent() {
               <div className="max-w-xl space-y-6">
                 <h2 className="text-xl font-bold text-nc-ink">Account &amp; security</h2>
                 <div className="border-b border-slate-100 pb-6">
-                  <AvatarPicker name={userData.name || "You"} avatarUrl={avatarUrl} googlePhotoUrl={googlePhotoUrl} onChange={setAvatarUrl} />
+                  <AvatarPicker
+                    name={userData.name || "You"}
+                    avatarUrl={avatarUrl}
+                    googlePhotoUrl={googlePhotoUrl}
+                    onChange={setAvatarUrl}
+                  />
                 </div>
                 <dl className="space-y-4">
                   <div>
                     <dt className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Full name</dt>
-                    <dd className="break-words rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium text-nc-ink">{userData.name}</dd>
+                    <dd className="break-words rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium text-nc-ink">
+                      {userData.name}
+                    </dd>
                   </div>
                   <div>
                     <dt className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Email address</dt>
-                    <dd className="break-all rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium text-nc-ink">{userData.email}</dd>
+                    <dd className="break-all rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium text-nc-ink">
+                      {userData.email}
+                    </dd>
                   </div>
                 </dl>
                 <label className="block">
-                  <span className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500"><Smartphone className="h-4 w-4" aria-hidden /> Emergency contact phone</span>
-                  <input type="tel" placeholder="+250 788 000 000" maxLength={200} value={emergencyContact} onChange={(e) => setEmergencyContact(e.target.value)} className="m3-input" />
+                  <span className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <Smartphone className="h-4 w-4" aria-hidden /> Emergency contact phone
+                  </span>
+                  <input
+                    type="tel"
+                    placeholder="+250 788 000 000"
+                    maxLength={200}
+                    value={emergencyContact}
+                    onChange={(e) => setEmergencyContact(e.target.value)}
+                    className="m3-input"
+                  />
                 </label>
                 <DeleteAccount />
               </div>
@@ -195,14 +237,24 @@ function SettingsContent() {
           {activeTab !== "reminders" && (
             <div className="flex flex-col-reverse gap-3 border-t border-rose-100 bg-rose-50/30 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
               <span role="status" aria-live="polite" className="text-sm font-medium">
-                {saveMessage && <span className="flex items-center gap-2 text-emerald-700"><CheckCircle2 className="h-4 w-4" aria-hidden /> {saveMessage}</span>}
+                {saveMessage && (
+                  <span className="flex items-center gap-2 text-emerald-700">
+                    <CheckCircle2 className="h-4 w-4" aria-hidden /> {saveMessage}
+                  </span>
+                )}
               </span>
               <button onClick={handleSave} disabled={isSaving} className="m3-btn-filled w-full sm:w-auto">
                 <Save className="h-4 w-4" aria-hidden /> {isSaving ? "Saving…" : "Save changes"}
               </button>
             </div>
           )}
-          {saveError && activeTab !== "reminders" && <div className="px-4 pb-4 sm:px-6"><Callout tone="danger" role="alert">{saveError}</Callout></div>}
+          {saveError && activeTab !== "reminders" && (
+            <div className="px-4 pb-4 sm:px-6">
+              <Callout tone="danger" role="alert">
+                {saveError}
+              </Callout>
+            </div>
+          )}
         </div>
       </div>
     </div>

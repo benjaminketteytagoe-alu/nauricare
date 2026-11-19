@@ -28,7 +28,10 @@ export async function markNotificationRead(notificationId: string) {
   const user = await getSessionUser();
   if (!user) return { success: false, error: "Unauthorized" };
   if (!idSchema.safeParse(notificationId).success) return { success: false, error: "Invalid notification." };
-  await prisma.userNotification.updateMany({ where: { id: notificationId, recipientId: user.id }, data: { isRead: true } });
+  await prisma.userNotification.updateMany({
+    where: { id: notificationId, recipientId: user.id },
+    data: { isRead: true },
+  });
   return { success: true };
 }
 

@@ -84,7 +84,21 @@
 /* Friendly rounded system stack for emotional, Flo-style surfaces (triage
    gate). System fonts only: nothing is downloaded at build or run time. */
 @utility font-friendly {
-  font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, Roboto, "Noto Sans", Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    ui-rounded,
+    "SF Pro Rounded",
+    "Nunito",
+    "Segoe UI Variable Display",
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    Roboto,
+    "Noto Sans",
+    Ubuntu,
+    Cantarell,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
 }
 
 /* Outlined text field */

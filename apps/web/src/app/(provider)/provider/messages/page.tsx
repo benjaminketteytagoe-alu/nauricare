@@ -23,9 +23,7 @@ export default function ProviderMessagesPage() {
       {session?.user?.id ? (
         <DirectMessageChat currentUserId={session.user.id} accentColor="blue" />
       ) : (
-        <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">
-          Loading session…
-        </div>
+        <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">Loading session…</div>
       )}
     </div>
   );

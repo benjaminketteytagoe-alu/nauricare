@@ -67,7 +67,12 @@ export async function POST(req: Request) {
     },
   });
 
-  await recordActivity({ userId, type: "CONSENT_GRANTED", title: "Agreed to AI triage consent", details: { version: CURRENT_CONSENT_VERSION } });
+  await recordActivity({
+    userId,
+    type: "CONSENT_GRANTED",
+    title: "Agreed to AI triage consent",
+    details: { version: CURRENT_CONSENT_VERSION },
+  });
   return NextResponse.json({ consent: { valid: true, grantedAt, version: CURRENT_CONSENT_VERSION } });
 }
 

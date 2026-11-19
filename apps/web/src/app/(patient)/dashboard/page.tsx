@@ -1,10 +1,7 @@
 // apps/web/src/app/(patient)/dashboard/page.tsx
 "use client";
 
-import {
-  Activity, Calendar, CheckCircle2, Circle,
-  Newspaper, Edit2, Video
-} from "lucide-react";
+import { Activity, Calendar, CheckCircle2, Circle, Newspaper, Edit2, Video } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
@@ -32,8 +29,8 @@ export default function PatientDashboardPage() {
   const [nextAppointment, setNextAppointment] = useState<AppointmentData | null>(null);
 
   // --- INTERACTIVE HABIT TRACKER STATE ---
-  const [activeTab, setActiveTab] = useState<'today' | 'analytics'>('today');
-  const [chartPeriod, setChartPeriod] = useState<'week' | 'month' | 'year'>('week');
+  const [activeTab, setActiveTab] = useState<"today" | "analytics">("today");
+  const [chartPeriod, setChartPeriod] = useState<"week" | "month" | "year">("week");
 
   // Dynamic States for Personalization
   const [habits, setHabits] = useState<HabitItem[]>([]);
@@ -41,18 +38,34 @@ export default function PatientDashboardPage() {
 
   const [analyticsData, setAnalyticsData] = useState({
     week: [
-      { label: 'Mon', value: 0 }, { label: 'Tue', value: 0 }, { label: 'Wed', value: 0 },
-      { label: 'Thu', value: 0 }, { label: 'Fri', value: 0 }, { label: 'Sat', value: 0 }, { label: 'Sun', value: 0 }
+      { label: "Mon", value: 0 },
+      { label: "Tue", value: 0 },
+      { label: "Wed", value: 0 },
+      { label: "Thu", value: 0 },
+      { label: "Fri", value: 0 },
+      { label: "Sat", value: 0 },
+      { label: "Sun", value: 0 },
     ],
     month: [
-      { label: 'Wk 1', value: 0 }, { label: 'Wk 2', value: 0 }, { label: 'Wk 3', value: 0 }, { label: 'Wk 4', value: 0 }
+      { label: "Wk 1", value: 0 },
+      { label: "Wk 2", value: 0 },
+      { label: "Wk 3", value: 0 },
+      { label: "Wk 4", value: 0 },
     ],
     year: [
-      { label: 'Jan', value: 0 }, { label: 'Feb', value: 0 }, { label: 'Mar', value: 0 },
-      { label: 'Apr', value: 0 }, { label: 'May', value: 0 }, { label: 'Jun', value: 0 },
-      { label: 'Jul', value: 0 }, { label: 'Aug', value: 0 }, { label: 'Sep', value: 0 },
-      { label: 'Oct', value: 0 }, { label: 'Nov', value: 0 }, { label: 'Dec', value: 0 }
-    ]
+      { label: "Jan", value: 0 },
+      { label: "Feb", value: 0 },
+      { label: "Mar", value: 0 },
+      { label: "Apr", value: 0 },
+      { label: "May", value: 0 },
+      { label: "Jun", value: 0 },
+      { label: "Jul", value: 0 },
+      { label: "Aug", value: 0 },
+      { label: "Sep", value: 0 },
+      { label: "Oct", value: 0 },
+      { label: "Nov", value: 0 },
+      { label: "Dec", value: 0 },
+    ],
   });
 
   // --- INTERACTIVE CYCLE TRACKER STATE ---
@@ -78,7 +91,7 @@ export default function PatientDashboardPage() {
       if (data) {
         setCycleLength(data.cycleLength || 28);
         if (data.lastPeriodDate) {
-          setLastPeriodDate(new Date(data.lastPeriodDate).toISOString().split('T')[0]);
+          setLastPeriodDate(new Date(data.lastPeriodDate).toISOString().split("T")[0]);
         }
       }
     } catch {
@@ -89,24 +102,30 @@ export default function PatientDashboardPage() {
   useEffect(() => {
     if (session?.user?.id) {
       fetch("/api/habits/analytics")
-        .then(res => res.ok ? res.json() : Promise.reject(new Error()))
-        .then(data => setAnalyticsData(data))
+        .then((res) => (res.ok ? res.json() : Promise.reject(new Error())))
+        .then((data) => setAnalyticsData(data))
         .catch(() => {});
 
       fetch("/api/cycles/latest")
-        .then((res) => { if (res.ok) return res.json(); throw new Error(); })
+        .then((res) => {
+          if (res.ok) return res.json();
+          throw new Error();
+        })
         .then((data) => {
           if (data) {
             setCycleLength(data.cycleLength || 28);
             if (data.lastPeriodDate) {
-              setLastPeriodDate(new Date(data.lastPeriodDate).toISOString().split('T')[0]);
+              setLastPeriodDate(new Date(data.lastPeriodDate).toISOString().split("T")[0]);
             }
           }
         })
         .catch(() => console.warn("Cycles API not ready yet."));
 
       fetch("/api/personalization")
-        .then((res) => { if (res.ok) return res.json(); throw new Error(); })
+        .then((res) => {
+          if (res.ok) return res.json();
+          throw new Error();
+        })
         .then((data) => {
           if (data) {
             if (data.habits) setHabits(data.habits);
@@ -116,10 +135,13 @@ export default function PatientDashboardPage() {
         .catch(() => console.warn("Personalization API not ready yet."));
 
       fetch("/api/appointments")
-        .then((res) => { if (res.ok) return res.json(); throw new Error(); })
+        .then((res) => {
+          if (res.ok) return res.json();
+          throw new Error();
+        })
         .then((data) => {
           if (Array.isArray(data) && data.length > 0) {
-            setNextAppointment(data[0]); 
+            setNextAppointment(data[0]);
           }
         })
         .catch(() => console.warn("Appointments API not ready yet."));
@@ -127,9 +149,9 @@ export default function PatientDashboardPage() {
   }, [session]);
 
   const toggleHabit = async (id: number) => {
-    const habitToToggle = habits.find(h => h.id === id);
+    const habitToToggle = habits.find((h) => h.id === id);
     const newStatus = !habitToToggle?.done;
-    setHabits(habits.map(h => h.id === id ? { ...h, done: newStatus } : h));
+    setHabits(habits.map((h) => (h.id === id ? { ...h, done: newStatus } : h)));
 
     try {
       await fetch("/api/habits", {
@@ -138,29 +160,27 @@ export default function PatientDashboardPage() {
         body: JSON.stringify({
           habitId: id,
           completed: newStatus,
-          date: new Date().toISOString().split('T')[0]
-        })
+          date: new Date().toISOString().split("T")[0],
+        }),
       });
       void fetchAnalytics();
     } catch {
-      setHabits(habits.map(h => h.id === id ? { ...h, done: !newStatus } : h));
+      setHabits(habits.map((h) => (h.id === id ? { ...h, done: !newStatus } : h)));
     }
   };
 
   // --- RENDER LOGIC & MATH ---
   const today = new Date();
   const lastP = lastPeriodDate ? new Date(lastPeriodDate) : new Date();
-  
+
   const diffTime = lastPeriodDate ? Math.abs(today.getTime() - lastP.getTime()) : 0;
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  const currentCycleDay = lastPeriodDate ? ((diffDays % cycleLength) || 1) : 1;
+
+  const currentCycleDay = lastPeriodDate ? diffDays % cycleLength || 1 : 1;
   const daysUntilNextPeriod = cycleLength - currentCycleDay;
 
   // Predicted next period = last logged start date + saved average cycle length
-  const predictedNextPeriod = lastPeriodDate
-    ? new Date(lastP.getTime() + cycleLength * 24 * 60 * 60 * 1000)
-    : null;
+  const predictedNextPeriod = lastPeriodDate ? new Date(lastP.getTime() + cycleLength * 24 * 60 * 60 * 1000) : null;
   const dateFormat: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" };
 
   let phaseInfo = "Follicular Phase";
@@ -177,14 +197,16 @@ export default function PatientDashboardPage() {
   }
 
   const ringCircumference = 283;
-  const ringOffset = ringCircumference - ((currentCycleDay / cycleLength) * ringCircumference);
+  const ringOffset = ringCircumference - (currentCycleDay / cycleLength) * ringCircumference;
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">My Health</h1>
-          <p className="text-gray-500 mt-1">Welcome back, <span className="font-semibold text-rose-700">{session?.user?.name || "Jane"}</span>.</p>
+          <p className="text-gray-500 mt-1">
+            Welcome back, <span className="font-semibold text-rose-700">{session?.user?.name || "Jane"}</span>.
+          </p>
         </div>
         <Link href="/dashboard/symptoms">
           <button className="btn-brand px-6 py-2.5 rounded-full font-medium flex items-center gap-2">
@@ -197,14 +219,27 @@ export default function PatientDashboardPage() {
         <div className="lg:col-span-8 space-y-8">
           {/* Cycle Ring */}
           <div className="card-surface p-8 relative overflow-hidden">
-            <button onClick={() => setIsEditingCycle(true)} className="absolute top-4 right-4 z-20 text-gray-400 p-2 rounded-full hover:bg-rose-50 hover:text-rose-600">
+            <button
+              onClick={() => setIsEditingCycle(true)}
+              className="absolute top-4 right-4 z-20 text-gray-400 p-2 rounded-full hover:bg-rose-50 hover:text-rose-600"
+            >
               <Edit2 className="w-4 h-4" />
             </button>
             <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
               <div className="relative w-40 h-40 flex items-center justify-center shrink-0">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="45" fill="none" stroke="#fce7f3" strokeWidth="8" />
-                  <circle cx="50" cy="50" r="45" fill="none" stroke="#e11d48" strokeWidth="8" strokeDasharray={ringCircumference} strokeDashoffset={ringOffset} strokeLinecap="round" />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    stroke="#e11d48"
+                    strokeWidth="8"
+                    strokeDasharray={ringCircumference}
+                    strokeDashoffset={ringOffset}
+                    strokeLinecap="round"
+                  />
                 </svg>
                 <div className="absolute text-center">
                   <span className="text-xs font-bold text-rose-600 uppercase">Day</span>
@@ -212,7 +247,9 @@ export default function PatientDashboardPage() {
                 </div>
               </div>
               <div className="flex-1 space-y-2">
-                <span className="px-3 py-1 rounded-full bg-rose-50 text-rose-600 text-xs font-bold uppercase">{phaseInfo}</span>
+                <span className="px-3 py-1 rounded-full bg-rose-50 text-rose-600 text-xs font-bold uppercase">
+                  {phaseInfo}
+                </span>
                 <h2 className="text-xl font-bold text-gray-900">Your Body Today</h2>
                 <p className="text-sm text-gray-600">{phaseDesc}</p>
                 <div className="text-xs font-bold text-rose-700 bg-rose-50 px-2.5 py-1.5 rounded-lg inline-flex">
@@ -220,8 +257,18 @@ export default function PatientDashboardPage() {
                 </div>
                 {lastPeriodDate && predictedNextPeriod && (
                   <div className="flex flex-wrap gap-4 pt-1 text-xs text-gray-500">
-                    <span>Last Period: <span className="font-semibold text-gray-700">{lastP.toLocaleDateString("en-US", dateFormat)}</span></span>
-                    <span>Predicted Next Period: <span className="font-semibold text-gray-700">{predictedNextPeriod.toLocaleDateString("en-US", dateFormat)}</span></span>
+                    <span>
+                      Last Period:{" "}
+                      <span className="font-semibold text-gray-700">
+                        {lastP.toLocaleDateString("en-US", dateFormat)}
+                      </span>
+                    </span>
+                    <span>
+                      Predicted Next Period:{" "}
+                      <span className="font-semibold text-gray-700">
+                        {predictedNextPeriod.toLocaleDateString("en-US", dateFormat)}
+                      </span>
+                    </span>
                   </div>
                 )}
               </div>
@@ -236,32 +283,54 @@ export default function PatientDashboardPage() {
           {/* Daily Action Plan & Tabs */}
           <div className="card-surface overflow-hidden flex flex-col">
             <div className="flex border-b border-rose-100/60 bg-rose-50/30">
-              <button onClick={() => setActiveTab('today')} className={`flex-1 py-4 text-sm font-bold ${activeTab === 'today' ? 'text-rose-700 border-b-2 border-rose-600 bg-white' : 'text-gray-500'}`}>Today&apos;s Plan</button>
-              <button onClick={() => setActiveTab('analytics')} className={`flex-1 py-4 text-sm font-bold ${activeTab === 'analytics' ? 'text-rose-700 border-b-2 border-rose-600 bg-white' : 'text-gray-500'}`}>Habit Analytics</button>
+              <button
+                onClick={() => setActiveTab("today")}
+                className={`flex-1 py-4 text-sm font-bold ${activeTab === "today" ? "text-rose-700 border-b-2 border-rose-600 bg-white" : "text-gray-500"}`}
+              >
+                Today&apos;s Plan
+              </button>
+              <button
+                onClick={() => setActiveTab("analytics")}
+                className={`flex-1 py-4 text-sm font-bold ${activeTab === "analytics" ? "text-rose-700 border-b-2 border-rose-600 bg-white" : "text-gray-500"}`}
+              >
+                Habit Analytics
+              </button>
             </div>
 
-            {activeTab === 'analytics' && (
-               <div className="flex justify-center gap-2 pt-4 px-6">
-                 {['week', 'month', 'year'].map(period => (
-                   <button
-                     key={period}
-                     onClick={() => setChartPeriod(period as 'week' | 'month' | 'year')}
-                     className={`px-3 py-1 text-xs font-bold rounded-full capitalize transition-colors ${chartPeriod === period ? 'bg-rose-100 text-rose-800' : 'text-gray-500 hover:bg-rose-50'}`}
-                   >
-                     {period}
-                   </button>
-                 ))}
-               </div>
+            {activeTab === "analytics" && (
+              <div className="flex justify-center gap-2 pt-4 px-6">
+                {["week", "month", "year"].map((period) => (
+                  <button
+                    key={period}
+                    onClick={() => setChartPeriod(period as "week" | "month" | "year")}
+                    className={`px-3 py-1 text-xs font-bold rounded-full capitalize transition-colors ${chartPeriod === period ? "bg-rose-100 text-rose-800" : "text-gray-500 hover:bg-rose-50"}`}
+                  >
+                    {period}
+                  </button>
+                ))}
+              </div>
             )}
 
-            {activeTab === 'today' ? (
+            {activeTab === "today" ? (
               <div className="p-6 space-y-4">
                 {habits.length > 0 ? (
-                  habits.map(habit => (
-                    <div key={habit.id} onClick={() => toggleHabit(habit.id)} className="flex items-center gap-4 p-3 rounded-xl cursor-pointer hover:bg-gray-50">
-                      {habit.done ? <CheckCircle2 className="w-5 h-5 text-rose-500" /> : <Circle className="w-5 h-5 text-gray-300" />}
+                  habits.map((habit) => (
+                    <div
+                      key={habit.id}
+                      onClick={() => toggleHabit(habit.id)}
+                      className="flex items-center gap-4 p-3 rounded-xl cursor-pointer hover:bg-gray-50"
+                    >
+                      {habit.done ? (
+                        <CheckCircle2 className="w-5 h-5 text-rose-500" />
+                      ) : (
+                        <Circle className="w-5 h-5 text-gray-300" />
+                      )}
                       <div>
-                        <p className={`text-sm font-medium ${habit.done ? 'line-through text-gray-400' : 'text-gray-900'}`}>{habit.title}</p>
+                        <p
+                          className={`text-sm font-medium ${habit.done ? "line-through text-gray-400" : "text-gray-900"}`}
+                        >
+                          {habit.title}
+                        </p>
                         <p className="text-xs text-gray-500 mt-0.5">{habit.desc}</p>
                       </div>
                     </div>
@@ -274,7 +343,10 @@ export default function PatientDashboardPage() {
               <div className="p-6 h-48 flex items-end justify-between gap-2 mt-4">
                 {analyticsData[chartPeriod as keyof typeof analyticsData]?.map((data, i) => (
                   <div key={i} className="flex flex-col items-center flex-1">
-                    <div className="w-full bg-rose-500 rounded-t-sm transition-all duration-500" style={{ height: `${Math.max(data.value, 4)}%` }}></div>
+                    <div
+                      className="w-full bg-rose-500 rounded-t-sm transition-all duration-500"
+                      style={{ height: `${Math.max(data.value, 4)}%` }}
+                    ></div>
                     <span className="text-[9px] text-gray-400 mt-2 uppercase font-semibold">{data.label}</span>
                   </div>
                 ))}
@@ -285,7 +357,6 @@ export default function PatientDashboardPage() {
 
         {/* RIGHT COLUMN */}
         <div className="lg:col-span-4 space-y-6">
-          
           {/* Dynamic Telehealth Card */}
           {nextAppointment ? (
             <div className="bg-rose-800 rounded-2xl p-6 text-white shadow-md shadow-rose-200 space-y-4 relative overflow-hidden">
@@ -300,10 +371,14 @@ export default function PatientDashboardPage() {
               <div className="relative z-10">
                 <h3 className="text-lg font-bold">Dr. {nextAppointment.practitioner?.user?.name || "Specialist"}</h3>
                 <p className="text-sm text-rose-100 mt-1 font-medium">
-                  {new Date(nextAppointment.startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                  {new Date(nextAppointment.startTime).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "short",
+                    day: "numeric",
+                  })}
                 </p>
                 <p className="text-xs text-rose-200 mt-0.5">
-                  {new Date(nextAppointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(nextAppointment.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>
               </div>
               <div className="relative z-10">
@@ -328,11 +403,15 @@ export default function PatientDashboardPage() {
             <div className="bg-rose-800 rounded-2xl p-6 text-white shadow-md shadow-rose-200 space-y-4">
               <div className="flex justify-between items-center">
                 <Calendar className="w-5 h-5 text-rose-200" />
-                <span className="bg-white/20 text-rose-100 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full">Available Now</span>
+                <span className="bg-white/20 text-rose-100 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full">
+                  Available Now
+                </span>
               </div>
               <div>
                 <h3 className="text-lg font-bold">Telehealth Session</h3>
-                <p className="text-xs text-rose-100 mt-1">Book a secure consultation with a verified specialist to discuss your health goals.</p>
+                <p className="text-xs text-rose-100 mt-1">
+                  Book a secure consultation with a verified specialist to discuss your health goals.
+                </p>
               </div>
               <Link href="/dashboard/providers" className="block">
                 <button className="w-full bg-white text-rose-900 text-xs font-bold py-2.5 rounded-xl hover:bg-rose-50 transition-colors">
@@ -345,12 +424,18 @@ export default function PatientDashboardPage() {
           {/* Curated Feed (Dynamic) */}
           <div className="card-surface p-5 space-y-4">
             <div className="flex justify-between items-center border-b border-rose-100/60 pb-3">
-              <h3 className="font-bold text-gray-900 flex items-center gap-2"><Newspaper className="w-4 h-4 text-purple-500" /> Today&apos;s Insights</h3>
+              <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                <Newspaper className="w-4 h-4 text-purple-500" /> Today&apos;s Insights
+              </h3>
             </div>
             <div className="space-y-3">
               {articles.length > 0 ? (
                 articles.map((article, idx) => (
-                  <Link key={idx} href={article.url ?? "#"} className="block text-xs font-bold text-gray-800 hover:text-rose-600 cursor-pointer">
+                  <Link
+                    key={idx}
+                    href={article.url ?? "#"}
+                    className="block text-xs font-bold text-gray-800 hover:text-rose-600 cursor-pointer"
+                  >
                     {article.title}
                   </Link>
                 ))

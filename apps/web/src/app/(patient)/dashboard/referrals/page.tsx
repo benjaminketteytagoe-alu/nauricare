@@ -37,8 +37,12 @@ export default async function ReferralsPage() {
             Run a symptom check or start a referral when you need to see a specialist in person.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
-            <Link href="/dashboard/symptoms" className="m3-btn-outlined">Check symptoms</Link>
-            <Link href="/dashboard/referrals/new" className="m3-btn-filled">Start a referral</Link>
+            <Link href="/dashboard/symptoms" className="m3-btn-outlined">
+              Check symptoms
+            </Link>
+            <Link href="/dashboard/referrals/new" className="m3-btn-filled">
+              Start a referral
+            </Link>
           </div>
         </div>
       ) : (

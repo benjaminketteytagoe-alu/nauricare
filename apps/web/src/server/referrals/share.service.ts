@@ -55,8 +55,14 @@ export async function createShare(patientId: string, referralId: string, days: n
   if (referral.status === "EXPIRED" || referral.status === "COMPLETED") {
     throw new ServiceError("This referral is closed and can no longer be shared.");
   }
-  const active = await prisma.referralShare.count({ where: { referralId, revokedAt: null, expiresAt: { gt: new Date() } } });
-  if (active >= MAX_ACTIVE_SHARES) throw new ServiceError(`You already have ${MAX_ACTIVE_SHARES} active links for this referral. Revoke one first.`, 409);
+  const active = await prisma.referralShare.count({
+    where: { referralId, revokedAt: null, expiresAt: { gt: new Date() } },
+  });
+  if (active >= MAX_ACTIVE_SHARES)
+    throw new ServiceError(
+      `You already have ${MAX_ACTIVE_SHARES} active links for this referral. Revoke one first.`,
+      409,
+    );
 
   const expiresAt = new Date(Date.now() + days * 24 * 60 * 60_000);
   const p = referral.patient;
@@ -80,7 +86,11 @@ export async function createShare(patientId: string, referralId: string, days: n
       clinicalReason: referral.clinicalReason,
       triageSeverity: referral.triageSeverity,
     },
-    hospital: { name: referral.hospital.name, address: referral.hospital.address, district: referral.hospital.district },
+    hospital: {
+      name: referral.hospital.name,
+      address: referral.hospital.address,
+      district: referral.hospital.district,
+    },
     insurance: referral.insuranceSnapshot ?? null,
   };
 
@@ -117,7 +127,10 @@ export async function listShares(patientId: string, referralId: string) {
     },
   });
   const now = Date.now();
-  return shares.map((s) => ({ ...s, state: s.revokedAt ? "revoked" : s.expiresAt.getTime() < now ? "expired" : "active" }));
+  return shares.map((s) => ({
+    ...s,
+    state: s.revokedAt ? "revoked" : s.expiresAt.getTime() < now ? "expired" : "active",
+  }));
 }
 
 export async function revokeShare(patientId: string, shareId: string) {
@@ -143,12 +156,21 @@ function codesMatch(given: string, expected: string): boolean {
 }
 
 export async function unlockShare(token: string, code: string, meta: { ip: string | null; userAgent: string | null }) {
-  const share = token.length >= 32 && token.length <= 64
-    ? await prisma.referralShare.findUnique({ where: { tokenHash: hashToken(token) }, include: { referral: { select: { id: true, referralCode: true, patientId: true, hospital: { select: { name: true } } } } } })
-    : null;
+  const share =
+    token.length >= 32 && token.length <= 64
+      ? await prisma.referralShare.findUnique({
+          where: { tokenHash: hashToken(token) },
+          include: {
+            referral: {
+              select: { id: true, referralCode: true, patientId: true, hospital: { select: { name: true } } },
+            },
+          },
+        })
+      : null;
   if (!share) throw new ServiceError("This referral link is not valid.", 404);
   if (share.revokedAt) throw new ServiceError("The patient has revoked this referral link.", 410);
-  if (share.expiresAt < new Date()) throw new ServiceError("This referral link has expired. Ask the patient for a new one.", 410);
+  if (share.expiresAt < new Date())
+    throw new ServiceError("This referral link has expired. Ask the patient for a new one.", 410);
 
   const log = { shareId: share.id, ipAddress: meta.ip, userAgent: meta.userAgent?.slice(0, 300) ?? null };
   if (!codesMatch(code, share.referral.referralCode)) {
@@ -160,7 +182,11 @@ export async function unlockShare(token: string, code: string, meta: { ip: strin
         data: { failedAttempts: failed, ...(failed >= MAX_FAILED_ATTEMPTS ? { revokedAt: new Date() } : {}) },
       }),
     ]);
-    if (failed >= MAX_FAILED_ATTEMPTS) throw new ServiceError("Too many incorrect codes. This link has been locked; ask the patient for a new one.", 423);
+    if (failed >= MAX_FAILED_ATTEMPTS)
+      throw new ServiceError(
+        "Too many incorrect codes. This link has been locked; ask the patient for a new one.",
+        423,
+      );
     throw new ServiceError("That referral code is not correct.", 401);
   }
 
@@ -168,7 +194,10 @@ export async function unlockShare(token: string, code: string, meta: { ip: strin
   if (!payload) throw new ServiceError("This referral could not be decrypted. Ask the patient for a new link.", 500);
   await prisma.$transaction([
     prisma.referralShareAccess.create({ data: { ...log, success: true } }),
-    prisma.referralShare.update({ where: { id: share.id }, data: { accessCount: { increment: 1 }, lastAccessedAt: new Date() } }),
+    prisma.referralShare.update({
+      where: { id: share.id },
+      data: { accessCount: { increment: 1 }, lastAccessedAt: new Date() },
+    }),
   ]);
   await notify({
     recipientId: share.referral.patientId,

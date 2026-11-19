@@ -8,8 +8,7 @@ export const metadata: Metadata = {
 
   title: {
     template: "%s | NauriCare",
-    default:
-      "NauriCare — Secure Telemedicine & Women’s Health Platform in Kigali, Rwanda",
+    default: "NauriCare — Secure Telemedicine & Women’s Health Platform in Kigali, Rwanda",
   },
 
   description:

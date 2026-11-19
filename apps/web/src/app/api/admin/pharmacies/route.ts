@@ -9,7 +9,10 @@ import { sanitizePlainText } from "@/lib/sanitize";
 const PharmacyInput = z.object({
   name: z.string().trim().min(1, "name and address are required").max(200),
   address: z.string().trim().min(1, "name and address are required").max(300),
-  contactEmail: z.union([z.literal(""), z.email("Enter a valid contact email")]).optional().or(z.null()),
+  contactEmail: z
+    .union([z.literal(""), z.email("Enter a valid contact email")])
+    .optional()
+    .or(z.null()),
   tags: z.array(z.string().trim().min(1).max(40)).max(20).optional().or(z.null()),
 });
 

@@ -34,8 +34,8 @@ const TRUST_SLIDES: AuthVisualSlide[] = [
 
 const TRUST_CHIPS = [
   { Icon: ShieldCheck, label: "HIPAA Compliant" },
-  { Icon: Lock,        label: "End-to-End Encrypted" },
-  { Icon: Globe,       label: "Built for Africa" },
+  { Icon: Lock, label: "End-to-End Encrypted" },
+  { Icon: Globe, label: "Built for Africa" },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -44,19 +44,17 @@ export default function SignUpPage() {
   const authParams = useAuthParams(); // keeps ?redirect=&action= when switching auth pages
   const router = useRouter();
   const turnstileSize = useTurnstileSize();
-  const [loading, setLoading]           = useState(false);
-  const [error, setError]               = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [turnstileToken, setTurnstileToken] = useState("");
-  const [password, setPassword]         = useState("");
+  const [password, setPassword] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("Rwanda");
-  const [localPhone, setLocalPhone]     = useState("");
+  const [localPhone, setLocalPhone] = useState("");
 
   const dialCode = dialCodeForCountry(selectedCountry);
 
   const passwordResult = password ? passwordField.safeParse(password) : null;
-  const passwordError  = passwordResult && !passwordResult.success
-    ? passwordResult.error.issues[0].message
-    : "";
+  const passwordError = passwordResult && !passwordResult.success ? passwordResult.error.issues[0].message : "";
 
   async function handleSubmit(e: { preventDefault(): void; currentTarget: HTMLFormElement }) {
     e.preventDefault();
@@ -82,9 +80,9 @@ export default function SignUpPage() {
       return;
     }
 
-    const formData    = new FormData(e.currentTarget);
-    const name        = formData.get("name") as string;
-    const email       = formData.get("email") as string;
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
     const dateOfBirth = formData.get("dateOfBirth") as string;
     const privacyConsent = formData.get("privacyConsent") === "on";
 
@@ -96,8 +94,13 @@ export default function SignUpPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email, password, name, dateOfBirth, privacyConsent,
-          role: "PATIENT", turnstileToken,
+          email,
+          password,
+          name,
+          dateOfBirth,
+          privacyConsent,
+          role: "PATIENT",
+          turnstileToken,
           country: selectedCountry,
           phoneNumber,
         }),
@@ -117,11 +120,9 @@ export default function SignUpPage() {
 
   return (
     <div className="min-h-[100dvh] flex">
-
       {/* ── LEFT — Registration form ── */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 py-6 sm:py-8 bg-white overflow-y-auto">
         <div className="w-full max-w-md space-y-6 my-8">
-
           <div className="text-center">
             <h2 className="text-3xl font-extrabold text-teal-900">Join NauriCare</h2>
             <p className="text-gray-500 mt-2 text-sm">Create your free patient account.</p>
@@ -140,15 +141,15 @@ export default function SignUpPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-200">
-                {error}
-              </div>
+              <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-200">{error}</div>
             )}
 
             <div className="space-y-1.5">
               <Label htmlFor="name">Full Name</Label>
               <Input
-                id="name" name="name" required
+                id="name"
+                name="name"
+                required
                 placeholder="Jane Doe"
                 className="h-11 focus-visible:ring-teal-500 rounded-xl"
               />
@@ -157,7 +158,10 @@ export default function SignUpPage() {
             <div className="space-y-1.5">
               <Label htmlFor="email">Email Address</Label>
               <Input
-                id="email" name="email" type="email" required
+                id="email"
+                name="email"
+                type="email"
+                required
                 placeholder="jane@example.com"
                 className="h-11 focus-visible:ring-teal-500 rounded-xl"
               />
@@ -167,21 +171,25 @@ export default function SignUpPage() {
               <div className="space-y-1.5">
                 <Label htmlFor="password">Password</Label>
                 <PasswordInput
-                  id="password" name="password" required minLength={8}
+                  id="password"
+                  name="password"
+                  required
+                  minLength={8}
                   placeholder="Min. 8 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   aria-invalid={!!passwordError}
                   className="h-11 focus-visible:ring-teal-500 rounded-xl"
                 />
-                {passwordError && (
-                  <p className="text-xs text-red-600">{passwordError}</p>
-                )}
+                {passwordError && <p className="text-xs text-red-600">{passwordError}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="dateOfBirth">Date of Birth</Label>
                 <Input
-                  id="dateOfBirth" name="dateOfBirth" type="date" required
+                  id="dateOfBirth"
+                  name="dateOfBirth"
+                  type="date"
+                  required
                   className="h-11 focus-visible:ring-teal-500 rounded-xl text-gray-700"
                 />
               </div>
@@ -202,12 +210,16 @@ export default function SignUpPage() {
               >
                 <optgroup label="Recommended regions">
                   {COUNTRIES.slice(0, PRIORITY_COUNTRY_COUNT).map((c) => (
-                    <option key={c.name} value={c.name}>{c.name}</option>
+                    <option key={c.name} value={c.name}>
+                      {c.name}
+                    </option>
                   ))}
                 </optgroup>
                 <optgroup label="All countries">
                   {COUNTRIES.slice(PRIORITY_COUNTRY_COUNT).map((c) => (
-                    <option key={c.name} value={c.name}>{c.name}</option>
+                    <option key={c.name} value={c.name}>
+                      {c.name}
+                    </option>
                   ))}
                 </optgroup>
               </select>
@@ -237,12 +249,17 @@ export default function SignUpPage() {
 
             <div className="flex items-start gap-3 py-1">
               <input
-                type="checkbox" id="privacyConsent" name="privacyConsent" required
+                type="checkbox"
+                id="privacyConsent"
+                name="privacyConsent"
+                required
                 className="mt-1 w-4 h-4 accent-teal-600 cursor-pointer shrink-0"
               />
-              <Label htmlFor="privacyConsent" className="text-xs text-gray-600 font-normal leading-relaxed cursor-pointer">
-                I consent to the collection and processing of my personal health information in
-                accordance with the{" "}
+              <Label
+                htmlFor="privacyConsent"
+                className="text-xs text-gray-600 font-normal leading-relaxed cursor-pointer"
+              >
+                I consent to the collection and processing of my personal health information in accordance with the{" "}
                 <Link href="/privacy" className="text-teal-600 hover:underline">
                   Privacy Policy.
                 </Link>{" "}
@@ -250,7 +267,9 @@ export default function SignUpPage() {
               </Label>
             </div>
 
-            <Turnstile key={turnstileSize} options={{ size: turnstileSize }}
+            <Turnstile
+              key={turnstileSize}
+              options={{ size: turnstileSize }}
               siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
               onSuccess={setTurnstileToken}
               onExpire={() => setTurnstileToken("")}

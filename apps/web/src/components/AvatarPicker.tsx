@@ -53,24 +53,57 @@ export function AvatarPicker({
       <div className="flex items-center gap-4">
         <Avatar name={name} avatarUrl={current} size="xl" />
         <div>
-          <h3 id="avatar-heading" className="font-semibold text-nc-ink">{heading}</h3>
+          <h3 id="avatar-heading" className="font-semibold text-nc-ink">
+            {heading}
+          </h3>
           <p className="text-sm text-slate-500">{description}</p>
         </div>
       </div>
-      {error && <Callout tone="danger" role="alert" className="mt-3">{error}</Callout>}
+      {error && (
+        <Callout tone="danger" role="alert" className="mt-3">
+          {error}
+        </Callout>
+      )}
       <div role="radiogroup" aria-label="Avatars" className="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-6">
         {googlePhotoUrl && (
-          <button type="button" role="radio" aria-checked={current === googlePhotoUrl} aria-label="Use my Google photo" title="My Google photo" disabled={pending} onClick={() => pick({ google: true })} className={tile(current === googlePhotoUrl)}>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={current === googlePhotoUrl}
+            aria-label="Use my Google photo"
+            title="My Google photo"
+            disabled={pending}
+            onClick={() => pick({ google: true })}
+            className={tile(current === googlePhotoUrl)}
+          >
             <Avatar name={name} avatarUrl={googlePhotoUrl} size="xl" className="!h-full !w-full" />
-            {busyId === "google" && <Loader2 className="absolute inset-0 m-auto h-5 w-5 animate-spin text-white" aria-hidden />}
+            {busyId === "google" && (
+              <Loader2 className="absolute inset-0 m-auto h-5 w-5 animate-spin text-white" aria-hidden />
+            )}
           </button>
         )}
         {AVATAR_PRESETS.map((p) => (
-          <button key={p.id} type="button" role="radio" aria-checked={selectedPreset === p.id} aria-label={p.label} title={p.label} disabled={pending} onClick={() => pick({ preset: p.id })} className={tile(selectedPreset === p.id)}>
+          <button
+            key={p.id}
+            type="button"
+            role="radio"
+            aria-checked={selectedPreset === p.id}
+            aria-label={p.label}
+            title={p.label}
+            disabled={pending}
+            onClick={() => pick({ preset: p.id })}
+            className={tile(selectedPreset === p.id)}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={presetSrc(p.id)} alt="" className="aspect-square w-full rounded-full" />
-            {selectedPreset === p.id && <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-nc-primary text-white shadow"><Check className="h-4 w-4" aria-hidden /></span>}
-            {busyId === p.id && <Loader2 className="absolute inset-0 m-auto h-5 w-5 animate-spin text-white drop-shadow" aria-hidden />}
+            {selectedPreset === p.id && (
+              <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-nc-primary text-white shadow">
+                <Check className="h-4 w-4" aria-hidden />
+              </span>
+            )}
+            {busyId === p.id && (
+              <Loader2 className="absolute inset-0 m-auto h-5 w-5 animate-spin text-white drop-shadow" aria-hidden />
+            )}
           </button>
         ))}
       </div>

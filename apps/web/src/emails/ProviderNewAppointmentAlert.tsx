@@ -31,29 +31,24 @@ export function ProviderNewAppointmentAlert({
   return (
     <Html lang="en">
       <Head />
-      <Preview>New patient booking: {patientName} on {date} at {time}</Preview>
+      <Preview>
+        New patient booking: {patientName} on {date} at {time}
+      </Preview>
       <Tailwind>
         <Body className="bg-gray-50 font-sans">
           <Container className="mx-auto max-w-lg py-8 px-4">
-
             {/* Header */}
             <Section className="bg-teal-900 rounded-t-2xl px-8 py-6 text-center">
-              <Heading className="text-white text-2xl font-bold m-0">
-                NauriCare
-              </Heading>
-              <Text className="text-teal-300 text-sm mt-1 mb-0">
-                Clinical Portal
-              </Text>
+              <Heading className="text-white text-2xl font-bold m-0">NauriCare</Heading>
+              <Text className="text-teal-300 text-sm mt-1 mb-0">Clinical Portal</Text>
             </Section>
 
             {/* Body card */}
             <Section className="bg-white rounded-b-2xl px-8 py-8 shadow-sm border border-gray-100">
-              <Heading className="text-gray-900 text-xl font-semibold mt-0 mb-2">
-                New Appointment Booked
-              </Heading>
+              <Heading className="text-gray-900 text-xl font-semibold mt-0 mb-2">New Appointment Booked</Heading>
               <Text className="text-gray-600 text-sm leading-relaxed mt-0">
-                Hi {providerName}, a patient has booked a telehealth consultation with you.
-                Review the details below and make sure you&apos;re available.
+                Hi {providerName}, a patient has booked a telehealth consultation with you. Review the details below and
+                make sure you&apos;re available.
               </Text>
 
               <Hr className="border-gray-100 my-6" />
@@ -82,8 +77,8 @@ export function ProviderNewAppointmentAlert({
               </Section>
 
               <Text className="text-gray-600 text-sm leading-relaxed mb-6">
-                The consultation room is ready. Join at the scheduled time using the secure
-                link below — the patient has received the same link.
+                The consultation room is ready. Join at the scheduled time using the secure link below — the patient has
+                received the same link.
               </Text>
 
               <Button
@@ -97,7 +92,8 @@ export function ProviderNewAppointmentAlert({
                 Manage your full schedule from the{" "}
                 <a href={`${SITE_URL}/provider`} className="text-teal-600">
                   NauriCare Clinical Portal
-                </a>.
+                </a>
+                .
               </Text>
             </Section>
 
@@ -107,7 +103,6 @@ export function ProviderNewAppointmentAlert({
               <br />
               You&apos;re receiving this as a verified NauriCare provider.
             </Text>
-
           </Container>
         </Body>
       </Tailwind>

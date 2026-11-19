@@ -28,10 +28,7 @@ export async function POST(req: Request) {
 
     const isHuman = await verifyTurnstileToken(body?.turnstileToken ?? "", ip);
     if (!isHuman) {
-      return NextResponse.json(
-        { error: "Security verification failed. Please try again." },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: "Security verification failed. Please try again." }, { status: 403 });
     }
 
     const parsed = schema.safeParse(body);
@@ -46,9 +43,7 @@ export async function POST(req: Request) {
     // mirrors the anti-enumeration pattern in forgot-password.
     if (user) {
       const rawToken = randomBytes(32).toString("hex");
-      const tokenHash = createHash("sha256")
-        .update(`${rawToken}${process.env.NEXTAUTH_SECRET}`)
-        .digest("hex");
+      const tokenHash = createHash("sha256").update(`${rawToken}${process.env.NEXTAUTH_SECRET}`).digest("hex");
       const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
       await prisma.verificationToken.create({

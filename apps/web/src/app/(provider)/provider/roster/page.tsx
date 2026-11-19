@@ -57,25 +57,19 @@ export default async function ProviderRosterPage() {
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm">
           <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-bold text-slate-900">No Patients Yet</h3>
-          <p className="text-slate-500 mt-1">
-            Patients will appear here once they book a consultation.
-          </p>
+          <p className="text-slate-500 mt-1">Patients will appear here once they book a consultation.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {patients.map((patient) => {
             const lastAppt = patient.appointments[0];
-            const status = (lastAppt?.status ?? "SCHEDULED") as
-              | "SCHEDULED"
-              | "COMPLETED"
-              | "CANCELLED"
-              | "MISSED";
+            const status = (lastAppt?.status ?? "SCHEDULED") as "SCHEDULED" | "COMPLETED" | "CANCELLED" | "MISSED";
 
             const statusColors: Record<string, string> = {
               SCHEDULED: "text-blue-600",
               COMPLETED: "text-emerald-600",
               CANCELLED: "text-slate-500",
-              MISSED:    "text-rose-600",
+              MISSED: "text-rose-600",
             };
 
             return (
@@ -119,15 +113,10 @@ export default async function ProviderRosterPage() {
                         </span>
                       </div>
                       <div className="flex items-start gap-2">
-                        <span className={`text-xs font-semibold mt-0.5 ${statusColors[status]}`}>
-                          ● {status}
-                        </span>
+                        <span className={`text-xs font-semibold mt-0.5 ${statusColors[status]}`}>● {status}</span>
                       </div>
                       {/* Status update buttons — only shown for SCHEDULED appointments */}
-                      <AppointmentStatusButton
-                        appointmentId={lastAppt.id}
-                        currentStatus={status}
-                      />
+                      <AppointmentStatusButton appointmentId={lastAppt.id} currentStatus={status} />
                     </>
                   ) : (
                     <p className="text-sm text-slate-400">No appointments recorded.</p>

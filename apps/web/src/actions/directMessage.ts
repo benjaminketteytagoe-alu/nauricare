@@ -47,7 +47,9 @@ export async function getConversations() {
       partnerName: partner.name,
       partnerAvatarUrl: partner.avatarUrl,
       partnerRole: partner.role,
-      partnerSubtitle: partner.practitionerProfile ? `${partner.practitionerProfile.specialty} · ${partner.practitionerProfile.clinicName}` : null,
+      partnerSubtitle: partner.practitionerProfile
+        ? `${partner.practitionerProfile.specialty} · ${partner.practitionerProfile.clinicName}`
+        : null,
       online: isOnline(partner.lastSeenAt),
       lastMessage: m.content,
       lastMessageAt: m.createdAt,
@@ -73,7 +75,9 @@ export async function getMessageableProviders() {
       id: p.id,
       name: p.name,
       avatarUrl: p.avatarUrl,
-      subtitle: p.practitionerProfile ? `${p.practitionerProfile.specialty} · ${p.practitionerProfile.clinicName}` : null,
+      subtitle: p.practitionerProfile
+        ? `${p.practitionerProfile.specialty} · ${p.practitionerProfile.clinicName}`
+        : null,
       online: isOnline(p.lastSeenAt),
     })),
   };
@@ -120,7 +124,8 @@ export async function sendDirectMessage(receiverId: string, content: string) {
   if (!parsed.success) return { success: false as const, error: parsed.error.issues[0]?.message ?? "Invalid message." };
 
   const limit = rateLimit(`dm-send:${user.id}`, 30, 60_000);
-  if (!limit.allowed) return { success: false as const, error: "You're sending messages too quickly. Please wait a moment." };
+  if (!limit.allowed)
+    return { success: false as const, error: "You're sending messages too quickly. Please wait a moment." };
 
   const trimmed = sanitizePlainText(parsed.data.content);
   if (!trimmed) return { success: false as const, error: "Message cannot be empty" };

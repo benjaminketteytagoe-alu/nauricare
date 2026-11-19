@@ -3,10 +3,10 @@
 import { useState } from "react";
 
 export function ResendVerificationForm() {
-  const [email, setEmail]     = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent]       = useState(false);
-  const [error, setError]     = useState("");
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -44,11 +44,7 @@ export function ResendVerificationForm() {
 
   return (
     <form onSubmit={handleSubmit} className="w-full space-y-3">
-      {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-2 rounded-lg">
-          {error}
-        </p>
-      )}
+      {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-2 rounded-lg">{error}</p>}
       <input
         type="email"
         required

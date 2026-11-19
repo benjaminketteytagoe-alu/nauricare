@@ -21,5 +21,7 @@ export async function POST(req: Request, { params }: Ctx) {
   if (!limit.allowed) return rateLimitResponse(limit);
   const parsed = await parseJson(req, CreateInput);
   if (!parsed.ok) return parsed.response;
-  return handle(async () => apiSuccess(await createShare(userId, idSchema.parse((await params).id), parsed.data.days), 201));
+  return handle(async () =>
+    apiSuccess(await createShare(userId, idSchema.parse((await params).id), parsed.data.days), 201),
+  );
 }

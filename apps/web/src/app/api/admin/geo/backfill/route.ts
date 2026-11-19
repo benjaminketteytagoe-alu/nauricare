@@ -10,7 +10,11 @@ export async function POST() {
   if (!adminId) return unauthorized();
   return handle(async () => {
     const result = await backfillCoordinates();
-    await logAdministrativeAction({ action: "ADMIN_SETTINGS_UPDATE", actorId: adminId, details: { op: "geo-backfill", ...result } });
+    await logAdministrativeAction({
+      action: "ADMIN_SETTINGS_UPDATE",
+      actorId: adminId,
+      details: { op: "geo-backfill", ...result },
+    });
     return apiSuccess(result);
   });
 }

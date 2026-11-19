@@ -47,25 +47,42 @@ export function TriageHandover({ consentValid }: { consentValid: boolean }) {
         );
       } catch (e) {
         started.current = false;
-        setError(e instanceof Error && e.message ? e.message : "We couldn't bring your Nauri assessment across. Please try again.");
+        setError(
+          e instanceof Error && e.message
+            ? e.message
+            : "We couldn't bring your Nauri assessment across. Please try again.",
+        );
       }
     })();
   }, [consentValid, pending, router]);
 
-  if (error) return <Callout tone="warning" role="alert" className="mx-auto mb-6 max-w-3xl">{error}</Callout>;
+  if (error)
+    return (
+      <Callout tone="warning" role="alert" className="mx-auto mb-6 max-w-3xl">
+        {error}
+      </Callout>
+    );
   if (!pending) return null;
 
   if (!consentValid) {
     return (
-      <Callout tone="info" icon={Sparkles} title="Your Nauri assessment is ready to save" className="mx-auto mb-6 max-w-3xl">
-        Welcome to NauriCare. Confirm your consent below once more to link the assessment to your new account. We&apos;ll
-        then take you straight to your hospital referral.
+      <Callout
+        tone="info"
+        icon={Sparkles}
+        title="Your Nauri assessment is ready to save"
+        className="mx-auto mb-6 max-w-3xl"
+      >
+        Welcome to NauriCare. Confirm your consent below once more to link the assessment to your new account.
+        We&apos;ll then take you straight to your hospital referral.
       </Callout>
     );
   }
 
   return (
-    <div role="status" className="fixed inset-0 z-[80] flex flex-col items-center justify-center gap-3 bg-white/90 text-nc-ink backdrop-blur-sm">
+    <div
+      role="status"
+      className="fixed inset-0 z-[80] flex flex-col items-center justify-center gap-3 bg-white/90 text-nc-ink backdrop-blur-sm"
+    >
       <Loader2 className="h-8 w-8 animate-spin text-nc-primary" aria-hidden />
       <p className="font-semibold">Bringing your Nauri assessment across…</p>
     </div>

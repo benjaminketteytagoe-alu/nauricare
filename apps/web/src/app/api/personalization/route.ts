@@ -11,34 +11,34 @@ const GoalsInput = z.object({
 
 // --- CURATED MEDICAL CONTENT LIBRARY ---
 const CONTENT_DB = {
-  "PCOS": {
+  PCOS: {
     habits: [
       { id: 1, title: "Take Supplements (Inositol/Vitamin D)", desc: "Helps improve insulin sensitivity." },
-      { id: 2, title: "Eat a High-Fiber, Low-GI Breakfast", desc: "Crucial for managing PCOS blood sugar spikes." }
+      { id: 2, title: "Eat a High-Fiber, Low-GI Breakfast", desc: "Crucial for managing PCOS blood sugar spikes." },
     ],
-    article: { title: "The Link Between Insulin Resistance and PCOS", url: "/dashboard/articles/pcos-insulin" }
+    article: { title: "The Link Between Insulin Resistance and PCOS", url: "/dashboard/articles/pcos-insulin" },
   },
-  "Fibroids": {
+  Fibroids: {
     habits: [
       { id: 3, title: "Drink Green Tea (EGCG)", desc: "Antioxidants may help reduce fibroid cellular growth." },
-      { id: 4, title: "Limit Processed Red Meats", desc: "Reduces inflammatory markers linked to fibroids." }
+      { id: 4, title: "Limit Processed Red Meats", desc: "Reduces inflammatory markers linked to fibroids." },
     ],
-    article: { title: "How to Manage Fibroid Pain Naturally at Home", url: "/dashboard/articles/fibroid-pain" }
+    article: { title: "How to Manage Fibroid Pain Naturally at Home", url: "/dashboard/articles/fibroid-pain" },
   },
-  "Endometriosis": {
+  Endometriosis: {
     habits: [
       { id: 5, title: "Take Omega-3 Supplements", desc: "Helps manage and reduce systemic inflammation." },
-      { id: 6, title: "Anti-Inflammatory Dinner", desc: "Focus on leafy greens and avoid refined sugars." }
+      { id: 6, title: "Anti-Inflammatory Dinner", desc: "Focus on leafy greens and avoid refined sugars." },
     ],
-    article: { title: "Navigating Endometriosis Flare-ups: A Guide", url: "/dashboard/articles/endo-flare" }
+    article: { title: "Navigating Endometriosis Flare-ups: A Guide", url: "/dashboard/articles/endo-flare" },
   },
-  "General": {
+  General: {
     habits: [
       { id: 7, title: "Drink 2.5L of Water", desc: "Supports liver function to clear excess estrogen." },
-      { id: 8, title: "30 Mins of Gentle Movement", desc: "Reduces cortisol levels without over-stressing the body." }
+      { id: 8, title: "30 Mins of Gentle Movement", desc: "Reduces cortisol levels without over-stressing the body." },
     ],
-    article: { title: "The Foundations of Hormonal Balance", url: "/dashboard/articles/hormone-basics" }
-  }
+    article: { title: "The Foundations of Hormonal Balance", url: "/dashboard/articles/hormone-basics" },
+  },
 };
 
 // GET: Generate the tailored dashboard payload
@@ -71,14 +71,15 @@ export async function GET() {
 
     // --- Articles: fetched from the database ---
     // Primary: articles whose tags intersect with the patient's health goals
-    let dbArticles = goals.length > 0
-      ? await prisma.article.findMany({
-          where: { isPublished: true, tags: { hasSome: goals } },
-          orderBy: { createdAt: "desc" },
-          take: 3,
-          select: { id: true, title: true },
-        })
-      : [];
+    let dbArticles =
+      goals.length > 0
+        ? await prisma.article.findMany({
+            where: { isPublished: true, tags: { hasSome: goals } },
+            orderBy: { createdAt: "desc" },
+            take: 3,
+            select: { id: true, title: true },
+          })
+        : [];
 
     // Fallback: if no goal-matched articles exist, surface the 3 most recent published articles
     if (dbArticles.length === 0) {

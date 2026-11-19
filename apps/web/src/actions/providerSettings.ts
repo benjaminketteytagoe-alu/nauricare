@@ -110,9 +110,9 @@ export async function updateSecuritySettings(data: {
 }
 
 export async function upsertAvailabilitySlot(data: {
-  date: string;        // ISO date "YYYY-MM-DD"
-  startTime: string;   // "HH:MM"
-  endTime: string;     // "HH:MM"
+  date: string; // ISO date "YYYY-MM-DD"
+  startTime: string; // "HH:MM"
+  endTime: string; // "HH:MM"
   isAvailable: boolean;
 }) {
   const session = await getServerSession(authOptions);

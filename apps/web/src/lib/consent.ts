@@ -24,10 +24,10 @@ interface ConsentFields {
 export function evaluateConsent(u: ConsentFields | null): TriageConsent {
   const valid = Boolean(
     u &&
-      u.hasConsentedToPrivacy &&
-      u.hasConsentedToTriage &&
-      u.consentTimestamp &&
-      u.consentVersion === CURRENT_CONSENT_VERSION,
+    u.hasConsentedToPrivacy &&
+    u.hasConsentedToTriage &&
+    u.consentTimestamp &&
+    u.consentVersion === CURRENT_CONSENT_VERSION,
   );
   return {
     valid,

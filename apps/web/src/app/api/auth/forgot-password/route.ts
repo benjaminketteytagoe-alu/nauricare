@@ -22,10 +22,7 @@ export async function POST(req: Request) {
 
     const isHuman = await verifyTurnstileToken(body?.turnstileToken ?? "", ip);
     if (!isHuman) {
-      return NextResponse.json(
-        { error: "Security verification failed. Please try again." },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: "Security verification failed. Please try again." }, { status: 403 });
     }
 
     const parsed = schema.safeParse(body);

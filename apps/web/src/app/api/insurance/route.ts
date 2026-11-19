@@ -73,7 +73,12 @@ export async function PUT(req: Request) {
       update: data,
       create: { userId, ...data },
     });
-    await recordActivity({ userId, type: "INSURANCE_UPDATED", title: `Updated insurance details (${insuranceLabel(provider, otherProviderName)})`, details: { provider } });
+    await recordActivity({
+      userId,
+      type: "INSURANCE_UPDATED",
+      title: `Updated insurance details (${insuranceLabel(provider, otherProviderName)})`,
+      details: { provider },
+    });
     return NextResponse.json({ insurance });
   } catch (error) {
     console.error("[INSURANCE_SAVE_ERROR]", error);

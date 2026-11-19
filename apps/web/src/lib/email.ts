@@ -5,21 +5,20 @@ import { MagicLink, type MagicLinkProps } from "@/emails/MagicLink";
 import { PasswordReset, type PasswordResetProps } from "@/emails/PasswordReset";
 import { PatientBookingConfirmation, type PatientBookingConfirmationProps } from "@/emails/PatientBookingConfirmation";
 import { ProviderInvitation, type ProviderInvitationProps } from "@/emails/ProviderInvitation";
-import { ProviderNewAppointmentAlert, type ProviderNewAppointmentAlertProps } from "@/emails/ProviderNewAppointmentAlert";
+import {
+  ProviderNewAppointmentAlert,
+  type ProviderNewAppointmentAlertProps,
+} from "@/emails/ProviderNewAppointmentAlert";
 import { ReminderEmail, type ReminderEmailProps } from "@/emails/Reminder";
 import { VerifyEmail, type VerifyEmailProps } from "@/emails/VerifyEmail";
 import { SUPPORT_EMAIL } from "@/lib/site";
 
-const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
+const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key_for_build");
 
 // Use the verified domain in production; fall back to Resend's test sender in dev.
-const FROM_ADDRESS =
-  process.env.EMAIL_FROM ?? "appointments@nauricare.com";
+const FROM_ADDRESS = process.env.EMAIL_FROM ?? "appointments@nauricare.com";
 
-export async function sendPatientConfirmationEmail({
-  to,
-  ...props
-}: PatientBookingConfirmationProps & { to: string }) {
+export async function sendPatientConfirmationEmail({ to, ...props }: PatientBookingConfirmationProps & { to: string }) {
   const { error } = await resend.emails.send({
     from: FROM_ADDRESS,
     to,
@@ -30,10 +29,7 @@ export async function sendPatientConfirmationEmail({
   if (error) throw new Error(`[RESEND] Patient confirmation failed: ${error.message}`);
 }
 
-export async function sendProviderAlertEmail({
-  to,
-  ...props
-}: ProviderNewAppointmentAlertProps & { to: string }) {
+export async function sendProviderAlertEmail({ to, ...props }: ProviderNewAppointmentAlertProps & { to: string }) {
   const { error } = await resend.emails.send({
     from: FROM_ADDRESS,
     to,
@@ -44,10 +40,7 @@ export async function sendProviderAlertEmail({
   if (error) throw new Error(`[RESEND] Provider alert failed: ${error.message}`);
 }
 
-export async function sendPasswordResetEmail({
-  to,
-  ...props
-}: PasswordResetProps & { to: string }) {
+export async function sendPasswordResetEmail({ to, ...props }: PasswordResetProps & { to: string }) {
   const { error } = await resend.emails.send({
     from: FROM_ADDRESS,
     to,
@@ -58,10 +51,7 @@ export async function sendPasswordResetEmail({
   if (error) throw new Error(`[RESEND] Password reset email failed: ${error.message}`);
 }
 
-export async function sendVerificationEmail({
-  to,
-  ...props
-}: VerifyEmailProps & { to: string }) {
+export async function sendVerificationEmail({ to, ...props }: VerifyEmailProps & { to: string }) {
   const { error } = await resend.emails.send({
     from: FROM_ADDRESS,
     to,
@@ -72,10 +62,7 @@ export async function sendVerificationEmail({
   if (error) throw new Error(`[RESEND] Verification email failed: ${error.message}`);
 }
 
-export async function sendMagicLinkEmail({
-  to,
-  ...props
-}: MagicLinkProps & { to: string }) {
+export async function sendMagicLinkEmail({ to, ...props }: MagicLinkProps & { to: string }) {
   const { error } = await resend.emails.send({
     from: FROM_ADDRESS,
     to,
@@ -107,14 +94,21 @@ export async function sendProviderInvitationEmail({ to, ...props }: ProviderInvi
   const { error } = await resend.emails.send({
     from: FROM_ADDRESS,
     to,
-    subject: props.alreadyListed ? "Set up your NauriCare provider account" : "Invitation to join NauriCare as a women's health specialist",
+    subject: props.alreadyListed
+      ? "Set up your NauriCare provider account"
+      : "Invitation to join NauriCare as a women's health specialist",
     react: ProviderInvitation(props),
   });
   if (error) throw new Error(`[RESEND] Provider invitation failed: ${error.message}`);
 }
 
 /** `idempotencyKey`: Resend drops repeats of the same key (24h), so a retried reminder is never sent twice. */
-export async function sendReminderEmail({ to, subject, idempotencyKey, ...props }: ReminderEmailProps & { to: string; subject: string; idempotencyKey?: string }) {
+export async function sendReminderEmail({
+  to,
+  subject,
+  idempotencyKey,
+  ...props
+}: ReminderEmailProps & { to: string; subject: string; idempotencyKey?: string }) {
   const { error } = await resend.emails.send(
     { from: FROM_ADDRESS, to, subject: headerSafe(subject), react: ReminderEmail(props) },
     idempotencyKey ? { idempotencyKey } : undefined,
@@ -123,6 +117,11 @@ export async function sendReminderEmail({ to, subject, idempotencyKey, ...props 
 }
 
 export async function sendLoginCodeEmail({ to, ...props }: LoginCodeProps & { to: string }) {
-  const { error } = await resend.emails.send({ from: FROM_ADDRESS, to, subject: `${props.code} is your NauriCare sign-in code`, react: LoginCode(props) });
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: `${props.code} is your NauriCare sign-in code`,
+    react: LoginCode(props),
+  });
   if (error) throw new Error(`[RESEND] Login code email failed: ${error.message}`);
 }

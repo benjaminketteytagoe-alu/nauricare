@@ -96,8 +96,8 @@ export async function POST(req: Request) {
             latitude: coords?.lat ?? null,
             longitude: coords?.lng ?? null,
             isVerified: true,
-          }
-        }
+          },
+        },
       },
       select: {
         id: true,
@@ -114,8 +114,8 @@ export async function POST(req: Request) {
       data: {
         userId: session.user.id,
         action: "ONBOARD_PROVIDER",
-        details: { providerId: newProvider.id, email: newProvider.email }
-      }
+        details: { providerId: newProvider.id, email: newProvider.email },
+      },
     });
 
     return NextResponse.json(newProvider, { status: 201 });

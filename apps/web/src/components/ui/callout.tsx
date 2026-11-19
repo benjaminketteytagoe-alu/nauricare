@@ -29,7 +29,10 @@ export function Callout({
   role?: "alert" | "status";
 }) {
   return (
-    <div role={role} className={`flex items-start gap-3 rounded-xl border p-4 text-sm leading-relaxed ${TONES[tone]} ${className}`}>
+    <div
+      role={role}
+      className={`flex items-start gap-3 rounded-xl border p-4 text-sm leading-relaxed ${TONES[tone]} ${className}`}
+    >
       {Icon && <Icon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />}
       <div className="min-w-0">
         {title && <p className="font-semibold">{title}</p>}
