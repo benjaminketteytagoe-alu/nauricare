@@ -122,7 +122,22 @@ All admin and provider operations must be logged via `logAdministrativeAction()`
 
 ### API routes
 
-REST-style route handlers in `src/app/api/`. Each handler calls `getServerSession(authOptions)` directly for auth. Appointments GET handler acts as a smart router, returning different data shapes depending on the user's role.
+REST-style route handlers in `src/app/api/`. Every handler follows the same shape (enforced by ESLint and `src/app/api/conventions.test.ts`):
+
+```ts
+const auth = await requireApiUser("PATIENT"); // lib/auth-guards: 401 signed out, 403 wrong role
+if (!auth.ok) return auth.response;
+const limited = enforceRateLimit(`thing:${auth.user.id}`); // lib/rateLimit: every write is limited
+if (limited) return limited;
+const body = await parseJson(req, Schema); // lib/api: malformed JSON and Zod errors -> 400
+if (!body.ok) return body.response;
+return handle(async () => apiSuccess(await doThing(auth.user.id, body.data), 201)); // 500s are logged, never leaked
+```
+
+- Errors are always JSON `{ error, code? }`; clients read them with `readErrorMessage(res, fallback)` from `lib/http.ts`.
+- Never call `getServerSession` or `req.json()` directly, and never use `console` in server code (`logger` instead). Lint fails on all three.
+- Use `readJson` + `validateBody` when something must run between reading and validating (Turnstile in the auth routes).
+- The appointments GET handler returns different shapes per role.
 
 ### Server Actions
 
@@ -135,7 +150,8 @@ Admin mutations use Next.js Server Actions (e.g., `(admin)/admin/actions.ts`). T
 - `sanitize.ts` — `sanitizePlainText()`; run on all user-generated text before storing.
 - `site.ts` — `SITE_URL`, `SUPPORT_EMAIL` (nauricare@gmail.com), `EMERGENCY_NUMBERS`. Never hard-code these.
 - `format.ts` — `formatDate`/`formatTime` (en-GB). `safeRedirect.ts` — open-redirect guard for `?redirect=`/`callbackUrl`.
-- UI primitives: `Callout`, `StatusChip` (+ `SEVERITY_TONE`, `REFERRAL_STATUS_TONE`), `Tooltip`. Portal navigation: `components/navigation/AppSidebar.tsx`.
+- UI primitives: `Callout`, `StatusChip` (+ `SEVERITY_TONE`, `REFERRAL_STATUS_TONE`), `Tooltip`. Portal navigation: `components/navigation/AppSidebar.tsx` (patient shell: `navigation/PatientShell.tsx`).
+- Components live in domain folders under `src/components/` (`avatar/`, `appointments/`, `community/`, `cycle/`, `layout/`, `messaging/`, `notifications/`, `provider-directory/`, `app/Providers.tsx`, …); `components/ui/` holds design-system primitives only. Don't add files at the `components/` root.
 
 ### Security utilities (`src/lib/`)
 
@@ -182,6 +198,9 @@ See `docs/runbooks/ci-cd.md` for the full picture and the one-off setup. In shor
 Pin new GitHub Actions to a full commit SHA with the version in a comment. AWS access uses OIDC when `vars.AWS_ROLE_ARN` is set.
 
 Tests: `npm test` runs Vitest (`*.test.ts` next to the code). `npm run test:e2e -w web` runs Playwright (`apps/web/e2e/`) against a built app on port 3100, or against `E2E_BASE_URL`.
+
+- `npm run test:coverage -w web` enforces thresholds in `apps/web/vitest.config.mts`: 70% overall for `lib/` and `server/`, plus stricter per-file floors for triage, encryption, auth, referral sharing and account deletion. Raise thresholds as coverage grows; never lower them to pass a PR.
+- Mock the database with `createPrismaMock()` from `apps/web/test/prismaMock.ts` (`vi.mock("@/lib/prisma", async () => ({ prisma: (await import("…/test/prismaMock")).createPrismaMock() }))`).
 
 `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is a Docker build arg, so it is baked into the bundle. All other secrets come from SSM Parameter Store and are injected into the ECS task at runtime.
 

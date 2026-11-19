@@ -9,7 +9,7 @@
 | `security.yml`            | PRs, pushes and weekly (Mon 04:17 UTC)                 | CodeQL, dependency review, `npm audit` (with an allowlist), gitleaks, hadolint, actionlint.                                                                                                                                                      |
 | `release.yml`             | Push to `main`                                         | release-please keeps a release PR open. Merging it tags `vX.Y.Z` and updates `CHANGELOG.md`.                                                                                                                                                     |
 | `infra.yml`               | PRs/pushes touching `infra/terraform/**`; manual apply | fmt, validate, tflint and Trivy on every change. Read-only `terraform plan` per root on PRs once `TF_PLAN_ROLE_ARN` is set. Apply only by manual dispatch from `main`, behind the `infrastructure` environment. See `infra/terraform/README.md`. |
-| `cloudflare-dns-sync.yml` | Every 5 minutes (opt-in)                               | Points DNS back at healthy tasks if ECS replaces one between deploys.                                                                                                                                                                            |
+| `cloudflare-dns-sync.yml` | Every 5 minutes (opt-in)                               | Points DNS back at healthy tasks (production, and staging once configured) if ECS replaces one between deploys.                                                                                                                                  |
 
 **Every check runs before any image is built.** Each commit gets one image, and both staging and production deploy that image **by digest**. No deploy depends on a mutable tag.
 
@@ -85,6 +85,20 @@ Settings → Environments:
 | `TF_PLAN_ROLE_ARN`, `TF_STATE_BUCKET`, `TF_APPLY_ROLE_ARN` | variable | Terraform plan/apply in `infra.yml` (see `infra/terraform/README.md`)                      |
 
 Staging app secrets live under `/nauricare/staging/` in SSM. Use a separate database: **never point staging at production data**.
+
+#### Cloudflare in front of staging
+
+Staging uses Cloudflare exactly like production: the deploy writes the new
+tasks' IPs to the `STAGING_DNS_NAMES` records, the security group only accepts
+Cloudflare's IP ranges (Terraform `network` module), and the DNS repair job
+covers staging once `STAGING_ECS_SERVICE` and `STAGING_DNS_NAMES` are set.
+The `staging.` hostname sits in the same zone, so the same
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ZONE_ID` are used. If you scope those
+secrets to the `production` environment instead of the repository, add them to
+`staging` too. The Cloudflare Origin Rule that rewrites the port to 3000 must
+match the staging hostname as well (for example `http.host in {"nauricare.org"
+"www.nauricare.org" "deploy-check.nauricare.org" "staging.nauricare.org"}`), or
+staging requests reach port 80 and time out.
 
 ### 4. Repository settings
 
