@@ -31,6 +31,10 @@ description = "User/email paired with a literal password, e.g. { user: 'Admin', 
 regex = '''(?i)(?:user(?:name)?|email|login|role)["']?\s*:\s*["'][^"']+["']\s*,\s*["']?(?:string|password|pass|pwd|pw|plain(?:text)?)["']?\s*:\s*["']([^"']{6,})["']'''
 secretGroup = 1
 keywords = ["user", "email", "login", "role"]
+[rules.allowlist]
+paths = [
+  '''(^|/)(.*\.test\.[cm]?[jt]sx?|e2e/.*|.*\.spec\.[cm]?[jt]sx?)$''',
+]
 
 [[rules]]
 id = "bcrypt-hash"
