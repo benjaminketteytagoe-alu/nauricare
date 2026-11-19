@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Video, FileText, Users, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Video, FileText, Users, ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
 import { NauriTriageCard } from "@/components/nauri/NauriTriageCard";
 
 // ─── Animation presets ────────────────────────────────────────────────────────

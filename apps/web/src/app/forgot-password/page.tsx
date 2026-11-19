@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { useTurnstileSize } from "@/lib/useTurnstileSize";
+import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { useTurnstileSize } from "@/lib/useTurnstileSize";
 
 export default function ForgotPasswordPage() {
   const turnstileSize = useTurnstileSize();

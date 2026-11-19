@@ -1,5 +1,6 @@
-import { getToken } from "next-auth/jwt";
+import "server-only";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 /** The signed-in-but-unverified session behind this request, if any. */

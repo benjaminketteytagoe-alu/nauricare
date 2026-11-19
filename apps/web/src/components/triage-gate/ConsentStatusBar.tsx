@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ShieldCheck } from "lucide-react";
-import { SPRING, tactile } from "./motion";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { formatDate } from "@/lib/format";
+import { SPRING, tactile } from "./motion";
 
 // Withdrawing must be as easy as agreeing (Law Nº 058/2021), so it lives
 // one tap away on the symptom guide itself, with a single confirmation step.

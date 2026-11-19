@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { createHash } from "crypto";
 import { CheckCircle2, XCircle, Mail } from "lucide-react";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { ResendVerificationForm } from "./ResendVerificationForm";
 

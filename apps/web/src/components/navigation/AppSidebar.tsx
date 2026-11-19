@@ -1,5 +1,6 @@
 "use client";
 
+import { Menu, PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -7,7 +8,6 @@ import {
   createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { Menu, PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "lucide-react";
 import { Tooltip } from "@/components/ui/tooltip";
 
 // ─── Shared collapsible sidebar for the patient, provider and admin portals ──

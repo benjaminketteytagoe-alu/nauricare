@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BellRing, CheckCircle2, Droplet, Save, Settings, Smartphone, Target, User } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { AvatarPicker } from "@/components/AvatarPicker";
 import { DeleteAccount } from "@/components/settings/DeleteAccount";
 import { ReminderSettings } from "@/components/settings/ReminderSettings";

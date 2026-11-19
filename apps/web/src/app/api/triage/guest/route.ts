@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { apiError, apiSuccess, parseJson } from "@/lib/api";
+import { CURRENT_CONSENT_VERSION } from "@/lib/consent";
 import { getClientIp } from "@/lib/getClientIp";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { sanitizePlainText } from "@/lib/sanitize";
-import { CURRENT_CONSENT_VERSION } from "@/lib/consent";
-import { runTriage, toTriageOutcome } from "@/lib/triage/engine";
 import { sealGuestTriage } from "@/lib/triage/claimToken";
+import { runTriage, toTriageOutcome } from "@/lib/triage/engine";
 
 // Public "Nauri" triage for signed-out visitors on the landing page.
 // Abuse controls: strict per-IP limit, plus a global hourly budget after

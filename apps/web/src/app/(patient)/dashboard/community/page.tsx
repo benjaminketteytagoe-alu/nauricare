@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useSession } from "next-auth/react";
 import {
   Heart, MessageCircle, Repeat2,
   Image as ImageIcon, X, Plus, Users,
   ChevronLeft, ChevronRight,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Avatar } from "@/components/Avatar";
 import { AvatarPicker } from "@/components/AvatarPicker";
-import { communityAvatar, presetIdOf } from "@/lib/avatars";
 import { MentionText } from "@/components/MentionText";
+import { communityAvatar, presetIdOf } from "@/lib/avatars";
 import { followUser, unfollowUser } from "./actions";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -266,7 +266,7 @@ function CommentsThread({
   const hasLocalMutation = useRef(false);
 
   useEffect(() => {
-    fetch(`/api/community/comments?postId=${postId}`)
+    void fetch(`/api/community/comments?postId=${postId}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((data: Comment[]) => {
         if (!hasLocalMutation.current) setComments(data);
@@ -339,7 +339,7 @@ function CommentsThread({
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+          onKeyDown={(e) => { if (e.key === "Enter") void handleSubmit(); }}
           placeholder="Write a comment…"
           className="flex-1 text-sm border border-gray-100 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-300"
         />
@@ -592,7 +592,7 @@ export default function CommunityPage() {
 
   // Initial load: fetch feed + stories in parallel
   useEffect(() => {
-    Promise.all([
+    void Promise.all([
       fetch("/api/community/feed?page=1").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/community/stories").then((r) => (r.ok ? r.json() : [])),
     ]).then(([feedData, storiesData]: [Post[], StoryGroup[]]) => {

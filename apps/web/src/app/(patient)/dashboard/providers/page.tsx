@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { BadgeCheck, CalendarPlus, List, LocateFixed, Map as MapIcon, MapPin, MessageSquare, Search, ShieldAlert, Stethoscope } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { BadgeCheck, CalendarPlus, List, LocateFixed, Map as MapIcon, MapPin, MessageSquare, Search, ShieldAlert, Stethoscope } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "@/components/Avatar";
 import { BookingDialog } from "@/components/providers/BookingDialog";
 import { Callout } from "@/components/ui/callout";
-import { distanceKm, formatDistance, type LatLng } from "@/lib/geo/distance";
 import { doctorName } from "@/lib/format";
+import { distanceKm, formatDistance, type LatLng } from "@/lib/geo/distance";
 
 const ProviderMap = dynamic(() => import("@/components/providers/ProviderMap"), {
   ssr: false,

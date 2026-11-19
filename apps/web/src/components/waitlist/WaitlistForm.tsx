@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { useTurnstileSize } from "@/lib/useTurnstileSize";
+import type { WaitlistRole } from "@prisma/client";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import { Callout } from "@/components/ui/callout";
 import { useClientValue } from "@/lib/hooks/useClientValue";
+import { useTurnstileSize } from "@/lib/useTurnstileSize";
 import { WAITLIST_ROLES } from "@/lib/waitlist";
-import type { WaitlistRole } from "@prisma/client";
 
 // Where the visitor came from: ?utm_source=… if present, else the referrer host.
 function readSource(): string {

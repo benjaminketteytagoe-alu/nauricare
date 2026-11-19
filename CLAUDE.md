@@ -17,9 +17,12 @@ All commands run from the monorepo root unless noted.
 npm run dev                                          # start all apps via Turbo
 npx turbo dev --filter=web                           # start only the web app
 
-# Build & lint
+# Quality gates (all run in CI)
+npm run format:check                                 # Prettier (npm run format to fix)
+npm run lint                                         # type-aware ESLint, zero warnings allowed
+npm run typecheck                                    # tsc --noEmit in every workspace
+npm test                                             # unit tests via Turbo
 npm run build                                        # build all packages via Turbo
-cd apps/web && npm run lint                          # lint the web app
 
 # Database (always pass --schema explicitly)
 npx prisma generate --schema=packages/database/prisma/schema.prisma
@@ -58,8 +61,10 @@ packages/
   ui/              — Shared React component library
   eslint-config/   — Shared ESLint config
   typescript-config/
-  validation/
+docs/adr/          — architecture decision records (read before changing design, avatars, tracking, AI, infra)
 ```
+
+Modules in `apps/web/src/server/**` start with `import "server-only"` so they can never be bundled into client code. Client components may import only *types* from them.
 
 ### Route groups (Next.js App Router)
 
@@ -155,12 +160,12 @@ Use `error.issues[0]` not `error.errors[0]` — the property was renamed in v4. 
 
 ## CI/CD
 
-GitHub Actions pipeline (`.github/workflows/ci.yml`) has four stages:
-1. **Build & typecheck** — runs on all pushes and PRs
-2. **Docker image** — built and pushed to GHCR on every push
-3. **Staging** — deploys from the `develop` branch to staging server (port 3001)
-4. **Production** — deploys from the `main` branch (port 3000)
+GitHub Actions pipeline (`.github/workflows/ci.yml`):
+1. **Build & test**: runs on all pushes and PRs. It applies every migration to a throwaway Postgres and fails on schema drift, then runs lint and build.
+2. **Image**: on every push, it builds the image and pushes it to AWS ECR, tagged with the commit SHA (plus `latest` for main or `develop` for develop).
+3. **Staging**: deploys from `develop`. This is still a placeholder; see ADR-0005 and the upgrade plan.
+4. **Production**: `main` deploys to ECS Fargate. It registers a task definition pinned to the SHA, then runs `prisma migrate deploy` as a one-off task, then does a rolling deploy with automatic rollback. Cloudflare DNS is synced to the new task IPs, and the deploy is verified through `/api/health`.
 
-Prisma migrations run inside the container post-deploy using `prisma@6.19.3` (pinned explicitly to avoid version drift).
+`NEXT_PUBLIC_TURNSTILE_SITE_KEY` is a Docker build arg, so it is baked into the bundle. All other secrets come from SSM Parameter Store and are injected into the ECS task at runtime.
 
-`NEXT_PUBLIC_TURNSTILE_SITE_KEY` is passed as a Docker `--build-arg` (baked into the bundle). All other secrets (`TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`) are injected at runtime via `-e` flags on `docker run`.
+Commits follow Conventional Commits, enforced by commitlint via husky. See `CONTRIBUTING.md`.

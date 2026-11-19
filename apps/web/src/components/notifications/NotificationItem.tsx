@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import type { UserNotificationType } from "@prisma/client";
 import {
   AtSign, Bell, CalendarCheck, CalendarClock, Droplet, Heart, Hospital, MessageCircle, MessageSquare, UserPlus, type LucideIcon,
 } from "lucide-react";
-import type { UserNotificationType } from "@prisma/client";
+import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { formatRelative } from "@/lib/format";
 import type { NotificationView } from "./useNotifications";

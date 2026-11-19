@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import type { ProviderCandidateStatus, ProviderScrapeStatus } from "@prisma/client";
 import {
   Check, ExternalLink, Globe, Loader2, Mail, MapPin, Pencil, Phone, Play, Plus, Power, Quote, UserRound, X,
 } from "lucide-react";
-import type { ProviderCandidateStatus, ProviderScrapeStatus } from "@prisma/client";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Callout } from "@/components/ui/callout";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import { formatDateTime } from "@/lib/format";
@@ -93,12 +93,12 @@ function SourcesPanel({ onRunFinished }: { onRunFinished: () => void }) {
     const tick = async () => {
       try {
         const running = await load();
-        if (!stopped) timer = setTimeout(tick, running ? 3000 : 20000);
+        if (!stopped) timer = setTimeout(() => void tick(), running ? 3000 : 20000);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not load sources.");
       }
     };
-    tick();
+    void tick();
     return () => {
       stopped = true;
       clearTimeout(timer);

@@ -1,3 +1,4 @@
+import "server-only";
 import { runReminderSweep } from "./sweep";
 
 // Optional in-process scheduler (REMINDER_SCHEDULER=on), for local
@@ -19,7 +20,7 @@ async function tick() {
   g.__ncReminderRunning = true;
   try {
     const r = await runReminderSweep();
-    if (r.period + r.daily + r.weekly + r.appointments + r.failed > 0) console.log("[REMINDERS]", JSON.stringify(r));
+    if (r.period + r.daily + r.weekly + r.appointments + r.failed > 0) console.info("[REMINDERS]", JSON.stringify(r));
   } catch (e) {
     console.error("[REMINDERS] sweep failed:", e instanceof Error ? e.message : e);
   } finally {
@@ -29,8 +30,8 @@ async function tick() {
 
 export function startReminderScheduler() {
   if (!schedulerEnabled() || g.__ncReminderTimer) return;
-  setTimeout(tick, FIRST_RUN_MS).unref();
-  g.__ncReminderTimer = setInterval(tick, INTERVAL_MS);
+  setTimeout(() => void tick(), FIRST_RUN_MS).unref();
+  g.__ncReminderTimer = setInterval(() => void tick(), INTERVAL_MS);
   g.__ncReminderTimer.unref();
-  console.log("[REMINDERS] scheduler started (every 10 minutes)");
+  console.info("[REMINDERS] scheduler started (every 10 minutes)");
 }

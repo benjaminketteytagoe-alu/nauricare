@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { CheckCircle, ShieldAlert } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { PasswordInput } from "@/components/auth/PasswordInput";
-import { CheckCircle, ShieldAlert } from "lucide-react";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();

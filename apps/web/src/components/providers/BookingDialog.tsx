@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Calendar, CheckCircle2, Clock, Loader2, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Callout } from "@/components/ui/callout";
 
 /** Book a 60-minute video consultation with a provider. */

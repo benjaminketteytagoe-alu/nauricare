@@ -1,10 +1,10 @@
 "use client";
 
+import { Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useClientValue } from "@/lib/hooks/useClientValue";
-import { Sparkles } from "lucide-react";
 import { Callout } from "@/components/ui/callout";
+import { useClientValue } from "@/lib/hooks/useClientValue";
 import { readPendingClaim } from "@/lib/triage/guestStorage";
 
 /** Portal-wide reminder when a landing-page triage is waiting (e.g. after a magic-link login). */

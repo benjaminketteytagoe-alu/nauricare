@@ -1,13 +1,13 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth/next";
+import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { sanitizePlainText } from "@/lib/sanitize";
-import { recordActivity } from "@/server/activity/activity.service";
 import { firstIssue, idSchema } from "@/lib/validation/common";
+import { recordActivity } from "@/server/activity/activity.service";
 
 const CreatePrescriptionInput = z.object({
   patientId: idSchema,

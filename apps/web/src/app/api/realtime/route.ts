@@ -1,5 +1,5 @@
-import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth-guards";
+import { prisma } from "@/lib/prisma";
 import { subscribe, type RealtimeEvent } from "@/server/realtime/bus";
 
 // Server-sent events stream for the signed-in user: new direct messages and

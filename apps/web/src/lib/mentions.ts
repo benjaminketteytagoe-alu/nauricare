@@ -1,6 +1,6 @@
+import { type UserNotificationType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/server/notifications/notify";
-import { UserNotificationType } from "@prisma/client";
 
 // \w = [a-zA-Z0-9_] — no catastrophic backtracking risk.
 // The {1,30} quantifier caps each handle length and bounds the match.

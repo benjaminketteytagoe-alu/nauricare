@@ -25,14 +25,28 @@
         "^lint"
       ]
     },
-    "check-types": {
-      "dependsOn": [
-        "^check-types"
-      ]
-    },
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "typecheck": {
+      "dependsOn": [
+        "^typecheck"
+      ]
+    },
+    "test": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "coverage/**"
+      ]
+    },
+    "test:e2e": {
+      "dependsOn": [
+        "build"
+      ],
+      "cache": false
     }
   }
 }

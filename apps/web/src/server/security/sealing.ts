@@ -1,3 +1,4 @@
+import "server-only";
 import { createCipheriv, createDecipheriv, createHash, createHmac, hkdfSync, randomBytes } from "crypto";
 
 // One place for application-level encryption and opaque tokens.

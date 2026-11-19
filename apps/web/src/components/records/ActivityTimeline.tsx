@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import type { PatientActivityType } from "@prisma/client";
 import {
   Activity, Bot, CalendarCheck, ChevronDown, FileHeart, Hospital, Link2, Link2Off, LogIn,
   MessageSquareHeart, Pill, ShieldCheck, ShieldOff, UserCog, Droplet, Eye, type LucideIcon,
 } from "lucide-react";
-import type { PatientActivityType } from "@prisma/client";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { Callout } from "@/components/ui/callout";
 import { SEVERITY_TONE, StatusChip } from "@/components/ui/status-chip";
 import { formatDate, formatTime } from "@/lib/format";

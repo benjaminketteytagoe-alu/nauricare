@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import type { UserNotificationType } from "@prisma/client";
+import { useCallback, useEffect, useState } from "react";
 import { getNotifications, getUnreadCount, markAllNotificationsRead, markNotificationRead } from "@/actions/notification";
 import { useRealtime } from "@/components/realtime/RealtimeProvider";
 

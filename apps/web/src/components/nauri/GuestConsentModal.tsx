@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
-import dynamic from "next/dynamic";
-import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useEffect, useId, useState } from "react";
 import { ConsentToggle } from "@/components/triage-gate/ConsentToggle";
 import { SPRING, tactile } from "@/components/triage-gate/motion";
 import { CURRENT_CONSENT_VERSION } from "@/lib/consentVersion";

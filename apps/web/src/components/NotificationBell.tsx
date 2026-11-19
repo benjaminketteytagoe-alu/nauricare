@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { Bell, Check } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { NotificationItem } from "@/components/notifications/NotificationItem";
 import { useNotifications } from "@/components/notifications/useNotifications";
 

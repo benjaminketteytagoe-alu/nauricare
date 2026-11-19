@@ -1,5 +1,5 @@
+import { type AuditAction } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { AuditAction } from "@prisma/client";
 
 interface AuditLogPayload {
   action: AuditAction;

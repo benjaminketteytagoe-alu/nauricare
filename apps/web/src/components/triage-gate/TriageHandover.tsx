@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useClientValue } from "@/lib/hooks/useClientValue";
-import { useRouter } from "next/navigation";
 import { Loader2, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { Callout } from "@/components/ui/callout";
+import { useClientValue } from "@/lib/hooks/useClientValue";
 import { clearPendingTriage, readPendingClaim } from "@/lib/triage/guestStorage";
 
 // Serialised so the snapshot is a stable primitive between renders.
@@ -25,7 +25,7 @@ export function TriageHandover({ consentValid }: { consentValid: boolean }) {
   useEffect(() => {
     if (!consentValid || !pending || started.current) return;
     started.current = true;
-    (async () => {
+    void (async () => {
       try {
         const res = await fetch("/api/triage/claim", {
           method: "POST",

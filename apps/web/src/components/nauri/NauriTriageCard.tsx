@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, Check, Hospital, Loader2, RotateCcw, Send, Siren, Stethoscope } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Check, Hospital, Loader2, RotateCcw, Send, Siren, Stethoscope } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 import { tactile } from "@/components/triage-gate/motion";
 import { Callout } from "@/components/ui/callout";
 import { SEVERITY_TONE, StatusChip } from "@/components/ui/status-chip";
@@ -45,13 +45,13 @@ export function NauriTriageCard() {
   const [error, setError] = useState("");
   const [result, setResult] = useState<GuestTriageResponse | null>(null);
   const [consentOpen, setConsentOpen] = useState(false);
-  const pendingAction = useRef<(() => void) | null>(null);
+  const pendingAction = useRef<(() => unknown) | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Runs `action` now if consent is already on record, otherwise after the
   // visitor accepts in the consent modal.
-  function withConsent(action: () => void) {
-    if (hasGuestConsent(CURRENT_CONSENT_VERSION)) return action();
+  function withConsent(action: () => unknown) {
+    if (hasGuestConsent(CURRENT_CONSENT_VERSION)) { void action(); return; }
     pendingAction.current = action;
     // Move focus off the page so keystrokes can't land behind the modal.
     (document.activeElement as HTMLElement | null)?.blur();
@@ -60,7 +60,7 @@ export function NauriTriageCard() {
 
   const onAccept = useCallback(() => {
     setConsentOpen(false);
-    pendingAction.current?.();
+    void pendingAction.current?.();
     pendingAction.current = null;
   }, []);
   const onDismiss = useCallback(() => {

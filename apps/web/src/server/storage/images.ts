@@ -1,3 +1,4 @@
+import "server-only";
 import { randomUUID } from "crypto";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { AWS_REGION, AWS_S3_BUCKET, s3, s3IsConfigured } from "@/lib/s3";

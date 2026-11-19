@@ -1,3 +1,4 @@
+import "server-only";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { isValidTimeZone } from "@/lib/time/zoned";

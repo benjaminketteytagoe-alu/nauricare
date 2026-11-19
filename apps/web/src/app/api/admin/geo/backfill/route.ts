@@ -1,6 +1,6 @@
 import { apiSuccess, handle, unauthorized } from "@/lib/api";
-import { getUserIdWithRole } from "@/lib/auth-guards";
 import { logAdministrativeAction } from "@/lib/audit";
+import { getUserIdWithRole } from "@/lib/auth-guards";
 import { backfillCoordinates } from "@/server/geo/geocode";
 
 // Geocodes providers/hospitals missing coordinates (for the patient map).

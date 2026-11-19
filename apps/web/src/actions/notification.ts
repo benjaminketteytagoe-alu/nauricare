@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth-guards";
+import { prisma } from "@/lib/prisma";
 import { idSchema } from "@/lib/validation/common";
 import { NOTIFICATION_SELECT } from "@/server/notifications/notify";
 

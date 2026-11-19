@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { useEffect, useRef, useState } from "react";
 import { Callout } from "@/components/ui/callout";
+import { Switch } from "@/components/ui/switch";
 
 interface Prefs {
   periodReminders: boolean;

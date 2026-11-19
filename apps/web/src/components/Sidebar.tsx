@@ -1,16 +1,16 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import type { ReactNode } from "react";
-import { signOut } from "next-auth/react";
 import {
   Activity, Calendar, Droplet, FileText, Hospital, LayoutDashboard, LogOut, MessageSquare, MessageSquarePlus, Pill, Settings, Users,
 } from "lucide-react";
-import { NotificationBell } from "@/components/NotificationBell";
-import { PendingTriageBanner } from "@/components/triage-gate/PendingTriageBanner";
-import { RealtimeProvider } from "@/components/realtime/RealtimeProvider";
+import Image from "next/image";
+import Link from "next/link";
+import { signOut } from "next-auth/react";
+import type { ReactNode } from "react";
 import { AppSidebar, SidebarAction, SidebarMobileTrigger, SidebarProvider, type NavItem } from "@/components/navigation/AppSidebar";
+import { NotificationBell } from "@/components/NotificationBell";
+import { RealtimeProvider } from "@/components/realtime/RealtimeProvider";
+import { PendingTriageBanner } from "@/components/triage-gate/PendingTriageBanner";
 
 const PATIENT_NAV: NavItem[] = [
   { name: "My Health", href: "/dashboard", icon: LayoutDashboard },

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export interface AuthVisualSlide {
   src: string;

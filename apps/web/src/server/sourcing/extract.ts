@@ -1,5 +1,6 @@
-import * as cheerio from "cheerio";
+import "server-only";
 import { GoogleGenerativeAI, SchemaType, type ResponseSchema } from "@google/generative-ai";
+import * as cheerio from "cheerio";
 import { z } from "zod";
 
 // Turns crawled pages into gynaecologist candidates. Two extractors share one

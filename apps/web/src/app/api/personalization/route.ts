@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { parseJson } from "@/lib/api";
+import { prisma } from "@/lib/prisma";
 
 const GoalsInput = z.object({
   healthGoals: z.array(z.string().trim().min(1).max(60)).max(20),

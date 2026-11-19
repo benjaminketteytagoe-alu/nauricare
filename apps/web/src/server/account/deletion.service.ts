@@ -1,6 +1,7 @@
-import { prisma } from "@/lib/prisma";
+import "server-only";
 import { ServiceError } from "@/lib/api";
 import { logAdministrativeAction } from "@/lib/audit";
+import { prisma } from "@/lib/prisma";
 import { notify } from "@/server/notifications/notify";
 
 // GitHub-style account deletion for patients: type your username to confirm.

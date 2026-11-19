@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { motion, useAnimate, useReducedMotion } from "framer-motion";
+import { HeartHandshake, Loader2, LockKeyhole, Siren, Sparkles } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, useAnimate, useReducedMotion } from "framer-motion";
-import { HeartHandshake, Loader2, LockKeyhole, Siren, Sparkles } from "lucide-react";
+import { useState } from "react";
 import { ConsentToggle } from "./ConsentToggle";
 import { SPRING, riseIn, stagger, tactile } from "./motion";
 

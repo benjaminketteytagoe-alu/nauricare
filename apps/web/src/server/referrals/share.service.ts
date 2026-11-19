@@ -1,10 +1,11 @@
+import "server-only";
 import { timingSafeEqual } from "crypto";
-import { prisma } from "@/lib/prisma";
 import { ServiceError } from "@/lib/api";
+import { prisma } from "@/lib/prisma";
 import { SITE_URL } from "@/lib/site";
-import { hashToken, openJson, randomToken, sealJson } from "@/server/security/sealing";
 import { recordActivity } from "@/server/activity/activity.service";
 import { notify } from "@/server/notifications/notify";
+import { hashToken, openJson, randomToken, sealJson } from "@/server/security/sealing";
 
 // Hospital referral sharing. The link carries only a random token (its hash
 // is stored); the patient snapshot is AES-256-GCM encrypted at rest and is

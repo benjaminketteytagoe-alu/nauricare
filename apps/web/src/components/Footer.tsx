@@ -1,6 +1,6 @@
+import { Mail, MapPin, Siren } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Mail, MapPin, Siren } from "lucide-react";
 import { SITE_LOCATION, SUPPORT_EMAIL } from "@/lib/site";
 
 interface FooterLink {

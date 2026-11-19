@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { Avatar } from "@/components/Avatar";
+import { prisma } from "@/lib/prisma";
 
 interface Props {
   params: Promise<{ handle: string }>;

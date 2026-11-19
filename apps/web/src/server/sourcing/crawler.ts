@@ -1,3 +1,4 @@
+import "server-only";
 import * as cheerio from "cheerio";
 import { safeGet } from "@/server/net/safeFetch";
 import { loadRobots } from "./robots";

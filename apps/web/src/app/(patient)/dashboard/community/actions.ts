@@ -1,10 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/server/notifications/notify";
-import { revalidatePath } from "next/cache";
 
 export async function followUser(followingId: string) {
   try {

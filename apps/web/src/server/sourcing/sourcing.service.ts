@@ -1,17 +1,18 @@
-import bcrypt from "bcryptjs";
+import "server-only";
 import { randomBytes } from "crypto";
 import type { Prisma, ProviderCandidate, ProviderCandidateStatus } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 import { ServiceError as SourcingError } from "@/lib/api";
 import { logAdministrativeAction } from "@/lib/audit";
 import { sendProviderInvitationEmail } from "@/lib/email";
 import { formatDate } from "@/lib/format";
+import { prisma } from "@/lib/prisma";
 import { SITE_URL } from "@/lib/site";
-import { hashToken, randomToken } from "@/server/security/sealing";
+import { geocodePractice } from "@/server/geo/geocode";
 import { isPublicAddress } from "@/server/net/safeFetch";
+import { hashToken, randomToken } from "@/server/security/sealing";
 import { fetchRemoteImage, rehostImage } from "@/server/storage/images";
 import { crawlSite, type CrawledPage } from "./crawler";
-import { geocodePractice } from "@/server/geo/geocode";
 import { extractCandidates, toDocument, type ExtractedCandidate } from "./extract";
 
 // Provider sourcing: admin-managed sources -> background crawl -> candidates

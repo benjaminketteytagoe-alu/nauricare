@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { Star, Search, MessageSquareHeart, TrendingUp, Users, Loader2 } from "lucide-react";
 import type { FeedbackCategory, FeedbackStatus } from "@prisma/client";
-import { FEEDBACK_CATEGORY_LABELS, FEEDBACK_CATEGORY_TONES } from "@/lib/feedback/categories";
+import { Star, Search, MessageSquareHeart, TrendingUp, Users, Loader2 } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
 import { StatusChip } from "@/components/ui/status-chip";
+import { FEEDBACK_CATEGORY_LABELS, FEEDBACK_CATEGORY_TONES } from "@/lib/feedback/categories";
 
 type Category = FeedbackCategory;
 type Status = FeedbackStatus;

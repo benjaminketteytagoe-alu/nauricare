@@ -1,7 +1,7 @@
+import { Store, TrendingUp, Package } from "lucide-react";
+import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
-import { Store, TrendingUp, Package } from "lucide-react";
 import PharmacyManagementClient from "./PharmacyManagementClient";
 
 export const dynamic = "force-dynamic";

@@ -1,13 +1,13 @@
 "use server";
 
+import bcrypt from "bcryptjs";
+import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth/next";
+import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
-import bcrypt from "bcryptjs";
-import { z } from "zod";
-import { passwordField } from "@/lib/validation/password";
 import { dateKeySchema, firstIssue, optionalText, timeSchema } from "@/lib/validation/common";
+import { passwordField } from "@/lib/validation/password";
 
 const ProfileInput = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),

@@ -1,3 +1,4 @@
+import "server-only";
 import { EventEmitter } from "events";
 
 // In-process pub/sub for server-sent events. Events published here reach

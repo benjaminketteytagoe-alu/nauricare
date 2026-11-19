@@ -1,16 +1,16 @@
 // apps/web/src/app/dashboard/symptoms/page.tsx
 "use client";
 
-import { useState } from "react";
-import { useClientValue } from "@/lib/hooks/useClientValue";
-import { Callout } from "@/components/ui/callout";
+import { ArrowLeft, Activity } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { TriageResultCard, type TriageView } from "@/components/triage/TriageResultCard";
 import { Button } from "@/components/ui/button";
+import { Callout } from "@/components/ui/callout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Activity } from "lucide-react";
-import { TriageResultCard, type TriageView } from "@/components/triage/TriageResultCard";
+import { useClientValue } from "@/lib/hooks/useClientValue";
 
 const COMMON_SYMPTOMS = [
   "Cramps", "Bloating", "Headache", "Fatigue", 

@@ -1,10 +1,10 @@
 "use server";
 
-import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 import { getSessionUser } from "@/lib/auth-guards";
 import { AVATAR_PRESET_IDS, isGooglePhoto, presetSrc } from "@/lib/avatars";
+import { prisma } from "@/lib/prisma";
 import { recordPatientActivity } from "@/server/activity/activity.service";
 
 const AvatarChoice = z.union([

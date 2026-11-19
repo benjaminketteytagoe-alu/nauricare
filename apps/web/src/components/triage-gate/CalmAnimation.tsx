@@ -1,11 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { LottieLight, type LottieHandle } from "lottie-react";
 import { motion, useReducedMotion } from "framer-motion";
+import { LottieLight, type LottieHandle } from "lottie-react";
 import { Pause, Play } from "lucide-react";
-import { tactile } from "./motion";
+import { useRef, useState } from "react";
 import calmBreath from "./calm-breath.json";
+import { tactile } from "./motion";
 
 // Bundled locally: the LottieFiles URL in the original brief now returns 403,
 // and loading a third-party asset on a health page would leak visitors' IPs.

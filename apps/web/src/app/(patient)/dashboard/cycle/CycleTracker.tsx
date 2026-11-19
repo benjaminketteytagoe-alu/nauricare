@@ -1,16 +1,16 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { CalendarRange, ChevronLeft, ChevronRight, Droplet, Loader2, Trash2, X } from "lucide-react";
-import { addDays, diffInDays, localDateKey, parseDateKey, toDateKey } from "@/lib/cycleDates";
-import { phaseForDay, PHASES } from "@/lib/cycle/catalog";
-import { Callout } from "@/components/ui/callout";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
+import { CycleInsights } from "@/components/cycle/CycleInsights";
 import { CycleRing } from "@/components/cycle/CycleRing";
 import { DayLogPanel } from "@/components/cycle/DayLogPanel";
 import { PhaseCard } from "@/components/cycle/PhaseCard";
-import { CycleInsights } from "@/components/cycle/CycleInsights";
+import { Callout } from "@/components/ui/callout";
+import { phaseForDay, PHASES } from "@/lib/cycle/catalog";
+import { addDays, diffInDays, localDateKey, parseDateKey, toDateKey } from "@/lib/cycleDates";
 import { deletePeriod, endPeriod, logPeriodRange, startPeriod, type CycleData } from "./actions";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];

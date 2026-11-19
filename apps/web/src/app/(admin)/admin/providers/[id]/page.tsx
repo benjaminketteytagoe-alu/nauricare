@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
-import { VerifyButton } from "./VerifyButton";
 import { DeleteProviderButton } from "./DeleteProviderButton";
+import { VerifyButton } from "./VerifyButton";
 
 export const dynamic = "force-dynamic";
 

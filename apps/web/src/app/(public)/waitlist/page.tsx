@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { HeartPulse, ShieldCheck, Stethoscope } from "lucide-react";
+import type { Metadata } from "next";
 import { WaitlistForm } from "@/components/waitlist/WaitlistForm";
 
 export const metadata: Metadata = {

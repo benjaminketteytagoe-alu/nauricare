@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
 import { CheckCircle2, ExternalLink, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import { Callout } from "@/components/ui/callout";
-import { PASSWORD_REGEX } from "@/lib/validation/password";
 import { SUPPORT_EMAIL } from "@/lib/site";
+import { PASSWORD_REGEX } from "@/lib/validation/password";
 
 interface Invitation {
   fullName: string;

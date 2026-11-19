@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
 import { BookOpen, Sparkles, ArrowRight, Clock } from "lucide-react";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 
 type Article = {
   id: string;
@@ -62,7 +62,7 @@ export default function ArticleLibraryPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
+    void Promise.all([
       fetch("/api/articles").then((r) => r.ok ? r.json() : []),
       fetch("/api/settings").then((r) => r.ok ? r.json() : null),
     ]).then(([arts, settings]) => {

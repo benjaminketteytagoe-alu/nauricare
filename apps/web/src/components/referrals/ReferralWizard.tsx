@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import type { InsuranceProvider } from "@prisma/client";
 import {
   ArrowLeft, ArrowRight, Check, CheckCircle2, ClipboardCopy, Hospital as HospitalIcon,
   Loader2, MapPin, Phone, ShieldCheck, Stethoscope,
 } from "lucide-react";
-import type { InsuranceProvider } from "@prisma/client";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { EmergencyBanner } from "@/components/triage/EmergencyBanner";
+import { Callout } from "@/components/ui/callout";
+import { SEVERITY_TONE, StatusChip } from "@/components/ui/status-chip";
 import {
   INSURANCE_OPTIONS, KIGALI_DISTRICTS, SPECIALTIES, insuranceLabel, insurerKey,
   type Specialty, type TriageSeverity,
 } from "@/lib/referrals/constants";
-import { EmergencyBanner } from "@/components/triage/EmergencyBanner";
-import { Callout } from "@/components/ui/callout";
-import { SEVERITY_TONE, StatusChip } from "@/components/ui/status-chip";
 import { FloatingField } from "./FloatingField";
 
 export interface WizardInsurance {

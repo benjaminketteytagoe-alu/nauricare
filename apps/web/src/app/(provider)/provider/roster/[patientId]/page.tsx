@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, FileText, Plus, Save, FlaskConical, Pill } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function PatientMedicalRecordPage() {
   const params = useParams();

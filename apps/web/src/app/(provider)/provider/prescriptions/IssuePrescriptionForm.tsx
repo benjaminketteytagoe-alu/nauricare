@@ -1,8 +1,8 @@
 "use client";
 
+import { PlusCircle, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { createPrescription } from "@/actions/prescription";
-import { PlusCircle, AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface Patient {
   userId: string;

@@ -1,8 +1,8 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { useEffect } from "react";
 import L from "leaflet";
+import { useEffect } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import { KIGALI, type LatLng } from "@/lib/geo/distance";
 

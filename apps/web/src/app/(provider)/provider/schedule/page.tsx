@@ -1,8 +1,8 @@
-import { requireRole } from "@/lib/auth-guards";
-import { prisma } from "@/lib/prisma";
 import { Calendar, Search, Clock, Video, MapPin, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { CalendarButtons } from "@/components/CalendarButtons";
+import { requireRole } from "@/lib/auth-guards";
+import { prisma } from "@/lib/prisma";
 
 export default async function ProviderSchedulePage() {
   const session = await requireRole("PROVIDER");

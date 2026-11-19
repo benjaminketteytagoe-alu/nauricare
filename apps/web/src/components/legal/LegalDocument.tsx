@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { EmergencyBanner } from "@/components/triage/EmergencyBanner";
-
 import { SUPPORT_EMAIL } from "@/lib/site";
 
 export const LEGAL_CONTACT_EMAIL = SUPPORT_EMAIL;

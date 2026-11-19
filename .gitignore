@@ -48,3 +48,11 @@ yarn-error.log*
 awscliv2.zip
 *.zip
 aws/
+
+# IDEs
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Throwaway local scripts
+e2e_*_tmp.mjs

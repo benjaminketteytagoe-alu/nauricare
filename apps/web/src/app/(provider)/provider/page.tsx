@@ -1,6 +1,6 @@
-import { requireRole } from "@/lib/auth-guards";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Calendar, Clock, Activity } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { requireRole } from "@/lib/auth-guards";
 
 export default async function ProviderDashboardPage() {
   const session = await requireRole("PROVIDER");

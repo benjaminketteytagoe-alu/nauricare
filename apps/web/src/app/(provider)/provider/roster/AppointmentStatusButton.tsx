@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
 import { CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
+import { useState, useTransition } from "react";
 import { updateAppointmentStatus } from "@/actions/appointment";
 
 type Status = "SCHEDULED" | "COMPLETED" | "CANCELLED" | "MISSED";

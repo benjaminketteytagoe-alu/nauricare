@@ -1,7 +1,7 @@
-import { requireRole } from "@/lib/auth-guards";
-import { prisma } from "@/lib/prisma";
 import { Users, Search, Calendar, ShieldAlert } from "lucide-react";
 import Link from "next/link";
+import { requireRole } from "@/lib/auth-guards";
+import { prisma } from "@/lib/prisma";
 import { AppointmentStatusButton } from "./AppointmentStatusButton";
 
 export const dynamic = "force-dynamic";

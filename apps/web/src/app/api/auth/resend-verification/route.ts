@@ -1,9 +1,9 @@
+import { randomBytes, createHash } from "crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
-import { randomBytes, createHash } from "crypto";
 import { sendVerificationEmail } from "@/lib/email";
 import { getClientIp } from "@/lib/getClientIp";
+import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
 const schema = z.object({ email: z.email() });

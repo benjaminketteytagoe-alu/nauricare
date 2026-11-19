@@ -1,8 +1,8 @@
 "use client";
 
+import { Store, Plus, Search, X, MapPin, Mail } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Store, Plus, Search, X, MapPin, Mail } from "lucide-react";
 
 interface Pharmacy {
   id: string;

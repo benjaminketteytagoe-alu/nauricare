@@ -1,7 +1,8 @@
+import "server-only";
+import type { LatLng } from "@/lib/geo/distance";
 import { prisma } from "@/lib/prisma";
 import { SUPPORT_EMAIL } from "@/lib/site";
 import { safeGet } from "@/server/net/safeFetch";
-import type { LatLng } from "@/lib/geo/distance";
 
 // Address -> coordinates via OpenStreetMap Nominatim (free; usage policy:
 // max 1 request/second, identifying User-Agent, cache results). Results are

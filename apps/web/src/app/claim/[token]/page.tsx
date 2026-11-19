@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { getInvitation } from "@/server/sourcing/sourcing.service";
 import { ClaimForm } from "@/components/sourcing/ClaimForm";
 import { SUPPORT_EMAIL } from "@/lib/site";
+import { getInvitation } from "@/server/sourcing/sourcing.service";
 
 export const metadata: Metadata = {
   title: "Join NauriCare as a Specialist",

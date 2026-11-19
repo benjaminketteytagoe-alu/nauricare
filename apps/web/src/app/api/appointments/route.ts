@@ -1,16 +1,16 @@
 // apps/web/src/app/api/appointments/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
-import { sendPatientConfirmationEmail, sendProviderAlertEmail } from "@/lib/email";
-import { recordActivity } from "@/server/activity/activity.service";
-import { notify } from "@/server/notifications/notify";
 import { z } from "zod";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { apiError, parseJson } from "@/lib/api";
+import { sendPatientConfirmationEmail, sendProviderAlertEmail } from "@/lib/email";
+import { prisma } from "@/lib/prisma";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { sanitizePlainText } from "@/lib/sanitize";
 import { idSchema } from "@/lib/validation/common";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { recordActivity } from "@/server/activity/activity.service";
+import { notify } from "@/server/notifications/notify";
 
 const isoDate = z.string().max(40).refine((v) => !Number.isNaN(Date.parse(v)), "Invalid date.");
 const BookingInput = z
@@ -143,7 +143,7 @@ export async function POST(req: Request) {
       if (result.status === "rejected") {
         console.error(`[APPOINTMENT_EMAIL_ERROR] ${label} (to=${to}):`, result.reason);
       } else {
-        console.log(`[APPOINTMENT_EMAIL_OK] ${label} (to=${to})`);
+        console.info(`[APPOINTMENT_EMAIL_OK] ${label} (to=${to})`);
       }
     });
 

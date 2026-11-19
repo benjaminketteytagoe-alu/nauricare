@@ -19,7 +19,7 @@ async function sweep() {
   g.__ncCronRunning = true;
   try {
     const r = await runReminderSweep();
-    console.log("[CRON] reminders", JSON.stringify(r));
+    console.info("[CRON] reminders", JSON.stringify(r));
     return r;
   } catch (e) {
     console.error("[CRON] reminder sweep failed:", e instanceof Error ? e.message : e);

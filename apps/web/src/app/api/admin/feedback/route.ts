@@ -1,9 +1,9 @@
+import { type Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { Prisma } from "@prisma/client";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
 import { ALL_FEEDBACK_CATEGORIES } from "@/lib/feedback/categories";
+import { prisma } from "@/lib/prisma";
 
 const VALID_CATEGORIES = new Set<string>(ALL_FEEDBACK_CATEGORIES);
 const VALID_STATUSES = new Set(["NEW", "REVIEWED", "ACTIONED"]);

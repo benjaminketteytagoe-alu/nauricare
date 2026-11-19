@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { submitFeedback } from "@/actions/feedback";
-import { CSAT_SCALE, FEEDBACK_FORM_CATEGORIES, type FeedbackFormCategory } from "@/lib/feedback/categories";
 import { Callout } from "@/components/ui/callout";
+import { CSAT_SCALE, FEEDBACK_FORM_CATEGORIES, type FeedbackFormCategory } from "@/lib/feedback/categories";
 import { SUPPORT_EMAIL } from "@/lib/site";
 
 const COMMENT_MAX = 2000;

@@ -1,18 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { useTurnstileSize } from "@/lib/useTurnstileSize";
+import { ShieldCheck, Stethoscope, Users } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PasswordInput } from "@/components/auth/PasswordInput";
-import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
-import { passwordField } from "@/lib/validation/password";
 import { COUNTRIES, PRIORITY_COUNTRY_COUNT, dialCodeForCountry } from "@/lib/countries";
-import { ShieldCheck, Stethoscope, Users } from "lucide-react";
+import { useTurnstileSize } from "@/lib/useTurnstileSize";
+import { passwordField } from "@/lib/validation/password";
 
 // ─── Trust panel data ─────────────────────────────────────────────────────────
 

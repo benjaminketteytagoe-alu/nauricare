@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
 import { Check, ChevronDown, ClipboardCopy, Link2, Loader2, ShieldCheck } from "lucide-react";
+import { useCallback, useState } from "react";
 import { Callout } from "@/components/ui/callout";
 import { StatusChip, type ChipTone } from "@/components/ui/status-chip";
 import { formatDate, formatDateTime } from "@/lib/format";

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { ShieldAlert, HeartPulse } from "lucide-react";
+import { useState } from "react";
 
 export default function OnboardingPage() {
   const [isLoading, setIsLoading] = useState(false);

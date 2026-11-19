@@ -1,12 +1,13 @@
+import "server-only";
+import { predictCycle } from "@/lib/cycle/predict";
+import { diffInDays, parseDateKey, toDateKey } from "@/lib/cycleDates";
+import { sendReminderEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { SITE_URL } from "@/lib/site";
-import { sendReminderEmail } from "@/lib/email";
-import { diffInDays, parseDateKey, toDateKey } from "@/lib/cycleDates";
-import { predictCycle } from "@/lib/cycle/predict";
 import { formatInZone, zonedParts } from "@/lib/time/zoned";
 import { notifyOrThrow } from "@/server/notifications/notify";
-import { REMINDER_DEFAULTS } from "./preferences";
 import { claim, deliver } from "./dispatch";
+import { REMINDER_DEFAULTS } from "./preferences";
 
 // The reminder sweep, triggered by AWS EventBridge via POST /api/cron/execute.
 // Safe to run often, concurrently and repeatedly: every reminder goes through

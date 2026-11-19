@@ -1,5 +1,5 @@
-import type { DefaultSession } from "next-auth";
 import type { Role } from "@prisma/client";
+import type { DefaultSession } from "next-auth";
 
 // Session/JWT augmentation. `role` reuses the Prisma enum so there is a
 // single source of truth for roles across the database, auth and UI.

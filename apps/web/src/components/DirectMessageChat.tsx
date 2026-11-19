@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { formatRelative } from "@/lib/format";
 import { ArrowLeft, Lock, MessageSquare, Plus, Search, Send, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { getConversations, getDirectMessages, getMessageableProviders, sendDirectMessage } from "@/actions/directMessage";
 import { Avatar } from "@/components/Avatar";
 import { useRealtime } from "@/components/realtime/RealtimeProvider";
+import { formatRelative } from "@/lib/format";
 import { useClientValue } from "@/lib/hooks/useClientValue";
-import { getConversations, getDirectMessages, getMessageableProviders, sendDirectMessage } from "@/actions/directMessage";
 
 type Conversation = {
   partnerId: string;
@@ -84,7 +84,7 @@ export function DirectMessageChat({
     if (!deepLink || chosen || !canStartWithProviders || loadingConvs) return;
     if (conversations.some((c) => c.partnerId === deepLink)) return;
     let cancelled = false;
-    getMessageableProviders().then((res) => {
+    void getMessageableProviders().then((res) => {
       const p = res.success ? res.data.find((x) => x.id === deepLink) : undefined;
       if (p && !cancelled) open(p.id, p.name, p.avatarUrl, p.subtitle);
     });

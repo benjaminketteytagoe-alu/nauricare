@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import LandingPageClient from "@/components/landing/LandingPageClient";
-
 import { SITE_URL as BASE_URL, SUPPORT_EMAIL } from "@/lib/site";
 
 // Page-level metadata inherits the root template: "NauriCare — Women's Health, Connected | NauriCare"

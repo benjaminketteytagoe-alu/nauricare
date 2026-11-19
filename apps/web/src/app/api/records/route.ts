@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
 import { logAdministrativeAction } from "@/lib/audit";
+import { prisma } from "@/lib/prisma";
 
 const createRecordSchema = z.object({
   patientProfileId: z.string().min(1),

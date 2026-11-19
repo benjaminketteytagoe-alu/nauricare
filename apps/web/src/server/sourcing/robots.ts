@@ -1,3 +1,4 @@
+import "server-only";
 import { safeGet } from "@/server/net/safeFetch";
 
 // Minimal robots.txt support (RFC 9309): pick the group for our agent, else

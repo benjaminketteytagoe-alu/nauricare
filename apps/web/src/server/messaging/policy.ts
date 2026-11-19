@@ -1,3 +1,4 @@
+import "server-only";
 import { prisma } from "@/lib/prisma";
 
 // Who may message whom (one rule for every messaging entry point):

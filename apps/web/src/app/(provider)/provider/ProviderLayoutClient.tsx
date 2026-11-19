@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { signOut } from "next-auth/react";
-import { AppSidebar, SidebarAction, SidebarMobileTrigger, SidebarProvider, type NavItem } from "@/components/navigation/AppSidebar";
-import { useState } from "react";
 import {
   Activity, Users, Calendar, MessageSquare, MessageSquarePlus, LogOut,
   Settings, User, Lock, Sliders, Pill,
 } from "lucide-react";
+import Link from "next/link";
+import { signOut } from "next-auth/react";
+import { useState } from "react";
+import { AppSidebar, SidebarAction, SidebarMobileTrigger, SidebarProvider, type NavItem } from "@/components/navigation/AppSidebar";
 import { NotificationBell } from "@/components/NotificationBell";
 import { RealtimeProvider } from "@/components/realtime/RealtimeProvider";
 

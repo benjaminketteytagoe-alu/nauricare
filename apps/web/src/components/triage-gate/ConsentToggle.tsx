@@ -1,8 +1,8 @@
 "use client";
 
-import { useId, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
+import { useId, type ReactNode } from "react";
 import { SPRING, tactile } from "./motion";
 
 /** Flo-style explicit consent row. Never pre-ticked: the caller owns `checked`. */

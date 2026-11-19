@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation";
-import Link from "next/link";
-import { prisma } from "@/lib/prisma";
 import { ArrowLeft, Clock, Tag } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 
 const TAG_COLORS: Record<string, string> = {
   PCOS:           "bg-violet-100 text-violet-700",

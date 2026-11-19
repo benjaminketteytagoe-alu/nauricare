@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getUserIdWithRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { INSURANCE_VALUES, insuranceLabel, matchListedInsurer } from "@/lib/referrals/constants";
 import { sanitizePlainText } from "@/lib/sanitize";
-import { knownPrivateInsurers } from "@/server/insurance/insurers";
 import { recordActivity } from "@/server/activity/activity.service";
-import { getUserIdWithRole } from "@/lib/auth-guards";
+import { knownPrivateInsurers } from "@/server/insurance/insurers";
 
 const InsuranceInput = z
   .object({

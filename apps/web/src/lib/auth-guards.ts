@@ -1,7 +1,7 @@
+import type { Role } from "@prisma/client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getServerSession, type Session } from "next-auth";
-import type { Role } from "@prisma/client";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export const ROLE_HOME: Record<Role, string> = {

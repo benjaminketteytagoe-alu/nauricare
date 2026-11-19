@@ -1,11 +1,11 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Loader2, MailCheck, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSession, signOut, useSession } from "next-auth/react";
-import { Loader2, MailCheck, ShieldCheck } from "lucide-react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Callout } from "@/components/ui/callout";
 import { ROLE_HOME_PATHS } from "@/lib/authDestination";
 

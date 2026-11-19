@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { runTriage, toLegacyRiskLevel } from "@/lib/triage/engine";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getTriageConsent } from "@/lib/consent";
+import { prisma } from "@/lib/prisma";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { runTriage, toLegacyRiskLevel } from "@/lib/triage/engine";
 import { recordActivity } from "@/server/activity/activity.service";
 
 const SymptomInput = z.object({

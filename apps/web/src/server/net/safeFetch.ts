@@ -1,3 +1,4 @@
+import "server-only";
 import { lookup } from "dns";
 import http from "http";
 import https from "https";

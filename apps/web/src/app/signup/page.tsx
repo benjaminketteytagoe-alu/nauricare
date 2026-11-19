@@ -1,21 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { carryAuthParams } from "@/lib/safeRedirect";
-import { useAuthParams } from "@/lib/authDestination";
-import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { useTurnstileSize } from "@/lib/useTurnstileSize";
+import { ShieldCheck, Lock, Globe } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
-import { PasswordInput } from "@/components/auth/PasswordInput";
-import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
-import { passwordField } from "@/lib/validation/password";
+import { useAuthParams } from "@/lib/authDestination";
 import { COUNTRIES, PRIORITY_COUNTRY_COUNT, dialCodeForCountry } from "@/lib/countries";
-import { ShieldCheck, Lock, Globe } from "lucide-react";
+import { carryAuthParams } from "@/lib/safeRedirect";
+import { useTurnstileSize } from "@/lib/useTurnstileSize";
+import { passwordField } from "@/lib/validation/password";
 
 // ─── Trust panel data ─────────────────────────────────────────────────────────
 

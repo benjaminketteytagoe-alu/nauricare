@@ -1,11 +1,11 @@
+import { randomBytes, createHash } from "crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { randomBytes, createHash } from "crypto";
-import { prisma } from "@/lib/prisma";
-import { verifyTurnstileToken } from "@/lib/turnstile";
-import { getClientIp } from "@/lib/getClientIp";
 import { sendMagicLinkEmail } from "@/lib/email";
+import { getClientIp } from "@/lib/getClientIp";
+import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 const schema = z.object({
   email: z.string().email(),

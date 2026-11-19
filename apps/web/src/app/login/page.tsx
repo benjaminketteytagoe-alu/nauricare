@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
-import { useTurnstileSize } from "@/lib/useTurnstileSize";
+import { ShieldCheck, Lock } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signIn, getSession } from "next-auth/react";
+import { useState } from "react";
+import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { postAuthDestination, useAuthParams } from "@/lib/authDestination";
-import { PasswordInput } from "@/components/auth/PasswordInput";
-import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
-import { ShieldCheck, Lock } from "lucide-react";
+import { useTurnstileSize } from "@/lib/useTurnstileSize";
 
 // ─── Trust panel data ─────────────────────────────────────────────────────────
 

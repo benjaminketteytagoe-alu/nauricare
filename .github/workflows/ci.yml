@@ -93,8 +93,17 @@ jobs:
             exit 1
           fi
 
+      - name: Check Formatting
+        run: npm run format:check
+
       - name: Lint
-        run: npm run lint --workspace=web
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit Tests
+        run: npm test
 
       - name: Run Build Pipeline
         run: npm run build

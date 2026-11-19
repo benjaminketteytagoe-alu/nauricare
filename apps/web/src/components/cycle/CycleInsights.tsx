@@ -1,6 +1,6 @@
 import { BarChart3 } from "lucide-react";
-import { MOOD_OPTIONS, SYMPTOM_OPTIONS } from "@/lib/cycle/catalog";
 import type { CycleData } from "@/app/(patient)/dashboard/cycle/actions";
+import { MOOD_OPTIONS, SYMPTOM_OPTIONS } from "@/lib/cycle/catalog";
 
 /** Averages, regularity, cycle history and the most-logged symptoms. */
 export function CycleInsights({ data, todayKey }: { data: CycleData; todayKey: string }) {

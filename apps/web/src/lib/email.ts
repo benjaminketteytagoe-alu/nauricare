@@ -1,13 +1,13 @@
 import { Resend } from "resend";
-import { PatientBookingConfirmation, type PatientBookingConfirmationProps } from "@/emails/PatientBookingConfirmation";
-import { ProviderNewAppointmentAlert, type ProviderNewAppointmentAlertProps } from "@/emails/ProviderNewAppointmentAlert";
-import { PasswordReset, type PasswordResetProps } from "@/emails/PasswordReset";
-import { VerifyEmail, type VerifyEmailProps } from "@/emails/VerifyEmail";
-import { MagicLink, type MagicLinkProps } from "@/emails/MagicLink";
 import { FeedbackNotification, type FeedbackNotificationProps } from "@/emails/FeedbackNotification";
-import { ProviderInvitation, type ProviderInvitationProps } from "@/emails/ProviderInvitation";
-import { ReminderEmail, type ReminderEmailProps } from "@/emails/Reminder";
 import { LoginCode, type LoginCodeProps } from "@/emails/LoginCode";
+import { MagicLink, type MagicLinkProps } from "@/emails/MagicLink";
+import { PasswordReset, type PasswordResetProps } from "@/emails/PasswordReset";
+import { PatientBookingConfirmation, type PatientBookingConfirmationProps } from "@/emails/PatientBookingConfirmation";
+import { ProviderInvitation, type ProviderInvitationProps } from "@/emails/ProviderInvitation";
+import { ProviderNewAppointmentAlert, type ProviderNewAppointmentAlertProps } from "@/emails/ProviderNewAppointmentAlert";
+import { ReminderEmail, type ReminderEmailProps } from "@/emails/Reminder";
+import { VerifyEmail, type VerifyEmailProps } from "@/emails/VerifyEmail";
 import { SUPPORT_EMAIL } from "@/lib/site";
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');

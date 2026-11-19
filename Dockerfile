@@ -17,7 +17,8 @@ FROM node:24-alpine AS base
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1 \
-    TURBO_TELEMETRY_DISABLED=1
+    TURBO_TELEMETRY_DISABLED=1 \
+    HUSKY=0
 
 # ----------------------------------------------------------------------------
 # 1. Pruner: extract only the `web` app and its internal dependencies

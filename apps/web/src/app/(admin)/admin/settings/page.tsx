@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { User, Lock, Sliders, Save } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function AdminSettingsPage() {
   const { data: session } = useSession();

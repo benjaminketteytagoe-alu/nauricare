@@ -1,13 +1,13 @@
 // apps/web/src/app/(patient)/dashboard/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import Link from "next/link";
 import {
   Activity, Calendar, CheckCircle2, Circle,
   Newspaper, Edit2, Video
 } from "lucide-react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
 import { CalendarButtons } from "@/components/CalendarButtons";
 import { CycleLogModal } from "@/components/CycleLogModal";
 
@@ -66,7 +66,7 @@ export default function PatientDashboardPage() {
       const res = await fetch("/api/habits/analytics");
       if (res.ok) setAnalyticsData(await res.json());
     } catch {
-      console.log("Analytics API not ready yet.");
+      console.warn("Analytics API not ready yet.");
     }
   };
 
@@ -82,7 +82,7 @@ export default function PatientDashboardPage() {
         }
       }
     } catch {
-      console.log("Cycles API not ready yet.");
+      console.warn("Cycles API not ready yet.");
     }
   };
 
@@ -103,7 +103,7 @@ export default function PatientDashboardPage() {
             }
           }
         })
-        .catch(() => console.log("Cycles API not ready yet."));
+        .catch(() => console.warn("Cycles API not ready yet."));
 
       fetch("/api/personalization")
         .then((res) => { if (res.ok) return res.json(); throw new Error(); })
@@ -113,7 +113,7 @@ export default function PatientDashboardPage() {
             if (data.articles) setArticles(data.articles);
           }
         })
-        .catch(() => console.log("Personalization API not ready yet."));
+        .catch(() => console.warn("Personalization API not ready yet."));
 
       fetch("/api/appointments")
         .then((res) => { if (res.ok) return res.json(); throw new Error(); })
@@ -122,7 +122,7 @@ export default function PatientDashboardPage() {
             setNextAppointment(data[0]); 
           }
         })
-        .catch(() => console.log("Appointments API not ready yet."));
+        .catch(() => console.warn("Appointments API not ready yet."));
     }
   }, [session]);
 
@@ -141,7 +141,7 @@ export default function PatientDashboardPage() {
           date: new Date().toISOString().split('T')[0]
         })
       });
-      fetchAnalytics();
+      void fetchAnalytics();
     } catch {
       setHabits(habits.map(h => h.id === id ? { ...h, done: !newStatus } : h));
     }

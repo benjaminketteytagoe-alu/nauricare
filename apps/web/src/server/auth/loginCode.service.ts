@@ -1,7 +1,8 @@
+import "server-only";
 import { randomInt, timingSafeEqual } from "crypto";
-import { prisma } from "@/lib/prisma";
 import { ServiceError } from "@/lib/api";
 import { sendLoginCodeEmail } from "@/lib/email";
+import { prisma } from "@/lib/prisma";
 import { hashToken, keyedHash } from "@/server/security/sealing";
 
 // Second sign-in step: a 6-digit code emailed after every sign-in (password,
@@ -58,7 +59,7 @@ export async function sendLoginCode(userId: string, sid: string, ipAddress?: str
   // Local development only (never in production): print the code instead of
   // relying on email, so the flow can be tested without a real Resend key.
   const devLog = process.env.NODE_ENV !== "production" && process.env.LOGIN_CODE_DEV_LOG === "1";
-  if (devLog) console.log(`[LOGIN_CODE_DEV] ${user.email} ${code}`);
+  if (devLog) console.info(`[LOGIN_CODE_DEV] ${user.email} ${code}`);
   try {
     await sendLoginCodeEmail({ to: user.email, name: user.name.split(" ")[0] || "there", code, minutes: CODE_TTL_MS / 60_000 });
   } catch (e) {

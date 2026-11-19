@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { CheckCircle2, Droplet, Loader2 } from "lucide-react";
 import type { FlowLevel } from "@prisma/client";
+import { CheckCircle2, Droplet, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { saveDayLog, type DayLogEntry } from "@/app/(patient)/dashboard/cycle/actions";
 import { Callout } from "@/components/ui/callout";
 import { FLOW_OPTIONS, MOOD_OPTIONS, SYMPTOM_OPTIONS } from "@/lib/cycle/catalog";
-import { saveDayLog, type DayLogEntry } from "@/app/(patient)/dashboard/cycle/actions";
 
 const chip = (on: boolean) =>
   `inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${on ? "border-nc-primary bg-nc-primary text-white" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"}`;

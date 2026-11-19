@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Clock, Hospital, ShieldAlert, Stethoscope, Video } from "lucide-react";
+import Link from "next/link";
+import { SEVERITY_TONE, StatusChip } from "@/components/ui/status-chip";
 import type { TriageSeverity } from "@/lib/referrals/constants";
 import { EmergencyBanner } from "./EmergencyBanner";
-import { SEVERITY_TONE, StatusChip } from "@/components/ui/status-chip";
 
 export interface TriageView {
   severity: TriageSeverity;

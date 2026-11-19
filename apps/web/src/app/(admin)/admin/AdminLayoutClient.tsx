@@ -1,13 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { signOut } from "next-auth/react";
-import { AppSidebar, SidebarAction, SidebarMobileTrigger, SidebarProvider, type NavItem } from "@/components/navigation/AppSidebar";
-import { useState } from "react";
 import {
   LayoutDashboard, Stethoscope, SearchCheck, Store, ShieldAlert, LogOut,
   Settings, Bell, User, Lock, Sliders, CheckCircle, AlertTriangle, MessageSquareHeart
 } from "lucide-react";
+import Link from "next/link";
+import { signOut } from "next-auth/react";
+import { useState } from "react";
+import { AppSidebar, SidebarAction, SidebarMobileTrigger, SidebarProvider, type NavItem } from "@/components/navigation/AppSidebar";
 
 const navItems: NavItem[] = [
   { name: "Overview", href: "/admin", icon: LayoutDashboard },
