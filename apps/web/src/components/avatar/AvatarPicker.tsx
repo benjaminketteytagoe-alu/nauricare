@@ -4,7 +4,7 @@ import { Check, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState, useTransition } from "react";
 import { chooseAvatar } from "@/app/(patient)/dashboard/settings/actions";
-import { Avatar } from "@/components/Avatar";
+import { Avatar } from "@/components/avatar/Avatar";
 import { Callout } from "@/components/ui/callout";
 import { AVATAR_PRESETS, presetIdOf, presetSrc, type AvatarPresetId } from "@/lib/avatars";
 

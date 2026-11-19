@@ -13,9 +13,9 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Avatar } from "@/components/Avatar";
-import { AvatarPicker } from "@/components/AvatarPicker";
-import { MentionText } from "@/components/MentionText";
+import { Avatar } from "@/components/avatar/Avatar";
+import { AvatarPicker } from "@/components/avatar/AvatarPicker";
+import { MentionText } from "@/components/community/MentionText";
 import { communityAvatar, presetIdOf } from "@/lib/avatars";
 import { followUser, unfollowUser } from "./actions";
 

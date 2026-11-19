@@ -23,7 +23,7 @@ import {
   SidebarProvider,
   type NavItem,
 } from "@/components/navigation/AppSidebar";
-import { NotificationBell } from "@/components/NotificationBell";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { RealtimeProvider } from "@/components/realtime/RealtimeProvider";
 
 const navItems: NavItem[] = [

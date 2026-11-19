@@ -15,7 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { Avatar } from "@/components/Avatar";
+import { Avatar } from "@/components/avatar/Avatar";
 import { formatRelative } from "@/lib/format";
 import type { NotificationView } from "./useNotifications";
 

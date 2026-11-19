@@ -4,6 +4,7 @@ import { Calendar, CheckCircle2, Clock, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Callout } from "@/components/ui/callout";
+import { readErrorMessage } from "@/lib/http";
 
 /** Book a 60-minute video consultation with a provider. */
 export function BookingDialog({ provider, onClose }: { provider: { id: string; name: string }; onClose: () => void }) {
@@ -35,14 +36,7 @@ export function BookingDialog({ provider, onClose }: { provider: { id: string; n
         }),
       });
       if (!res.ok) {
-        const raw = await res.text();
-        let msg = raw;
-        try {
-          msg = JSON.parse(raw).error ?? raw;
-        } catch {
-          /* plain-text error */
-        }
-        throw new Error(msg || "Failed to book appointment.");
+        throw new Error(await readErrorMessage(res, "Failed to book appointment."));
       }
       setDone(true);
       router.refresh();

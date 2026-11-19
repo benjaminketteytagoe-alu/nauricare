@@ -1,6 +1,6 @@
 import { Calendar, Search, Clock, Video, MapPin, CheckCircle } from "lucide-react";
 import Link from "next/link";
-import { CalendarButtons } from "@/components/CalendarButtons";
+import { CalendarButtons } from "@/components/appointments/CalendarButtons";
 import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 

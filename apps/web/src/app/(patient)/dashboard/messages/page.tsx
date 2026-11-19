@@ -2,7 +2,7 @@
 
 import { MessageSquare, Lock } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { DirectMessageChat } from "@/components/DirectMessageChat";
+import { DirectMessageChat } from "@/components/messaging/DirectMessageChat";
 
 export default function PatientMessagesPage() {
   const { data: session } = useSession();

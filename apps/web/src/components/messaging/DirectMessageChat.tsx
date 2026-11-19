@@ -8,7 +8,7 @@ import {
   getMessageableProviders,
   sendDirectMessage,
 } from "@/actions/directMessage";
-import { Avatar } from "@/components/Avatar";
+import { Avatar } from "@/components/avatar/Avatar";
 import { useRealtime } from "@/components/realtime/RealtimeProvider";
 import { formatRelative } from "@/lib/format";
 import { useClientValue } from "@/lib/hooks/useClientValue";

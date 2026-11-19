@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Providers } from "@/components/Providers";
+import { Providers } from "@/components/app/Providers";
 import { SITE_URL as BASE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {

@@ -3,10 +3,11 @@
 import { BellRing, CheckCircle2, Droplet, Save, Settings, Smartphone, Target, User } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { AvatarPicker } from "@/components/AvatarPicker";
+import { AvatarPicker } from "@/components/avatar/AvatarPicker";
 import { DeleteAccount } from "@/components/settings/DeleteAccount";
 import { ReminderSettings } from "@/components/settings/ReminderSettings";
 import { Callout } from "@/components/ui/callout";
+import { readErrorMessage } from "@/lib/http";
 
 const AVAILABLE_GOALS = [
   { id: "PCOS", label: "PCOS Management", desc: "Tailor insights for Polycystic Ovary Syndrome." },
@@ -86,7 +87,7 @@ function SettingsContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ healthGoals: selectedGoals, menstrualCycle: length, emergencyContact }),
       });
-      if (!res.ok) throw new Error((await res.text()) || "Couldn't save your settings.");
+      if (!res.ok) throw new Error(await readErrorMessage(res, "Couldn't save your settings."));
       setSaveMessage("Settings saved");
       setTimeout(() => setSaveMessage(""), 3000);
     } catch (e) {

@@ -5,8 +5,8 @@ import { Activity, Calendar, CheckCircle2, Circle, Newspaper, Edit2, Video } fro
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
-import { CalendarButtons } from "@/components/CalendarButtons";
-import { CycleLogModal } from "@/components/CycleLogModal";
+import { CalendarButtons } from "@/components/appointments/CalendarButtons";
+import { CycleLogModal } from "@/components/cycle/CycleLogModal";
 
 interface HabitItem {
   id: number;

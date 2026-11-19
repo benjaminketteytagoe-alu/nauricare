@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Avatar } from "@/components/Avatar";
+import { Avatar } from "@/components/avatar/Avatar";
 import { prisma } from "@/lib/prisma";
 
 interface Props {

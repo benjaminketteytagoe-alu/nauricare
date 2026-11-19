@@ -15,13 +15,13 @@ import {
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Avatar } from "@/components/Avatar";
-import { BookingDialog } from "@/components/providers/BookingDialog";
+import { Avatar } from "@/components/avatar/Avatar";
+import { BookingDialog } from "@/components/provider-directory/BookingDialog";
 import { Callout } from "@/components/ui/callout";
 import { doctorName } from "@/lib/format";
 import { distanceKm, formatDistance, type LatLng } from "@/lib/geo/distance";
 
-const ProviderMap = dynamic(() => import("@/components/providers/ProviderMap"), {
+const ProviderMap = dynamic(() => import("@/components/provider-directory/ProviderMap"), {
   ssr: false,
   loading: () => (
     <div className="flex h-full items-center justify-center bg-slate-100 text-sm text-slate-500">Loading map…</div>
