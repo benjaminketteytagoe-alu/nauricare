@@ -15,7 +15,7 @@
     "test": "turbo run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "staff": "tsx apps/web/scripts/staff-access.ts",
+    "staff": "tsx --tsconfig apps/web/tsconfig.json apps/web/scripts/staff-access.ts",
     "prepare": "husky || true"
   },
   "devDependencies": {

@@ -65,6 +65,10 @@ ENV NODE_ENV=production \
     NEXTAUTH_URL="http://localhost:3000"
 
 RUN npx turbo run build --filter=web
+# The staff-access tool as one self-contained file (only @prisma/client is
+# external, and the standalone output already ships it). It runs as a one-off
+# ECS task: .github/workflows/staff-rotate.yml.
+RUN npm run build:staff-tool -w web
 
 # ----------------------------------------------------------------------------
 # 3. Runner: minimal image with the standalone server
@@ -97,6 +101,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 # Prisma schema + migrations: the deploy job runs `prisma migrate deploy`
 # inside this container after start-up.
 COPY --from=builder --chown=nextjs:nodejs /app/packages/database/prisma ./packages/database/prisma
+
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/dist/staff-access.cjs ./apps/web/scripts/staff-access.cjs
 
 # Build identifier, surfaced by /api/health (CI passes the commit SHA).
 ARG APP_VERSION=unknown
