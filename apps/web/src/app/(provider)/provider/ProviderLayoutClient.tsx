@@ -43,7 +43,7 @@ export default function ProviderLayoutClient({ children }: { children: React.Rea
       <RealtimeProvider>
         <div className="flex min-h-screen bg-gray-50">
           <AppSidebar
-            items={navItems}
+            sections={[{ items: navItems }]}
             homeHref="/provider"
             portalLabel="Clinical Portal"
             tone="dark"
@@ -62,7 +62,7 @@ export default function ProviderLayoutClient({ children }: { children: React.Rea
 
           <main className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
             <header className="z-10 flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm lg:justify-end lg:px-8">
-              <SidebarMobileTrigger className="text-gray-500 hover:bg-gray-100 hover:text-teal-600" />
+              <SidebarMobileTrigger />
               <div className="flex items-center gap-4 text-gray-500">
                 <NotificationBell notificationsHref="/provider/notifications" />
 

@@ -40,13 +40,6 @@
 /* ─── Legacy utilities (deprecated) ────────────────────────────────────────
    Kept so older screens keep working while they migrate to components/ui.
    Each one now resolves to the tokens; don't use them in new code. */
-@utility app-shell-canvas {
-  @apply bg-canvas min-h-screen;
-}
-/* Callers supply the border side (top bar: border-b; aside: border-r). */
-@utility nav-glass {
-  @apply bg-surface/95 border-hairline backdrop-blur;
-}
 /* Callers supply their own padding. */
 @utility card-surface {
   @apply bg-surface border border-hairline shadow-card rounded-card;
@@ -54,9 +47,6 @@
 /* Callers supply shape and weight. */
 @utility btn-brand {
   @apply bg-brand hover:bg-brand-hover active:bg-brand-pressed text-on-brand shadow-button transition-colors;
-}
-@utility nav-pill-active {
-  @apply bg-brand text-on-brand font-semibold rounded-full shadow-button;
 }
 /* Was a rounded system stack; the triage gate now uses the UI face. */
 @utility font-friendly {
