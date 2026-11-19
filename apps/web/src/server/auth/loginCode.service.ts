@@ -2,6 +2,7 @@ import "server-only";
 import { randomInt, timingSafeEqual } from "crypto";
 import { ServiceError } from "@/lib/api";
 import { sendLoginCodeEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { hashToken, keyedHash } from "@/server/security/sealing";
 
@@ -72,6 +73,7 @@ export async function sendLoginCode(
   // Local development only (never in production): print the code instead of
   // relying on email, so the flow can be tested without a real Resend key.
   const devLog = process.env.NODE_ENV !== "production" && process.env.LOGIN_CODE_DEV_LOG === "1";
+  // eslint-disable-next-line no-restricted-globals -- deliberate dev-only output; never runs in production
   if (devLog) console.info(`[LOGIN_CODE_DEV] ${user.email} ${code}`);
   try {
     await sendLoginCodeEmail({
@@ -81,7 +83,7 @@ export async function sendLoginCode(
       minutes: CODE_TTL_MS / 60_000,
     });
   } catch (e) {
-    console.error("[LOGIN_CODE_EMAIL]", e instanceof Error ? e.message : e);
+    logger.error({ event: "auth.login_code_email_failed", err: e }, "Sign-in code email failed");
     if (!devLog) {
       await prisma.loginChallenge.update({ where: { id: challenge.id }, data: { expiresAt: new Date() } });
       throw new ServiceError("We couldn't send your code. Please try again in a moment.", 502);

@@ -63,7 +63,7 @@ export async function submitFeedback(input: SubmitFeedbackInput) {
         feedbackId: feedback.id,
       });
     } catch (emailError) {
-      console.error("[FEEDBACK_EMAIL_ERROR]", emailError instanceof Error ? emailError.message : emailError);
+      logger.error({ event: "feedback.email_failed", err: emailError }, "Feedback email failed");
     }
 
     await recordPatientActivity(user.role, {

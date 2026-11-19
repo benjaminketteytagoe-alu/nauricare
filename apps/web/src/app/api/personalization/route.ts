@@ -1,10 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { parseJson } from "@/lib/api";
-import { logger } from "@/lib/logger";
+import { apiSuccess, handle, notFound, parseJson } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
 const GoalsInput = z.object({
   healthGoals: z.array(z.string().trim().min(1).max(60)).max(20),
@@ -44,16 +42,14 @@ const CONTENT_DB = {
 
 // GET: Generate the tailored dashboard payload
 export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
-
+  const auth = await requireApiUser("PATIENT");
+  if (!auth.ok) return auth.response;
+  return handle(async () => {
     const profile = await prisma.patientProfile.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: auth.user.id },
       select: { healthGoals: true },
     });
-
-    if (!profile) return new NextResponse("Profile not found", { status: 404 });
+    if (!profile) return notFound("Profile not found.");
 
     const goals = profile.healthGoals;
 
@@ -92,7 +88,7 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json({
+    return apiSuccess({
       healthGoals: profile.healthGoals,
       habits: tailoredHabits.slice(0, 4).map((h) => ({ ...h, done: false })),
       articles: dbArticles.map((a) => ({
@@ -100,30 +96,23 @@ export async function GET() {
         url: `/dashboard/articles/${a.id}`,
       })),
     });
-  } catch (error) {
-    logger.error({ event: "get_personalization_error", err: error }, "Get personalization error");
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+  });
 }
 
 // POST: Save new preferences from the Settings page
 export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
-
-    const parsed = await parseJson(req, GoalsInput);
-    if (!parsed.ok) return parsed.response;
-    const { healthGoals } = parsed.data;
-
-    const updatedProfile = await prisma.patientProfile.update({
-      where: { userId: session.user.id },
-      data: { healthGoals },
-    });
-
-    return NextResponse.json(updatedProfile);
-  } catch (error) {
-    logger.error({ event: "post_personalization_error", err: error }, "Post personalization error");
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+  const auth = await requireApiUser("PATIENT");
+  if (!auth.ok) return auth.response;
+  const limited = enforceRateLimit(`personalization:${auth.user.id}`);
+  if (limited) return limited;
+  const body = await parseJson(req, GoalsInput);
+  if (!body.ok) return body.response;
+  return handle(async () =>
+    apiSuccess(
+      await prisma.patientProfile.update({
+        where: { userId: auth.user.id },
+        data: { healthGoals: body.data.healthGoals },
+      }),
+    ),
+  );
 }

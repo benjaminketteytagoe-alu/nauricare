@@ -1,10 +1,9 @@
 import { Prisma } from "@prisma/client";
-import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getUserIdWithRole } from "@/lib/auth-guards";
-import { logger } from "@/lib/logger";
+import { apiError, apiSuccess, handle, notFound, parseJson } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { SPECIALTIES, TRIAGE_SEVERITIES, insuranceLabel, type TriageSeverity } from "@/lib/referrals/constants";
 import { generateReferralCode } from "@/lib/referrals/server";
 import { maxSeverity, screenRedFlags } from "@/lib/triage/redFlags";
@@ -34,15 +33,17 @@ const referralSelect = {
 } satisfies Prisma.ReferralSelect;
 
 export async function GET() {
-  const userId = await getUserIdWithRole("PATIENT");
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const referrals = await prisma.referral.findMany({
-    where: { patientId: userId },
-    orderBy: { createdAt: "desc" },
-    select: referralSelect,
-  });
-  return NextResponse.json({ referrals });
+  const auth = await requireApiUser("PATIENT");
+  if (!auth.ok) return auth.response;
+  return handle(async () =>
+    apiSuccess({
+      referrals: await prisma.referral.findMany({
+        where: { patientId: auth.user.id },
+        orderBy: { createdAt: "desc" },
+        select: referralSelect,
+      }),
+    }),
+  );
 }
 
 // Severity is always decided server-side: from the stored triage result when
@@ -64,71 +65,67 @@ async function resolveSeverity(userId: string, reason: string, symptomCheckId?: 
 }
 
 export async function POST(req: Request) {
-  const userId = await getUserIdWithRole("PATIENT");
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const limit = rateLimit(`referrals:${userId}`, 10, 60 * 60_000);
-  if (!limit.allowed) return rateLimitResponse(limit);
-
-  const parsed = ReferralInput.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
-  }
+  const auth = await requireApiUser("PATIENT");
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
+  const limited = enforceRateLimit(`referrals:${userId}`, 10, 60 * 60_000);
+  if (limited) return limited;
+  const parsed = await parseJson(req, ReferralInput);
+  if (!parsed.ok) return parsed.response;
   const { hospitalId, specialtyRequired, clinicalReason, symptomCheckId } = parsed.data;
 
-  const [hospital, insurance] = await Promise.all([
-    prisma.hospital.findUnique({ where: { id: hospitalId }, select: { id: true } }),
-    prisma.patientInsurance.findUnique({ where: { userId } }),
-  ]);
-  if (!hospital) return NextResponse.json({ error: "That hospital is no longer available." }, { status: 404 });
+  return handle(async () => {
+    const [hospital, insurance] = await Promise.all([
+      prisma.hospital.findUnique({ where: { id: hospitalId }, select: { id: true } }),
+      prisma.patientInsurance.findUnique({ where: { userId } }),
+    ]);
+    if (!hospital) return notFound("That hospital is no longer available.");
 
-  const triageSeverity = await resolveSeverity(userId, clinicalReason, symptomCheckId);
+    const triageSeverity = await resolveSeverity(userId, clinicalReason, symptomCheckId);
 
-  // Frozen copy so later edits to the patient's insurance never rewrite what
-  // the hospital was told at the time of referral.
-  const insuranceSnapshot = {
-    provider: insurance?.provider ?? "NONE_CASH",
-    providerLabel: insuranceLabel(insurance?.provider ?? "NONE_CASH", insurance?.otherProviderName),
-    otherProviderName: insurance?.otherProviderName ?? null,
-    policyNumber: insurance?.policyNumber ?? null,
-    principalMember: insurance?.principalMember ?? null,
-    expiryDate: insurance?.expiryDate?.toISOString() ?? null,
-    capturedAt: new Date().toISOString(),
-  };
+    // Frozen copy so later edits to the patient's insurance never rewrite what
+    // the hospital was told at the time of referral.
+    const insuranceSnapshot = {
+      provider: insurance?.provider ?? "NONE_CASH",
+      providerLabel: insuranceLabel(insurance?.provider ?? "NONE_CASH", insurance?.otherProviderName),
+      otherProviderName: insurance?.otherProviderName ?? null,
+      policyNumber: insurance?.policyNumber ?? null,
+      principalMember: insurance?.principalMember ?? null,
+      expiryDate: insurance?.expiryDate?.toISOString() ?? null,
+      capturedAt: new Date().toISOString(),
+    };
 
-  // Retry on the rare referral-code collision (unique constraint P2002).
-  for (let attempt = 0; attempt < 5; attempt++) {
-    try {
-      const referral = await prisma.referral.create({
-        data: {
-          patientId: userId,
-          hospitalId,
-          specialtyRequired,
-          clinicalReason,
-          triageSeverity,
-          insuranceSnapshot,
-          referralCode: generateReferralCode(),
-        },
-        select: referralSelect,
-      });
-      await recordActivity({
-        userId,
-        type: "REFERRAL_CREATED",
-        title: `Created referral ${referral.referralCode} to ${referral.hospital.name}`,
-        details: { specialty: specialtyRequired, severity: triageSeverity },
-        ref: { type: "Referral", id: referral.id },
-      });
-      return NextResponse.json({ referral }, { status: 201 });
-    } catch (error) {
-      const collision =
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002" &&
-        String(error.meta?.target ?? "").includes("referralCode");
-      if (!collision) {
-        logger.error({ event: "referral_create_error", err: error }, "Referral create error");
-        return NextResponse.json({ error: "Could not create your referral." }, { status: 500 });
+    // Retry on the rare referral-code collision (unique constraint P2002).
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const referral = await prisma.referral.create({
+          data: {
+            patientId: userId,
+            hospitalId,
+            specialtyRequired,
+            clinicalReason,
+            triageSeverity,
+            insuranceSnapshot,
+            referralCode: generateReferralCode(),
+          },
+          select: referralSelect,
+        });
+        await recordActivity({
+          userId,
+          type: "REFERRAL_CREATED",
+          title: `Created referral ${referral.referralCode} to ${referral.hospital.name}`,
+          details: { specialty: specialtyRequired, severity: triageSeverity },
+          ref: { type: "Referral", id: referral.id },
+        });
+        return apiSuccess({ referral }, 201);
+      } catch (error) {
+        const collision =
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002" &&
+          String(error.meta?.target ?? "").includes("referralCode");
+        if (!collision) throw error;
       }
     }
-  }
-  return NextResponse.json({ error: "Could not create your referral. Please try again." }, { status: 500 });
+    return apiError("Could not create your referral. Please try again.", 500);
+  });
 }

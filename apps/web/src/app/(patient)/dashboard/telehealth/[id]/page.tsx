@@ -4,6 +4,7 @@ import { Shield, ArrowLeft, Loader2, Clock, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { readErrorMessage } from "@/lib/http";
 
 interface AppointmentDetail {
   id: string;
@@ -28,8 +29,7 @@ export default function TelehealthRoomPage() {
     fetch(`/api/appointments/${params.id}`)
       .then(async (res) => {
         if (!res.ok) {
-          const msg = await res.text();
-          throw new Error(msg || "Failed to load secure room.");
+          throw new Error(await readErrorMessage(res, "Failed to load secure room."));
         }
         return res.json();
       })

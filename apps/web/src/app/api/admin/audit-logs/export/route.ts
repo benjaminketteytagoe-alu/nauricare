@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { logger } from "@/lib/logger";
+import { handle } from "@/lib/api";
+import { logAdministrativeAction } from "@/lib/audit";
+import { requireApiUser } from "@/lib/auth-guards";
+import { getClientIp } from "@/lib/getClientIp";
 import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
 function csvEscape(value: unknown): string {
   if (value === null || value === undefined) return "";
@@ -10,13 +12,14 @@ function csvEscape(value: unknown): string {
   return /[,"\n\r]/.test(str) ? `"${str}"` : str;
 }
 
-export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.role !== "ADMIN") {
-      return new NextResponse("Forbidden", { status: 403 });
-    }
+export async function GET(req: Request) {
+  const auth = await requireApiUser("ADMIN");
+  if (!auth.ok) return auth.response;
+  // Exports are bulk reads of personal data: keep them rare and audited.
+  const limited = enforceRateLimit(`audit-export:${auth.user.id}`, 10, 60 * 60_000);
+  if (limited) return limited;
 
+  return handle(async () => {
     const logs = await prisma.auditLog.findMany({
       take: 1000,
       orderBy: { createdAt: "desc" },
@@ -38,6 +41,13 @@ export async function GET() {
 
     const csv = [header, ...rows].join("\r\n");
 
+    await logAdministrativeAction({
+      action: "DATA_EXPORT",
+      actorId: auth.user.id,
+      ipAddress: getClientIp(req.headers),
+      details: { export: "audit_log", rows: logs.length },
+    });
+
     return new NextResponse(csv, {
       status: 200,
       headers: {
@@ -47,8 +57,5 @@ export async function GET() {
         "Content-Disposition": `attachment; filename="nauricare-compliance-audit-${Date.now()}.csv"`,
       },
     });
-  } catch (error) {
-    logger.error({ event: "audit_export_error", err: error }, "Audit export error");
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+  });
 }

@@ -1,11 +1,11 @@
 import { randomUUID } from "crypto";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { apiError, apiSuccess, handle, validateBody, readJson } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
+import { logger } from "@/lib/logger";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { s3, AWS_REGION, AWS_S3_BUCKET, s3IsConfigured } from "@/lib/s3";
 
 const UploadInput = z.object({
@@ -31,58 +31,42 @@ function sanitizeFilename(filename: string): string {
 export async function POST(req: Request) {
   // ── Guard: S3 not configured ──────────────────────────────────────────────
   if (!s3IsConfigured()) {
-    console.error(
-      "PRODUCTION S3 UPLOAD FAILURE STACK: S3 environment variables are not configured. " +
-        "Set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, and AWS_S3_BUCKET_NAME.",
-    );
-    return NextResponse.json(
-      { error: "File uploads are not available right now. Please contact support." },
-      { status: 503 },
-    );
+    logger.error({ event: "uploads.s3_not_configured" }, "Upload requested but AWS_S3_BUCKET_NAME is not set");
+    return apiError("File uploads are not available right now. Please contact support.", 503);
   }
 
   // ── Auth ──────────────────────────────────────────────────────────────────
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
 
-  try {
-    const parsed = UploadInput.safeParse(await req.json().catch(() => null));
-    if (!parsed.success) {
-      return NextResponse.json({ error: "filename, fileType, and fileSize are required" }, { status: 400 });
-    }
-    const { filename, fileType, fileSize, context } = parsed.data;
+  const limited = enforceRateLimit(`upload-presign:${userId}`, 20, 10 * 60_000);
+  if (limited) return limited;
+  const parsed = validateBody(await readJson(req), UploadInput, "filename, fileType, and fileSize are required");
+  if (!parsed.ok) return parsed.response;
+  const { filename, fileType, fileSize, context } = parsed.data;
 
-    const limit = rateLimit(`upload-presign:${session.user.id}`, 20, 10 * 60_000);
-    if (!limit.allowed) return rateLimitResponse(limit);
-
+  return handle(async () => {
     const folder = context === "avatar" ? "avatars" : "community";
 
     const isImage = ALLOWED_IMAGE_TYPES.has(fileType);
     const isVideo = ALLOWED_VIDEO_TYPES.has(fileType);
 
     if (!isImage && !isVideo) {
-      return NextResponse.json(
-        { error: "Unsupported file type. Allowed: JPEG, PNG, WEBP, GIF, MP4, WEBM, MOV." },
-        { status: 400 },
-      );
+      return apiError("Unsupported file type. Allowed: JPEG, PNG, WEBP, GIF, MP4, WEBM, MOV.", 400);
     }
 
     if (folder === "avatars" && isVideo) {
-      return NextResponse.json({ error: "Profile pictures must be an image." }, { status: 400 });
+      return apiError("Profile pictures must be an image.", 400);
     }
 
     const cap = isImage ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
     if (fileSize <= 0 || fileSize > cap) {
-      return NextResponse.json(
-        { error: `File exceeds the ${cap / (1024 * 1024)}MB limit for ${isImage ? "images" : "videos"}.` },
-        { status: 400 },
-      );
+      return apiError(`File exceeds the ${cap / (1024 * 1024)}MB limit for ${isImage ? "images" : "videos"}.`, 400);
     }
 
     const mediaType = isImage ? "IMAGE" : "VIDEO";
-    const key = `${folder}/${session.user.id}/${randomUUID()}-${sanitizeFilename(filename)}`;
+    const key = `${folder}/${userId}/${randomUUID()}-${sanitizeFilename(filename)}`;
 
     // ── Presigned URL generation ───────────────────────────────────────────
     let uploadUrl: string;
@@ -98,17 +82,14 @@ export async function POST(req: Request) {
 
       uploadUrl = await getSignedUrl(s3, command, { expiresIn: 60 });
     } catch (s3Error) {
-      console.error("PRODUCTION S3 UPLOAD FAILURE STACK:", s3Error);
-      return NextResponse.json({ error: "Could not generate upload URL. Please try again." }, { status: 500 });
+      logger.error({ event: "uploads.presign_failed", err: s3Error }, "Generating the upload URL failed");
+      return apiError("Could not generate upload URL. Please try again.", 500);
     }
 
     // Construct the public URL from the same constants used above so it is
     // never built from a raw process.env value that could be undefined.
     const publicUrl = `https://${AWS_S3_BUCKET}.s3.${AWS_REGION}.amazonaws.com/${key}`;
 
-    return NextResponse.json({ uploadUrl, publicUrl, mediaType });
-  } catch (error) {
-    console.error("PRODUCTION S3 UPLOAD FAILURE STACK:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  }
+    return apiSuccess({ uploadUrl, publicUrl, mediaType });
+  });
 }

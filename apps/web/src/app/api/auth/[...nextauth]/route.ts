@@ -6,6 +6,7 @@ import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 import { isGooglePhoto } from "@/lib/avatars";
 import { getClientIp } from "@/lib/getClientIp";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
@@ -32,7 +33,10 @@ export const authOptions: AuthOptions = {
     EmailProvider({
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async sendVerificationRequest(_params) {
-        console.warn("[MAGIC_LINK] Native NextAuth send path called — ignored. Use /api/auth/magic-link.");
+        logger.warn(
+          { event: "auth.native_magic_link_ignored" },
+          "Native NextAuth email send path called; use /api/auth/magic-link",
+        );
       },
     }),
     CredentialsProvider({
@@ -160,7 +164,7 @@ export const authOptions: AuthOptions = {
             },
           });
         } catch (dbError) {
-          console.error("Error provisioning Google User in DB:", dbError);
+          logger.error({ event: "auth.google_provision_failed", err: dbError }, "Provisioning Google user failed");
           return false; // Reject sign in if DB creation fails completely
         }
       }
@@ -213,7 +217,7 @@ export const authOptions: AuthOptions = {
           token.avatarUrl = null;
         }
       } catch (dbError) {
-        console.error("NextAuth JWT Database Lookup Error:", dbError);
+        logger.error({ event: "auth.jwt_lookup_failed", err: dbError }, "JWT user lookup failed");
       }
 
       return token;

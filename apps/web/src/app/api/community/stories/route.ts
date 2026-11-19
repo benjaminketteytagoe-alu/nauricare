@@ -1,11 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { parseJson } from "@/lib/api";
-import { logger } from "@/lib/logger";
+import { apiSuccess, handle, parseJson } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { sanitizePlainText } from "@/lib/sanitize";
 import { mediaUrlSchema } from "@/lib/validation/media";
 import { requireCommunityAvatar, scrubAuthor } from "@/server/community/avatars";
@@ -18,10 +15,9 @@ const StoryInput = z
   .refine((v) => !!v.content?.trim() || !!v.imageUrl, { message: "Story must have content or an image" });
 
 export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
-
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  return handle(async () => {
     const stories = await prisma.communityStory.findMany({
       where: { expiresAt: { gt: new Date() } },
       include: {
@@ -68,22 +64,18 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json(Array.from(groupMap.values()));
-  } catch (error) {
-    logger.error({ event: "community_stories_get_error", err: error }, "Community stories get error");
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+    return apiSuccess(Array.from(groupMap.values()));
+  });
 }
 
 export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  return handle(async () => {
+    const limited = enforceRateLimit(`community-story:${auth.user.id}`, 10, 60 * 60_000);
+    if (limited) return limited;
 
-    const limit = rateLimit(`community-story:${session.user.id}`, 10, 60 * 60_000);
-    if (!limit.allowed) return rateLimitResponse(limit);
-
-    const noAvatar = await requireCommunityAvatar(session.user.id);
+    const noAvatar = await requireCommunityAvatar(auth.user.id);
     if (noAvatar) return noAvatar;
 
     const parsed = await parseJson(req, StoryInput);
@@ -97,15 +89,12 @@ export async function POST(req: Request) {
       data: {
         content: content || null,
         imageUrl: imageUrl || null,
-        authorId: session.user.id,
+        authorId: auth.user.id,
         expiresAt,
       },
       include: { author: { select: { id: true, name: true, role: true, avatarUrl: true } } },
     });
 
-    return NextResponse.json(scrubAuthor(story), { status: 201 });
-  } catch (error) {
-    logger.error({ event: "community_stories_post_error", err: error }, "Community stories post error");
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+    return apiSuccess(scrubAuthor(story), 201);
+  });
 }

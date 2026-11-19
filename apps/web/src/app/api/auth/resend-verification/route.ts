@@ -1,37 +1,34 @@
 import { randomBytes, createHash } from "crypto";
-import { NextResponse } from "next/server";
 import { z } from "zod";
+import { apiSuccess, handle, readJson, validateBody } from "@/lib/api";
 import { sendVerificationEmail } from "@/lib/email";
 import { getClientIp } from "@/lib/getClientIp";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
 const schema = z.object({ email: z.email() });
 
 export async function POST(req: Request) {
-  try {
+  return handle(async () => {
     const ip = getClientIp(req.headers);
-    const limit = rateLimit(`auth-resend-verification:${ip}`, 5, 15 * 60_000);
-    if (!limit.allowed) return rateLimitResponse(limit);
+    const limit = enforceRateLimit(`auth-resend-verification:${ip}`, 5, 15 * 60_000);
+    if (limit) return limit;
 
-    const body = await req.json();
-    const parsed = schema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
-    }
+    const parsed = validateBody(await readJson(req), schema, "A valid email is required.");
+    if (!parsed.ok) return parsed.response;
 
     const cleanEmail = parsed.data.email.trim().toLowerCase();
     const user = await prisma.user.findUnique({ where: { email: cleanEmail } });
 
     // Always return 200 — never reveal whether an email is registered.
     if (!user) {
-      return NextResponse.json({ message: "ok" });
+      return apiSuccess({ message: "ok" });
     }
 
     if (user.isEmailVerified) {
       // Account is already active; don't send a spurious email.
-      return NextResponse.json({ message: "ok" });
+      return apiSuccess({ message: "ok" });
     }
 
     // Rotate: delete any outstanding tokens, issue a fresh one.
@@ -53,9 +50,6 @@ export async function POST(req: Request) {
       logger.error({ event: "resend_verification_email_error", err: emailErr }, "Resend verification email error");
     }
 
-    return NextResponse.json({ message: "ok" });
-  } catch (err) {
-    logger.error({ event: "resend_verification_error", err: err }, "Resend verification error");
-    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
-  }
+    return apiSuccess({ message: "ok" });
+  });
 }

@@ -1,26 +1,16 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { logger } from "@/lib/logger";
+import { apiSuccess, handle, notFound } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 
 // A perfect day = 4 completions (100%).
 const TOTAL_DAILY_HABITS = 4;
 
 export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.role !== "PATIENT") {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const profile = await prisma.patientProfile.findUnique({
-      where: { userId: session.user.id },
-    });
-
-    if (!profile) {
-      return new NextResponse("Profile not found", { status: 404 });
-    }
+  const auth = await requireApiUser("PATIENT");
+  if (!auth.ok) return auth.response;
+  return handle(async () => {
+    const profile = await prisma.patientProfile.findUnique({ where: { userId: auth.user.id }, select: { id: true } });
+    if (!profile) return notFound("Profile not found.");
 
     // 1. Fetch all completed logs for the current year
     const currentYear = new Date().getFullYear();
@@ -113,13 +103,6 @@ export async function GET() {
       value: calculatePercentage(d.value, TOTAL_DAILY_HABITS * 30),
     }));
 
-    return NextResponse.json({
-      week: shiftedWeek,
-      month: formattedMonthData,
-      year: formattedYearData,
-    });
-  } catch (error) {
-    logger.error({ event: "analytics_error", err: error }, "Analytics error");
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+    return apiSuccess({ week: shiftedWeek, month: formattedMonthData, year: formattedYearData });
+  });
 }

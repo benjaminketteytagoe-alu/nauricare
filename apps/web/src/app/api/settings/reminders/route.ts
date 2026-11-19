@@ -1,5 +1,6 @@
 import { apiSuccess, handle, parseJson, unauthorized } from "@/lib/api";
 import { getUserIdWithRole } from "@/lib/auth-guards";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { recordActivity } from "@/server/activity/activity.service";
 import { getReminderPrefs, ReminderPrefsPatch, updateReminderPrefs } from "@/server/reminders/preferences";
 
@@ -14,6 +15,8 @@ export async function GET() {
 export async function PATCH(req: Request) {
   const userId = await getUserIdWithRole("PATIENT");
   if (!userId) return unauthorized();
+  const limited = enforceRateLimit(`reminder-settings:${userId}`);
+  if (limited) return limited;
   const body = await parseJson(req, ReminderPrefsPatch);
   if (!body.ok) return body.response;
   return handle(async () => {

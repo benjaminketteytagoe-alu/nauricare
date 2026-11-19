@@ -1,4 +1,5 @@
 import { type UserNotificationType } from "@prisma/client";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/server/notifications/notify";
 
@@ -60,6 +61,6 @@ export async function parseMentionsAndNotify(
     );
   } catch (err) {
     // Logging only — notification failures must never abort the parent write.
-    console.error("[MENTION_NOTIFY_ERROR]", err);
+    logger.error({ event: "mentions.notify_failed", err }, "Mention notification failed");
   }
 }

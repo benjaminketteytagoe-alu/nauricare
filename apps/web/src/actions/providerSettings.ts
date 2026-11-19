@@ -2,9 +2,8 @@
 
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { getServerSession } from "next-auth/next";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getSessionUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { dateKeySchema, firstIssue, optionalText, timeSchema } from "@/lib/validation/common";
 import { passwordField } from "@/lib/validation/password";
@@ -36,8 +35,8 @@ export async function updateProviderProfile(data: {
   licenseNumber?: string;
   hospitalAffiliation?: string;
 }) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== "PROVIDER") {
+  const caller = await getSessionUser();
+  if (!caller?.id || caller.role !== "PROVIDER") {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -48,7 +47,7 @@ export async function updateProviderProfile(data: {
 
   await Promise.all([
     prisma.user.update({
-      where: { id: session.user.id },
+      where: { id: caller.id },
       data: {
         name,
         licenseNumber: data.licenseNumber?.trim() || null,
@@ -56,7 +55,7 @@ export async function updateProviderProfile(data: {
       },
     }),
     prisma.practitionerProfile.updateMany({
-      where: { userId: session.user.id },
+      where: { userId: caller.id },
       data: {
         specialty,
         bio: data.bio?.trim() || null,
@@ -74,8 +73,8 @@ export async function updateSecuritySettings(data: {
   newPassword: string;
   secondaryEmail?: string;
 }) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== "PROVIDER") {
+  const caller = await getSessionUser();
+  if (!caller?.id || caller.role !== "PROVIDER") {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -85,7 +84,7 @@ export async function updateSecuritySettings(data: {
   const newPassword = parsed.data.newPassword;
 
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: caller.id },
     select: { passwordHash: true },
   });
   if (!user) return { success: false, error: "User not found" };
@@ -98,7 +97,7 @@ export async function updateSecuritySettings(data: {
   const newHash = await bcrypt.hash(newPassword, 12);
 
   await prisma.user.update({
-    where: { id: session.user.id },
+    where: { id: caller.id },
     data: {
       passwordHash: newHash,
       secondaryEmail: data.secondaryEmail?.trim() || null,
@@ -115,8 +114,8 @@ export async function upsertAvailabilitySlot(data: {
   endTime: string; // "HH:MM"
   isAvailable: boolean;
 }) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== "PROVIDER") {
+  const caller = await getSessionUser();
+  if (!caller?.id || caller.role !== "PROVIDER") {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -128,7 +127,7 @@ export async function upsertAvailabilitySlot(data: {
   await prisma.providerAvailability.upsert({
     where: {
       providerId_date_startTime_endTime: {
-        providerId: session.user.id,
+        providerId: caller.id,
         date: dateObj,
         startTime: data.startTime,
         endTime: data.endTime,
@@ -136,7 +135,7 @@ export async function upsertAvailabilitySlot(data: {
     },
     update: { isAvailable: data.isAvailable },
     create: {
-      providerId: session.user.id,
+      providerId: caller.id,
       date: dateObj,
       startTime: data.startTime,
       endTime: data.endTime,

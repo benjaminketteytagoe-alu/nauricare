@@ -6,6 +6,7 @@ import { ServiceError as SourcingError } from "@/lib/api";
 import { logAdministrativeAction } from "@/lib/audit";
 import { sendProviderInvitationEmail } from "@/lib/email";
 import { formatDate } from "@/lib/format";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { SITE_URL } from "@/lib/site";
 import { geocodePractice } from "@/server/geo/geocode";
@@ -348,7 +349,7 @@ async function issueInvite(c: ProviderCandidate, alreadyListed: boolean) {
     });
     return { emailSent: true as const };
   } catch (e) {
-    console.error("[PROVIDER_INVITE_EMAIL]", e instanceof Error ? e.message : e);
+    logger.error({ event: "sourcing.invite_email_failed", err: e }, "Provider invite email failed");
     return { emailSent: false as const };
   }
 }

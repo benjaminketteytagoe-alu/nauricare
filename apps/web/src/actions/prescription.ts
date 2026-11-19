@@ -1,9 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getServerSession } from "next-auth/next";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getSessionUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { sanitizePlainText } from "@/lib/sanitize";
 import { firstIssue, idSchema } from "@/lib/validation/common";
@@ -28,8 +27,8 @@ export async function createPrescription(data: {
   appointmentId?: string;
   suggestedPharmacyId?: string;
 }) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== "PROVIDER") {
+  const caller = await getSessionUser();
+  if (!caller?.id || caller.role !== "PROVIDER") {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -47,7 +46,7 @@ export async function createPrescription(data: {
   // actual appointment relationship with — without this, any provider could
   // issue prescriptions against any patient in the system.
   const practitioner = await prisma.practitionerProfile.findUnique({
-    where: { userId: session.user.id },
+    where: { userId: caller.id },
     select: { id: true },
   });
   if (!practitioner) return { success: false, error: "Practitioner profile not found" };
@@ -91,7 +90,7 @@ export async function createPrescription(data: {
       dosage: sanitizePlainText(data.dosage),
       instructions: data.instructions ? sanitizePlainText(data.instructions) || null : null,
       patientId: data.patientId,
-      providerId: session.user.id,
+      providerId: caller.id,
       appointmentId,
       suggestedPharmacyId: data.suggestedPharmacyId || null,
     },
@@ -103,8 +102,8 @@ export async function createPrescription(data: {
 }
 
 export async function routeToPharmacy(prescriptionId: string, pharmacyId: string) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== "PATIENT") {
+  const caller = await getSessionUser();
+  if (!caller?.id || caller.role !== "PATIENT") {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -116,7 +115,7 @@ export async function routeToPharmacy(prescriptionId: string, pharmacyId: string
     select: { id: true, patientId: true, status: true },
   });
 
-  if (!prescription || prescription.patientId !== session.user.id) {
+  if (!prescription || prescription.patientId !== caller.id) {
     return { success: false, error: "Prescription not found" };
   }
   if (prescription.status !== "PENDING") {
@@ -132,12 +131,12 @@ export async function routeToPharmacy(prescriptionId: string, pharmacyId: string
   // Atomic: ownership and PENDING status are re-checked in the same write,
   // so two concurrent requests cannot both route the prescription.
   const routed = await prisma.prescription.updateMany({
-    where: { id: prescriptionId, patientId: session.user.id, status: "PENDING" },
+    where: { id: prescriptionId, patientId: caller.id, status: "PENDING" },
     data: { pharmacyId, status: "ROUTED" },
   });
   if (routed.count === 0) return { success: false, error: "Prescription has already been routed" };
   await recordActivity({
-    userId: session.user.id,
+    userId: caller.id,
     type: "PRESCRIPTION_ROUTED",
     title: "Sent a prescription to a pharmacy",
     ref: { type: "Prescription", id: prescriptionId },

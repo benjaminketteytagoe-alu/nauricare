@@ -1,4 +1,5 @@
 import "server-only";
+import { logger } from "@/lib/logger";
 import { runReminderSweep } from "./sweep";
 
 // Optional in-process scheduler (REMINDER_SCHEDULER=on), for local
@@ -20,9 +21,14 @@ async function tick() {
   g.__ncReminderRunning = true;
   try {
     const r = await runReminderSweep();
-    if (r.period + r.daily + r.weekly + r.appointments + r.failed > 0) console.info("[REMINDERS]", JSON.stringify(r));
+    if (r.period + r.daily + r.weekly + r.appointments + r.failed > 0) {
+      logger.info(
+        { event: "cron.reminders_run", ok: true, source: "in-process", result: r },
+        "Reminder sweep finished",
+      );
+    }
   } catch (e) {
-    console.error("[REMINDERS] sweep failed:", e instanceof Error ? e.message : e);
+    logger.error({ event: "cron.reminders_run", ok: false, source: "in-process", err: e }, "Reminder sweep failed");
   } finally {
     g.__ncReminderRunning = false;
   }
@@ -33,5 +39,5 @@ export function startReminderScheduler() {
   setTimeout(() => void tick(), FIRST_RUN_MS).unref();
   g.__ncReminderTimer = setInterval(() => void tick(), INTERVAL_MS);
   g.__ncReminderTimer.unref();
-  console.info("[REMINDERS] scheduler started (every 10 minutes)");
+  logger.info({ event: "reminders.scheduler_started" }, "In-process reminder scheduler started (every 10 minutes)");
 }

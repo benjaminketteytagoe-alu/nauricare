@@ -1,5 +1,6 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 // The reminder idempotency ledger (ReminderDispatch). Flow per reminder:
@@ -60,7 +61,7 @@ export async function deliver(c: Claim, steps: Steps): Promise<boolean> {
     await prisma.reminderDispatch
       .update({ where: { id: c.id }, data: { status: "FAILED", lastError: message } })
       .catch(() => {});
-    console.error(`[REMINDER] ${c.dedupeKey} failed:`, message);
+    logger.error({ event: "reminders.send_failed", dedupeKey: c.dedupeKey, error: message }, "Reminder send failed");
     return false;
   }
 }

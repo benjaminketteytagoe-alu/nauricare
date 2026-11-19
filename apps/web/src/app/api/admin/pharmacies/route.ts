@@ -1,10 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { parseJson } from "@/lib/api";
-import { logger } from "@/lib/logger";
+import { apiSuccess, handle, parseJson } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { sanitizePlainText } from "@/lib/sanitize";
 
 const PharmacyInput = z.object({
@@ -18,54 +16,32 @@ const PharmacyInput = z.object({
 });
 
 export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (session?.user?.role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
-    const pharmacies = await prisma.pharmacy.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-
-    return NextResponse.json(pharmacies, { status: 200 });
-  } catch (error) {
-    logger.error({ event: "pharmacy_get_error", err: error }, "Pharmacy get error");
-    return NextResponse.json({ error: "Failed to fetch pharmacies" }, { status: 500 });
-  }
+  const auth = await requireApiUser("ADMIN");
+  if (!auth.ok) return auth.response;
+  return handle(async () => apiSuccess(await prisma.pharmacy.findMany({ orderBy: { createdAt: "desc" } })));
 }
 
 export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (session?.user?.role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
+  const auth = await requireApiUser("ADMIN");
+  if (!auth.ok) return auth.response;
+  const limited = enforceRateLimit(`admin-pharmacies:${auth.user.id}`);
+  if (limited) return limited;
+  const body = await parseJson(req, PharmacyInput);
+  if (!body.ok) return body.response;
+  const { contactEmail, tags } = body.data;
 
-    const parsed = await parseJson(req, PharmacyInput);
-    if (!parsed.ok) return parsed.response;
-    const { contactEmail, tags } = parsed.data;
-
-    const newPharmacy = await prisma.pharmacy.create({
+  return handle(async () => {
+    const pharmacy = await prisma.pharmacy.create({
       data: {
-        name: sanitizePlainText(parsed.data.name),
-        address: sanitizePlainText(parsed.data.address),
+        name: sanitizePlainText(body.data.name),
+        address: sanitizePlainText(body.data.address),
         contactEmail: contactEmail || null,
         tags: (tags ?? []).map(sanitizePlainText).filter(Boolean),
       },
     });
-
     await prisma.auditEvent.create({
-      data: {
-        userId: session.user.id,
-        action: "ADD_PHARMACY",
-        details: { pharmacyId: newPharmacy.id, name: newPharmacy.name },
-      },
+      data: { userId: auth.user.id, action: "ADD_PHARMACY", details: { pharmacyId: pharmacy.id, name: pharmacy.name } },
     });
-
-    return NextResponse.json(newPharmacy, { status: 201 });
-  } catch (error) {
-    logger.error({ event: "pharmacy_post_error", err: error }, "Pharmacy post error");
-    return NextResponse.json({ error: "Failed to add pharmacy" }, { status: 500 });
-  }
+    return apiSuccess(pharmacy, 201);
+  });
 }

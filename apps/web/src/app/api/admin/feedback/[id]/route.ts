@@ -1,46 +1,28 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { logger } from "@/lib/logger";
+import { apiSuccess, handle, notFound, parseJson } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
-const updateStatusSchema = z.object({
-  status: z.enum(["NEW", "REVIEWED", "ACTIONED"]),
-});
+const UpdateStatus = z.object({ status: z.enum(["NEW", "REVIEWED", "ACTIONED"]) });
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function PATCH(req: Request, { params }: RouteParams) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
-
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireApiUser("ADMIN");
+  if (!auth.ok) return auth.response;
+  const limited = enforceRateLimit(`admin-feedback:${auth.user.id}`);
+  if (limited) return limited;
   const { id } = await params;
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const parsed = updateStatusSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
-  }
-
-  try {
-    const updated = await prisma.feedback.update({
-      where: { id },
-      data: { status: parsed.data.status },
-    });
-    return NextResponse.json(updated);
-  } catch (error) {
-    logger.error({ event: "admin_feedback_patch_error", err: error }, "Admin feedback patch error");
-    return NextResponse.json({ error: "Feedback item not found" }, { status: 404 });
-  }
+  const body = await parseJson(req, UpdateStatus);
+  if (!body.ok) return body.response;
+  return handle(async () => {
+    try {
+      return apiSuccess(await prisma.feedback.update({ where: { id }, data: { status: body.data.status } }));
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+        return notFound("Feedback item not found.");
+      }
+      throw e;
+    }
+  });
 }

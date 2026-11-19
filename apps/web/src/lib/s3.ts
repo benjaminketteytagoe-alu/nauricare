@@ -1,4 +1,5 @@
 import { S3Client } from "@aws-sdk/client-s3";
+import { logger } from "@/lib/logger";
 
 // ── Credentials ────────────────────────────────────────────────────────────────
 // On ECS the task role supplies short-lived credentials through the SDK's
@@ -13,7 +14,10 @@ export const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET_NAME ?? "";
 
 if (!AWS_S3_BUCKET) {
   // Use warn (not error): the server still boots; only uploads return 503.
-  console.warn("[S3 CONFIG] AWS_S3_BUCKET_NAME is not set. Profile picture and media uploads will return 503.");
+  logger.warn(
+    { event: "config.s3_bucket_missing" },
+    "AWS_S3_BUCKET_NAME is not set: profile picture and media uploads will return 503",
+  );
 }
 
 export const s3 = new S3Client({

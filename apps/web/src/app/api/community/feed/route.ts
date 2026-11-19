@@ -1,12 +1,9 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { parseJson } from "@/lib/api";
-import { logger } from "@/lib/logger";
+import { apiSuccess, handle, notFound, parseJson } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { parseMentionsAndNotify } from "@/lib/mentions";
 import { prisma } from "@/lib/prisma";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { sanitizePlainText } from "@/lib/sanitize";
 import { idSchema } from "@/lib/validation/common";
 import { mediaUrlSchema } from "@/lib/validation/media";
@@ -24,10 +21,9 @@ const PostInput = z
   });
 
 export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
-
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  return handle(async () => {
     const url = new URL(req.url);
     const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1"));
     const take = 10;
@@ -58,16 +54,16 @@ export async function GET(req: Request) {
           },
         },
         likes: {
-          where: { userId: session.user.id },
+          where: { userId: auth.user.id },
           select: { id: true },
         },
       },
     });
 
-    const authorIds = [...new Set(posts.map((p) => p.authorId).filter((id) => id !== session.user.id))];
+    const authorIds = [...new Set(posts.map((p) => p.authorId).filter((id) => id !== auth.user.id))];
     const myFollows = authorIds.length
       ? await prisma.follow.findMany({
-          where: { followerId: session.user.id, followingId: { in: authorIds } },
+          where: { followerId: auth.user.id, followingId: { in: authorIds } },
           select: { followingId: true },
         })
       : [];
@@ -83,22 +79,18 @@ export async function GET(req: Request) {
       isFollowedByMe: followedSet.has(post.authorId),
     }));
 
-    return NextResponse.json(enriched);
-  } catch (error) {
-    logger.error({ event: "community_feed_get_error", err: error }, "Community feed get error");
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+    return apiSuccess(enriched);
+  });
 }
 
 export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  return handle(async () => {
+    const limited = enforceRateLimit(`community-post:${auth.user.id}`, 10, 10 * 60_000);
+    if (limited) return limited;
 
-    const limit = rateLimit(`community-post:${session.user.id}`, 10, 10 * 60_000);
-    if (!limit.allowed) return rateLimitResponse(limit);
-
-    const noAvatar = await requireCommunityAvatar(session.user.id);
+    const noAvatar = await requireCommunityAvatar(auth.user.id);
     if (noAvatar) return noAvatar;
 
     const parsed = await parseJson(req, PostInput);
@@ -108,7 +100,7 @@ export async function POST(req: Request) {
 
     if (repostOfId) {
       const original = await prisma.communityPost.findUnique({ where: { id: repostOfId }, select: { id: true } });
-      if (!original) return new NextResponse("Original post not found", { status: 404 });
+      if (!original) return notFound("Original post not found.");
     }
 
     const post = await prisma.communityPost.create({
@@ -116,7 +108,7 @@ export async function POST(req: Request) {
         content,
         mediaUrl: mediaUrl || null,
         mediaType: mediaUrl ? (mediaType ?? "IMAGE") : null,
-        authorId: session.user.id,
+        authorId: auth.user.id,
         repostOfId: repostOfId || null,
       },
       include: {
@@ -141,10 +133,10 @@ export async function POST(req: Request) {
 
     // Fire-and-forget: parse @mentions in post content and notify matched users.
     if (post.content) {
-      void parseMentionsAndNotify(post.content, session.user.id, "MENTION_POST", post.id);
+      void parseMentionsAndNotify(post.content, auth.user.id, "MENTION_POST", post.id);
     }
 
-    return NextResponse.json(
+    return apiSuccess(
       {
         ...scrubAuthor(post),
         repostOf: post.repostOf ? scrubAuthor(post.repostOf) : null,
@@ -154,10 +146,7 @@ export async function POST(req: Request) {
         isLikedByMe: false,
         isFollowedByMe: false,
       },
-      { status: 201 },
+      201,
     );
-  } catch (error) {
-    logger.error({ event: "community_feed_post_error", err: error }, "Community feed post error");
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+  });
 }

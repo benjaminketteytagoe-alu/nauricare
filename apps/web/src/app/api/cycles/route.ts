@@ -1,10 +1,8 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { parseJson } from "@/lib/api";
-import { logger } from "@/lib/logger";
+import { apiSuccess, handle, notFound, parseJson } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
 const CycleInput = z.object({
   startDate: z
@@ -15,39 +13,21 @@ const CycleInput = z.object({
     .refine((v) => Date.parse(v) >= Date.parse("2000-01-01"), "Enter a valid start date."),
 });
 
+// Logs the start of a new cycle (the dashboard's pen-icon modal).
 export async function POST(req: Request) {
-  try {
-    // 1. Authenticate the request
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.role !== "PATIENT") {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+  const auth = await requireApiUser("PATIENT");
+  if (!auth.ok) return auth.response;
+  const limited = enforceRateLimit(`cycles:${auth.user.id}`);
+  if (limited) return limited;
+  const body = await parseJson(req, CycleInput);
+  if (!body.ok) return body.response;
 
-    // 2. Parse the payload from the frontend pen icon modal
-    const parsed = await parseJson(req, CycleInput);
-    if (!parsed.ok) return parsed.response;
-    const { startDate } = parsed.data;
-
-    // 3. Find the PatientProfile ID linked to this user
-    const profile = await prisma.patientProfile.findUnique({
-      where: { userId: session.user.id },
-    });
-
-    if (!profile) {
-      return new NextResponse("Patient profile not found. Please complete onboarding.", { status: 404 });
-    }
-
-    // 4. Create the new historical CycleLog entry
+  return handle(async () => {
+    const profile = await prisma.patientProfile.findUnique({ where: { userId: auth.user.id }, select: { id: true } });
+    if (!profile) return notFound("Patient profile not found. Please complete onboarding.");
     const cycleLog = await prisma.cycleLog.create({
-      data: {
-        patientProfileId: profile.id,
-        startDate: new Date(startDate),
-      },
+      data: { patientProfileId: profile.id, startDate: new Date(body.data.startDate) },
     });
-
-    return NextResponse.json(cycleLog, { status: 201 });
-  } catch (error) {
-    logger.error({ event: "cycle_log_error", err: error }, "Cycle log error");
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+    return apiSuccess(cycleLog, 201);
+  });
 }

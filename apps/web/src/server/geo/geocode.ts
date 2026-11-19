@@ -1,5 +1,6 @@
 import "server-only";
 import type { LatLng } from "@/lib/geo/distance";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { SUPPORT_EMAIL } from "@/lib/site";
 import { safeGet } from "@/server/net/safeFetch";
@@ -40,7 +41,7 @@ export async function geocode(query: string): Promise<LatLng | null> {
     memo.set(key, result);
     return result;
   } catch (e) {
-    console.error("[GEOCODE]", e instanceof Error ? e.message : e);
+    logger.warn({ event: "geo.geocode_failed", err: e }, "Geocoding failed");
     return null;
   }
 }

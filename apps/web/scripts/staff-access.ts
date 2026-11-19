@@ -77,7 +77,7 @@ async function audit(action: "invite" | "rotate" | "revoke", targetUserId: strin
       data: {
         // No CLI operator identity exists in the app, so the target is the actor
         // and the operating-system user is recorded in the details.
-        action: "ADMIN_SETTINGS_UPDATE",
+        action: "STAFF_ACCESS_CHANGE",
         actorId: targetUserId,
         targetId: targetUserId,
         details: { via: "scripts/staff-access.ts", operation: action, role, operator: userInfo().username },

@@ -7,6 +7,7 @@ import { getSessionUser } from "@/lib/auth-guards";
 import { MOOD_IDS, SYMPTOM_IDS } from "@/lib/cycle/catalog";
 import { DEFAULT_CYCLE_LENGTH, DEFAULT_PERIOD_LENGTH, predictCycle } from "@/lib/cycle/predict";
 import { addDays, diffInDays, parseDateKey, toDateKey } from "@/lib/cycleDates";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { sanitizePlainText } from "@/lib/sanitize";
 import { recordActivity } from "@/server/activity/activity.service";
@@ -147,7 +148,7 @@ export async function logPeriodRange({
     refresh();
     return { success: true };
   } catch (error) {
-    console.error("[LOG_PERIOD_RANGE_ERROR]", error);
+    logger.error({ event: "cycle.log_period_range_failed", err: error }, "Logging period range failed");
     return { success: false, error: "Failed to save period log." };
   }
 }
@@ -182,7 +183,7 @@ export async function startPeriod(day: string): Promise<Result> {
     refresh();
     return { success: true };
   } catch (error) {
-    console.error("[START_PERIOD_ERROR]", error);
+    logger.error({ event: "cycle.start_period_failed", err: error }, "Starting period failed");
     return { success: false, error: "Failed to log your period." };
   }
 }
@@ -209,7 +210,7 @@ export async function endPeriod(day: string): Promise<Result> {
     refresh();
     return { success: true };
   } catch (error) {
-    console.error("[END_PERIOD_ERROR]", error);
+    logger.error({ event: "cycle.end_period_failed", err: error }, "Ending period failed");
     return { success: false, error: "Failed to update your period." };
   }
 }
@@ -226,7 +227,7 @@ export async function deletePeriod(id: string): Promise<Result> {
     refresh();
     return { success: true };
   } catch (error) {
-    console.error("[DELETE_PERIOD_ERROR]", error);
+    logger.error({ event: "cycle.delete_period_failed", err: error }, "Deleting period failed");
     return { success: false, error: "Failed to delete that period." };
   }
 }
@@ -264,7 +265,7 @@ export async function saveDayLog(input: z.infer<typeof DayLogInput>): Promise<Re
     refresh();
     return { success: true };
   } catch (error) {
-    console.error("[SAVE_DAY_LOG_ERROR]", error);
+    logger.error({ event: "cycle.save_day_log_failed", err: error }, "Saving day log failed");
     return { success: false, error: "Failed to save today's log." };
   }
 }
