@@ -1,0 +1,128 @@
+import { Resend } from "resend";
+import { PatientBookingConfirmation, type PatientBookingConfirmationProps } from "@/emails/PatientBookingConfirmation";
+import { ProviderNewAppointmentAlert, type ProviderNewAppointmentAlertProps } from "@/emails/ProviderNewAppointmentAlert";
+import { PasswordReset, type PasswordResetProps } from "@/emails/PasswordReset";
+import { VerifyEmail, type VerifyEmailProps } from "@/emails/VerifyEmail";
+import { MagicLink, type MagicLinkProps } from "@/emails/MagicLink";
+import { FeedbackNotification, type FeedbackNotificationProps } from "@/emails/FeedbackNotification";
+import { ProviderInvitation, type ProviderInvitationProps } from "@/emails/ProviderInvitation";
+import { ReminderEmail, type ReminderEmailProps } from "@/emails/Reminder";
+import { LoginCode, type LoginCodeProps } from "@/emails/LoginCode";
+import { SUPPORT_EMAIL } from "@/lib/site";
+
+const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key_for_build');
+
+// Use the verified domain in production; fall back to Resend's test sender in dev.
+const FROM_ADDRESS =
+  process.env.EMAIL_FROM ?? "appointments@nauricare.com";
+
+export async function sendPatientConfirmationEmail({
+  to,
+  ...props
+}: PatientBookingConfirmationProps & { to: string }) {
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: `Your NauriCare appointment with ${props.providerName} is confirmed`,
+    react: PatientBookingConfirmation(props),
+  });
+
+  if (error) throw new Error(`[RESEND] Patient confirmation failed: ${error.message}`);
+}
+
+export async function sendProviderAlertEmail({
+  to,
+  ...props
+}: ProviderNewAppointmentAlertProps & { to: string }) {
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: `New booking: ${props.patientName} on ${props.date} at ${props.time}`,
+    react: ProviderNewAppointmentAlert(props),
+  });
+
+  if (error) throw new Error(`[RESEND] Provider alert failed: ${error.message}`);
+}
+
+export async function sendPasswordResetEmail({
+  to,
+  ...props
+}: PasswordResetProps & { to: string }) {
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "Reset your NauriCare password",
+    react: PasswordReset(props),
+  });
+
+  if (error) throw new Error(`[RESEND] Password reset email failed: ${error.message}`);
+}
+
+export async function sendVerificationEmail({
+  to,
+  ...props
+}: VerifyEmailProps & { to: string }) {
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "Verify your NauriCare email",
+    react: VerifyEmail(props),
+  });
+
+  if (error) throw new Error(`[RESEND] Verification email failed: ${error.message}`);
+}
+
+export async function sendMagicLinkEmail({
+  to,
+  ...props
+}: MagicLinkProps & { to: string }) {
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "Your NauriCare login link",
+    react: MagicLink(props),
+  });
+
+  if (error) throw new Error(`[RESEND] Magic link email failed: ${error.message}`);
+}
+
+// Strips characters that could break out of an email header line.
+const headerSafe = (value: string) => value.replace(/[\r\n]+/g, " ").slice(0, 120);
+
+/** Sends a submitted feedback record to the NauriCare support inbox. */
+export async function sendFeedbackEmail(props: FeedbackNotificationProps) {
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to: SUPPORT_EMAIL,
+    replyTo: props.userEmail,
+    subject: headerSafe(`[NauriCare Feedback] ${props.category} - Rating: ${props.rating}/5 from ${props.userName}`),
+    react: FeedbackNotification(props),
+  });
+
+  if (error) throw new Error(`[RESEND] Feedback email failed: ${error.message}`);
+}
+
+/** Invitation for a sourced provider to review and accept their NauriCare listing. */
+export async function sendProviderInvitationEmail({ to, ...props }: ProviderInvitationProps & { to: string }) {
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: props.alreadyListed ? "Set up your NauriCare provider account" : "Invitation to join NauriCare as a women's health specialist",
+    react: ProviderInvitation(props),
+  });
+  if (error) throw new Error(`[RESEND] Provider invitation failed: ${error.message}`);
+}
+
+/** `idempotencyKey`: Resend drops repeats of the same key (24h), so a retried reminder is never sent twice. */
+export async function sendReminderEmail({ to, subject, idempotencyKey, ...props }: ReminderEmailProps & { to: string; subject: string; idempotencyKey?: string }) {
+  const { error } = await resend.emails.send(
+    { from: FROM_ADDRESS, to, subject: headerSafe(subject), react: ReminderEmail(props) },
+    idempotencyKey ? { idempotencyKey } : undefined,
+  );
+  if (error) throw new Error(`[RESEND] Reminder email failed: ${error.message}`);
+}
+
+export async function sendLoginCodeEmail({ to, ...props }: LoginCodeProps & { to: string }) {
+  const { error } = await resend.emails.send({ from: FROM_ADDRESS, to, subject: `${props.code} is your NauriCare sign-in code`, react: LoginCode(props) });
+  if (error) throw new Error(`[RESEND] Login code email failed: ${error.message}`);
+}

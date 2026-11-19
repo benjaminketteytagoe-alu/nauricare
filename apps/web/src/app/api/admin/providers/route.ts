@@ -1,20 +1,44 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
+import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { geocodePractice } from "@/server/geo/geocode";
+import { passwordField } from "@/lib/validation/password";
 import bcrypt from "bcryptjs";
 
-// NEW: Fetch all providers
-export async function GET(req: Request) {
+const onboardProviderSchema = z.object({
+  name: z.string().trim().min(2).max(100),
+  email: z.email().trim(),
+  password: passwordField,
+  specialty: z.string().trim().min(2).max(100),
+  location: z.string().trim().min(1).max(200),
+  // Required — PractitionerProfile.clinicName is a non-nullable DB column.
+  clinicName: z.string().trim().min(1, "Clinic name is required").max(150),
+});
+
+// Fetch all providers
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (session?.user?.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
+    // select (not include) — an unscoped include on User pulls every scalar
+    // field, including passwordHash, straight into the JSON response.
     const providers = await prisma.user.findMany({
       where: { role: "PROVIDER" },
-      include: { practitionerProfile: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        isVerified: true,
+        createdAt: true,
+        practitionerProfile: {
+          select: { specialty: true, clinicName: true, location: true, isVerified: true, isActive: true },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -33,8 +57,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const body = await req.json();
-    const { name, email, password, specialty, location, clinicName } = body;
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const parsed = onboardProviderSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+    }
+    const { name, email, password, specialty, location, clinicName } = parsed.data;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -42,7 +76,11 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    // Coordinates for the patient map (best effort; never blocks onboarding).
+    const coords = await geocodePractice(location, clinicName);
 
+    // select (not include) — see GET above: an unscoped include on User
+    // returns passwordHash straight into the JSON response.
     const newProvider = await prisma.user.create({
       data: {
         name,
@@ -55,11 +93,21 @@ export async function POST(req: Request) {
             specialty,
             location,
             clinicName,
+            latitude: coords?.lat ?? null,
+            longitude: coords?.lng ?? null,
             isVerified: true,
           }
         }
       },
-      include: { practitionerProfile: true }
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        isVerified: true,
+        practitionerProfile: {
+          select: { specialty: true, clinicName: true, location: true, isVerified: true, isActive: true },
+        },
+      },
     });
 
     await prisma.auditEvent.create({

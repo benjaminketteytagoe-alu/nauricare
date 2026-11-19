@@ -1,9 +1,0 @@
-.git
-.turbo
-node_modules
-apps/web/.next
-apps/web/out
-build
-dist
-.env
-.env.local

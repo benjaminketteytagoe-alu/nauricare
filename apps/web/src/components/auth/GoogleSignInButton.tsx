@@ -2,6 +2,7 @@
 
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { postAuthDestination } from "@/lib/authDestination";
 
 export function GoogleSignInButton({ text = "Continue with Google" }: { text?: string }) {
   return (
@@ -9,7 +10,8 @@ export function GoogleSignInButton({ text = "Continue with Google" }: { text?: s
       type="button"
       variant="outline" 
       className="w-full h-11 border-gray-300 text-gray-700 font-medium hover:bg-gray-50 flex items-center justify-center gap-2"
-      onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+      // Google sign-in is patient-only (new accounts are auto-provisioned as PATIENT).
+      onClick={() => signIn("google", { callbackUrl: postAuthDestination("PATIENT") })}
     >
       <svg className="w-5 h-5" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />

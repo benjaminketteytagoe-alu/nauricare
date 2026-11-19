@@ -1,84 +1,86 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { z } from "zod";
+import { runTriage, toLegacyRiskLevel } from "@/lib/triage/engine";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { getTriageConsent } from "@/lib/consent";
+import { recordActivity } from "@/server/activity/activity.service";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const SymptomInput = z.object({
+  symptoms: z.array(z.string().trim().min(1).max(60)).min(1, "Select at least one symptom.").max(20),
+  cycleDay: z.coerce.number().int().min(0).max(100).catch(0),
+  notes: z.string().max(2000, "Notes must be under 2000 characters.").default(""),
+});
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession();
-    if (!session || !session.user?.email) {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.email || !session.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { symptoms, cycleDay, notes } = await req.json();
-
-    const systemPrompt = "You are an empathetic, educational health assistant for NauriCare. " +
-      "A patient has logged the following daily symptoms: " + JSON.stringify(symptoms) + ". " +
-      "They are on day " + cycleDay + " of their menstrual cycle. " +
-      "Additional notes: \"" + notes + "\".\n\n" +
-      "YOUR RULES:\n" +
-      "1. DO NOT DIAGNOSE. You are an educator, not a doctor.\n" +
-      "2. Provide a short, empathetic insight explaining why these symptoms might occur at this stage.\n" +
-      "3. Determine a 'riskLevel' (Low, Medium, High).\n" +
-      "4. Return ONLY a valid JSON object with no markdown formatting.\n\n" +
-      "JSON FORMAT:\n" +
-      "{\n" +
-      "  \"riskLevel\": \"Low\" | \"Medium\" | \"High\",\n" +
-      "  \"insight\": \"Your empathetic, educational response here.\"\n" +
-      "}";
-
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const result = await model.generateContent(systemPrompt);
-    const responseText = result.response.text();
-
-    // Safely look up the precise user ID from the database using their session email
-    const dbUser = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!dbUser) {
-      return NextResponse.json({ error: "User not found in database" }, { status: 404 });
+    // Server-side consent gate: the UI gate can be bypassed, this cannot.
+    const consent = await getTriageConsent(session.user.id);
+    if (!consent.valid) {
+      return NextResponse.json(
+        { error: "Please review and accept the AI triage consent before using the symptom checker.", code: "CONSENT_REQUIRED" },
+        { status: 403 },
+      );
     }
 
-    let aiAnalysis;
-    try {
-      const t = String.fromCharCode(96, 96, 96);
-      
-      const cleanJsonString = responseText
-        .split(t + "json").join("")
-        .split(t).join("")
-        .trim();
-        
-      aiAnalysis = JSON.parse(cleanJsonString);
-    } catch (parseError) {
-      console.error("JSON Parse Error. Raw AI Output:", responseText);
-      aiAnalysis = { 
-        riskLevel: "Medium", 
-        insight: "We logged your symptoms securely, but our AI couldn't generate a personalized insight at this moment." 
-      };
+    // AI triage is an LLM call — rate-limit distinctly from generic API abuse.
+    const limit = rateLimit(`symptoms-ai:${session.user.id}`, 10, 10 * 60_000);
+    if (!limit.allowed) return rateLimitResponse(limit);
+
+    const body = await req.json().catch(() => null);
+    const parsed = SymptomInput.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
     }
+    const { symptoms, cycleDay, notes } = parsed.data;
+
+    const triage = await runTriage({ symptoms, cycleDay, notes });
 
     const newSymptomLog = await prisma.symptomCheck.create({
       data: {
-        userId: dbUser.id, // Now using the guaranteed ID from the database!
-        answers: { symptoms, cycleDay, notes },
-        riskLevel: aiAnalysis.riskLevel,
+        userId: session.user.id,
+        answers: { symptoms, cycleDay, notes, triage: { ...triage } },
+        riskLevel: toLegacyRiskLevel(triage.severity),
       },
     });
 
-    return NextResponse.json(
-      { 
-        message: "Symptoms logged successfully", 
-        log: newSymptomLog,
-        aiInsight: aiAnalysis.insight 
+    await recordActivity({
+      userId: session.user.id,
+      type: "AI_TRIAGE",
+      title: `AI symptom check: ${triage.severity.toLowerCase()} urgency`,
+      details: {
+        prompt: { symptoms, cycleDay, notes },
+        response: {
+          severity: triage.severity,
+          summary: triage.summary,
+          recommendedSpecialty: triage.recommendedSpecialty,
+          redFlags: triage.redFlags,
+          seekCareWithin: triage.seekCareWithin,
+          engine: triage.engine,
+        },
       },
-      { status: 201 }
+      ref: { type: "SymptomCheck", id: newSymptomLog.id },
+    });
+
+    return NextResponse.json(
+      {
+        message: "Symptoms logged successfully",
+        log: newSymptomLog,
+        aiInsight: triage.summary,
+        triage,
+      },
+      { status: 201 },
     );
 
-  } catch (error: any) {
-    console.error("Detailed Backend Error:", error.message || error);
+  } catch (error) {
+    console.error("Detailed Backend Error:", error instanceof Error ? error.message : error);
     return NextResponse.json(
       { error: "Failed to process symptoms. Check terminal for details." },
       { status: 500 }
@@ -86,10 +88,10 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
-    const session = await getServerSession();
-    if (!session || !session.user?.email) {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.email || !session.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -109,6 +111,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ logs }, { status: 200 });
   } catch (error) {
+    console.error("[SYMPTOM_LOGS_ERROR]", error instanceof Error ? error.message : error);
     return NextResponse.json({ error: "Failed to fetch logs" }, { status: 500 });
   }
 }

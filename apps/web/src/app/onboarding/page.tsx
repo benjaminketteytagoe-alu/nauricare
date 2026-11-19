@@ -13,14 +13,14 @@ export default function OnboardingPage() {
     setError("");
 
     const formData = new FormData(event.currentTarget);
-    
-    // FIX 1: Explicitly parse the cycle string into a strict integer for the Prisma backend
-    const cycleInput = formData.get("menstrualCycle");
-    const parsedCycle = cycleInput ? parseInt(cycleInput.toString(), 10) : null;
+
+    // menstrualCycle is stored as String? in Prisma (see PatientProfile.menstrualCycle) —
+    // keep it a string here, matching dashboard/settings' read/write of the same field.
+    const cycleInput = formData.get("menstrualCycle")?.toString().trim();
 
     const data = {
       country: formData.get("country"),
-      menstrualCycle: parsedCycle,
+      menstrualCycle: cycleInput || null,
       emergencyContact: formData.get("emergencyContact"),
     };
 
@@ -41,8 +41,8 @@ export default function OnboardingPage() {
       // client-side cache and forces the server to evaluate your new database profile.
       window.location.href = "/dashboard";
       
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save profile. Please try again.");
       setIsLoading(false);
     }
   }
@@ -57,7 +57,7 @@ export default function OnboardingPage() {
           Welcome to NauriCare
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Let's set up your health profile to get started.
+          Let&apos;s set up your health profile to get started.
         </p>
       </div>
 

@@ -1,9 +1,21 @@
+# VCS / tooling
 .git
+.github
 .turbo
-node_modules
-apps/web/.next
-apps/web/out
+**/.turbo
+
+# Dependencies and build output (rebuilt inside the image)
+**/node_modules
+**/.next
+**/out
 build
 dist
-.env
-.env.local
+
+# Secrets: never send any .env file into the build context, at any depth.
+**/.env
+**/.env.*
+!**/.env.example
+
+# Local scratch files
+*.log
+e2e_*_tmp.mjs

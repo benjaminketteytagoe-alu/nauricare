@@ -2,11 +2,15 @@
 "use client";
 
 import { useState } from "react";
+import { useClientValue } from "@/lib/hooks/useClientValue";
+import { Callout } from "@/components/ui/callout";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Activity, Brain, AlertCircle, Heart, Video } from "lucide-react";
+import { ArrowLeft, Activity } from "lucide-react";
+import { TriageResultCard, type TriageView } from "@/components/triage/TriageResultCard";
 
 const COMMON_SYMPTOMS = [
   "Cramps", "Bloating", "Headache", "Fatigue", 
@@ -15,11 +19,14 @@ const COMMON_SYMPTOMS = [
 ];
 
 export default function SymptomLoggerPage() {
+  const router = useRouter();
+  // ?saved=1 is set after a landing-page Nauri assessment is saved to this account.
+  const justSaved = useClientValue(() => window.location.search.includes("saved=1"), false);
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [cycleDay, setCycleDay] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
-  const [aiResponse, setAiResponse] = useState<{ insight: string; riskLevel: string } | null>(null);
+  const [aiResponse, setAiResponse] = useState<{ triage: TriageView; checkId: string } | null>(null);
   const [error, setError] = useState("");
 
   const toggleSymptom = (symptom: string) => {
@@ -37,7 +44,7 @@ export default function SymptomLoggerPage() {
       return;
     }
 
-    loading || setLoading(true);
+    if (!loading) setLoading(true);
     setError("");
     setAiResponse(null);
 
@@ -53,35 +60,43 @@ export default function SymptomLoggerPage() {
       });
 
       const data = await res.json();
+      // Consent was withdrawn in another tab, or the notice version changed:
+      // re-render the layout so the consent gate shows again.
+      if (res.status === 403 && data.code === "CONSENT_REQUIRED") {
+        router.refresh();
+        return;
+      }
       if (!res.ok) throw new Error(data.error || "Failed to log symptoms.");
 
-      setAiResponse({
-        insight: data.aiInsight,
-        riskLevel: data.log.riskLevel,
-      });
+      setAiResponse({ triage: data.triage, checkId: data.log.id });
       
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to log symptoms.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-3xl mx-auto space-y-6">
-        
+    <div className="max-w-3xl mx-auto space-y-6 pb-12">
+
+        {justSaved && (
+          <Callout tone="success" role="status" title="Your Nauri assessment is saved">
+            It&apos;s now part of your health log. Log how you feel below whenever things change.
+          </Callout>
+        )}
+
         {/* Navigation */}
-        <Link href="/dashboard" className="text-teal-700 hover:text-teal-900 flex items-center gap-2 font-medium w-fit">
+        <Link href="/dashboard" className="text-rose-700 hover:text-rose-900 flex items-center gap-2 font-medium w-fit">
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </Link>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="bg-teal-900 p-6 text-white">
+        <div className="card-surface overflow-hidden">
+          <div className="bg-rose-800 p-6 text-white">
             <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Activity className="w-6 h-6 text-teal-300" /> Daily Health Log
+              <Activity className="w-6 h-6 text-rose-200" /> Daily Health Log
             </h1>
-            <p className="text-teal-100 mt-1">Track how you are feeling today to build a better picture of your reproductive health.</p>
+            <p className="text-rose-100 mt-1">Track how you are feeling today to build a better picture of your reproductive health.</p>
           </div>
 
           <div className="p-6 md:p-8">
@@ -101,9 +116,9 @@ export default function SymptomLoggerPage() {
                         type="button"
                         onClick={() => toggleSymptom(symptom)}
                         className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
-                          isSelected 
-                            ? "bg-teal-600 border-teal-600 text-white shadow-sm" 
-                            : "bg-white border-gray-200 text-gray-700 hover:border-teal-300 hover:bg-teal-50"
+                          isSelected
+                            ? "bg-rose-600 border-rose-600 text-white shadow-sm"
+                            : "bg-white border-gray-200 text-gray-700 hover:border-rose-300 hover:bg-rose-50"
                         }`}
                       >
                         {symptom}
@@ -125,7 +140,7 @@ export default function SymptomLoggerPage() {
                     placeholder="e.g., 14" 
                     value={cycleDay}
                     onChange={(e) => setCycleDay(e.target.value)}
-                    className="h-11 focus-visible:ring-teal-600" 
+                    className="h-11 focus-visible:ring-rose-600"
                   />
                   <p className="text-xs text-gray-500">Day 1 is the first day of your period.</p>
                 </div>
@@ -140,49 +155,20 @@ export default function SymptomLoggerPage() {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Any emotional changes, triggers, or severity details..." 
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-600"
+                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-600"
                 />
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full md:w-auto h-11 px-8 bg-teal-600 hover:bg-teal-700 text-white">
+              <Button type="submit" disabled={loading} className="w-full md:w-auto h-11 px-8 btn-brand">
                 {loading ? "Analyzing Context..." : "Save Daily Log"}
               </Button>
             </form>
           </div>
         </div>
 
-        {/* Gemini AI Response Area */}
-        {aiResponse && (
-          <div className="bg-white rounded-xl shadow-sm border border-teal-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className={`p-4 border-b flex items-center gap-2 font-semibold ${
-              aiResponse.riskLevel?.toLowerCase() === 'high' ? 'bg-rose-50 text-rose-800 border-rose-100' : 
-              aiResponse.riskLevel?.toLowerCase() === 'medium' ? 'bg-amber-50 text-amber-800 border-amber-100' : 
-              'bg-teal-50 text-teal-800 border-teal-100'
-            }`}>
-              {aiResponse.riskLevel?.toLowerCase() === 'high' ? <AlertCircle className="w-5 h-5" /> : <Heart className="w-5 h-5" />}
-              NauriCare AI Insight (Risk Level: {aiResponse.riskLevel})
-            </div>
-            <div className="p-6 space-y-5">
-              <div className="flex gap-4 text-gray-700 leading-relaxed">
-                <Brain className="w-6 h-6 text-teal-600 shrink-0 mt-1" />
-                <p>{aiResponse.insight}</p>
-              </div>
+        {/* AI triage result (MedGemma → Gemini → safety rules) */}
+        {aiResponse && <TriageResultCard triage={aiResponse.triage} symptomCheckId={aiResponse.checkId} />}
 
-              {/* Dynamic Escalation Action Button */}
-              {(aiResponse.riskLevel?.toLowerCase() === 'high' || aiResponse.riskLevel?.toLowerCase() === 'medium') && (
-                <div className="pt-2 sm:pl-10">
-                  <Link href="/dashboard/providers">
-                    <Button className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-sm">
-                      <Video className="w-4 h-4" /> Consult a Verified Specialist Now
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-      </div>
     </div>
   );
 }

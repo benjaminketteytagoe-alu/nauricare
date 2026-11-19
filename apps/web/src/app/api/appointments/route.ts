@@ -1,8 +1,27 @@
 // apps/web/src/app/api/appointments/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { sendPatientConfirmationEmail, sendProviderAlertEmail } from "@/lib/email";
+import { recordActivity } from "@/server/activity/activity.service";
+import { notify } from "@/server/notifications/notify";
+import { z } from "zod";
+import { apiError, parseJson } from "@/lib/api";
+import { sanitizePlainText } from "@/lib/sanitize";
+import { idSchema } from "@/lib/validation/common";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+
+const isoDate = z.string().max(40).refine((v) => !Number.isNaN(Date.parse(v)), "Invalid date.");
+const BookingInput = z
+  .object({
+    practitionerProfileId: idSchema,
+    startTime: isoDate,
+    endTime: isoDate,
+    notes: z.string().max(2000, "Notes must be under 2000 characters.").optional().or(z.null()),
+  })
+  .refine((v) => Date.parse(v.endTime) > Date.parse(v.startTime), { message: "The appointment must end after it starts." })
+  .refine((v) => Date.parse(v.startTime) > Date.now() - 5 * 60_000, { message: "Please choose a time in the future." });
 
 export async function POST(req: Request) {
   try {
@@ -11,12 +30,13 @@ export async function POST(req: Request) {
       return new NextResponse("Unauthorized. Only patients can book appointments.", { status: 401 });
     }
 
-    const body = await req.json();
-    const { practitionerProfileId, startTime, endTime, notes } = body;
+    const limit = rateLimit(`booking:${session.user.id}`, 10, 60 * 60_000);
+    if (!limit.allowed) return rateLimitResponse(limit);
 
-    if (!practitionerProfileId || !startTime || !endTime) {
-      return new NextResponse("Missing required booking details.", { status: 400 });
-    }
+    const parsed = await parseJson(req, BookingInput);
+    if (!parsed.ok) return parsed.response;
+    const { practitionerProfileId, startTime, endTime } = parsed.data;
+    const notes = parsed.data.notes ? sanitizePlainText(parsed.data.notes) : "";
 
     const patientProfile = await prisma.patientProfile.findUnique({
       where: { userId: session.user.id },
@@ -25,20 +45,123 @@ export async function POST(req: Request) {
     if (!patientProfile) return new NextResponse("Patient profile not found.", { status: 404 });
 
     const practitioner = await prisma.practitionerProfile.findUnique({
-      where: { id: practitionerProfileId }
+      where: { id: practitionerProfileId },
+      include: { user: { select: { name: true, email: true } } },
     });
 
-    if (!practitioner) return new NextResponse("Practitioner not found.", { status: 404 });
+    // Only verified, active practitioners can be booked (same rule as the directory).
+    if (!practitioner || !practitioner.isVerified || !practitioner.isActive) {
+      return apiError("This specialist isn't available for booking.", 404);
+    }
 
-    const appointment = await prisma.appointment.create({
-      data: {
-        patientProfileId: patientProfile.id,
-        practitionerProfileId: practitioner.id,
-        startTime: new Date(startTime),
-        endTime: new Date(endTime),
-        notes: notes || null,
-        status: "PENDING",
-      },
+    const start = new Date(startTime);
+    const dateLabel =
+      start.toDateString() +
+      " at " +
+      start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    // Atomic booking: create appointment → derive meetingLink → notify both parties.
+    // All four writes succeed together or none do.
+    const appointment = await prisma.$transaction(async (tx) => {
+      const created = await tx.appointment.create({
+        data: {
+          patientProfileId: patientProfile.id,
+          practitionerProfileId: practitioner.id,
+          startTime: start,
+          endTime: new Date(endTime),
+          notes: notes || null,
+          status: "SCHEDULED",
+        },
+      });
+
+      // Deterministic room name: both patient and provider resolve to the same Jitsi URL.
+      const meetingLink = `https://meet.jit.si/nauricare-${created.id}`;
+
+      const [updated] = await Promise.all([
+        tx.appointment.update({
+          where: { id: created.id },
+          data: { meetingLink },
+        }),
+        tx.notification.create({
+          data: {
+            userId: session.user.id,
+            type: "EMAIL",
+            status: "PENDING",
+            message: `Your NauriCare telehealth appointment is confirmed for ${dateLabel}. Join here: ${meetingLink}`,
+          },
+        }),
+        tx.notification.create({
+          data: {
+            userId: practitioner.userId,
+            type: "PUSH",
+            status: "PENDING",
+            message: `New appointment booked for ${dateLabel}. Video consultation: ${meetingLink}`,
+          },
+        }),
+      ]);
+
+      return updated;
+    });
+
+    // Derive human-readable date/time strings for the email templates
+    const apptDate = start.toLocaleDateString("en-GB", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    const apptTime = start.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    // Fire both emails concurrently after the DB transaction succeeds.
+    // allSettled (not all) so a failure on one side doesn't hide the other's
+    // outcome — Promise.all only ever surfaces the first rejection.
+    const emailJobs = [
+      { label: "patient", to: session.user.email, fn: () => sendPatientConfirmationEmail({
+          to: session.user.email!,
+          patientName: session.user.name ?? "Patient",
+          providerName: practitioner.user.name ?? "Your Provider",
+          date: apptDate,
+          time: apptTime,
+          meetingLink: appointment.meetingLink ?? "",
+        }) },
+      { label: "provider", to: practitioner.user.email, fn: () => sendProviderAlertEmail({
+          to: practitioner.user.email,
+          providerName: practitioner.user.name ?? "Provider",
+          patientName: session.user.name ?? "Patient",
+          date: apptDate,
+          time: apptTime,
+          meetingLink: appointment.meetingLink ?? "",
+        }) },
+    ];
+
+    const results = await Promise.allSettled(emailJobs.map((job) => job.fn()));
+    results.forEach((result, i) => {
+      const { label, to } = emailJobs[i];
+      if (result.status === "rejected") {
+        console.error(`[APPOINTMENT_EMAIL_ERROR] ${label} (to=${to}):`, result.reason);
+      } else {
+        console.log(`[APPOINTMENT_EMAIL_OK] ${label} (to=${to})`);
+      }
+    });
+
+    await notify({
+      recipientId: practitioner.userId,
+      actorId: session.user.id,
+      type: "APPOINTMENT_BOOKED",
+      title: `New booking: ${dateLabel}`,
+      body: `${session.user.name ?? "A patient"} booked a video consultation.`,
+      link: "/provider/schedule",
+    });
+
+    await recordActivity({
+      userId: session.user.id,
+      type: "APPOINTMENT_BOOKED",
+      title: `Booked a consultation with ${practitioner.user.name}`,
+      details: { startTime: start.toISOString(), clinic: practitioner.clinicName },
+      ref: { type: "Appointment", id: appointment.id },
     });
 
     return NextResponse.json(appointment, { status: 201 });

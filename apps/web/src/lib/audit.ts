@@ -5,7 +5,7 @@ interface AuditLogPayload {
   action: AuditAction;
   actorId: string;       
   targetId?: string;     
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   ipAddress?: string; 
 }
 

@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { z } from "zod";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { recordActivity } from "@/server/activity/activity.service";
+
+const settingsSchema = z.object({
+  healthGoals: z.array(z.string().max(100)).max(20),
+  menstrualCycle: z.union([z.string(), z.number()]).optional(),
+  emergencyContact: z.string().trim().max(200).optional().nullable(),
+});
 
 // GET: Fetch all user preferences for the settings UI
 export async function GET() {
@@ -12,7 +20,7 @@ export async function GET() {
     const profile = await prisma.patientProfile.findUnique({
       where: { userId: session.user.id },
       include: {
-        user: { select: { name: true, email: true, phoneNumber: true } }
+        user: { select: { name: true, email: true, phoneNumber: true, avatarUrl: true, googlePhotoUrl: true } }
       }
     });
 
@@ -21,6 +29,8 @@ export async function GET() {
     return NextResponse.json({
       name: profile.user.name,
       email: profile.user.email,
+      avatarUrl: profile.user.avatarUrl,
+      googlePhotoUrl: profile.user.googlePhotoUrl,
       healthGoals: profile.healthGoals,
       menstrualCycle: profile.menstrualCycle || "28",
       emergencyContact: profile.emergencyContact || ""
@@ -37,18 +47,29 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
-    const body = await req.json();
-    const { healthGoals, menstrualCycle, emergencyContact } = body;
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return new NextResponse("Invalid JSON body", { status: 400 });
+    }
+
+    const parsed = settingsSchema.safeParse(body);
+    if (!parsed.success) {
+      return new NextResponse(parsed.error.issues[0].message, { status: 400 });
+    }
+    const { healthGoals, menstrualCycle, emergencyContact } = parsed.data;
 
     const updatedProfile = await prisma.patientProfile.update({
       where: { userId: session.user.id },
-      data: { 
+      data: {
         healthGoals,
-        menstrualCycle: menstrualCycle.toString(),
-        emergencyContact
+        menstrualCycle: menstrualCycle !== undefined ? menstrualCycle.toString() : undefined,
+        emergencyContact,
       },
     });
 
+    await recordActivity({ userId: session.user.id, type: "PROFILE_UPDATED", title: "Updated health profile settings" });
     return NextResponse.json(updatedProfile);
   } catch (error) {
     console.error("[POST_SETTINGS_ERROR]", error);
