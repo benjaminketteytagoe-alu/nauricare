@@ -12,8 +12,8 @@ import { prisma } from "@/lib/prisma";
 // Emails carry the dedupe key as a Resend idempotency key, so even a crash
 // between "provider accepted" and "row updated" can't send twice.
 
-export const LEASE_MS = 15 * 60_000;
-export const MAX_ATTEMPTS = 5;
+const LEASE_MS = 15 * 60_000;
+const MAX_ATTEMPTS = 5;
 
 export type Claim = { id: string; dedupeKey: string; notifiedAt: Date | null; emailedAt: Date | null };
 const CLAIM_SELECT = { id: true, dedupeKey: true, notifiedAt: true, emailedAt: true } as const;

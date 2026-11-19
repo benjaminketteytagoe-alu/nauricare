@@ -4,7 +4,7 @@ import { EmergencyBanner } from "@/components/triage/EmergencyBanner";
 import { SUPPORT_EMAIL } from "@/lib/site";
 
 export const LEGAL_CONTACT_EMAIL = SUPPORT_EMAIL;
-export const LEGAL_EFFECTIVE_DATE = "17 October 2026";
+const LEGAL_EFFECTIVE_DATE = "17 October 2026";
 
 export interface LegalSection {
   id: string;

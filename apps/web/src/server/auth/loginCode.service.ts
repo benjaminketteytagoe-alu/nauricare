@@ -13,7 +13,7 @@ import { hashToken, keyedHash } from "@/server/security/sealing";
 // Codes: 10-minute lifetime, 5 attempts, stored only as an HMAC, bound to
 // the browser session that requested them. Sending is rate-limited.
 
-export const CODE_TTL_MS = 10 * 60_000;
+const CODE_TTL_MS = 10 * 60_000;
 export const MAX_ATTEMPTS = 5;
 const RESEND_COOLDOWN_MS = 45_000;
 const MAX_SENDS_PER_HOUR = 10;

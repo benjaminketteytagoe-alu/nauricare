@@ -57,7 +57,7 @@ export function rateLimitResponse(result: RateLimitResult): NextResponse {
 }
 
 /** Default budget for authenticated writes that have no stricter limit of their own. */
-export const WRITE_LIMIT = { limit: 60, windowMs: 60_000 } as const;
+const WRITE_LIMIT = { limit: 60, windowMs: 60_000 } as const;
 
 /**
  * Applies a limit and returns the 429 response to send, or null to carry on.

@@ -6,7 +6,7 @@ import { getServerSession, type Session } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { forbidden, unauthorized } from "@/lib/api";
 
-export const ROLE_HOME: Record<Role, string> = {
+const ROLE_HOME: Record<Role, string> = {
   PATIENT: "/dashboard",
   PROVIDER: "/provider",
   ADMIN: "/admin",

@@ -109,5 +109,3 @@ export function ProviderNewAppointmentAlert({
     </Html>
   );
 }
-
-export default ProviderNewAppointmentAlert;

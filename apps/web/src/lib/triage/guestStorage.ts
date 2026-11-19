@@ -49,7 +49,7 @@ export function savePendingTriage(p: PendingTriage): void {
   );
 }
 
-export function readPendingTriage(): PendingTriage | null {
+function readPendingTriage(): PendingTriage | null {
   const p = safe<PendingTriage | null>(() => JSON.parse(sessionStorage.getItem(PENDING_KEY) ?? "null"), null);
   return p && p.expiresAt > Date.now() ? p : null;
 }

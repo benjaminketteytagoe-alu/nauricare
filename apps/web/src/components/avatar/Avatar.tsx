@@ -60,5 +60,3 @@ export function Avatar({
     </div>
   );
 }
-
-export default Avatar;

@@ -25,7 +25,7 @@ const MAX_CONCURRENT_RUNS = 2;
 
 // ── Sources ──────────────────────────────────────────────────────────────────
 
-export function assertCrawlableUrl(raw: string): string {
+function assertCrawlableUrl(raw: string): string {
   let url: URL;
   try {
     url = new URL(raw);
@@ -121,10 +121,6 @@ export async function startScrapeRun(adminId: string, sourceId: string) {
   return run;
 }
 
-export function getRun(id: string) {
-  return prisma.providerScrapeRun.findUnique({ where: { id } });
-}
-
 function dedupeKeyFor(c: ExtractedCandidate, host: string): string {
   if (c.email) return `email:${c.email.toLowerCase()}`;
   const name = c.fullName
@@ -143,7 +139,7 @@ function dedupeKeyFor(c: ExtractedCandidate, host: string): string {
  * touching reviewed candidates). Separate from the crawl so it can be tested
  * with fixture pages.
  */
-export async function ingestPages(
+async function ingestPages(
   ctx: { runId: string; sourceId: string; sourceName: string; host: string },
   pages: CrawledPage[],
   log: (line: string) => void,

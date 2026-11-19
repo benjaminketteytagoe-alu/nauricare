@@ -49,7 +49,7 @@ interface SidebarState {
 
 const SidebarContext = createContext<SidebarState | null>(null);
 
-export function useSidebar(): SidebarState {
+function useSidebar(): SidebarState {
   const ctx = useContext(SidebarContext);
   if (!ctx) throw new Error("useSidebar must be used inside <SidebarProvider>");
   return ctx;

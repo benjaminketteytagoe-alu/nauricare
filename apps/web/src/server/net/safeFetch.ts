@@ -10,7 +10,7 @@ import { isIP } from "net";
 // public address for an internal one (cloud metadata, VPC, localhost) after
 // the check. Redirects are followed manually and re-validated.
 
-export class SafeFetchError extends Error {}
+class SafeFetchError extends Error {}
 
 const BLOCKED_V4: [number, number][] = [
   [0x00000000, 8],
@@ -85,7 +85,7 @@ export interface SafeFetchOptions {
   userAgent?: string;
 }
 
-export const CRAWLER_USER_AGENT = "NauriCareBot/1.0 (+https://nauricare.org; provider directory verification)";
+const CRAWLER_USER_AGENT = "NauriCareBot/1.0 (+https://nauricare.org; provider directory verification)";
 
 export async function safeGet(rawUrl: string, opts: SafeFetchOptions = {}): Promise<SafeResponse> {
   const {

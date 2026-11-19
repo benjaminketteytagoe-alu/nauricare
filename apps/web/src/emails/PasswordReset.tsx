@@ -64,5 +64,3 @@ export function PasswordReset({ resetUrl }: PasswordResetProps) {
     </Html>
   );
 }
-
-export default PasswordReset;

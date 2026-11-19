@@ -104,5 +104,3 @@ export function PatientBookingConfirmation({
     </Html>
   );
 }
-
-export default PatientBookingConfirmation;

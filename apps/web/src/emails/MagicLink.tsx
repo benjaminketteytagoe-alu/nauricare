@@ -64,5 +64,3 @@ export function MagicLink({ url }: MagicLinkProps) {
     </Html>
   );
 }
-
-export default MagicLink;

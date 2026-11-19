@@ -114,8 +114,3 @@ type HeaderReader = { get(name: string): string | null };
 export function requestIdFrom(headers: HeaderReader): string | undefined {
   return headers.get("x-request-id") ?? headers.get("cf-ray") ?? undefined;
 }
-
-/** A child logger carrying the request id, for correlating one request's lines. */
-export function requestLogger(headers: HeaderReader, bindings: object = {}) {
-  return logger.child({ requestId: requestIdFrom(headers), ...bindings });
-}

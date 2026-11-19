@@ -67,5 +67,3 @@ export function VerifyEmail({ name, verifyUrl }: VerifyEmailProps) {
     </Html>
   );
 }
-
-export default VerifyEmail;

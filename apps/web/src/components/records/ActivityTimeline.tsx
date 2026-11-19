@@ -53,7 +53,7 @@ const META: Record<PatientActivityType, { icon: LucideIcon; tint: string }> = {
   PROFILE_UPDATED: { icon: UserCog, tint: "bg-slate-100 text-slate-600" },
 };
 
-export const ACTIVITY_FILTERS: { label: string; types: PatientActivityType[] }[] = [
+const ACTIVITY_FILTERS: { label: string; types: PatientActivityType[] }[] = [
   { label: "All", types: [] },
   { label: "AI", types: ["AI_TRIAGE"] },
   { label: "Bookings", types: ["APPOINTMENT_BOOKED", "PRESCRIPTION_ROUTED"] },
