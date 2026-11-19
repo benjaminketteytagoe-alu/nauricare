@@ -1,7 +1,22 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/app/Providers";
 import { SITE_URL as BASE_URL } from "@/lib/site";
+
+// Self-hosted by next/font: downloaded at build time and served from our own
+// origin, so no request ever reaches Google from a visitor's browser.
+const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-fraunces",
+  axes: ["opsz", "SOFT"],
+});
+
+export const viewport: Viewport = {
+  themeColor: "#fbf7f4",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -80,8 +95,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="font-sans min-h-screen bg-gray-50 flex flex-col" suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
+      <body className="flex min-h-screen flex-col bg-canvas font-sans text-ink" suppressHydrationWarning>
         <Providers>
           {/* Global clean workspace canvas container */}
           {children}
