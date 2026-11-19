@@ -162,7 +162,7 @@ export function NauriTriageCard() {
             AI clinical health assistant · reproductive & maternal health
           </p>
         </div>
-        <span className="ml-auto flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+        <span className="ml-auto flex items-center gap-1.5 text-xs font-medium text-success">
           <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden /> Online
         </span>
       </div>
@@ -275,7 +275,7 @@ export function NauriTriageCard() {
               )}
 
               <div className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
-                <Stethoscope className="mt-0.5 h-5 w-5 shrink-0 text-nc-primary" aria-hidden />
+                <Stethoscope className="mt-0.5 h-5 w-5 shrink-0 text-brand-ink" aria-hidden />
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Recommended specialty</p>
                   <p className="font-semibold text-nc-ink">{result.triage.recommendedSpecialty}</p>
@@ -315,7 +315,7 @@ export function NauriTriageCard() {
                 <button
                   type="button"
                   onClick={reset}
-                  className="inline-flex items-center gap-1 font-medium hover:text-nc-primary"
+                  className="inline-flex items-center gap-1 font-medium hover:text-brand-ink"
                 >
                   <RotateCcw className="h-3.5 w-3.5" aria-hidden /> Start over
                 </button>
@@ -325,7 +325,7 @@ export function NauriTriageCard() {
                     <Link
                       href={`/login?redirect=${encodeURIComponent("/dashboard/symptoms")}&action=${result.triageOutcome === "SELF_CARE" ? "save" : "referral"}`}
                       onClick={() => persistPending(result.triageOutcome === "SELF_CARE" ? "save" : "referral")}
-                      className="font-semibold text-nc-primary hover:underline"
+                      className="font-semibold text-brand-ink hover:underline"
                     >
                       Log in
                     </Link>

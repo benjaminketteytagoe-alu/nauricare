@@ -30,7 +30,7 @@ function ResetPasswordForm() {
         <p className="text-gray-500 text-sm">
           This password reset link is missing a token. Please request a new reset link.
         </p>
-        <Link href="/forgot-password" className="text-sm text-teal-600 hover:underline font-medium">
+        <Link href="/forgot-password" className="text-sm text-brand-ink hover:underline font-medium">
           Request new link
         </Link>
       </div>
@@ -65,8 +65,8 @@ function ResetPasswordForm() {
     return (
       <div className="text-center space-y-4">
         <div className="flex justify-center">
-          <div className="bg-teal-50 p-4 rounded-full">
-            <CheckCircle className="w-8 h-8 text-teal-600" />
+          <div className="bg-brand-soft p-4 rounded-full">
+            <CheckCircle className="w-8 h-8 text-brand-ink" />
           </div>
         </div>
         <h2 className="text-2xl font-bold text-gray-900">Password updated</h2>
@@ -95,17 +95,17 @@ function ResetPasswordForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Min. 8 characters, 1 number, 1 special char"
-            className="h-11 focus-visible:ring-teal-600"
+            className="h-11"
           />
         </div>
 
-        <Button type="submit" disabled={loading} className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white">
+        <Button type="submit" disabled={loading} className="w-full h-11">
           {loading ? "Updating password…" : "Update Password"}
         </Button>
       </form>
 
       <p className="text-center">
-        <Link href="/login" className="text-sm text-gray-500 hover:text-teal-600 transition-colors">
+        <Link href="/login" className="text-sm text-gray-500 hover:text-brand-ink transition-colors">
           Back to login
         </Link>
       </p>
@@ -118,7 +118,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-[100dvh] flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-6">
-          <Suspense fallback={<div className="text-center text-gray-400">Loading…</div>}>
+          <Suspense fallback={<div className="text-center text-ink-muted">Loading…</div>}>
             <ResetPasswordForm />
           </Suspense>
         </div>

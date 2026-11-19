@@ -115,7 +115,7 @@ function VerifyCode() {
         </Link>
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-nc-ink">
-            <ShieldCheck className="h-6 w-6 text-nc-primary" aria-hidden /> Check your email
+            <ShieldCheck className="h-6 w-6 text-brand-ink" aria-hidden /> Check your email
           </h1>
           <p className="mt-2 text-sm text-slate-600">
             {maskedEmail ? (
@@ -183,7 +183,7 @@ function VerifyCode() {
             type="button"
             onClick={() => void send()}
             disabled={sending || cooldown > 0}
-            className="font-semibold text-nc-primary hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
+            className="font-semibold text-brand-ink hover:underline disabled:cursor-not-allowed disabled:text-ink-muted disabled:no-underline"
           >
             {cooldown > 0 ? `Resend code in ${cooldown}s` : sending ? "Sending…" : "Resend code"}
           </button>

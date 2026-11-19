@@ -33,7 +33,7 @@ export default function Navbar() {
           <Button variant="ghost" className="h-11 px-2.5 sm:px-4" asChild>
             <Link href="/login">Log in</Link>
           </Button>
-          <Button className="h-11 px-3 sm:px-6 bg-teal-600 hover:bg-teal-700" asChild>
+          <Button className="h-11 px-3 sm:px-6" asChild>
             <Link href="/signup">Get Started</Link>
           </Button>
         </div>

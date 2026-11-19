@@ -18,7 +18,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
       <div className="w-full max-w-md">
         {/* Logo / brand strip */}
         <div className="text-center mb-8">
-          <span className="text-2xl font-extrabold text-teal-700 tracking-tight">NauriCare</span>
+          <span className="text-2xl font-extrabold text-brand-ink tracking-tight">NauriCare</span>
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-8 py-10 space-y-6">{children}</div>
       </div>
@@ -32,8 +32,8 @@ function SuccessCard() {
   return (
     <PageShell>
       <div className="flex flex-col items-center text-center space-y-4">
-        <div className="w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center">
-          <CheckCircle2 className="w-9 h-9 text-teal-600" />
+        <div className="w-16 h-16 bg-brand-soft rounded-full flex items-center justify-center">
+          <CheckCircle2 className="w-9 h-9 text-brand-ink" />
         </div>
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900">Email Verified!</h1>
@@ -43,7 +43,7 @@ function SuccessCard() {
         </div>
         <Link
           href="/login"
-          className="w-full inline-block text-center h-11 leading-[2.75rem] bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold rounded-xl transition-colors"
+          className="w-full inline-block text-center h-11 leading-[2.75rem] bg-brand hover:bg-brand-hover text-on-brand text-sm font-bold rounded-xl transition-colors"
         >
           Log In to Your Account
         </Link>
@@ -88,15 +88,15 @@ function ErrorCard({ reason }: { reason: ErrorReason }) {
 
       <div className="border-t border-gray-100 pt-6 space-y-3">
         <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <Mail className="w-4 h-4 text-teal-600 shrink-0" />
+          <Mail className="w-4 h-4 text-brand-ink shrink-0" />
           Resend verification email
         </div>
         <ResendVerificationForm />
       </div>
 
-      <p className="text-center text-xs text-gray-400">
+      <p className="text-center text-xs text-ink-muted">
         Already verified?{" "}
-        <Link href="/login" className="text-teal-600 hover:underline font-medium">
+        <Link href="/login" className="text-brand-ink hover:underline font-medium">
           Log in
         </Link>
       </p>

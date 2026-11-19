@@ -55,8 +55,8 @@ export default function ForgotPasswordPage() {
           {submitted ? (
             <div className="text-center space-y-4">
               <div className="flex justify-center">
-                <div className="bg-teal-50 p-4 rounded-full">
-                  <CheckCircle className="w-8 h-8 text-teal-600" />
+                <div className="bg-brand-soft p-4 rounded-full">
+                  <CheckCircle className="w-8 h-8 text-brand-ink" />
                 </div>
               </div>
               <h2 className="text-2xl font-bold text-gray-900">Check your email</h2>
@@ -64,10 +64,10 @@ export default function ForgotPasswordPage() {
                 If an account exists for <span className="font-medium text-gray-700">{email}</span>, we&apos;ve sent a
                 password reset link. Check your inbox and spam folder.
               </p>
-              <p className="text-xs text-gray-400">The link expires in 1 hour.</p>
+              <p className="text-xs text-ink-muted">The link expires in 1 hour.</p>
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 text-sm text-teal-600 hover:underline font-medium mt-4"
+                className="inline-flex items-center gap-2 text-sm text-brand-ink hover:underline font-medium mt-4"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back to login
@@ -77,8 +77,8 @@ export default function ForgotPasswordPage() {
             <>
               <div className="text-center space-y-2">
                 <div className="flex justify-center mb-4">
-                  <div className="bg-teal-50 p-3 rounded-full">
-                    <Mail className="w-6 h-6 text-teal-600" />
+                  <div className="bg-brand-soft p-3 rounded-full">
+                    <Mail className="w-6 h-6 text-brand-ink" />
                   </div>
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900">Forgot your password?</h2>
@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="jane@example.com"
-                    className="h-11 focus-visible:ring-teal-600"
+                    className="h-11"
                   />
                 </div>
 
@@ -111,11 +111,7 @@ export default function ForgotPasswordPage() {
                   onError={() => setTurnstileToken("")}
                 />
 
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white"
-                >
+                <Button type="submit" disabled={loading} className="w-full h-11">
                   {loading ? "Sending…" : "Send Reset Link"}
                 </Button>
               </form>
@@ -123,7 +119,7 @@ export default function ForgotPasswordPage() {
               <p className="text-center">
                 <Link
                   href="/login"
-                  className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-teal-600 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-ink transition-colors"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   Back to login

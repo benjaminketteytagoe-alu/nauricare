@@ -139,6 +139,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Playwright smoke + axe
         working-directory: apps/web
+        env:
+          AXE_ENFORCE: "1" # serious/critical axe violations fail the build
         run: npx playwright test
       - name: Lighthouse (budgets warn only)
         uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2

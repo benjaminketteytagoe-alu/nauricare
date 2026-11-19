@@ -142,7 +142,7 @@ export default function LoginPage() {
       <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 py-8 bg-white">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-teal-900">Welcome Back</h2>
+            <h2 className="text-3xl font-bold text-ink">Welcome Back</h2>
             <p className="text-gray-500 mt-2">Log in to your NauriCare account.</p>
           </div>
 
@@ -166,7 +166,7 @@ export default function LoginPage() {
                     <p className="text-amber-700">
                       Please check your inbox for the verification link we sent when you signed up.
                     </p>
-                    <a href="/verify-email" className="inline-block text-teal-600 hover:underline font-medium">
+                    <a href="/verify-email" className="inline-block text-brand-ink hover:underline font-medium">
                       Didn&apos;t get the email? Request a new link →
                     </a>
                   </div>
@@ -174,30 +174,23 @@ export default function LoginPage() {
                   <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{error}</div>
                 ))}
               {successMsg && (
-                <div className="bg-teal-50 text-teal-700 p-3 rounded-md text-sm border border-teal-200 font-medium">
+                <div className="bg-brand-soft text-brand-ink p-3 rounded-md text-sm border border-brand-line font-medium">
                   {successMsg}
                 </div>
               )}
 
               <div className="space-y-1">
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  placeholder="jane@example.com"
-                  className="h-11 focus-visible:ring-teal-600"
-                />
+                <Input id="email" name="email" type="email" required placeholder="jane@example.com" className="h-11" />
               </div>
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <Link href="/forgot-password" className="text-xs text-teal-600 hover:underline">
+                  <Link href="/forgot-password" className="text-xs text-brand-ink hover:underline">
                     Forgot password?
                   </Link>
                 </div>
-                <PasswordInput id="password" name="password" required className="h-11 focus-visible:ring-teal-600" />
+                <PasswordInput id="password" name="password" required className="h-11" />
               </div>
 
               <Turnstile
@@ -209,7 +202,7 @@ export default function LoginPage() {
                 onError={() => setTurnstileToken("")}
               />
 
-              <Button type="submit" className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white" disabled={loading}>
+              <Button type="submit" className="w-full h-11" disabled={loading}>
                 {loading ? "Logging in..." : "Log In"}
               </Button>
 
@@ -220,13 +213,13 @@ export default function LoginPage() {
                   setError("");
                   setSuccessMsg("");
                 }}
-                className="w-full text-center text-sm text-teal-600 hover:underline font-medium"
+                className="w-full text-center text-sm text-brand-ink hover:underline font-medium"
               >
                 Email me a login link instead
               </button>
             </form>
           ) : magicLinkSent ? (
-            <div className="bg-teal-50 text-teal-700 p-4 rounded-xl text-sm border border-teal-200 text-center space-y-1">
+            <div className="bg-brand-soft text-brand-ink p-4 rounded-xl text-sm border border-brand-line text-center space-y-1">
               <p className="font-semibold">Check your inbox!</p>
               <p>We&apos;ve sent a secure login link to your email. You can close this window.</p>
             </div>
@@ -244,7 +237,7 @@ export default function LoginPage() {
                   type="email"
                   required
                   placeholder="jane@example.com"
-                  className="h-11 focus-visible:ring-teal-600"
+                  className="h-11"
                 />
               </div>
 
@@ -257,11 +250,7 @@ export default function LoginPage() {
                 onError={() => setMagicTurnstileToken("")}
               />
 
-              <Button
-                type="submit"
-                className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white"
-                disabled={magicLoading}
-              >
+              <Button type="submit" className="w-full h-11" disabled={magicLoading}>
                 {magicLoading ? "Sending..." : "Send Login Link"}
               </Button>
 
@@ -271,7 +260,7 @@ export default function LoginPage() {
                   setUseMagicLink(false);
                   setMagicError("");
                 }}
-                className="w-full text-center text-sm text-teal-600 hover:underline font-medium"
+                className="w-full text-center text-sm text-brand-ink hover:underline font-medium"
               >
                 Use my password instead
               </button>
@@ -280,13 +269,13 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-gray-600">
             Don&apos;t have an account?{" "}
-            <Link href={`/signup${authParams}`} className="text-teal-600 hover:underline font-semibold">
+            <Link href={`/signup${authParams}`} className="text-brand-ink hover:underline font-semibold">
               Sign up
             </Link>
           </p>
           <p className="text-center text-sm text-gray-600">
             Are you a provider?{" "}
-            <Link href="/signup/provider" className="text-teal-600 hover:underline font-semibold">
+            <Link href="/signup/provider" className="text-brand-ink hover:underline font-semibold">
               Register your practice
             </Link>
           </p>
