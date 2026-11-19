@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 // GET: returns all partner pharmacies for the routing dropdown.
@@ -19,7 +20,7 @@ export async function GET() {
 
     return NextResponse.json(pharmacies);
   } catch (error) {
-    console.error("[PHARMACIES_GET_ERROR]", error);
+    logger.error({ event: "pharmacies_get_error", err: error }, "Pharmacies get error");
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 // A perfect day = 4 completions (100%).
@@ -118,7 +119,7 @@ export async function GET() {
       year: formattedYearData,
     });
   } catch (error) {
-    console.error("[ANALYTICS_ERROR]", error);
+    logger.error({ event: "analytics_error", err: error }, "Analytics error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { parseJson } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 const GoalsInput = z.object({
@@ -100,7 +101,7 @@ export async function GET() {
       })),
     });
   } catch (error) {
-    console.error("[GET_PERSONALIZATION_ERROR]", error);
+    logger.error({ event: "get_personalization_error", err: error }, "Get personalization error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
@@ -122,7 +123,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(updatedProfile);
   } catch (error) {
-    console.error("[POST_PERSONALIZATION_ERROR]", error);
+    logger.error({ event: "post_personalization_error", err: error }, "Post personalization error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

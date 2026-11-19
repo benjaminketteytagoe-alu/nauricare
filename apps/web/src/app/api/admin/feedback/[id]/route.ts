@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 const updateStatusSchema = z.object({
@@ -39,7 +40,7 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     });
     return NextResponse.json(updated);
   } catch (error) {
-    console.error("[ADMIN_FEEDBACK_PATCH_ERROR]", error);
+    logger.error({ event: "admin_feedback_patch_error", err: error }, "Admin feedback patch error");
     return NextResponse.json({ error: "Feedback item not found" }, { status: 404 });
   }
 }

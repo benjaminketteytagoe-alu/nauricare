@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 // GET: returns prescriptions scoped to the caller's role.
@@ -38,7 +39,7 @@ export async function GET() {
 
     return NextResponse.json(prescriptions);
   } catch (error) {
-    console.error("[PRESCRIPTIONS_GET_ERROR]", error);
+    logger.error({ event: "prescriptions_get_error", err: error }, "Prescriptions get error");
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

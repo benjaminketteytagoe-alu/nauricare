@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -41,7 +42,7 @@ export async function GET() {
       lastPeriodDate: latestLog.startDate.toISOString(),
     });
   } catch (error) {
-    console.error("[CYCLE_LATEST_ERROR]", error);
+    logger.error({ event: "cycle_latest_error", err: error }, "Cycle latest error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

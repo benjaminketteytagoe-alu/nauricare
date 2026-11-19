@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { recordActivity } from "@/server/activity/activity.service";
 
@@ -36,7 +37,7 @@ export async function GET() {
       emergencyContact: profile.emergencyContact || "",
     });
   } catch (error) {
-    console.error("[GET_SETTINGS_ERROR]", error);
+    logger.error({ event: "get_settings_error", err: error }, "Get settings error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
     });
     return NextResponse.json(updatedProfile);
   } catch (error) {
-    console.error("[POST_SETTINGS_ERROR]", error);
+    logger.error({ event: "post_settings_error", err: error }, "Post settings error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

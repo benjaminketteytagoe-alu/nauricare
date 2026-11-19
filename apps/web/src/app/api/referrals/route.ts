@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getUserIdWithRole } from "@/lib/auth-guards";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { SPECIALTIES, TRIAGE_SEVERITIES, insuranceLabel, type TriageSeverity } from "@/lib/referrals/constants";
@@ -124,7 +125,7 @@ export async function POST(req: Request) {
         error.code === "P2002" &&
         String(error.meta?.target ?? "").includes("referralCode");
       if (!collision) {
-        console.error("[REFERRAL_CREATE_ERROR]", error);
+        logger.error({ event: "referral_create_error", err: error }, "Referral create error");
         return NextResponse.json({ error: "Could not create your referral." }, { status: 500 });
       }
     }

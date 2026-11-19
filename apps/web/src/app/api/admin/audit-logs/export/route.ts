@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 function csvEscape(value: unknown): string {
@@ -47,7 +48,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("[AUDIT_EXPORT_ERROR]", error);
+    logger.error({ event: "audit_export_error", err: error }, "Audit export error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

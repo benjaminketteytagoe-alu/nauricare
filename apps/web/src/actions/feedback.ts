@@ -6,6 +6,7 @@ import { getSessionUser } from "@/lib/auth-guards";
 import { sendFeedbackEmail } from "@/lib/email";
 import { CSAT_SCALE, FEEDBACK_CATEGORY_LABELS, FEEDBACK_FORM_VALUES } from "@/lib/feedback/categories";
 import { formatDateTime } from "@/lib/format";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
 import { sanitizePlainText } from "@/lib/sanitize";
@@ -75,7 +76,7 @@ export async function submitFeedback(input: SubmitFeedbackInput) {
     revalidatePath("/admin/feedback");
     return { success: true as const, data: { id: feedback.id } };
   } catch (error) {
-    console.error("[SUBMIT_FEEDBACK_ERROR]", error);
+    logger.error({ event: "submit_feedback_error", err: error }, "Submit feedback error");
     return { success: false as const, error: "Failed to submit feedback." };
   }
 }

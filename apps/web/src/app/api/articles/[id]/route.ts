@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> | { id: string } }) {
@@ -18,7 +19,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     return NextResponse.json(article);
   } catch (error) {
-    console.error("[ARTICLE_DETAIL_ERROR]", error);
+    logger.error({ event: "article_detail_error", err: error }, "Article detail error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

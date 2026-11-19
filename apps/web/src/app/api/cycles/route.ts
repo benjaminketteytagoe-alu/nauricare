@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { parseJson } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 const CycleInput = z.object({
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(cycleLog, { status: 201 });
   } catch (error) {
-    console.error("[CYCLE_LOG_ERROR]", error);
+    logger.error({ event: "cycle_log_error", err: error }, "Cycle log error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

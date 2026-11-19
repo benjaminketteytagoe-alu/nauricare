@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { sendMagicLinkEmail } from "@/lib/email";
 import { getClientIp } from "@/lib/getClientIp";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
@@ -60,13 +61,13 @@ export async function POST(req: Request) {
       try {
         await sendMagicLinkEmail({ to: email, url: magicUrl });
       } catch (emailError) {
-        console.error("[MAGIC_LINK_EMAIL_ERROR]", emailError);
+        logger.error({ event: "magic_link_email_error", err: emailError }, "Magic link email error");
       }
     }
 
     return NextResponse.json({ message: "If an account exists, a login link has been sent." });
   } catch (error) {
-    console.error("[MAGIC_LINK_ERROR]", error);
+    logger.error({ event: "magic_link_error", err: error }, "Magic link error");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
