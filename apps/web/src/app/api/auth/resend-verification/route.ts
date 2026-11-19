@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { sendVerificationEmail } from "@/lib/email";
 import { getClientIp } from "@/lib/getClientIp";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
@@ -49,12 +50,12 @@ export async function POST(req: Request) {
     try {
       await sendVerificationEmail({ to: user.email, name: user.name, verifyUrl });
     } catch (emailErr) {
-      console.error("[RESEND_VERIFICATION_EMAIL_ERROR]", emailErr);
+      logger.error({ event: "resend_verification_email_error", err: emailErr }, "Resend verification email error");
     }
 
     return NextResponse.json({ message: "ok" });
   } catch (err) {
-    console.error("[RESEND_VERIFICATION_ERROR]", err);
+    logger.error({ event: "resend_verification_error", err: err }, "Resend verification error");
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }

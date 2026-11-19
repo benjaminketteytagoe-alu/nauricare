@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { parseJson } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { sanitizePlainText } from "@/lib/sanitize";
 
@@ -29,7 +30,7 @@ export async function GET() {
 
     return NextResponse.json(pharmacies, { status: 200 });
   } catch (error) {
-    console.error("[PHARMACY_GET_ERROR]", error);
+    logger.error({ event: "pharmacy_get_error", err: error }, "Pharmacy get error");
     return NextResponse.json({ error: "Failed to fetch pharmacies" }, { status: 500 });
   }
 }
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(newPharmacy, { status: 201 });
   } catch (error) {
-    console.error("[PHARMACY_POST_ERROR]", error);
+    logger.error({ event: "pharmacy_post_error", err: error }, "Pharmacy post error");
     return NextResponse.json({ error: "Failed to add pharmacy" }, { status: 500 });
   }
 }

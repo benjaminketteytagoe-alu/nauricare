@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError, type z } from "zod";
+import { logger } from "@/lib/logger";
 
 // Uniform JSON envelope for route handlers. Success bodies are the data
 // object itself (keeps existing clients working); errors are always
@@ -51,7 +52,7 @@ export async function handle(fn: () => Promise<NextResponse>): Promise<NextRespo
     if (e instanceof Error && typeof (e as { status?: unknown }).status === "number") {
       return apiError(e.message, (e as unknown as { status: number }).status, (e as { code?: string }).code);
     }
-    console.error("[API]", e);
+    logger.error({ event: "api.unhandled_error", err: e }, "Unhandled error in route handler");
     return apiError("Something went wrong. Please try again.", 500);
   }
 }

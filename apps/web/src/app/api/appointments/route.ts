@@ -5,6 +5,7 @@ import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { apiError, parseJson } from "@/lib/api";
 import { sendPatientConfirmationEmail, sendProviderAlertEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { sanitizePlainText } from "@/lib/sanitize";
@@ -179,7 +180,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(appointment, { status: 201 });
   } catch (error) {
-    console.error("[APPOINTMENT_BOOKING_ERROR]", error);
+    logger.error({ event: "appointment_booking_error", err: error }, "Appointment booking error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
@@ -229,7 +230,7 @@ export async function GET() {
     });
     return NextResponse.json(patientSchedule);
   } catch (error) {
-    console.error("[APPOINTMENT_FETCH_ERROR]", error);
+    logger.error({ event: "appointment_fetch_error", err: error }, "Appointment fetch error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

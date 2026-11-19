@@ -13,6 +13,12 @@ test("health endpoint reports ok", async ({ request }) => {
   expect(await res.json()).toMatchObject({ status: "ok" });
 });
 
+test("readiness probe reaches the database", async ({ request }) => {
+  const res = await request.get("/api/health/ready");
+  expect(res.status()).toBe(200);
+  expect(await res.json()).toMatchObject({ status: "ok", checks: { database: "ok" } });
+});
+
 for (const path of PUBLIC_PAGES) {
   test(`public page ${path} renders and is accessible`, async ({ page }, testInfo) => {
     const errors: string[] = [];

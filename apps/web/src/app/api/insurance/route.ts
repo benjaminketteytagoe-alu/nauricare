@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getUserIdWithRole } from "@/lib/auth-guards";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { INSURANCE_VALUES, insuranceLabel, matchListedInsurer } from "@/lib/referrals/constants";
 import { sanitizePlainText } from "@/lib/sanitize";
@@ -81,7 +82,7 @@ export async function PUT(req: Request) {
     });
     return NextResponse.json({ insurance });
   } catch (error) {
-    console.error("[INSURANCE_SAVE_ERROR]", error);
+    logger.error({ event: "insurance_save_error", err: error }, "Insurance save error");
     return NextResponse.json({ error: "Could not save your insurance details." }, { status: 500 });
   }
 }

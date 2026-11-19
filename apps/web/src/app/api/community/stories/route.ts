@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { parseJson } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { sanitizePlainText } from "@/lib/sanitize";
@@ -69,7 +70,7 @@ export async function GET() {
 
     return NextResponse.json(Array.from(groupMap.values()));
   } catch (error) {
-    console.error("[COMMUNITY_STORIES_GET_ERROR]", error);
+    logger.error({ event: "community_stories_get_error", err: error }, "Community stories get error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
@@ -104,7 +105,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(scrubAuthor(story), { status: 201 });
   } catch (error) {
-    console.error("[COMMUNITY_STORIES_POST_ERROR]", error);
+    logger.error({ event: "community_stories_post_error", err: error }, "Community stories post error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { parseJson } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import { parseMentionsAndNotify } from "@/lib/mentions";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
@@ -84,7 +85,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(enriched);
   } catch (error) {
-    console.error("[COMMUNITY_FEED_GET_ERROR]", error);
+    logger.error({ event: "community_feed_get_error", err: error }, "Community feed get error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
@@ -156,7 +157,7 @@ export async function POST(req: Request) {
       { status: 201 },
     );
   } catch (error) {
-    console.error("[COMMUNITY_FEED_POST_ERROR]", error);
+    logger.error({ event: "community_feed_post_error", err: error }, "Community feed post error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { logAdministrativeAction } from "@/lib/audit";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 const createRecordSchema = z.object({
@@ -86,7 +87,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(records);
   } catch (error) {
-    console.error("[EHR_GET_ERROR]", error);
+    logger.error({ event: "ehr_get_error", err: error }, "Ehr get error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
@@ -140,7 +141,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(record, { status: 201 });
   } catch (error) {
-    console.error("[EHR_POST_ERROR]", error);
+    logger.error({ event: "ehr_post_error", err: error }, "Ehr post error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

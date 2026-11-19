@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { sendVerificationEmail } from "@/lib/email";
 import { getClientIp } from "@/lib/getClientIp";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
@@ -161,7 +162,7 @@ export async function POST(req: Request) {
         verifyUrl,
       });
     } catch (emailError) {
-      console.error("[VERIFICATION_EMAIL_ERROR]", emailError);
+      logger.error({ event: "verification_email_error", err: emailError }, "Verification email error");
     }
 
     return NextResponse.json({ message: "User registered successfully", user: userWithoutPassword }, { status: 201 });

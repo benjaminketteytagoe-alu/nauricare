@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getClientIp } from "@/lib/getClientIp";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 
@@ -60,7 +61,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: "Password updated successfully" });
   } catch (error) {
-    console.error("[RESET_PASSWORD_ERROR]", error);
+    logger.error({ event: "reset_password_error", err: error }, "Reset password error");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

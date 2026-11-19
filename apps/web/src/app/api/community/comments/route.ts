@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { parseJson } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import { parseMentionsAndNotify } from "@/lib/mentions";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
@@ -35,7 +36,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(comments.map(scrubAuthor));
   } catch (error) {
-    console.error("[COMMUNITY_COMMENTS_GET_ERROR]", error);
+    logger.error({ event: "community_comments_get_error", err: error }, "Community comments get error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
@@ -87,7 +88,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(scrubAuthor(comment), { status: 201 });
   } catch (error) {
-    console.error("[COMMUNITY_COMMENTS_POST_ERROR]", error);
+    logger.error({ event: "community_comments_post_error", err: error }, "Community comments post error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

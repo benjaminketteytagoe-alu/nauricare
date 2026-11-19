@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> | { id: string } }) {
@@ -31,7 +32,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     return NextResponse.json(appointment);
   } catch (error) {
-    console.error("[TELEHEALTH_AUTH_ERROR]", error);
+    logger.error({ event: "telehealth_auth_error", err: error }, "Telehealth auth error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 const onboardingSchema = z.object({
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
     return NextResponse.json(profile, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal Server Error";
-    console.error("[ONBOARDING_ERROR]", message);
+    logger.error({ event: "onboarding_error", err: message }, "Onboarding error");
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

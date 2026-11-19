@@ -1,0 +1,5 @@
+# cp terraform.tfvars.example terraform.tfvars, fill in, and COMMIT it (CI plans read it).
+account_id        = "<aws-account-id>"
+state_bucket_name = "nauricare-tfstate-<account-id>"
+# state_kms_key_arn  = "<from bootstrap output>"
+# create_oidc_provider = false   # if the account already has token.actions.githubusercontent.com

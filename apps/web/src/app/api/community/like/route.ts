@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { parseJson } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { idSchema } from "@/lib/validation/common";
 import { notify } from "@/server/notifications/notify";
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ liked: true });
   } catch (error) {
-    console.error("[COMMUNITY_LIKE_ERROR]", error);
+    logger.error({ event: "community_like_error", err: error }, "Community like error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

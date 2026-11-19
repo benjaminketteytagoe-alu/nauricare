@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(articles);
   } catch (error) {
-    console.error("[ARTICLES_GET_ERROR]", error);
+    logger.error({ event: "articles_get_error", err: error }, "Articles get error");
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

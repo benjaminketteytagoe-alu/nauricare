@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { getClientIp } from "@/lib/getClientIp";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
@@ -59,12 +60,12 @@ export async function POST(req: Request) {
     try {
       await sendPasswordResetEmail({ to: email, resetUrl });
     } catch (resendError) {
-      console.error("[PASSWORD_RESET_EMAIL_ERROR]", resendError);
+      logger.error({ event: "password_reset_email_error", err: resendError }, "Password reset email error");
     }
 
     return NextResponse.json({ message: "If an account exists, a reset link has been sent." });
   } catch (error) {
-    console.error("[FORGOT_PASSWORD_ERROR]", error);
+    logger.error({ event: "forgot_password_error", err: error }, "Forgot password error");
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
