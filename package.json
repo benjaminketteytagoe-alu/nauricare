@@ -15,7 +15,7 @@
     "test": "turbo run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "make-admin": "tsx apps/web/scripts/make-admin.ts",
+    "staff": "tsx apps/web/scripts/staff-access.ts",
     "prepare": "husky || true"
   },
   "devDependencies": {

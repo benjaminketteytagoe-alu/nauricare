@@ -89,7 +89,7 @@ Staging app secrets live under `/nauricare/staging/` in SSM. Use a separate data
   - require these checks: _Format, Lint, Typecheck, Unit Tests_; _Migrations Apply Cleanly & Match Schema_; _Build, E2E & Accessibility_; _Secret Scan_; _npm audit_
   - require one review and a linear history
   - block force-pushes
-- Enable Dependabot alerts and security updates, and private vulnerability reporting.
+- Enable Dependabot alerts and security updates, private vulnerability reporting, and secret scanning with **push protection**.
 
 ## Day-to-day
 

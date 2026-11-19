@@ -179,4 +179,6 @@ Tests: `npm test` runs Vitest (`*.test.ts` next to the code). `npm run test:e2e 
 
 `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is a Docker build arg, so it is baked into the bundle. All other secrets come from SSM Parameter Store and are injected into the ECS task at runtime.
 
+Secrets: gitleaks runs in CI and in the pre-commit hook (when installed) with the extra rules in `.gitleaks.toml`. Staff accounts are created or rotated with `npm run staff -- invite|rotate|revoke` (single-use set-password link, no plaintext passwords); never commit passwords or hashes. See `docs/runbooks/credential-rotation.md`.
+
 Commits follow Conventional Commits, enforced by commitlint via husky. See `CONTRIBUTING.md`.
