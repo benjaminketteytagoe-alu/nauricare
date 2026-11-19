@@ -1,0 +1,4 @@
+# cp backend.hcl.example backend.hcl && terraform init -backend-config=backend.hcl
+bucket = "nauricare-tfstate-<account-id>"
+key    = "shared/terraform.tfstate"
+region = "us-east-1"

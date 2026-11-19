@@ -62,7 +62,9 @@ packages/
   ui/              — Shared React component library
   eslint-config/   — Shared ESLint config
   typescript-config/
+infra/terraform/   — AWS as code: bootstrap, envs/{shared,staging,production}, modules (see its README)
 docs/adr/          — architecture decision records (read before changing design, avatars, tracking, AI, infra)
+docs/runbooks/     — CI/CD, observability, incident response, data breach, DB restore, credential rotation
 ```
 
 Modules in `apps/web/src/server/**` start with `import "server-only"` so they can never be bundled into client code. Client components may import only _types_ from them.
@@ -109,6 +111,10 @@ Core models:
 ### Prisma client singleton
 
 `src/lib/prisma.ts` exports a singleton `prisma` client. Always import from there.
+
+### Logging and observability
+
+Server code logs through `logger` from `src/lib/logger.ts` (pino, JSON to stdout → CloudWatch), not `console.*`. Use `logger.error({ event: "domain.what_happened", err }, "Message")`. The `event` field is stable and alarms key off it. **Log ids and outcomes, never content**: no request bodies, notes, symptoms, lab values, emails or names. Redaction is a safety net, not permission. `src/instrumentation.ts` logs every uncaught server error (`onRequestError`) and enables OpenTelemetry when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. `/api/health` is liveness (no DB, used by ECS); `/api/health/ready` checks the DB and is used by the uptime alarm. See ADR 0006 and `docs/runbooks/observability.md`.
 
 ### Audit logging
 

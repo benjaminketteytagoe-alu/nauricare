@@ -1,0 +1,11 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+# terraform.tfvars is committed on purpose: it holds non-secret config only (secrets live in SSM).
+backend.hcl
+imports.tf
+override.tf
+*_override.tf
