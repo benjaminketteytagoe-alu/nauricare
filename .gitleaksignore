@@ -1,0 +1,8 @@
+# Known historical findings. Each entry must be rotated BEFORE it is listed here,
+# and must name the incident record. Never add a current (live) secret.
+#
+# 2026-11-19: Admin/Provider passwords in generate-hashes.js (commit c7d4763).
+# File deleted in PR 1; accounts must be rotated with `npm run staff -- rotate`.
+# See docs/runbooks/credential-rotation.md.
+c7d476321f3d437a92a718b70458ef7380a7c6fb:generate-hashes.js:credential-pair-literal:4
+c7d476321f3d437a92a718b70458ef7380a7c6fb:generate-hashes.js:credential-pair-literal:5
