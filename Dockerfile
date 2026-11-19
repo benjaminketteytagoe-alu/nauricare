@@ -82,9 +82,14 @@ RUN addgroup --system --gid 1001 nodejs \
 # one-off task from this same image (ECS `run-task`, or `docker exec ... prisma
 # migrate deploy`) with no package download at deploy time.
 COPY --from=pruner /app/out/package-lock.json /tmp/package-lock.json
+# The package managers are removed afterwards: nothing installs at runtime,
+# and dropping them removes their bundled dependencies' CVEs and attack surface.
 RUN npm install -g "prisma@$(node -p "require('/tmp/package-lock.json').packages['node_modules/prisma'].version")" \
  && rm /tmp/package-lock.json \
- && npm cache clean --force
+ && npm cache clean --force \
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+           /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+           /opt/yarn-* /usr/local/bin/yarn /usr/local/bin/yarnpkg /root/.npm
 
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static

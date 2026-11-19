@@ -1,49 +1,68 @@
-name: NauriCare Enterprise Pipeline
+name: CI
+
+# One pipeline, three stages:
+#   1. checks   quality, database and e2e jobs run in parallel on every PR and push
+#   2. image    on push: build once, scan, attach an SBOM, sign, push to ECR by SHA
+#   3. deploy   develop -> staging, main -> production (manual approval), both
+#               deploying the exact image digest built in stage 2
+# Deploy mechanics live in the reusable deploy-ecs.yml.
 
 on:
   push:
-    branches: ["main", "develop"]
+    branches: [main, develop]
   pull_request:
-    branches: ["main", "develop"]
+    branches: [main, develop]
+  workflow_dispatch:
 
-# Least privilege. AWS access uses the AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY
-# secrets; switch to GitHub OIDC (and grant `id-token: write` only to the AWS
-# jobs) once an IAM role for GitHub Actions exists.
 permissions:
   contents: read
 
-# Supersede in-progress runs for the same PR; never cancel branch pushes,
-# so a half-finished deploy is never interrupted.
+# Supersede in-progress runs for the same PR; never cancel branch pushes, so a
+# half-finished deploy is never interrupted.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   NODE_VERSION: "24"
+  PRISMA_SCHEMA: packages/database/prisma/schema.prisma
   AWS_REGION: us-east-1
   ECR_REPOSITORY: nauricare-api
-  ECS_CLUSTER: default
-  ECS_SERVICE: arn:aws:ecs:us-east-1:706162600712:service/default/nauricare-api-0acf
-  PRISMA_SCHEMA: packages/database/prisma/schema.prisma
-  # Hostnames pointed at the production ECS tasks through Cloudflare (read by
-  # .github/scripts/cloudflare-ecs-dns.sh). deploy-check.* only ever points at
-  # ECS tasks, so it gives a reliable post-deploy check even while the apex
-  # still shares traffic with the old server.
-  DNS_NAMES: nauricare.org www.nauricare.org deploy-check.nauricare.org
-  PRODUCTION_URL: https://nauricare.org
-  DEPLOY_CHECK_URL: https://deploy-check.nauricare.org
+  # Cloudflare's always-pass Turnstile test key; real keys are only used in the image build.
+  TURNSTILE_TEST_SITE_KEY: 1x00000000000000000000AA
 
 jobs:
-  # ==========================================
-  # PHASE 1: CONTINUOUS INTEGRATION (TURBOREPO)
-  # ==========================================
-  build-and-test:
-    name: Build & Typecheck
+  # ===========================================================================
+  # 1. CHECKS
+  # ===========================================================================
+  quality:
+    name: Format, Lint, Typecheck, Unit Tests
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    # Throwaway database: proves every migration applies from scratch and that
-    # the result matches schema.prisma exactly (catches forgotten or broken
-    # migrations before they reach staging or production).
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate --schema="$PRISMA_SCHEMA"
+      - name: Format
+        run: npm run format:check
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Unit tests with coverage
+        run: npm run test:coverage --workspace=web
+      - name: Coverage summary
+        if: always()
+        run: node .github/scripts/coverage-summary.mjs apps/web/coverage/coverage-summary.json >> "$GITHUB_STEP_SUMMARY"
+
+  database:
+    name: Migrations Apply Cleanly & Match Schema
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     services:
       postgres:
         image: postgres:16-alpine
@@ -51,190 +70,126 @@ jobs:
           POSTGRES_USER: ci
           POSTGRES_PASSWORD: ci
           POSTGRES_DB: nauricare_ci
-        ports:
-          - 5432:5432
+        ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U ci -d nauricare_ci"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 12
+          --health-interval 5s --health-timeout 5s --health-retries 12
     env:
       DATABASE_URL: postgresql://ci:ci@localhost:5432/nauricare_ci
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
-        with:
-          lfs: true
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-
-      # Installs exactly what package-lock.json records (same tree as the image).
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Validate Prisma Schema
-        run: npx prisma validate --schema="$PRISMA_SCHEMA"
-
-      - name: Generate Database Client
-        run: npx prisma generate --schema="$PRISMA_SCHEMA"
-
-      - name: Verify Migrations Apply Cleanly and Match the Schema
+          cache: npm
+      - run: npm ci
+      - run: npx prisma validate --schema="$PRISMA_SCHEMA"
+      # Proves every migration applies from scratch and that the result matches
+      # schema.prisma exactly (catches forgotten or broken migrations).
+      - name: Apply migrations and check for drift
         run: |
           npx prisma migrate deploy --schema="$PRISMA_SCHEMA"
-          if ! npx prisma migrate diff \
-                 --from-url "$DATABASE_URL" \
-                 --to-schema-datamodel "$PRISMA_SCHEMA" \
-                 --exit-code; then
+          if ! npx prisma migrate diff --from-url "$DATABASE_URL" \
+                 --to-schema-datamodel "$PRISMA_SCHEMA" --exit-code; then
             echo "::error::schema.prisma has changes with no migration. Create one with 'prisma migrate dev' and commit it."
             exit 1
           fi
 
-      - name: Check Formatting
-        run: npm run format:check
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Unit Tests
-        run: npm test
-
-      - name: Run Build Pipeline
-        run: npm run build
-
-  # ==========================================
-  # PHASE 2: IMMUTABLE ARTIFACT GENERATION (AWS ECR)
-  # ==========================================
-  build-artifact:
-    name: Build & Push to AWS ECR
+  e2e:
+    name: Build, E2E & Accessibility
     runs-on: ubuntu-24.04
-    needs: build-and-test
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: nauricare_ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci -d nauricare_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/nauricare_ci
+      NEXTAUTH_SECRET: ci-only-not-a-secret-0123456789abcdef
+      NEXTAUTH_URL: http://localhost:3100
+      E2E_BASE_URL: http://localhost:3100
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate --schema="$PRISMA_SCHEMA"
+      - run: npx prisma migrate deploy --schema="$PRISMA_SCHEMA"
+      - name: Build
+        env:
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ env.TURNSTILE_TEST_SITE_KEY }}
+        run: npm run build
+      - name: Start the app
+        working-directory: apps/web
+        run: |
+          nohup npx next start -p 3100 > ../../next.log 2>&1 &
+          for _ in $(seq 1 60); do curl -fsS "$E2E_BASE_URL/api/health" >/dev/null && exit 0; sleep 1; done
+          cat ../../next.log; exit 1
+      - name: Install Playwright browser
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+      - name: Playwright smoke + axe
+        working-directory: apps/web
+        run: npx playwright test
+      - name: Lighthouse (budgets warn only)
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2
+        with:
+          urls: |
+            http://localhost:3100/
+            http://localhost:3100/login
+          configPath: apps/web/lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: false
+      - name: Upload test report
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+            next.log
+          retention-days: 7
+
+  # ===========================================================================
+  # 2. IMAGE: built once per commit; deploys reference it by digest
+  # ===========================================================================
+  image:
+    name: Build, Scan, Sign & Push Image
+    runs-on: ubuntu-24.04
+    needs: [quality, database, e2e]
     if: github.event_name == 'push'
     timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write # AWS OIDC + keyless cosign signing
+    outputs:
+      image: ${{ steps.ref.outputs.image }}
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v6
+      # OIDC when an IAM role is configured (vars.AWS_ROLE_ARN); long-lived
+      # keys only as a fallback until infra/terraform's github-oidc module is applied.
+      - name: AWS credentials (OIDC)
+        if: vars.AWS_ROLE_ARN != ''
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      # The commit SHA tag is the immutable release artifact that deploys use.
-      # `latest` only ever points at main; develop builds are tagged `develop`.
-      - name: Compute Image Tags
-        id: meta
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        run: |
-          REPO="${REGISTRY}/${ECR_REPOSITORY}"
-          if [ "$GITHUB_REF" = "refs/heads/main" ]; then CHANNEL=latest; else CHANNEL=develop; fi
-          {
-            echo "tags<<EOF"
-            echo "${REPO}:${GITHUB_SHA}"
-            echo "${REPO}:${CHANNEL}"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build and Push image to AWS ECR
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          platforms: linux/amd64
-          push: true
-          provenance: false
-          tags: ${{ steps.meta.outputs.tags }}
-          build-args: |
-            NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
-            APP_VERSION=${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # ==========================================
-  # PHASE 3: STAGING DEPLOYMENT (DEVELOP BRANCH)
-  # ==========================================
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-24.04
-    needs: build-artifact
-    if: github.ref == 'refs/heads/develop'
-    environment: staging
-    timeout-minutes: 15
-    concurrency:
-      group: deploy-staging
-      cancel-in-progress: false
-    steps:
-      - name: Deploy to Staging Server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.STAGING_SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script_stop: true
-          script: |
-            echo "Staging environment VM sync placeholder trace line"
-
-  # ==========================================
-  # PHASE 4: PRODUCTION DEPLOYMENT (MAIN BRANCH -> AWS ECS + CLOUDFLARE)
-  # ==========================================
-  # No load balancer and no NAT: each Fargate task has a public IP and
-  # Cloudflare proxies nauricare.org straight to it. Release flow:
-  #   1. register a task definition pinned to this commit's image, with an
-  #      ECS health check on /api/health
-  #   2. run database migrations as a one-off task from that image
-  #   3. roll the service out (automatic rollback on failure)
-  #   4. as soon as new tasks are HEALTHY, ADD their IPs to Cloudflare (old
-  #      tasks still serve, so there is no gap)
-  #   5. once the rollout is stable, REMOVE the old tasks' IPs
-  #   6. confirm https://nauricare.org reports this commit's version
-  # The scheduled "Cloudflare DNS Sync" workflow repairs DNS if ECS replaces a
-  # task between deploys (its IP changes).
-  deploy-production:
-    name: Deploy to AWS ECS Fargate & Sync Cloudflare
-    runs-on: ubuntu-24.04
-    needs: build-artifact
-    if: github.ref == 'refs/heads/main'
-    environment: production
-    timeout-minutes: 45
-    concurrency:
-      group: deploy-production
-      cancel-in-progress: false
-    env:
-      CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-    steps:
-      - name: Checkout Deploy Scripts
-        uses: actions/checkout@v7
-        with:
-          sparse-checkout: .github/scripts
-
-      - name: Check Required Secrets
-        run: |
-          missing=0
-          for v in CF_API_TOKEN CF_ZONE_ID; do
-            if [ -z "${!v}" ]; then echo "::error::Secret for $v is not set."; missing=1; fi
-          done
-          exit $missing
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v6
+      - name: AWS credentials (static keys, legacy)
+        if: vars.AWS_ROLE_ARN == ''
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -244,199 +199,109 @@ jobs:
         run: aws sts get-caller-identity
 
       - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@7290e214a610b32bc0eef81748948b6d466a8783 # v2.2.0
 
-      - name: Verify ECS Service
-        run: .github/scripts/ecs-service-check.sh check
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
-      - name: Register Task Definition for This Release
-        id: taskdef
+      # The SHA tag is the release artifact. `latest`/`develop` are convenience
+      # channels only; nothing deploys from them.
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          provenance: false
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.ref_name == 'main' && 'latest' || 'develop' }}
+          build-args: |
+            NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+            APP_VERSION=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Image reference
+        id: ref
+        run: echo "image=${{ steps.ecr.outputs.registry }}/${ECR_REPOSITORY}@${{ steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
+
+      - name: Scan image (fail on fixable CRITICAL)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.ref.outputs.image }}
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          image: ${{ steps.ref.outputs.image }}
+          format: spdx-json
+          artifact-name: sbom-${{ github.sha }}.spdx.json
+
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+      - name: Sign image (keyless, GitHub OIDC)
+        run: cosign sign --yes "${{ steps.ref.outputs.image }}"
+
+      - name: Summary
         env:
-          IMAGE: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
-          # Comma-separated app secrets stored in SSM Parameter Store under
-          # /nauricare/production/ (see .github/scripts/setup-reminder-scheduler.sh).
-          # Empty until the admin setup has run, so deploys never reference a
-          # parameter that doesn't exist (the task would fail to start).
-          APP_SSM_SECRETS: ${{ vars.APP_SSM_SECRETS }}
+          IMAGE: ${{ steps.ref.outputs.image }}
         run: |
-          set -euo pipefail
-          CURRENT_TD=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
-            --query 'services[0].taskDefinition' --output text)
-          if [ -z "$CURRENT_TD" ] || [ "$CURRENT_TD" = "None" ]; then
-            echo "::error::ECS service '$ECS_SERVICE' was not found in cluster '$ECS_CLUSTER'."
-            exit 1
-          fi
-          aws ecs describe-task-definition --task-definition "$CURRENT_TD" --query taskDefinition > current-taskdef.json
+          {
+            echo "### Image"
+            echo "- \`$IMAGE\` (signed, SBOM attached)"
+          } >> "$GITHUB_STEP_SUMMARY"
 
-          # The app container is the one whose image comes from our ECR repo.
-          REPO_URI="${IMAGE%:*}"
-          CONTAINER=$(jq -r --arg repo "$REPO_URI" \
-            '[.containerDefinitions[] | select(.image | startswith($repo))][0].name // empty' current-taskdef.json)
-          if [ -z "$CONTAINER" ]; then
-            echo "::error::No container in $CURRENT_TD runs an image from $REPO_URI."
-            exit 1
-          fi
+  # ===========================================================================
+  # 3. DEPLOY
+  # ===========================================================================
+  # Skipped (not failed) until the staging service exists; set the
+  # STAGING_ECS_SERVICE / STAGING_DNS_NAMES / STAGING_URL variables to enable.
+  deploy-staging:
+    name: Staging
+    needs: image
+    if: github.ref == 'refs/heads/develop' && vars.STAGING_ECS_SERVICE != ''
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy-ecs.yml
+    with:
+      environment: staging
+      image: ${{ needs.image.outputs.image }}
+      aws_region: us-east-1
+      ecs_cluster: ${{ vars.STAGING_ECS_CLUSTER || 'nauricare-staging' }}
+      ecs_service: ${{ vars.STAGING_ECS_SERVICE }}
+      dns_names: ${{ vars.STAGING_DNS_NAMES }}
+      public_url: ${{ vars.STAGING_URL }}
+      check_url: ${{ vars.STAGING_URL }}
+      ssm_prefix: /nauricare/staging/
+    secrets: inherit
 
-          # Pin the image to this commit. Add an ECS health check if the task
-          # definition has none: without a load balancer it is the only signal
-          # ECS (and the DNS sync) has that a task is actually serving.
-          # App secrets: ECS injects them at task start from SSM (by ARN); the
-          # values never pass through this workflow. Same-named plain env vars
-          # are dropped so the secret is the only source.
-          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          SECRETS=$(jq -nc --arg names "${APP_SSM_SECRETS:-}" \
-            --arg prefix "arn:aws:ssm:${AWS_REGION}:${ACCOUNT_ID}:parameter/nauricare/production/" '
-            [$names | split(",")[] | gsub("\\s"; "") | select(test("^[A-Z][A-Z0-9_]*$"))
-             | {name: ., valueFrom: ($prefix + .)}]')
-          echo "App secrets from SSM: $(jq -r 'map(.name) | join(", ") | if . == "" then "none" else . end' <<<"$SECRETS")"
-
-          jq --arg img "$IMAGE" --arg c "$CONTAINER" --argjson s "$SECRETS" '
-            ($s | map(.name)) as $names
-            | .containerDefinitions |= map(
-              if .name == $c then
-                .image = $img
-                | .secrets = (((.secrets // []) | map(select(.name as $n | $names | index($n) | not))) + $s)
-                | .environment = ((.environment // []) | map(select(.name as $n | $names | index($n) | not)))
-                | .healthCheck //= {
-                    command: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health >/dev/null || exit 1"],
-                    interval: 15, timeout: 5, retries: 3, startPeriod: 30
-                  }
-              else . end)
-            | del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
-                  .compatibilities, .registeredAt, .registeredBy, .deregisteredAt)
-          ' current-taskdef.json > release-taskdef.json
-
-          NEW_TD=$(aws ecs register-task-definition --cli-input-json file://release-taskdef.json \
-            --query 'taskDefinition.taskDefinitionArn' --output text)
-          echo "Registered $NEW_TD (container '$CONTAINER' -> $IMAGE)"
-          echo "arn=$NEW_TD" >> "$GITHUB_OUTPUT"
-          echo "container=$CONTAINER" >> "$GITHUB_OUTPUT"
-
-      # Runs `prisma migrate deploy` from the new image, with the same network
-      # and runtime configuration (DATABASE_URL etc.) as the service itself.
-      - name: Run Database Migrations
-        env:
-          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
-          CONTAINER: ${{ steps.taskdef.outputs.container }}
-        run: |
-          set -euo pipefail
-          aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
-            --query 'services[0]' > service.json
-          if [ "$(jq -r '.networkConfiguration.awsvpcConfiguration.assignPublicIp' service.json)" != "ENABLED" ]; then
-            echo "::error::$ECS_SERVICE must have assignPublicIp=ENABLED (no NAT: tasks need it to reach ECR, the database and Cloudflare)."
-            exit 1
-          fi
-          NETWORK=$(jq -c '.networkConfiguration' service.json)
-          if [ "$(jq '.capacityProviderStrategy | length' service.json)" -gt 0 ]; then
-            PLACEMENT=(--capacity-provider-strategy "$(jq -c '.capacityProviderStrategy' service.json)")
-          else
-            PLACEMENT=(--launch-type "$(jq -r '.launchType // "FARGATE"' service.json)")
-          fi
-          OVERRIDES=$(jq -nc --arg c "$CONTAINER" --arg s "$PRISMA_SCHEMA" \
-            '{containerOverrides: [{name: $c, command: ["prisma", "migrate", "deploy", ("--schema=" + $s)]}]}')
-
-          aws ecs run-task --cluster "$ECS_CLUSTER" --task-definition "$TASK_DEF" \
-            --network-configuration "$NETWORK" "${PLACEMENT[@]}" \
-            --overrides "$OVERRIDES" --started-by "gha-migrate-${GITHUB_RUN_ID}" > run-task.json
-          if [ "$(jq '.failures | length' run-task.json)" -gt 0 ]; then
-            echo "::error::Could not start the migration task: $(jq -c '.failures' run-task.json)"
-            exit 1
-          fi
-          TASK_ARN=$(jq -r '.tasks[0].taskArn' run-task.json)
-          echo "Migration task: $TASK_ARN"
-
-          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN"
-          aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN" > task.json
-          EXIT_CODE=$(jq -r --arg c "$CONTAINER" '.tasks[0].containers[] | select(.name == $c) | .exitCode // "none"' task.json)
-          if [ "$EXIT_CODE" != "0" ]; then
-            echo "::error::Database migrations failed (exit code: $EXIT_CODE, reason: $(jq -r '.tasks[0].stoppedReason' task.json)). The service was NOT updated. See the task's CloudWatch logs."
-            exit 1
-          fi
-          echo "Migrations applied."
-
-      - name: Start Rollout
-        env:
-          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
-        run: |
-          set -euo pipefail
-          # 200/100: a new task starts before an old one stops. The circuit
-          # breaker rolls back automatically if new tasks never become healthy.
-          aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" \
-            --task-definition "$TASK_DEF" --force-new-deployment \
-            --deployment-configuration "maximumPercent=200,minimumHealthyPercent=100,deploymentCircuitBreaker={enable=true,rollback=true}" \
-            > /dev/null
-
-      - name: Add New Tasks to Cloudflare as Soon as They Are Healthy
-        env:
-          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
-          MODE: add
-        run: |
-          set -euo pipefail
-          # Up to ~10 minutes for the first new task to pass its health check.
-          # Output is captured so expected "not healthy yet" messages don't
-          # appear as errors; only the final attempt's output is shown.
-          LAST_OUTPUT=""
-          for _ in $(seq 1 60); do
-            if LAST_OUTPUT=$(.github/scripts/cloudflare-ecs-dns.sh 2>&1); then
-              echo "$LAST_OUTPUT"
-              exit 0
-            fi
-            ROLLOUT=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
-              --query "services[0].deployments[?taskDefinition=='$TASK_DEF'].rolloutState | [0]" --output text)
-            if [ "$ROLLOUT" = "FAILED" ]; then
-              echo "::error::The new tasks failed their health checks and ECS rolled back. Check the task logs."
-              exit 1
-            fi
-            sleep 10
-          done
-          echo "${LAST_OUTPUT//::error::/Last attempt: }"
-          echo "::error::No new task became healthy within 10 minutes."
-          exit 1
-
-      - name: Wait for the Rollout to Finish
-        env:
-          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
-        run: |
-          set -euo pipefail
-          aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE"
-          # A rollback also ends "stable" -- make sure it is OUR release running.
-          PRIMARY_TD=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
-            --query "services[0].deployments[?status=='PRIMARY'].taskDefinition | [0]" --output text)
-          if [ "$PRIMARY_TD" != "$TASK_DEF" ]; then
-            echo "::error::ECS rolled back to $PRIMARY_TD. This release is not live."
-            exit 1
-          fi
-
-      - name: Remove Old Tasks from Cloudflare
-        env:
-          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
-          MODE: reconcile
-        run: .github/scripts/cloudflare-ecs-dns.sh
-
-      - name: Verify the ECS Tasks Serve This Release Through Cloudflare
-        run: |
-          set -euo pipefail
-          for _ in $(seq 1 24); do
-            VERSION=$(curl -fsS --max-time 10 "$DEPLOY_CHECK_URL/api/health" 2>/dev/null | jq -r '.version // empty' || true)
-            if [ "$VERSION" = "$GITHUB_SHA" ]; then
-              echo "$DEPLOY_CHECK_URL is serving $GITHUB_SHA."
-              {
-                echo "### Production deploy"
-                echo "- Commit: \`$GITHUB_SHA\` is live at $PRODUCTION_URL"
-                echo "- Task definition: \`${{ steps.taskdef.outputs.arn }}\`"
-              } >> "$GITHUB_STEP_SUMMARY"
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "::error::$DEPLOY_CHECK_URL/api/health did not report $GITHUB_SHA within 2 minutes (last seen: ${VERSION:-no response}). Check the Cloudflare Origin Rule (port 3000), SSL mode and the security group."
-          exit 1
-
-      # If anything above failed, point DNS at whatever is healthy right now
-      # (old tasks after a rollback), so the site is never left dark.
-      - name: Repair Cloudflare DNS After a Failure
-        if: failure() && steps.taskdef.outcome == 'success'
-        env:
-          MODE: reconcile
-        run: .github/scripts/cloudflare-ecs-dns.sh
+  # The `production` environment should require a reviewer
+  # (Settings > Environments > production > Required reviewers).
+  deploy-production:
+    name: Production
+    needs: image
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy-ecs.yml
+    with:
+      environment: production
+      image: ${{ needs.image.outputs.image }}
+      aws_region: us-east-1
+      # Pinned in the workflow on purpose (not repository variables), so a
+      # stray variable can never redirect production deploys.
+      ecs_cluster: default
+      ecs_service: arn:aws:ecs:us-east-1:706162600712:service/default/nauricare-api-0acf
+      dns_names: nauricare.org www.nauricare.org deploy-check.nauricare.org
+      public_url: https://nauricare.org
+      # deploy-check.* only ever points at ECS tasks, so it verifies the new
+      # release even while the apex still shares traffic with the old server.
+      check_url: https://deploy-check.nauricare.org
+      ssm_prefix: /nauricare/production/
+    secrets: inherit

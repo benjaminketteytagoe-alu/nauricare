@@ -163,12 +163,19 @@ Use `error.issues[0]` not `error.errors[0]` — the property was renamed in v4. 
 
 ## CI/CD
 
-GitHub Actions pipeline (`.github/workflows/ci.yml`):
+See `docs/runbooks/ci-cd.md` for the full picture and the one-off setup. In short:
 
-1. **Build & test**: runs on all pushes and PRs. It applies every migration to a throwaway Postgres and fails on schema drift, then runs lint and build.
-2. **Image**: on every push, it builds the image and pushes it to AWS ECR, tagged with the commit SHA (plus `latest` for main or `develop` for develop).
-3. **Staging**: deploys from `develop`. This is still a placeholder; see ADR-0005 and the upgrade plan.
-4. **Production**: `main` deploys to ECS Fargate. It registers a task definition pinned to the SHA, then runs `prisma migrate deploy` as a one-off task, then does a rolling deploy with automatic rollback. Cloudflare DNS is synced to the new task IPs, and the deploy is verified through `/api/health`.
+1. **Checks** (`ci.yml`, every PR and push): three parallel jobs.
+   - format, type-aware lint, typecheck and Vitest unit tests with coverage
+   - migrations applied to a throwaway Postgres, with a schema-drift check
+   - build, then Playwright smoke + axe against `next start`, then Lighthouse
+2. **Image** (push only): built once per commit, Trivy-scanned (fixable CRITICAL fails), given an SBOM, signed with keyless cosign, and pushed to ECR.
+3. **Deploy**: the reusable `deploy-ecs.yml` deploys `develop` to staging and `main` to production. Production needs approval. Both deploy the same image **digest**. The deploy registers the task definition, runs `prisma migrate deploy` as a one-off task, then does a rolling deploy with automatic rollback. It then syncs Cloudflare DNS, verifies `/api/health` and smoke-tests key pages. Staging is skipped until `vars.STAGING_ECS_SERVICE` is set.
+4. **Security** (`security.yml`): CodeQL, dependency review, `npm audit` against `.github/audit-allowlist.json` (entries expire), gitleaks, hadolint and actionlint.
+
+Pin new GitHub Actions to a full commit SHA with the version in a comment. AWS access uses OIDC when `vars.AWS_ROLE_ARN` is set.
+
+Tests: `npm test` runs Vitest (`*.test.ts` next to the code). `npm run test:e2e -w web` runs Playwright (`apps/web/e2e/`) against a built app on port 3100, or against `E2E_BASE_URL`.
 
 `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is a Docker build arg, so it is baked into the bundle. All other secrets come from SSM Parameter Store and are injected into the ECS task at runtime.
 

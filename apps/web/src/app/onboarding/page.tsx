@@ -1,9 +1,11 @@
 "use client";
 
 import { ShieldAlert, HeartPulse } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function OnboardingPage() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,9 +39,10 @@ export default function OnboardingPage() {
         throw new Error(errData?.error || errData?.message || "Failed to save profile. Please try again.");
       }
 
-      // FIX 2: Force a hard browser navigation. This completely destroys the Next.js
-      // client-side cache and forces the server to evaluate your new database profile.
-      window.location.href = "/dashboard";
+      // Drop the client router cache so the (force-dynamic) dashboard renders
+      // from the server with the newly saved profile.
+      router.refresh();
+      router.replace("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save profile. Please try again.");
       setIsLoading(false);
