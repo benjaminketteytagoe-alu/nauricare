@@ -1,7 +1,9 @@
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { apiError, apiSuccess, handle, parseJson } from "@/lib/api";
+import { logAdministrativeAction } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth-guards";
+import { getClientIp } from "@/lib/getClientIp";
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rateLimit";
 import { passwordField } from "@/lib/validation/password";
@@ -92,12 +94,12 @@ export async function POST(req: Request) {
       },
     });
 
-    await prisma.auditEvent.create({
-      data: {
-        userId: auth.user.id,
-        action: "ONBOARD_PROVIDER",
-        details: { providerId: newProvider.id, email: newProvider.email },
-      },
+    await logAdministrativeAction({
+      action: "PROVIDER_REGISTER",
+      actorId: auth.user.id,
+      targetId: newProvider.id,
+      details: { via: "admin-onboard", providerEmail: newProvider.email },
+      ipAddress: getClientIp(req.headers),
     });
 
     return apiSuccess(newProvider, 201);

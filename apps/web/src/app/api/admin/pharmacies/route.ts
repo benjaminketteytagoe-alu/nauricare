@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { apiSuccess, handle, parseJson } from "@/lib/api";
+import { logAdministrativeAction } from "@/lib/audit";
 import { requireApiUser } from "@/lib/auth-guards";
+import { getClientIp } from "@/lib/getClientIp";
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit } from "@/lib/rateLimit";
 import { sanitizePlainText } from "@/lib/sanitize";
@@ -39,8 +41,12 @@ export async function POST(req: Request) {
         tags: (tags ?? []).map(sanitizePlainText).filter(Boolean),
       },
     });
-    await prisma.auditEvent.create({
-      data: { userId: auth.user.id, action: "ADD_PHARMACY", details: { pharmacyId: pharmacy.id, name: pharmacy.name } },
+    await logAdministrativeAction({
+      action: "ADMIN_SETTINGS_UPDATE",
+      actorId: auth.user.id,
+      targetId: pharmacy.id,
+      details: { change: "pharmacy_added", name: pharmacy.name },
+      ipAddress: getClientIp(req.headers),
     });
     return apiSuccess(pharmacy, 201);
   });

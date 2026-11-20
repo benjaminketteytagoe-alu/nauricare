@@ -17,12 +17,12 @@ export default async function AdminOverviewPage() {
 
   const yesterday = new Date();
   yesterday.setHours(yesterday.getHours() - 24);
-  const recentEvents = await prisma.auditEvent.count({
+  const recentEvents = await prisma.auditLog.count({
     where: { createdAt: { gte: yesterday } },
   });
 
   // 2. Analytics Aggregation: Group audit events to see where engagement is happening
-  const eventStats = await prisma.auditEvent.groupBy({
+  const eventStats = await prisma.auditLog.groupBy({
     by: ["action"],
     _count: {
       action: true,
