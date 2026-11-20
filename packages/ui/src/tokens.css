@@ -275,6 +275,13 @@
   --shadow-card: 0 1px 2px rgb(42 22 49 / 0.04), 0 4px 16px -4px rgb(42 22 49 / 0.06);
   --shadow-raised: 0 2px 4px rgb(42 22 49 / 0.05), 0 12px 32px -8px rgb(42 22 49 / 0.12);
   --shadow-button: inset 0 1px 0 rgb(255 255 255 / 0.18), 0 1px 2px rgb(42 22 49 / 0.12);
+  /* Tactile stacked shadow for the one hero call to action, adapted from
+     Pixel Perfect's "Premium button" (MIT) and tinted plum. */
+  --shadow-premium:
+    0.44px 0.44px 0.63px -1px rgb(94 34 51 / 0.26), 1.21px 1.21px 1.71px -1.5px rgb(94 34 51 / 0.24),
+    2.66px 2.66px 3.76px -2.25px rgb(94 34 51 / 0.22), 5.9px 5.9px 8.35px -3px rgb(94 34 51 / 0.18),
+    10px 10px 21.2px -3.75px rgb(94 34 51 / 0.08), inset 1px 1px 1px rgb(255 255 255 / 0.28),
+    inset -1px -1px 1px rgb(54 17 28 / 0.3);
 
   /* Motion: short and calm. Everything collapses under reduced motion. */
   --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
@@ -282,6 +289,7 @@
   --animate-rise: rise 480ms var(--ease-editorial) both;
   --animate-fade: fade 320ms var(--ease-editorial) both;
   --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-sheen: sheen 700ms var(--ease-editorial) both;
 
   @keyframes rise {
     from {
@@ -299,6 +307,15 @@
     }
     to {
       opacity: 1;
+    }
+  }
+  /* A light sweep across a button on hover (Pixel Perfect "Shiny button", MIT). */
+  @keyframes sheen {
+    from {
+      transform: translateX(-120%);
+    }
+    to {
+      transform: translateX(120%);
     }
   }
   @keyframes shimmer {

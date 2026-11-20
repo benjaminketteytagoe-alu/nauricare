@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 /**
  * Masked line reveal for display headings: each line slides up from behind
  * a clip. Modelled on Pixel Perfect's GSAP "Text reveal" (MIT, see
- * THIRD_PARTY_NOTICES.md) but written from scratch on Framer Motion.
+ * THIRD_PARTY_NOTICES.txt) but written from scratch on Framer Motion.
  */
 export function TextReveal({
   lines,
@@ -71,7 +71,7 @@ export function Reveal({
 /**
  * Confirmation mark: a check that draws in over two expanding rings, played
  * once (never looping). Adapted from Pixel Perfect's "Success ripple
- * animation" (MIT, see THIRD_PARTY_NOTICES.md).
+ * animation" (MIT, see THIRD_PARTY_NOTICES.txt).
  */
 export function SuccessMark({ label = "Done", className }: { label?: string; className?: string }) {
   return (

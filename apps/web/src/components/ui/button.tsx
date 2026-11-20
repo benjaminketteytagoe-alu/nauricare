@@ -5,7 +5,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 // The primary variant's inset top highlight and press scale are adapted from
-// Pixel Perfect's "Stripe button" (MIT, see THIRD_PARTY_NOTICES.md), recoloured
+// Pixel Perfect's "Stripe button" (MIT, see THIRD_PARTY_NOTICES.txt), recoloured
 // to the brand tokens. The press scale is a transform, so reduced motion
 // removes it with every other transition.
 const buttonVariants = cva(
@@ -14,6 +14,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-brand text-on-brand shadow-button hover:bg-brand-hover active:bg-brand-pressed",
+        // The one hero call to action: Pixel Perfect's "Premium button" depth
+        // and "Shiny button" sweep (MIT), on the brand gradient. Both ends of
+        // the gradient are contrast-tested against on-brand.
+        premium:
+          "relative isolate overflow-hidden bg-[linear-gradient(145deg,var(--nc-brand),var(--nc-brand-hover))] text-on-brand shadow-premium after:pointer-events-none after:absolute after:inset-0 after:-z-10 after:-translate-x-[120%] after:bg-[linear-gradient(105deg,transparent_30%,rgb(255_255_255/0.32)_50%,transparent_70%)] hover:after:animate-sheen active:bg-brand-pressed",
         secondary: "bg-surface-muted text-ink hover:bg-hairline",
         outline: "border border-field bg-surface text-ink hover:border-ink-muted hover:bg-surface-muted",
         ghost: "text-ink-soft hover:bg-surface-muted hover:text-ink",

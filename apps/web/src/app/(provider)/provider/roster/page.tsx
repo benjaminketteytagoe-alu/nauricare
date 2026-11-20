@@ -1,5 +1,6 @@
 import { Users, Search, Calendar, ShieldAlert } from "lucide-react";
 import Link from "next/link";
+import { Avatar } from "@/components/avatar/Avatar";
 import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { AppointmentStatusButton } from "./AppointmentStatusButton";
@@ -24,7 +25,7 @@ export default async function ProviderRosterPage() {
   const patients = await prisma.patientProfile.findMany({
     where: { appointments: { some: { practitionerProfileId: practitioner.id } } },
     include: {
-      user: { select: { name: true, email: true, phoneNumber: true } },
+      user: { select: { name: true, email: true, phoneNumber: true, avatarUrl: true } },
       appointments: {
         where: { practitionerProfileId: practitioner.id },
         orderBy: { startTime: "desc" },
@@ -80,9 +81,12 @@ export default async function ProviderRosterPage() {
                 {/* Card header */}
                 <div className="p-6 border-b border-hairline">
                   <div className="flex justify-between items-start mb-4">
-                    <div className="w-12 h-12 bg-info-soft text-info rounded-full flex items-center justify-center font-bold text-xl">
-                      {patient.user.name.charAt(0)}
-                    </div>
+                    <Avatar
+                      name={patient.user.name}
+                      avatarUrl={patient.user.avatarUrl}
+                      size="lg"
+                      className="!size-12"
+                    />
                     {patient.healthGoals.length > 0 && (
                       <span className="bg-brand-soft text-brand-ink text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
                         <ShieldAlert className="w-3 h-3" /> Targeted

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { NauriTriageCard } from "@/components/nauri/NauriTriageCard";
 import { Button } from "@/components/ui/button";
 import { Reveal, TextReveal } from "@/components/ui/motion";
+import { SparkleField } from "@/components/ui/sparkle-field";
 import { EMERGENCY_NUMBERS } from "@/lib/site";
 
 // Landing page, "Warm editorial" (ADR 0001). Ivory canvas, plum ink, rose for
@@ -86,6 +87,7 @@ export default function LandingPageClient() {
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(48rem_32rem_at_8%_-8%,var(--nc-brand-soft),transparent_70%),radial-gradient(40rem_28rem_at_100%_30%,var(--nc-warning-soft),transparent_70%)]"
         />
+        <SparkleField className="-z-10 [mask-image:radial-gradient(ellipse_at_30%_40%,black,transparent_75%)]" />
         <div className="mx-auto grid w-full max-w-7xl grid-cols-[minmax(0,1fr)] items-center gap-12 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-16 lg:px-8 lg:py-24">
           <div className="space-y-8 text-center lg:text-left">
             <Eyebrow>Women&apos;s health · Kigali and across Africa</Eyebrow>
@@ -111,7 +113,7 @@ export default function LandingPageClient() {
 
             <Reveal delay={0.3}>
               <div className="flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
-                <Button size="lg" className="group w-full sm:w-auto" asChild>
+                <Button size="lg" variant="premium" className="group w-full sm:w-auto" asChild>
                   <Link href="/signup">
                     Create your account
                     <ArrowRight className="transition-transform group-hover:translate-x-0.5" aria-hidden />
@@ -265,7 +267,7 @@ export default function LandingPageClient() {
               <div>
                 <Button
                   size="lg"
-                  className="group bg-ink-inverse text-ink hover:bg-brand-soft active:bg-brand-line"
+                  className="group relative isolate overflow-hidden bg-ink-inverse text-ink shadow-premium after:pointer-events-none after:absolute after:inset-0 after:-z-10 after:-translate-x-[120%] after:bg-[linear-gradient(105deg,transparent_30%,var(--nc-brand-soft)_50%,transparent_70%)] hover:bg-brand-soft hover:after:animate-sheen active:bg-brand-line"
                   asChild
                 >
                   <Link href="/signup">
