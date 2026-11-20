@@ -13,7 +13,7 @@
 
 # Node 24 is the active LTS and matches the CI test job (Node 20 reached EOL
 # in April 2026). openssl lets Prisma detect the OpenSSL 3 engine on Alpine.
-FROM node:24-alpine AS base
+FROM node:26-alpine AS base
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1 \
