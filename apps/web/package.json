@@ -25,7 +25,7 @@
     "@nauricare/database": "*",
     "@nauricare/ui": "*",
     "@next-auth/prisma-adapter": "^1.0.7",
-    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/api": "^1.10.0",
     "@opentelemetry/api-logs": "^0.223.2",
     "@opentelemetry/instrumentation": "^0.223.2",
     "@opentelemetry/resources": "^2.12.1",
