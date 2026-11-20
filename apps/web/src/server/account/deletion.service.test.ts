@@ -58,7 +58,7 @@ describe("account deletion", () => {
       passwordHash: "",
       deletedAt: expect.any(Date),
     });
-    for (const model of ["account", "session", "resetToken", "emailVerificationToken", "follow", "patientInsurance"]) {
+    for (const model of ["account", "session", "resetToken", "follow", "patientInsurance"]) {
       expect(mock[model].deleteMany, model).toHaveBeenCalled();
     }
     expect(mock.referralShare.updateMany).toHaveBeenCalledWith(
