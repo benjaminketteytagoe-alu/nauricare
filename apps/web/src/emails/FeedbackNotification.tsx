@@ -1,4 +1,5 @@
-import { Body, Container, Head, Heading, Hr, Html, Preview, Section, Tailwind, Text } from "@react-email/components";
+import { Heading, Hr, Text } from "@react-email/components";
+import { EmailShell } from "./EmailShell";
 
 export interface FeedbackNotificationProps {
   userName: string;
@@ -24,32 +25,28 @@ export function FeedbackNotification(props: FeedbackNotificationProps) {
     ["Reference", props.feedbackId],
   ];
   return (
-    <Html lang="en">
-      <Head />
-      <Preview>{`${props.category} feedback, ${props.rating}/5, from ${props.userName}`}</Preview>
-      <Tailwind>
-        <Body className="bg-gray-50 font-sans">
-          <Container className="mx-auto max-w-lg px-4 py-8">
-            <Section className="rounded-t-2xl bg-[#1D4ED8] px-8 py-6">
-              <Heading className="m-0 text-xl font-bold text-white">New NauriCare feedback</Heading>
-              <Text className="mb-0 mt-1 text-sm text-blue-100">{props.category}</Text>
-            </Section>
-            <Section className="rounded-b-2xl border border-gray-100 bg-white px-8 py-6">
-              {rows.map(([label, value]) => (
-                <Text key={label} className="my-1 text-sm text-gray-700">
-                  <strong className="text-gray-900">{label}:</strong> {value}
-                </Text>
-              ))}
-              <Hr className="my-5 border-gray-200" />
-              <Text className="mb-1 mt-0 text-sm font-semibold text-gray-900">Message</Text>
-              <Text className="mt-0 whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{props.message}</Text>
-            </Section>
-            <Text className="text-center text-xs text-gray-400">
-              Reply to this email to respond to the user directly.
-            </Text>
-          </Container>
-        </Body>
-      </Tailwind>
-    </Html>
+    <EmailShell
+      preview={`${props.category} feedback, ${props.rating}/5, from ${props.userName}`}
+      footer={
+        <>
+          <Text className="text-center text-xs text-ink-muted">
+            Reply to this email to respond to the user directly.
+          </Text>
+        </>
+      }
+    >
+      <Heading as="h1" className="mb-1 mt-0 font-display text-xl font-bold text-ink">
+        New feedback
+      </Heading>
+      <Text className="mb-4 mt-0 text-sm text-ink-muted">{props.category}</Text>
+      {rows.map(([label, value]) => (
+        <Text key={label} className="my-1 text-sm text-ink-soft">
+          <strong className="text-ink">{label}:</strong> {value}
+        </Text>
+      ))}
+      <Hr className="my-5 border-hairline" />
+      <Text className="mb-1 mt-0 text-sm font-semibold text-ink">Message</Text>
+      <Text className="mt-0 whitespace-pre-wrap text-sm leading-relaxed text-ink-soft">{props.message}</Text>
+    </EmailShell>
   );
 }
