@@ -68,6 +68,51 @@
   @apply inline-flex items-center gap-1.5 rounded-lg border border-field bg-surface px-3 py-1.5 text-sm font-medium text-ink-soft transition-colors hover:bg-surface-muted aria-pressed:border-brand aria-pressed:bg-brand-soft aria-pressed:text-brand-ink;
 }
 
+/* Landing motion: slow, ambient loops. All of them are transforms, so the
+   reduced-motion rule in tokens.css freezes them, and the marquee and orbit
+   also have their own pause buttons (WCAG 2.2.2). */
+@theme {
+  --animate-drift: drift 24s ease-in-out infinite alternate;
+  --animate-drift-slow: drift 32s ease-in-out infinite alternate-reverse;
+  --animate-marquee: marquee 48s linear infinite;
+  --animate-orbit: orbit 70s linear infinite;
+  --animate-orbit-reverse: orbit 70s linear infinite reverse;
+  --animate-orbit-fast: orbit 46s linear infinite reverse;
+  --animate-orbit-fast-reverse: orbit 46s linear infinite;
+  --animate-bob: bob 7s ease-in-out infinite;
+
+  @keyframes drift {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+      transform: translate3d(6%, 4%, 0) scale(1.08);
+    }
+    100% {
+      transform: translate3d(-4%, 8%, 0) scale(0.96);
+    }
+  }
+  @keyframes marquee {
+    to {
+      transform: translate3d(-100%, 0, 0);
+    }
+  }
+  @keyframes orbit {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes bob {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0);
+    }
+    50% {
+      transform: translate3d(0, -8px, 0);
+    }
+  }
+}
+
 /* shadcn/ui variables, mapped onto the tokens so its primitives match. */
 @theme inline {
   --color-background: var(--background);

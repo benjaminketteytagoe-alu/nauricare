@@ -11,6 +11,7 @@ Adapted, recoloured and rewritten in:
   apps/web/src/components/ui/button.tsx       ("Stripe button", "Premium button", "Shiny button")
   apps/web/src/components/ui/motion.tsx       ("Text reveal", "Success ripple")
   apps/web/src/components/ui/sparkle-field.tsx ("Sparkle grid background")
+  apps/web/src/components/landing/flourishes.tsx ("Orbit carousel", "Infinite carousel")
   packages/ui/src/tokens.css                  (premium shadow, sheen keyframes)
 
 MIT License
