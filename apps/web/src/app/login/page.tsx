@@ -141,21 +141,21 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[100dvh] flex">
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 py-8 bg-white">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 py-8 bg-surface">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <h2 className="text-3xl font-bold text-ink">Welcome Back</h2>
-            <p className="text-gray-500 mt-2">Log in to your NauriCare account.</p>
+            <p className="text-ink-muted mt-2">Log in to your NauriCare account.</p>
           </div>
 
           <GoogleSignInButton text="Log in with Google" />
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+              <div className="w-full border-t border-hairline"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or log in with email</span>
+              <span className="px-2 bg-surface text-ink-muted">Or log in with email</span>
             </div>
           </div>
 
@@ -227,7 +227,9 @@ export default function LoginPage() {
           ) : (
             <form onSubmit={handleMagicLinkSubmit} className="space-y-5">
               {magicError && (
-                <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{magicError}</div>
+                <div className="bg-danger-soft text-danger p-3 rounded-md text-sm border border-danger-line">
+                  {magicError}
+                </div>
               )}
 
               <div className="space-y-1">
@@ -268,13 +270,13 @@ export default function LoginPage() {
             </form>
           )}
 
-          <p className="text-center text-sm text-gray-600">
+          <p className="text-center text-sm text-ink-soft">
             Don&apos;t have an account?{" "}
             <Link href={`/signup${authParams}`} className="text-brand-ink hover:underline font-semibold">
               Sign up
             </Link>
           </p>
-          <p className="text-center text-sm text-gray-600">
+          <p className="text-center text-sm text-ink-soft">
             Are you a provider?{" "}
             <Link href="/signup/provider" className="text-brand-ink hover:underline font-semibold">
               Register your practice

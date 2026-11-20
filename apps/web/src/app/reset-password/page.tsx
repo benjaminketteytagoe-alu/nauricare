@@ -22,12 +22,12 @@ function ResetPasswordForm() {
     return (
       <div className="text-center space-y-4">
         <div className="flex justify-center">
-          <div className="bg-red-50 p-4 rounded-full">
-            <ShieldAlert className="w-8 h-8 text-red-500" />
+          <div className="bg-danger-soft p-4 rounded-full">
+            <ShieldAlert className="w-8 h-8 text-danger" />
           </div>
         </div>
-        <h2 className="text-xl font-bold text-gray-900">Invalid Reset Link</h2>
-        <p className="text-gray-500 text-sm">
+        <h2 className="text-xl font-bold text-ink">Invalid Reset Link</h2>
+        <p className="text-ink-muted text-sm">
           This password reset link is missing a token. Please request a new reset link.
         </p>
         <Link href="/forgot-password" className="text-sm text-brand-ink hover:underline font-medium">
@@ -69,8 +69,8 @@ function ResetPasswordForm() {
             <CheckCircle className="w-8 h-8 text-brand-ink" />
           </div>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900">Password updated</h2>
-        <p className="text-gray-500 text-sm">Your password has been changed successfully. Redirecting to login…</p>
+        <h2 className="text-2xl font-bold text-ink">Password updated</h2>
+        <p className="text-ink-muted text-sm">Your password has been changed successfully. Redirecting to login…</p>
       </div>
     );
   }
@@ -78,14 +78,16 @@ function ResetPasswordForm() {
   return (
     <>
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">Set new password</h2>
-        <p className="text-gray-500 text-sm">
+        <h2 className="text-2xl font-bold text-ink">Set new password</h2>
+        <p className="text-ink-muted text-sm">
           Must be at least 8 characters and include a number and special character.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-200">{error}</div>}
+        {error && (
+          <div className="bg-danger-soft text-danger p-3 rounded-xl text-sm border border-danger-line">{error}</div>
+        )}
         <div className="space-y-1.5">
           <Label htmlFor="password">New Password</Label>
           <PasswordInput
@@ -105,7 +107,7 @@ function ResetPasswordForm() {
       </form>
 
       <p className="text-center">
-        <Link href="/login" className="text-sm text-gray-500 hover:text-brand-ink transition-colors">
+        <Link href="/login" className="text-sm text-ink-muted hover:text-brand-ink transition-colors">
           Back to login
         </Link>
       </p>
@@ -115,9 +117,9 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-surface-muted px-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-6">
+        <div className="bg-surface rounded-2xl shadow-sm border border-hairline p-8 space-y-6">
           <Suspense fallback={<div className="text-center text-ink-muted">Loading…</div>}>
             <ResetPasswordForm />
           </Suspense>

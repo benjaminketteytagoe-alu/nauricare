@@ -49,7 +49,7 @@ export function BookingDialog({ provider, onClose }: { provider: { id: string; n
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/50 p-0 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-surface-inverse/50 p-0 sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
@@ -57,29 +57,29 @@ export function BookingDialog({ provider, onClose }: { provider: { id: string; n
         aria-modal="true"
         aria-labelledby="book-title"
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white shadow-xl sm:rounded-3xl"
+        className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-surface shadow-xl sm:rounded-3xl"
       >
-        <div className="flex items-start justify-between gap-4 border-b border-rose-100 p-5 sm:p-6">
+        <div className="flex items-start justify-between gap-4 border-b border-brand-line p-5 sm:p-6">
           <div>
-            <h2 id="book-title" className="text-xl font-bold text-nc-ink">
+            <h2 id="book-title" className="text-xl font-bold text-ink">
               Book a video consultation
             </h2>
-            <p className="mt-1 text-sm text-slate-600">With {provider.name}</p>
+            <p className="mt-1 text-sm text-ink-soft">With {provider.name}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            className="rounded-full p-2 text-ink-muted hover:bg-surface-muted hover:text-ink-soft"
           >
             <X className="h-5 w-5" aria-hidden />
           </button>
         </div>
         {done ? (
           <div className="space-y-4 p-6 text-center">
-            <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" aria-hidden />
-            <p className="font-semibold text-nc-ink">Your consultation is booked</p>
-            <p className="text-sm text-slate-600">We&apos;ve emailed you the details and the video link.</p>
+            <CheckCircle2 className="mx-auto h-12 w-12 text-success" aria-hidden />
+            <p className="font-semibold text-ink">Your consultation is booked</p>
+            <p className="text-sm text-ink-soft">We&apos;ve emailed you the details and the video link.</p>
             <button type="button" onClick={onClose} className="m3-btn-filled">
               Done
             </button>
@@ -93,8 +93,8 @@ export function BookingDialog({ provider, onClose }: { provider: { id: string; n
             )}
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block text-sm">
-                <span className="mb-1.5 flex items-center gap-2 font-semibold text-nc-ink">
-                  <Calendar className="h-4 w-4 text-slate-400" aria-hidden /> Date
+                <span className="mb-1.5 flex items-center gap-2 font-semibold text-ink">
+                  <Calendar className="h-4 w-4 text-ink-muted" aria-hidden /> Date
                 </span>
                 <input
                   type="date"
@@ -106,8 +106,8 @@ export function BookingDialog({ provider, onClose }: { provider: { id: string; n
                 />
               </label>
               <label className="block text-sm">
-                <span className="mb-1.5 flex items-center gap-2 font-semibold text-nc-ink">
-                  <Clock className="h-4 w-4 text-slate-400" aria-hidden /> Time (your local time)
+                <span className="mb-1.5 flex items-center gap-2 font-semibold text-ink">
+                  <Clock className="h-4 w-4 text-ink-muted" aria-hidden /> Time (your local time)
                 </span>
                 <input
                   type="time"
@@ -119,8 +119,8 @@ export function BookingDialog({ provider, onClose }: { provider: { id: string; n
               </label>
             </div>
             <label className="block text-sm">
-              <span className="mb-1.5 block font-semibold text-nc-ink">
-                What would you like to discuss? <span className="font-normal text-slate-500">(optional)</span>
+              <span className="mb-1.5 block font-semibold text-ink">
+                What would you like to discuss? <span className="font-normal text-ink-muted">(optional)</span>
               </span>
               <textarea
                 rows={3}

@@ -9,7 +9,7 @@ import { Callout } from "@/components/ui/callout";
 import { FLOW_OPTIONS, MOOD_OPTIONS, SYMPTOM_OPTIONS } from "@/lib/cycle/catalog";
 
 const chip = (on: boolean) =>
-  `inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${on ? "border-nc-primary bg-nc-primary text-white" : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"}`;
+  `inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${on ? "border-brand bg-brand text-white" : "border-hairline bg-surface text-ink-soft hover:border-field hover:bg-surface-muted"}`;
 
 /** Flo-style daily log: flow, symptoms, mood and a note for one day. Remount (key) per date. */
 export function DayLogPanel({ date, label, initial }: { date: string; label: string; initial: DayLogEntry | null }) {
@@ -46,16 +46,16 @@ export function DayLogPanel({ date, label, initial }: { date: string; label: str
   return (
     <section aria-labelledby="daylog-heading" className="card-surface space-y-5 p-5 sm:p-6">
       <div>
-        <h2 id="daylog-heading" className="text-lg font-bold text-nc-ink">
+        <h2 id="daylog-heading" className="text-lg font-bold text-ink">
           How are you, {label.toLowerCase() === "today" ? "today" : `on ${label}`}?
         </h2>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-ink-muted">
           Tap everything that applies. Daily logs make your predictions and insights more accurate.
         </p>
       </div>
 
       <fieldset>
-        <legend className="mb-2 text-sm font-semibold text-nc-ink">Flow</legend>
+        <legend className="mb-2 text-sm font-semibold text-ink">Flow</legend>
         <div className="flex flex-wrap gap-2" role="radiogroup">
           {FLOW_OPTIONS.map((f) => (
             <button
@@ -83,7 +83,7 @@ export function DayLogPanel({ date, label, initial }: { date: string; label: str
       </fieldset>
 
       <fieldset>
-        <legend className="mb-2 text-sm font-semibold text-nc-ink">Symptoms</legend>
+        <legend className="mb-2 text-sm font-semibold text-ink">Symptoms</legend>
         <div className="flex flex-wrap gap-2">
           {SYMPTOM_OPTIONS.map((s) => (
             <button
@@ -100,7 +100,7 @@ export function DayLogPanel({ date, label, initial }: { date: string; label: str
       </fieldset>
 
       <fieldset>
-        <legend className="mb-2 text-sm font-semibold text-nc-ink">Mood</legend>
+        <legend className="mb-2 text-sm font-semibold text-ink">Mood</legend>
         <div className="flex flex-wrap gap-2">
           {MOOD_OPTIONS.map((m) => (
             <button
@@ -117,8 +117,8 @@ export function DayLogPanel({ date, label, initial }: { date: string; label: str
       </fieldset>
 
       <label className="block">
-        <span className="mb-2 block text-sm font-semibold text-nc-ink">
-          Notes <span className="font-normal text-slate-500">(optional)</span>
+        <span className="mb-2 block text-sm font-semibold text-ink">
+          Notes <span className="font-normal text-ink-muted">(optional)</span>
         </span>
         <textarea
           rows={2}
@@ -139,7 +139,7 @@ export function DayLogPanel({ date, label, initial }: { date: string; label: str
         </Callout>
       )}
       <div className="flex flex-wrap items-center justify-end gap-3">
-        <span role="status" aria-live="polite" className="text-sm text-emerald-700">
+        <span role="status" aria-live="polite" className="text-sm text-success">
           {saved && (
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="h-4 w-4" aria-hidden /> Saved

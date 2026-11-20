@@ -77,16 +77,16 @@ function Stepper({ current }: { current: number }) {
           >
             <span
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
-                done || active ? "bg-nc-primary text-white" : "border border-slate-300 bg-white text-slate-500"
+                done || active ? "bg-brand text-white" : "border border-field bg-surface text-ink-muted"
               }`}
             >
               {done ? <Check className="h-4 w-4" aria-hidden /> : i + 1}
             </span>
-            <span className={`hidden text-sm font-medium sm:inline ${active ? "text-nc-ink" : "text-slate-500"}`}>
+            <span className={`hidden text-sm font-medium sm:inline ${active ? "text-ink" : "text-ink-muted"}`}>
               {label}
             </span>
             {i < STEPS.length - 1 && (
-              <span className={`h-px flex-1 ${done ? "bg-nc-primary" : "bg-nc-divider"}`} aria-hidden />
+              <span className={`h-px flex-1 ${done ? "bg-brand" : "bg-hairline"}`} aria-hidden />
             )}
           </li>
         );
@@ -275,13 +275,13 @@ export function ReferralWizard({
   if (created) {
     return (
       <div className="m3-card p-6 text-center sm:p-10">
-        <CheckCircle2 className="mx-auto h-12 w-12 text-nc-primary" aria-hidden />
-        <h2 className="mt-4 text-2xl font-bold text-nc-ink">Your referral is ready</h2>
-        <p className="mx-auto mt-2 max-w-md text-slate-600">
+        <CheckCircle2 className="mx-auto h-12 w-12 text-brand-ink" aria-hidden />
+        <h2 className="mt-4 text-2xl font-bold text-ink">Your referral is ready</h2>
+        <p className="mx-auto mt-2 max-w-md text-ink-soft">
           Show this code at the reception desk of {created.hospital.name}. Bring your ID and insurance card.
         </p>
-        <div className="mx-auto mt-6 flex max-w-sm items-center justify-between gap-3 rounded-xl border border-nc-divider bg-slate-50 px-5 py-4">
-          <span className="font-mono text-xl font-bold tracking-wider text-nc-ink">{created.referralCode}</span>
+        <div className="mx-auto mt-6 flex max-w-sm items-center justify-between gap-3 rounded-xl border border-hairline bg-surface-muted px-5 py-4">
+          <span className="font-mono text-xl font-bold tracking-wider text-ink">{created.referralCode}</span>
           <button type="button" onClick={copyCode} className="m3-btn-outlined px-4 py-2" aria-live="polite">
             <ClipboardCopy className="h-4 w-4" aria-hidden /> {copied ? "Copied" : "Copy"}
           </button>
@@ -318,19 +318,19 @@ export function ReferralWizard({
         {step === 0 && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-xl font-bold text-nc-ink">Why do you need a referral?</h2>
-              <p className="mt-1 text-sm text-slate-600">The hospital team reads this before you arrive.</p>
+              <h2 className="text-xl font-bold text-ink">Why do you need a referral?</h2>
+              <p className="mt-1 text-sm text-ink-soft">The hospital team reads this before you arrive.</p>
             </div>
 
             {severity && (
-              <p className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+              <p className="flex flex-wrap items-center gap-2 text-sm text-ink-soft">
                 Triage result from your symptom check:
                 <StatusChip tone={SEVERITY_TONE[severity]}>{severity}</StatusChip>
               </p>
             )}
 
             <fieldset>
-              <legend className="mb-3 text-sm font-semibold text-nc-ink">Specialist needed</legend>
+              <legend className="mb-3 text-sm font-semibold text-ink">Specialist needed</legend>
               <div className="flex flex-wrap gap-2">
                 {SPECIALTIES.map((s) => (
                   <button
@@ -348,7 +348,7 @@ export function ReferralWizard({
             </fieldset>
 
             <div>
-              <label htmlFor="reason" className="mb-2 block text-sm font-semibold text-nc-ink">
+              <label htmlFor="reason" className="mb-2 block text-sm font-semibold text-ink">
                 Reason for referral
               </label>
               <textarea
@@ -360,7 +360,7 @@ export function ReferralWizard({
                 className="m3-input resize-y leading-relaxed"
                 placeholder="Describe your symptoms, how long you have had them, and anything that makes them better or worse."
               />
-              <p className="mt-1 text-right text-xs text-slate-500">{reason.length} / 2000</p>
+              <p className="mt-1 text-right text-xs text-ink-muted">{reason.length} / 2000</p>
             </div>
 
             <div className="flex justify-end">
@@ -380,8 +380,8 @@ export function ReferralWizard({
         {step === 1 && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-xl font-bold text-nc-ink">How will you pay?</h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <h2 className="text-xl font-bold text-ink">How will you pay?</h2>
+              <p className="mt-1 text-sm text-ink-soft">
                 We save this to your profile and show hospitals that accept it.
               </p>
             </div>
@@ -395,7 +395,7 @@ export function ReferralWizard({
                     <label
                       key={opt.id}
                       className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors ${
-                        checked ? "border-nc-primary bg-nc-primary-container" : "border-slate-300 hover:bg-slate-50"
+                        checked ? "border-brand bg-brand-soft" : "border-field hover:bg-surface-muted"
                       }`}
                     >
                       <input
@@ -413,11 +413,11 @@ export function ReferralWizard({
                               (opt.provider === "OTHER_PRIVATE" && !knownMatch ? i.otherProviderName : ""),
                           }))
                         }
-                        className="mt-1 h-4 w-4 accent-nc-primary"
+                        className="mt-1 h-4 w-4 accent-brand"
                       />
                       <span>
-                        <span className="block font-semibold text-nc-ink">{opt.label}</span>
-                        <span className="block text-xs text-slate-500">{opt.hint}</span>
+                        <span className="block font-semibold text-ink">{opt.label}</span>
+                        <span className="block text-xs text-ink-muted">{opt.hint}</span>
                       </span>
                     </label>
                   );
@@ -483,8 +483,8 @@ export function ReferralWizard({
         {step === 2 && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-xl font-bold text-nc-ink">Choose a hospital</h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <h2 className="text-xl font-bold text-ink">Choose a hospital</h2>
+              <p className="mt-1 text-sm text-ink-soft">
                 {insurance.provider === "NONE_CASH"
                   ? "Showing all partner hospitals."
                   : `Showing hospitals listed as accepting ${insuranceLabel(insurance.provider, insurance.otherProviderName)}.`}
@@ -506,11 +506,11 @@ export function ReferralWizard({
             </div>
 
             {hospitals === null ? (
-              <div className="flex items-center gap-2 py-10 text-slate-500">
+              <div className="flex items-center gap-2 py-10 text-ink-muted">
                 <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> Loading hospitals…
               </div>
             ) : hospitals.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-600">
+              <div className="rounded-xl border border-dashed border-field p-8 text-center text-sm text-ink-soft">
                 No partner hospitals match these filters. Try another district, or choose cash payment.
               </div>
             ) : (
@@ -523,7 +523,7 @@ export function ReferralWizard({
                       <li key={h.id}>
                         <label
                           className={`flex cursor-pointer items-start gap-4 rounded-xl border p-4 transition-colors ${
-                            checked ? "border-nc-primary bg-nc-primary-container" : "border-slate-300 hover:bg-slate-50"
+                            checked ? "border-brand bg-brand-soft" : "border-field hover:bg-surface-muted"
                           }`}
                         >
                           <input
@@ -532,15 +532,15 @@ export function ReferralWizard({
                             value={h.id}
                             checked={checked}
                             onChange={() => setHospitalId(h.id)}
-                            className="mt-1 h-4 w-4 accent-nc-primary"
+                            className="mt-1 h-4 w-4 accent-brand"
                           />
                           <span className="min-w-0 flex-1">
-                            <span className="block font-semibold text-nc-ink">{h.name}</span>
-                            <span className="mt-1 flex items-center gap-1.5 text-sm text-slate-600">
+                            <span className="block font-semibold text-ink">{h.name}</span>
+                            <span className="mt-1 flex items-center gap-1.5 text-sm text-ink-soft">
                               <MapPin className="h-4 w-4 shrink-0" aria-hidden /> {h.address} · {h.district}
                             </span>
                             {h.phone && (
-                              <span className="mt-0.5 flex items-center gap-1.5 text-sm text-slate-600">
+                              <span className="mt-0.5 flex items-center gap-1.5 text-sm text-ink-soft">
                                 <Phone className="h-4 w-4 shrink-0" aria-hidden /> {h.phone}
                               </span>
                             )}
@@ -548,7 +548,7 @@ export function ReferralWizard({
                               {h.supportedInsurances.map((p) => (
                                 <span
                                   key={p}
-                                  className="rounded-md bg-nc-amber-container px-2 py-0.5 text-xs font-medium text-nc-amber"
+                                  className="rounded-md bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning"
                                 >
                                   {insuranceLabel(p)}
                                 </span>
@@ -563,7 +563,7 @@ export function ReferralWizard({
               </fieldset>
             )}
 
-            <p className="text-xs text-slate-500">Coverage can change. Confirm with the hospital before your visit.</p>
+            <p className="text-xs text-ink-muted">Coverage can change. Confirm with the hospital before your visit.</p>
 
             <div className="flex justify-between gap-3">
               <button type="button" className="m3-btn-outlined" onClick={() => go(1)}>
@@ -579,55 +579,55 @@ export function ReferralWizard({
         {/* ── Step 4: Review ─────────────────────────────────────────────── */}
         {step === 3 && selectedHospital && (
           <div className="space-y-6">
-            <h2 className="text-xl font-bold text-nc-ink">Review and confirm</h2>
+            <h2 className="text-xl font-bold text-ink">Review and confirm</h2>
 
-            <dl className="divide-y divide-nc-divider rounded-xl border border-nc-divider">
+            <dl className="divide-y divide-hairline rounded-xl border border-hairline">
               <div className="flex gap-3 p-4">
-                <Stethoscope className="mt-0.5 h-5 w-5 text-nc-primary" aria-hidden />
+                <Stethoscope className="mt-0.5 h-5 w-5 text-brand-ink" aria-hidden />
                 <div className="min-w-0">
-                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Specialist</dt>
-                  <dd className="font-semibold text-nc-ink">{specialty}</dd>
-                  <dd className="mt-1 whitespace-pre-line break-words text-sm text-slate-600">{reason}</dd>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-ink-muted">Specialist</dt>
+                  <dd className="font-semibold text-ink">{specialty}</dd>
+                  <dd className="mt-1 whitespace-pre-line break-words text-sm text-ink-soft">{reason}</dd>
                 </div>
               </div>
               <div className="flex gap-3 p-4">
-                <ShieldCheck className="mt-0.5 h-5 w-5 text-nc-primary" aria-hidden />
+                <ShieldCheck className="mt-0.5 h-5 w-5 text-brand-ink" aria-hidden />
                 <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Payment</dt>
-                  <dd className="font-semibold text-nc-ink">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-ink-muted">Payment</dt>
+                  <dd className="font-semibold text-ink">
                     {insuranceLabel(insurance.provider, insurance.otherProviderName)}
                   </dd>
                   {insurance.policyNumber && insurance.provider !== "NONE_CASH" && (
-                    <dd className="text-sm text-slate-600">Policy {insurance.policyNumber}</dd>
+                    <dd className="text-sm text-ink-soft">Policy {insurance.policyNumber}</dd>
                   )}
                 </div>
               </div>
               <div className="flex gap-3 p-4">
-                <HospitalIcon className="mt-0.5 h-5 w-5 text-nc-primary" aria-hidden />
+                <HospitalIcon className="mt-0.5 h-5 w-5 text-brand-ink" aria-hidden />
                 <div>
-                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Hospital</dt>
-                  <dd className="font-semibold text-nc-ink">{selectedHospital.name}</dd>
-                  <dd className="text-sm text-slate-600">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-ink-muted">Hospital</dt>
+                  <dd className="font-semibold text-ink">{selectedHospital.name}</dd>
+                  <dd className="text-sm text-ink-soft">
                     {selectedHospital.address} · {selectedHospital.district}
                   </dd>
                 </div>
               </div>
             </dl>
 
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-nc-divider p-4">
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-hairline p-4">
               <input
                 type="checkbox"
                 checked={consented}
                 onChange={(e) => setConsented(e.target.checked)}
-                className="mt-1 h-4 w-4 accent-nc-primary"
+                className="mt-1 h-4 w-4 accent-brand"
               />
-              <span className="text-sm text-slate-700">
+              <span className="text-sm text-ink-soft">
                 I agree to share my referral reason and insurance details with {selectedHospital.name}, as described in
                 the{" "}
                 <Link
                   href="/consent"
                   target="_blank"
-                  className="font-medium text-nc-primary underline underline-offset-2"
+                  className="font-medium text-brand-ink underline underline-offset-2"
                 >
                   informed consent
                 </Link>{" "}
@@ -635,7 +635,7 @@ export function ReferralWizard({
                 <Link
                   href="/privacy"
                   target="_blank"
-                  className="font-medium text-nc-primary underline underline-offset-2"
+                  className="font-medium text-brand-ink underline underline-offset-2"
                 >
                   privacy policy
                 </Link>

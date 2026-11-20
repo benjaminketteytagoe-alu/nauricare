@@ -112,19 +112,19 @@ function VerifyCode() {
   }
 
   return (
-    <main className="flex min-h-[100dvh] items-center justify-center bg-slate-50 px-4 py-10">
-      <div className="w-full max-w-md space-y-6 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-8">
+    <main className="flex min-h-[100dvh] items-center justify-center bg-surface-muted px-4 py-10">
+      <div className="w-full max-w-md space-y-6 rounded-3xl border border-hairline bg-surface p-5 shadow-sm sm:p-8">
         <Link href="/" aria-label="NauriCare home" className="inline-block">
           <Image src="/logo-horizontal.jpg" alt="NauriCare" width={140} height={36} className="h-8 w-auto" priority />
         </Link>
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-nc-ink">
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-ink">
             <ShieldCheck className="h-6 w-6 text-brand-ink" aria-hidden /> Check your email
           </h1>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-ink-soft">
             {maskedEmail ? (
               <>
-                We sent a 6-digit code to <strong className="text-nc-ink">{maskedEmail}</strong>. Enter it to continue.
+                We sent a 6-digit code to <strong className="text-ink">{maskedEmail}</strong>. Enter it to continue.
               </>
             ) : sending ? (
               "Sending your sign-in code…"
@@ -172,7 +172,7 @@ function VerifyCode() {
             </label>
           )}
           <label className="block">
-            <span className="mb-1.5 block text-sm font-semibold text-nc-ink">Sign-in code</span>
+            <span className="mb-1.5 block text-sm font-semibold text-ink">Sign-in code</span>
             <input
               ref={inputRef}
               value={code}
@@ -191,7 +191,7 @@ function VerifyCode() {
               className="m3-input text-center font-mono text-3xl tracking-[0.5em]"
               placeholder="••••••"
             />
-            <span id="code-help" className="mt-1.5 block text-xs text-slate-500">
+            <span id="code-help" className="mt-1.5 block text-xs text-ink-muted">
               The code expires after 10 minutes. Never share it with anyone.
             </span>
           </label>
@@ -213,7 +213,7 @@ function VerifyCode() {
           <button
             type="button"
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="text-slate-500 hover:text-slate-800 hover:underline"
+            className="text-ink-muted hover:text-ink hover:underline"
           >
             Use a different account
           </button>

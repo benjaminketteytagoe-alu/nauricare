@@ -128,7 +128,8 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
         />
       ) : (
         <div className="overflow-hidden rounded-card border border-hairline bg-surface shadow-card">
-          <div className="overflow-x-auto">
+          {/* Focusable so keyboard users can scroll the wide table. */}
+          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Audit entries">
             <table className="w-full text-left text-sm">
               <caption className="sr-only">
                 Audit log, page {page} of {pages}

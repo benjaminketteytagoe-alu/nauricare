@@ -16,7 +16,7 @@ export default function Navbar() {
   return (
     // pt-safe-top is a no-op outside notched devices (env() resolves to 0),
     // and only pushes content down when viewport-fit=cover + a real inset apply.
-    <nav className="bg-white border-b border-gray-100 sticky top-0 z-50 pt-safe-top">
+    <nav className="bg-surface border-b border-hairline sticky top-0 z-50 pt-safe-top">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center h-11 shrink-0">
           <Image

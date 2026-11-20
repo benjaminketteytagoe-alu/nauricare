@@ -37,20 +37,20 @@ interface ActivityItem {
 }
 
 const META: Record<PatientActivityType, { icon: LucideIcon; tint: string }> = {
-  AI_TRIAGE: { icon: Bot, tint: "bg-nc-primary-container text-nc-primary" },
-  APPOINTMENT_BOOKED: { icon: CalendarCheck, tint: "bg-emerald-50 text-emerald-700" },
-  REFERRAL_CREATED: { icon: Hospital, tint: "bg-nc-amber-container text-nc-amber" },
-  REFERRAL_SHARED: { icon: Link2, tint: "bg-nc-amber-container text-nc-amber" },
-  REFERRAL_SHARE_REVOKED: { icon: Link2Off, tint: "bg-slate-100 text-slate-600" },
-  REFERRAL_SHARE_OPENED: { icon: Eye, tint: "bg-nc-amber-container text-nc-amber" },
-  INSURANCE_UPDATED: { icon: FileHeart, tint: "bg-slate-100 text-slate-600" },
-  CONSENT_GRANTED: { icon: ShieldCheck, tint: "bg-nc-primary-container text-nc-primary" },
-  CONSENT_WITHDRAWN: { icon: ShieldOff, tint: "bg-nc-berry-container text-nc-berry" },
-  CYCLE_LOGGED: { icon: Droplet, tint: "bg-rose-50 text-rose-600" },
-  PRESCRIPTION_ROUTED: { icon: Pill, tint: "bg-emerald-50 text-emerald-700" },
-  FEEDBACK_SUBMITTED: { icon: MessageSquareHeart, tint: "bg-slate-100 text-slate-600" },
-  SIGNED_IN: { icon: LogIn, tint: "bg-slate-100 text-slate-600" },
-  PROFILE_UPDATED: { icon: UserCog, tint: "bg-slate-100 text-slate-600" },
+  AI_TRIAGE: { icon: Bot, tint: "bg-brand-soft text-brand-ink" },
+  APPOINTMENT_BOOKED: { icon: CalendarCheck, tint: "bg-success-soft text-success" },
+  REFERRAL_CREATED: { icon: Hospital, tint: "bg-warning-soft text-warning" },
+  REFERRAL_SHARED: { icon: Link2, tint: "bg-warning-soft text-warning" },
+  REFERRAL_SHARE_REVOKED: { icon: Link2Off, tint: "bg-surface-muted text-ink-soft" },
+  REFERRAL_SHARE_OPENED: { icon: Eye, tint: "bg-warning-soft text-warning" },
+  INSURANCE_UPDATED: { icon: FileHeart, tint: "bg-surface-muted text-ink-soft" },
+  CONSENT_GRANTED: { icon: ShieldCheck, tint: "bg-brand-soft text-brand-ink" },
+  CONSENT_WITHDRAWN: { icon: ShieldOff, tint: "bg-danger-soft text-danger" },
+  CYCLE_LOGGED: { icon: Droplet, tint: "bg-brand-soft text-brand-ink" },
+  PRESCRIPTION_ROUTED: { icon: Pill, tint: "bg-success-soft text-success" },
+  FEEDBACK_SUBMITTED: { icon: MessageSquareHeart, tint: "bg-surface-muted text-ink-soft" },
+  SIGNED_IN: { icon: LogIn, tint: "bg-surface-muted text-ink-soft" },
+  PROFILE_UPDATED: { icon: UserCog, tint: "bg-surface-muted text-ink-soft" },
 };
 
 const ACTIVITY_FILTERS: { label: string; types: PatientActivityType[] }[] = [
@@ -91,33 +91,33 @@ function AiDetails({ details }: { details: Record<string, unknown> }) {
   };
   return (
     <div className="mt-3 space-y-3 text-sm">
-      <div className="rounded-xl bg-slate-50 p-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">You asked</p>
-        {prompt.symptoms?.length ? <p className="mt-1 text-slate-800">{prompt.symptoms.join(", ")}</p> : null}
-        {prompt.notes ? <p className="mt-1 whitespace-pre-line break-words text-slate-700">“{prompt.notes}”</p> : null}
-        {prompt.cycleDay ? <p className="mt-1 text-xs text-slate-500">Cycle day {prompt.cycleDay}</p> : null}
+      <div className="rounded-xl bg-surface-muted p-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">You asked</p>
+        {prompt.symptoms?.length ? <p className="mt-1 text-ink">{prompt.symptoms.join(", ")}</p> : null}
+        {prompt.notes ? <p className="mt-1 whitespace-pre-line break-words text-ink-soft">“{prompt.notes}”</p> : null}
+        {prompt.cycleDay ? <p className="mt-1 text-xs text-ink-muted">Cycle day {prompt.cycleDay}</p> : null}
       </div>
-      <div className="rounded-xl border border-nc-divider p-3">
+      <div className="rounded-xl border border-hairline p-3">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">AI answered</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">AI answered</p>
           {response.severity && (
             <StatusChip tone={SEVERITY_TONE[response.severity] ?? "neutral"}>{response.severity}</StatusChip>
           )}
           {response.engine && (
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-ink-muted">
               via{" "}
               {response.engine === "medgemma" ? "MedGemma" : response.engine === "gemini" ? "Gemini" : "safety rules"}
             </span>
           )}
         </div>
-        {response.summary && <p className="mt-2 leading-relaxed text-slate-700">{response.summary}</p>}
+        {response.summary && <p className="mt-2 leading-relaxed text-ink-soft">{response.summary}</p>}
         {response.recommendedSpecialty && (
-          <p className="mt-2 text-slate-600">
-            Suggested specialist: <span className="font-medium text-nc-ink">{response.recommendedSpecialty}</span>
+          <p className="mt-2 text-ink-soft">
+            Suggested specialist: <span className="font-medium text-ink">{response.recommendedSpecialty}</span>
           </p>
         )}
         {response.redFlags?.length ? (
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-slate-600">
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-ink-soft">
             {response.redFlags.map((f) => (
               <li key={f}>{f}</li>
             ))}
@@ -235,20 +235,20 @@ export function ActivityTimeline({
       {items === null && !error ? (
         <div className="space-y-3" aria-busy="true">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-16 animate-pulse rounded-2xl bg-white" />
+            <div key={i} className="h-16 animate-pulse rounded-2xl bg-surface" />
           ))}
         </div>
       ) : items && items.length === 0 ? (
         <div className="card-surface p-10 text-center">
-          <Activity className="mx-auto h-10 w-10 text-slate-300" aria-hidden />
-          <p className="mt-3 text-sm text-slate-600">
+          <Activity className="mx-auto h-10 w-10 text-field" aria-hidden />
+          <p className="mt-3 text-sm text-ink-soft">
             {emptyText ?? "Nothing here yet. Your actions on NauriCare will appear here."}
           </p>
         </div>
       ) : (
         groups.map((g) => (
           <section key={g.day} aria-label={g.day}>
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{g.day}</h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">{g.day}</h3>
             <ol className="space-y-2">
               {g.items.map((it) => {
                 const { icon: Icon, tint } = META[it.type];
@@ -256,20 +256,20 @@ export function ActivityTimeline({
                 const expanded = expandAi || open.has(it.id);
                 const href = it.refType ? REF_LINKS[it.refType] : undefined;
                 return (
-                  <li key={it.id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                  <li key={it.id} className="rounded-2xl border border-hairline bg-surface p-4 shadow-sm">
                     <div className="flex items-start gap-3">
                       <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tint}`}>
                         <Icon className="h-4 w-4" aria-hidden />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-nc-ink">{it.title}</p>
-                        <p className="text-xs text-slate-500">
+                        <p className="font-medium text-ink">{it.title}</p>
+                        <p className="text-xs text-ink-muted">
                           {formatTime(it.createdAt)}
                           {href && (
                             <>
                               {" "}
                               ·{" "}
-                              <Link href={href} className="font-medium text-nc-primary hover:underline">
+                              <Link href={href} className="font-medium text-brand-ink hover:underline">
                                 View
                               </Link>
                             </>
@@ -281,7 +281,7 @@ export function ActivityTimeline({
                           type="button"
                           onClick={() => toggle(it.id)}
                           aria-expanded={expanded}
-                          className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                          className="rounded-full p-1.5 text-ink-muted hover:bg-surface-muted hover:text-ink-soft"
                           aria-label={expanded ? "Hide details" : "Show what you asked and the AI's answer"}
                         >
                           <ChevronDown

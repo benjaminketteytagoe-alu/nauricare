@@ -144,12 +144,12 @@ export default function AdminProvidersPage() {
     <div className="space-y-6 max-w-7xl mx-auto relative">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Provider Management</h1>
-          <p className="text-gray-500 mt-1">Onboard and manage healthcare practitioners.</p>
+          <h1 className="text-3xl font-bold text-ink">Provider Management</h1>
+          <p className="text-ink-muted mt-1">Onboard and manage healthcare practitioners.</p>
         </div>
         <Button
           onClick={() => setIsModalOpen(true)}
-          className="bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-2"
+          className="bg-brand hover:bg-brand-hover text-white flex items-center gap-2"
         >
           <UserPlus className="w-4 h-4" />
           Onboard Provider
@@ -157,23 +157,23 @@ export default function AdminProvidersPage() {
       </div>
 
       {/* Roster Table */}
-      <div className="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+      <div className="bg-surface border border-hairline rounded-xl shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-hairline flex justify-between items-center bg-surface-muted/50">
           <div className="relative w-full max-w-md">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+            <Search className="w-4 h-4 absolute left-3 top-3 text-ink-muted" />
             <input
               type="text"
               placeholder="Search by name, email, or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-hairline rounded-lg focus:outline-none focus:ring-2 focus:ring-focus"
             />
           </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
+            <thead className="text-xs text-ink-muted uppercase bg-surface-muted border-b border-hairline">
               <tr>
                 <th className="px-6 py-4 font-medium">Provider Name</th>
                 <th className="px-6 py-4 font-medium">ID & Contact</th>
@@ -186,29 +186,29 @@ export default function AdminProvidersPage() {
             <tbody>
               {filteredProviders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-gray-500">
+                  <td colSpan={6} className="p-8 text-center text-ink-muted">
                     {" "}
                     {/* Increased colSpan to 6 */}
-                    <Stethoscope className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <h3 className="text-lg font-medium text-gray-900">No Providers Found</h3>
+                    <Stethoscope className="w-12 h-12 text-field mx-auto mb-3" />
+                    <h3 className="text-lg font-medium text-ink">No Providers Found</h3>
                     <p className="text-sm mt-1">Try adjusting your search query or onboard a new provider.</p>
                   </td>
                 </tr>
               ) : (
                 filteredProviders.map((provider) => (
-                  <tr key={provider.id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                    <td className="px-6 py-4 font-medium text-gray-900">{provider.name}</td>
-                    <td className="px-6 py-4 text-gray-500">
-                      <div className="text-xs font-mono text-gray-400 mb-1">{provider.id.slice(0, 12)}...</div>
+                  <tr key={provider.id} className="border-b border-hairline hover:bg-surface-muted/50">
+                    <td className="px-6 py-4 font-medium text-ink">{provider.name}</td>
+                    <td className="px-6 py-4 text-ink-muted">
+                      <div className="text-xs font-mono text-ink-muted mb-1">{provider.id.slice(0, 12)}...</div>
                       <div>{provider.email}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-teal-50 text-teal-700 border border-teal-100">
+                      <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-brand-soft text-brand-ink border border-brand-line">
                         {provider.practitionerProfile?.specialty || "N/A"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      <div className="font-medium text-gray-900">
+                    <td className="px-6 py-4 text-ink-soft">
+                      <div className="font-medium text-ink">
                         {provider.practitionerProfile?.clinicName || "Independent"}
                       </div>
                       <div className="text-xs">{provider.practitionerProfile?.location || "N/A"}</div>
@@ -220,7 +220,7 @@ export default function AdminProvidersPage() {
                         const isVerified = provider.practitionerProfile?.isVerified || provider.isVerified;
                         if (isDeleted) {
                           return (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 border border-gray-200">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-muted text-ink-muted border border-hairline">
                               DELETED
                             </span>
                           );
@@ -229,8 +229,8 @@ export default function AdminProvidersPage() {
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               isVerified
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : "bg-amber-50 text-amber-700 border border-amber-200"
+                                ? "bg-success-soft text-success border border-success-line"
+                                : "bg-warning-soft text-warning border border-warning-line"
                             }`}
                           >
                             {isVerified ? "APPROVED" : "PENDING"}
@@ -243,7 +243,7 @@ export default function AdminProvidersPage() {
                       <div className="flex items-center justify-end gap-3">
                         <Link
                           href={`/admin/providers/${provider.id}`}
-                          className="inline-flex items-center text-xs font-semibold text-teal-600 hover:text-teal-800 hover:underline gap-1"
+                          className="inline-flex items-center text-xs font-semibold text-brand-ink hover:text-brand-ink hover:underline gap-1"
                         >
                           Review <ArrowRight className="w-3 h-3" />
                         </Link>
@@ -251,7 +251,7 @@ export default function AdminProvidersPage() {
                           <button
                             onClick={() => setDeleteTarget(provider)}
                             aria-label={`Delete ${provider.name}`}
-                            className="inline-flex items-center text-xs font-semibold text-red-600 hover:text-red-800 hover:underline gap-1"
+                            className="inline-flex items-center text-xs font-semibold text-danger hover:text-danger hover:underline gap-1"
                           >
                             <Trash2 className="w-3.5 h-3.5" /> Delete
                           </button>
@@ -269,17 +269,17 @@ export default function AdminProvidersPage() {
       {/* Onboarding Modal Overlay */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900">New Provider Profile</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+          <div className="bg-surface rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-hairline">
+              <h2 className="text-xl font-bold text-ink">New Provider Profile</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-ink-muted hover:text-ink-soft">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-ink-soft mb-1">Full Name</label>
                 <input
                   required
                   type="text"
@@ -289,7 +289,7 @@ export default function AdminProvidersPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-ink-soft mb-1">Email</label>
                 <input
                   required
                   type="email"
@@ -299,7 +299,7 @@ export default function AdminProvidersPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Temporary Password</label>
+                <label className="block text-sm font-medium text-ink-soft mb-1">Temporary Password</label>
                 <input
                   required
                   type="password"
@@ -309,12 +309,12 @@ export default function AdminProvidersPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
+                <label className="block text-sm font-medium text-ink-soft mb-1">Specialty</label>
                 <select
                   required
                   value={formData.specialty}
                   onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
-                  className="w-full p-2 border rounded-md bg-white"
+                  className="w-full p-2 border rounded-md bg-surface"
                 >
                   {WOMEN_HEALTH_SPECIALTIES.map((spec) => (
                     <option key={spec} value={spec}>
@@ -325,7 +325,7 @@ export default function AdminProvidersPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Clinic Name</label>
+                  <label className="block text-sm font-medium text-ink-soft mb-1">Clinic Name</label>
                   <input
                     type="text"
                     value={formData.clinicName}
@@ -334,7 +334,7 @@ export default function AdminProvidersPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">City/Location</label>
+                  <label className="block text-sm font-medium text-ink-soft mb-1">City/Location</label>
                   <input
                     required
                     type="text"
@@ -349,7 +349,7 @@ export default function AdminProvidersPage() {
                 <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading} className="bg-teal-600 hover:bg-teal-700 text-white">
+                <Button type="submit" disabled={isLoading} className="bg-brand hover:bg-brand-hover text-white">
                   {isLoading ? "Creating..." : "Save Provider"}
                 </Button>
               </div>
@@ -361,21 +361,21 @@ export default function AdminProvidersPage() {
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900">Delete Provider</h2>
+          <div className="bg-surface rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-hairline">
+              <h2 className="text-xl font-bold text-ink">Delete Provider</h2>
               <button
                 onClick={() => setDeleteTarget(null)}
                 disabled={isDeleting}
-                className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                className="text-ink-muted hover:text-ink-soft disabled:opacity-50"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <p className="text-sm text-gray-600">
-                Are you sure you want to delete <span className="font-semibold text-gray-900">{deleteTarget.name}</span>
-                ? This action cannot be undone.
+              <p className="text-sm text-ink-soft">
+                Are you sure you want to delete <span className="font-semibold text-ink">{deleteTarget.name}</span>?
+                This action cannot be undone.
               </p>
               <div className="flex justify-end gap-3 pt-2">
                 <Button type="button" variant="outline" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
@@ -385,7 +385,7 @@ export default function AdminProvidersPage() {
                   type="button"
                   onClick={handleDelete}
                   disabled={isDeleting}
-                  className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+                  className="bg-danger hover:bg-danger text-white flex items-center gap-2"
                 >
                   {isDeleting ? (
                     <>
@@ -409,7 +409,7 @@ export default function AdminProvidersPage() {
       {toast && (
         <div
           className={`fixed bottom-6 right-6 z-[60] flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg text-sm font-medium ${
-            toast.type === "success" ? "bg-emerald-600 text-white" : "bg-red-600 text-white"
+            toast.type === "success" ? "bg-success text-white" : "bg-danger text-white"
           }`}
         >
           {toast.type === "success" ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}

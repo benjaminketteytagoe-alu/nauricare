@@ -31,7 +31,7 @@ export function ConsentStatusBar({ grantedAt }: { grantedAt: string }) {
   }
 
   return (
-    <div className="font-friendly mx-auto mb-6 max-w-3xl rounded-3xl border border-[#FFE4E6] bg-white px-5 py-3 shadow-sm">
+    <div className="font-friendly mx-auto mb-6 max-w-3xl rounded-3xl border border-[#FFE4E6] bg-surface px-5 py-3 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
         <p className="flex items-center gap-2 text-[#475569]">
           <ShieldCheck className="h-4 w-4 text-[#1D4ED8]" aria-hidden />
@@ -75,7 +75,7 @@ export function ConsentStatusBar({ grantedAt }: { grantedAt: string }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setConfirming(true)}
-              className="rounded-full px-4 py-1.5 font-semibold text-[#1D4ED8] hover:bg-blue-50"
+              className="rounded-full px-4 py-1.5 font-semibold text-[#1D4ED8] hover:bg-info-soft"
             >
               Withdraw consent
             </motion.button>

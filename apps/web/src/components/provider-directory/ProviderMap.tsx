@@ -33,7 +33,7 @@ function providerIcon(name: string, active: boolean) {
     iconSize: [40, 40],
     iconAnchor: [20, 40],
     popupAnchor: [0, -38],
-    html: `<span class="flex h-10 w-10 items-center justify-center rounded-full rounded-bl-none -rotate-45 border-2 border-white shadow-lg ${active ? "bg-nc-berry" : "bg-nc-primary"}"><span class="rotate-45 text-xs font-bold text-white">${escape(initials(name))}</span></span>`,
+    html: `<span class="flex h-10 w-10 items-center justify-center rounded-full rounded-bl-none -rotate-45 border-2 border-white shadow-lg ${active ? "bg-danger" : "bg-brand"}"><span class="rotate-45 text-xs font-bold text-white">${escape(initials(name))}</span></span>`,
   });
 }
 
@@ -41,7 +41,7 @@ const meIcon = L.divIcon({
   className: "",
   iconSize: [22, 22],
   iconAnchor: [11, 11],
-  html: `<span class="block h-[22px] w-[22px] rounded-full border-4 border-white bg-emerald-500 shadow-lg ring-4 ring-emerald-500/30"></span>`,
+  html: `<span class="block h-[22px] w-[22px] rounded-full border-4 border-white bg-success shadow-lg ring-4 ring-success/30"></span>`,
 });
 
 function FitToMarkers({ points }: { points: LatLng[] }) {

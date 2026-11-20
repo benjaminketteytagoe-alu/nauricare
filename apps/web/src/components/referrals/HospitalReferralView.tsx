@@ -13,8 +13,8 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   if (value === null || value === undefined || value === "") return null;
   return (
     <div>
-      <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
-      <dd className="mt-0.5 break-words text-nc-ink">{value}</dd>
+      <dt className="text-xs font-medium uppercase tracking-wide text-ink-muted">{label}</dt>
+      <dd className="mt-0.5 break-words text-ink">{value}</dd>
     </div>
   );
 }
@@ -64,11 +64,11 @@ export function HospitalReferralView({ token }: { token: string }) {
   } | null;
 
   return (
-    <main className="min-h-dvh bg-slate-50 px-4 py-8 print:bg-white print:p-0 sm:py-12">
+    <main className="min-h-dvh bg-surface-muted px-4 py-8 print:bg-surface print:p-0 sm:py-12">
       <div className="mx-auto max-w-3xl">
         <header className="mb-6 flex items-center justify-between gap-4">
           <Image src="/logo-horizontal.jpg" alt="NauriCare" width={150} height={40} className="h-8 w-auto" />
-          <span className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-ink-muted">
             <Lock className="h-3.5 w-3.5" aria-hidden /> Confidential patient referral
           </span>
         </header>
@@ -76,8 +76,8 @@ export function HospitalReferralView({ token }: { token: string }) {
         {!data ? (
           <form onSubmit={unlock} className="m3-card mx-auto max-w-md space-y-5 p-6 sm:p-8">
             <div>
-              <h1 className="text-xl font-bold text-nc-ink">Open patient referral</h1>
-              <p className="mt-1 text-sm text-slate-600">
+              <h1 className="text-xl font-bold text-ink">Open patient referral</h1>
+              <p className="mt-1 text-sm text-ink-soft">
                 Enter the referral code the patient gave you (it starts with <span className="font-mono">NC-REF-</span>
                 ). This second check protects the patient if the link reaches the wrong person.
               </p>
@@ -88,7 +88,7 @@ export function HospitalReferralView({ token }: { token: string }) {
               </Callout>
             )}
             <label className="block">
-              <span className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-nc-ink">
+              <span className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-ink">
                 <KeyRound className="h-4 w-4" aria-hidden /> Referral code
               </span>
               <input
@@ -106,15 +106,15 @@ export function HospitalReferralView({ token }: { token: string }) {
             <button type="submit" disabled={busy} className="m3-btn-filled w-full">
               {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Open referral
             </button>
-            <p className="text-center text-xs text-slate-500">Access is logged and shown to the patient.</p>
+            <p className="text-center text-xs text-ink-muted">Access is logged and shown to the patient.</p>
           </form>
         ) : (
           <article className="m3-card space-y-6 p-6 print:border-0 print:shadow-none sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="font-mono text-sm font-semibold tracking-wider text-nc-primary">{data.referral.code}</p>
-                <h1 className="mt-1 text-2xl font-bold text-nc-ink">{data.patient.fullName}</h1>
-                <p className="text-sm text-slate-600">
+                <p className="font-mono text-sm font-semibold tracking-wider text-brand-ink">{data.referral.code}</p>
+                <h1 className="mt-1 text-2xl font-bold text-ink">{data.patient.fullName}</h1>
+                <p className="text-sm text-ink-soft">
                   Referred to {data.hospital.name} · {data.referral.specialtyRequired}
                 </p>
               </div>
@@ -130,7 +130,7 @@ export function HospitalReferralView({ token }: { token: string }) {
             )}
 
             <section>
-              <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">Patient</h2>
+              <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-ink-muted">Patient</h2>
               <dl className="grid gap-4 sm:grid-cols-2">
                 <Field label="Full name" value={data.patient.fullName} />
                 <Field
@@ -145,16 +145,16 @@ export function HospitalReferralView({ token }: { token: string }) {
             </section>
 
             <section>
-              <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">Reason for referral</h2>
-              <p className="whitespace-pre-line leading-relaxed text-slate-800">{data.referral.clinicalReason}</p>
-              <p className="mt-2 text-xs text-slate-500">
+              <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-ink-muted">Reason for referral</h2>
+              <p className="whitespace-pre-line leading-relaxed text-ink">{data.referral.clinicalReason}</p>
+              <p className="mt-2 text-xs text-ink-muted">
                 Created {formatDateTime(data.referral.createdAt)} on NauriCare. Severity comes from NauriCare&apos;s
                 AI-assisted triage, not a clinical diagnosis.
               </p>
             </section>
 
             <section>
-              <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-500">Payment</h2>
+              <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-ink-muted">Payment</h2>
               <dl className="grid gap-4 sm:grid-cols-2">
                 <Field
                   label="Insurer"
@@ -172,7 +172,7 @@ export function HospitalReferralView({ token }: { token: string }) {
               </dl>
             </section>
 
-            <div className="flex flex-wrap gap-3 border-t border-nc-divider pt-5 print:hidden">
+            <div className="flex flex-wrap gap-3 border-t border-hairline pt-5 print:hidden">
               <button type="button" onClick={() => window.print()} className="m3-btn-filled">
                 <Printer className="h-4 w-4" aria-hidden /> Print
               </button>
@@ -180,7 +180,7 @@ export function HospitalReferralView({ token }: { token: string }) {
                 <Download className="h-4 w-4" aria-hidden /> Download for booking system (JSON)
               </button>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-ink-muted">
               Link valid until {formatDate(data.expiresAt, "long")}. Handle this information under your hospital&apos;s
               patient-confidentiality policy.
             </p>

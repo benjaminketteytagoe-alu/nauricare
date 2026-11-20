@@ -224,7 +224,7 @@ function Brand({ homeHref, tone, compact }: { homeHref: string; tone: SidebarTon
           N
         </span>
       ) : (
-        <span className={tone === "dark" ? "rounded-lg bg-white p-1.5 shadow-sm" : ""}>
+        <span className={tone === "dark" ? "rounded-lg bg-surface p-1.5 shadow-sm" : ""}>
           <Image
             src="/logo-horizontal.jpg"
             alt="NauriCare"

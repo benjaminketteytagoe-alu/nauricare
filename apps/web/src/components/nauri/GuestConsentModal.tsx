@@ -51,7 +51,7 @@ export function GuestConsentModal({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-900/50 p-0 sm:items-center sm:p-4"
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-surface-inverse/50 p-0 sm:items-center sm:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -77,7 +77,7 @@ export function GuestConsentModal({
               <X className="h-5 w-5" aria-hidden />
             </button>
 
-            <div className="mx-auto h-24 w-24 rounded-full border border-[#FFE4E6] bg-white p-2 shadow-sm">
+            <div className="mx-auto h-24 w-24 rounded-full border border-[#FFE4E6] bg-surface p-2 shadow-sm">
               <CalmAnimation />
             </div>
             <h2 id={titleId} className="mt-5 text-center text-2xl font-bold leading-snug text-[#0F172A]">

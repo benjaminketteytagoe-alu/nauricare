@@ -30,35 +30,35 @@ export function NotificationBell({ notificationsHref = "/dashboard/notifications
         onClick={() => setOpen((v) => !v)}
         aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
         aria-expanded={open}
-        className={`relative rounded-lg p-2 transition-colors hover:text-nc-primary ${open ? "bg-gray-100 text-nc-primary" : ""}`}
+        className={`relative rounded-lg p-2 transition-colors hover:text-brand-ink ${open ? "bg-surface-muted text-brand-ink" : ""}`}
       >
         <Bell className="h-5 w-5" aria-hidden />
         {unread > 0 && (
-          <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-rose-500 px-0.5 text-[9px] font-bold text-white">
+          <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-brand px-0.5 text-[9px] font-bold text-white">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="fixed inset-x-3 top-16 z-50 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-xl animate-in fade-in slide-in-from-top-2 sm:absolute sm:inset-x-auto sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96">
-          <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/60 px-4 py-3">
-            <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+        <div className="fixed inset-x-3 top-16 z-50 overflow-hidden rounded-xl border border-hairline bg-surface shadow-xl animate-in fade-in slide-in-from-top-2 sm:absolute sm:inset-x-auto sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96">
+          <div className="flex items-center justify-between border-b border-hairline bg-surface-muted/60 px-4 py-3">
+            <h3 className="text-sm font-semibold text-ink">Notifications</h3>
             {unread > 0 && (
               <button
                 type="button"
                 onClick={markAll}
-                className="flex items-center gap-1 text-xs font-medium text-nc-primary hover:underline"
+                className="flex items-center gap-1 text-xs font-medium text-brand-ink hover:underline"
               >
                 <Check className="h-3 w-3" aria-hidden /> Mark all read
               </button>
             )}
           </div>
-          <div className="max-h-[60vh] divide-y divide-gray-50 overflow-y-auto">
+          <div className="max-h-[60vh] divide-y divide-hairline overflow-y-auto">
             {items === null ? (
-              <p className="py-8 text-center text-sm text-gray-400">Loading…</p>
+              <p className="py-8 text-center text-sm text-ink-muted">Loading…</p>
             ) : items.length === 0 ? (
-              <p className="py-8 text-center text-sm text-gray-400">
+              <p className="py-8 text-center text-sm text-ink-muted">
                 <Bell className="mx-auto mb-2 h-6 w-6 opacity-30" aria-hidden />
                 No notifications yet
               </p>
@@ -66,11 +66,11 @@ export function NotificationBell({ notificationsHref = "/dashboard/notifications
               items.map((n) => <NotificationItem key={n.id} n={n} onRead={markOne} compact />)
             )}
           </div>
-          <div className="border-t border-gray-50 bg-gray-50/60 p-3 text-center">
+          <div className="border-t border-hairline bg-surface-muted/60 p-3 text-center">
             <Link
               href={notificationsHref}
               onClick={() => setOpen(false)}
-              className="text-xs font-medium text-nc-primary hover:underline"
+              className="text-xs font-medium text-brand-ink hover:underline"
             >
               View all notifications
             </Link>

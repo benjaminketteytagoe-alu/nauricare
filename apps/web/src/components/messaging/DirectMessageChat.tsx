@@ -36,35 +36,35 @@ type DM = {
 
 const ACCENTS = {
   blue: {
-    ring: "focus:ring-blue-500",
-    bg: "bg-blue-600",
-    hover: "hover:bg-blue-700",
-    time: "text-blue-100",
-    text: "text-blue-600",
-    soft: "bg-blue-50",
+    ring: "focus:ring-focus",
+    bg: "bg-info",
+    hover: "hover:opacity-90",
+    time: "text-on-brand/80",
+    text: "text-info",
+    soft: "bg-info-soft",
   },
   teal: {
-    ring: "focus:ring-teal-500",
-    bg: "bg-teal-600",
-    hover: "hover:bg-teal-700",
-    time: "text-teal-100",
-    text: "text-teal-600",
-    soft: "bg-teal-50",
+    ring: "focus:ring-focus",
+    bg: "bg-brand",
+    hover: "hover:bg-brand-hover",
+    time: "text-on-brand/80",
+    text: "text-brand-ink",
+    soft: "bg-brand-soft",
   },
   rose: {
-    ring: "focus:ring-rose-500",
-    bg: "bg-rose-600",
-    hover: "hover:bg-rose-700",
-    time: "text-rose-100",
-    text: "text-rose-600",
-    soft: "bg-rose-50",
+    ring: "focus:ring-focus",
+    bg: "bg-brand",
+    hover: "hover:bg-brand-hover",
+    time: "text-on-brand/80",
+    text: "text-brand-ink",
+    soft: "bg-brand-soft",
   },
 } as const;
 
 function OnlineDot({ online }: { online: boolean }) {
   return online ? (
     <span
-      className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-emerald-500"
+      className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-success"
       aria-label="Online"
     />
   ) : null;
@@ -253,21 +253,21 @@ export function DirectMessageChat({
   );
 
   return (
-    <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+    <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-hairline bg-surface shadow-sm">
       {/* Conversation list (hidden on small screens while a thread is open) */}
       <aside
-        className={`${active ? "hidden md:flex" : "flex"} w-full flex-col border-r border-gray-100 md:w-80 md:shrink-0`}
+        className={`${active ? "hidden md:flex" : "flex"} w-full flex-col border-r border-hairline md:w-80 md:shrink-0`}
       >
-        <div className="space-y-3 border-b border-gray-100 p-4">
+        <div className="space-y-3 border-b border-hairline p-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" aria-hidden />
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search conversations"
               aria-label="Search conversations"
-              className={`w-full rounded-full border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 ${acc.ring}`}
+              className={`w-full rounded-full border border-hairline bg-surface-muted py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 ${acc.ring}`}
             />
           </div>
           {canStartWithProviders && (
@@ -283,35 +283,35 @@ export function DirectMessageChat({
 
         {picker ? (
           <div className="flex min-h-0 flex-1 flex-col">
-            <div className="flex items-center justify-between px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <div className="flex items-center justify-between px-4 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
               Verified specialists
               <button
                 type="button"
                 onClick={() => setPicker(null)}
                 aria-label="Close specialist list"
-                className="rounded-full p-1 hover:bg-gray-100"
+                className="rounded-full p-1 hover:bg-surface-muted"
               >
                 <X className="h-4 w-4" aria-hidden />
               </button>
             </div>
             <ul className="flex-1 overflow-y-auto">
               {picker.length === 0 && (
-                <li className="p-6 text-center text-sm text-gray-500">No specialists are available right now.</li>
+                <li className="p-6 text-center text-sm text-ink-muted">No specialists are available right now.</li>
               )}
               {picker.map((p) => (
                 <li key={p.id}>
                   <button
                     type="button"
                     onClick={() => open(p.id, p.name, p.avatarUrl, p.subtitle)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50"
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-surface-muted"
                   >
                     <span className="relative">
                       <Avatar name={p.name} avatarUrl={p.avatarUrl} size="md" />
                       <OnlineDot online={p.online} />
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-gray-900">{p.name}</span>
-                      <span className="block truncate text-xs text-gray-500">
+                      <span className="block truncate text-sm font-semibold text-ink">{p.name}</span>
+                      <span className="block truncate text-xs text-ink-muted">
                         {p.online ? "Online now" : p.subtitle}
                       </span>
                     </span>
@@ -322,10 +322,10 @@ export function DirectMessageChat({
           </div>
         ) : (
           <ul className="flex-1 overflow-y-auto" aria-label="Conversations">
-            {loadingConvs && <li className="p-6 text-center text-sm text-gray-400">Loading…</li>}
+            {loadingConvs && <li className="p-6 text-center text-sm text-ink-muted">Loading…</li>}
             {!loadingConvs && filtered.length === 0 && (
-              <li className="p-6 text-center text-sm text-gray-500">
-                <MessageSquare className="mx-auto mb-2 h-8 w-8 text-gray-300" aria-hidden />
+              <li className="p-6 text-center text-sm text-ink-muted">
+                <MessageSquare className="mx-auto mb-2 h-8 w-8 text-field" aria-hidden />
                 No conversations yet.
               </li>
             )}
@@ -335,7 +335,7 @@ export function DirectMessageChat({
                   type="button"
                   onClick={() => open(c.partnerId, c.partnerName, c.partnerAvatarUrl, c.partnerSubtitle)}
                   aria-current={activeId === c.partnerId}
-                  className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 ${activeId === c.partnerId ? acc.soft : ""}`}
+                  className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-muted ${activeId === c.partnerId ? acc.soft : ""}`}
                 >
                   <span className="relative shrink-0">
                     <Avatar name={c.partnerName} avatarUrl={c.partnerAvatarUrl} size="md" />
@@ -343,15 +343,13 @@ export function DirectMessageChat({
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center justify-between gap-2">
-                      <span
-                        className={`truncate text-sm ${c.isRead ? "font-medium text-gray-800" : "font-bold text-gray-900"}`}
-                      >
+                      <span className={`truncate text-sm ${c.isRead ? "font-medium text-ink" : "font-bold text-ink"}`}>
                         {c.partnerName}
                       </span>
-                      <span className="shrink-0 text-xs text-gray-400">{formatRelative(c.lastMessageAt)}</span>
+                      <span className="shrink-0 text-xs text-ink-muted">{formatRelative(c.lastMessageAt)}</span>
                     </span>
                     <span
-                      className={`block truncate text-xs ${c.isRead ? "text-gray-500" : `font-semibold ${acc.text}`}`}
+                      className={`block truncate text-xs ${c.isRead ? "text-ink-muted" : `font-semibold ${acc.text}`}`}
                     >
                       {c.lastMessage}
                     </span>
@@ -366,37 +364,37 @@ export function DirectMessageChat({
       {/* Thread */}
       <section className={`${active ? "flex" : "hidden md:flex"} min-w-0 flex-1 flex-col`}>
         {!active ? (
-          <div className="flex flex-1 flex-col items-center justify-center p-8 text-center text-gray-400">
-            <MessageSquare className="mb-3 h-12 w-12 text-gray-200" aria-hidden />
+          <div className="flex flex-1 flex-col items-center justify-center p-8 text-center text-ink-muted">
+            <MessageSquare className="mb-3 h-12 w-12 text-field" aria-hidden />
             <p className="text-sm">Select a conversation{canStartWithProviders ? " or message a specialist" : ""}.</p>
           </div>
         ) : (
           <>
-            <header className="flex items-center gap-3 border-b border-gray-100 px-4 py-3">
+            <header className="flex items-center gap-3 border-b border-hairline px-4 py-3">
               <button
                 type="button"
                 onClick={() => setChosen(null)}
-                className="rounded-full p-1.5 text-gray-500 hover:bg-gray-100 md:hidden"
+                className="rounded-full p-1.5 text-ink-muted hover:bg-surface-muted md:hidden"
                 aria-label="Back to conversations"
               >
                 <ArrowLeft className="h-5 w-5" aria-hidden />
               </button>
               <Avatar name={active.name} avatarUrl={active.avatar} size="md" />
               <div className="min-w-0">
-                <p className="truncate font-semibold text-gray-900">{active.name}</p>
-                {active.subtitle && <p className="truncate text-xs text-gray-500">{active.subtitle}</p>}
+                <p className="truncate font-semibold text-ink">{active.name}</p>
+                {active.subtitle && <p className="truncate text-xs text-ink-muted">{active.subtitle}</p>}
               </div>
             </header>
 
-            <div className="flex-1 space-y-3 overflow-y-auto bg-gray-50/60 p-4" aria-live="polite">
-              {loadingThread && <p className="text-center text-sm text-gray-400">Loading…</p>}
+            <div className="flex-1 space-y-3 overflow-y-auto bg-surface-muted/60 p-4" aria-live="polite">
+              {loadingThread && <p className="text-center text-sm text-ink-muted">Loading…</p>}
               {gateError && (
-                <p className="mx-auto max-w-sm rounded-xl bg-amber-50 p-3 text-center text-sm text-amber-800">
+                <p className="mx-auto max-w-sm rounded-xl bg-warning-soft p-3 text-center text-sm text-warning">
                   {gateError}
                 </p>
               )}
               {!loadingThread && !gateError && messages.length === 0 && (
-                <p className="mx-auto max-w-sm text-center text-sm text-gray-500">
+                <p className="mx-auto max-w-sm text-center text-sm text-ink-muted">
                   Say hello. Please don&apos;t share emergencies here: call 112 / 912.
                 </p>
               )}
@@ -405,10 +403,10 @@ export function DirectMessageChat({
                 return (
                   <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                     <div
-                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm shadow-sm sm:max-w-[70%] ${mine ? `${acc.bg} rounded-br-sm text-white` : "rounded-bl-sm border border-gray-100 bg-white text-gray-800"}`}
+                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm shadow-sm sm:max-w-[70%] ${mine ? `${acc.bg} rounded-br-sm text-white` : "rounded-bl-sm border border-hairline bg-surface text-ink"}`}
                     >
                       <p className="whitespace-pre-wrap break-words">{m.content}</p>
-                      <p className={`mt-1 text-[10px] ${mine ? acc.time : "text-gray-400"}`}>
+                      <p className={`mt-1 text-[10px] ${mine ? acc.time : "text-ink-muted"}`}>
                         {formatRelative(m.createdAt)}
                       </p>
                     </div>
@@ -418,7 +416,7 @@ export function DirectMessageChat({
               <div ref={endRef} />
             </div>
 
-            <footer className="border-t border-gray-100 p-3">
+            <footer className="border-t border-hairline p-3">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -442,7 +440,7 @@ export function DirectMessageChat({
                     }
                   }}
                   placeholder="Write a message…"
-                  className={`max-h-32 min-h-[44px] flex-1 resize-none rounded-2xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${acc.ring}`}
+                  className={`max-h-32 min-h-[44px] flex-1 resize-none rounded-2xl border border-hairline px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${acc.ring}`}
                 />
                 <button
                   type="submit"
@@ -453,7 +451,7 @@ export function DirectMessageChat({
                   <Send className="h-4 w-4" aria-hidden />
                 </button>
               </form>
-              <p className="mt-2 flex items-center justify-center gap-1 text-[11px] text-gray-400">
+              <p className="mt-2 flex items-center justify-center gap-1 text-[11px] text-ink-muted">
                 <Lock className="h-3 w-3" aria-hidden /> Private between you and {active.name}
               </p>
             </footer>

@@ -19,22 +19,22 @@ export function FloatingField({
           placeholder=" "
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          className={`peer m3-input h-14 pt-5 ${error ? "border-nc-berry focus:border-nc-berry focus:ring-nc-berry" : ""}`}
+          className={`peer m3-input h-14 pt-5 ${error ? "border-danger focus:border-danger focus:ring-danger" : ""}`}
           {...props}
         />
         <label
           htmlFor={id}
-          className="pointer-events-none absolute left-3 top-1.5 bg-white px-1 text-xs font-medium text-slate-500 transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-nc-primary"
+          className="pointer-events-none absolute left-3 top-1.5 bg-surface px-1 text-xs font-medium text-ink-muted transition-all peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-brand-ink"
         >
           {label}
         </label>
       </div>
       {error ? (
-        <p id={`${id}-error`} className="mt-1 px-1 text-xs font-medium text-nc-berry">
+        <p id={`${id}-error`} className="mt-1 px-1 text-xs font-medium text-danger">
           {error}
         </p>
       ) : hint ? (
-        <p id={`${id}-hint`} className="mt-1 px-1 text-xs text-slate-500">
+        <p id={`${id}-hint`} className="mt-1 px-1 text-xs text-ink-muted">
           {hint}
         </p>
       ) : null}

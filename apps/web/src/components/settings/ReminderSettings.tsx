@@ -76,15 +76,15 @@ export function ReminderSettings() {
         {error}
       </Callout>
     ) : (
-      <p className="py-8 text-center text-sm text-slate-500">Loading reminder settings…</p>
+      <p className="py-8 text-center text-sm text-ink-muted">Loading reminder settings…</p>
     );
   }
 
   return (
     <div>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xl font-bold text-nc-ink">Reminders</h2>
-        <span role="status" aria-live="polite" className="flex items-center gap-1.5 text-sm text-slate-500">
+        <h2 className="text-xl font-bold text-ink">Reminders</h2>
+        <span role="status" aria-live="polite" className="flex items-center gap-1.5 text-sm text-ink-muted">
           {status === "saving" && (
             <>
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Saving…
@@ -92,12 +92,12 @@ export function ReminderSettings() {
           )}
           {status === "saved" && (
             <>
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden /> Saved
+              <CheckCircle2 className="h-4 w-4 text-success" aria-hidden /> Saved
             </>
           )}
         </span>
       </div>
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-ink-soft">
         Reminders appear in your notifications{prefs.emailEnabled ? " and by email" : ""}. Changes save automatically.
       </p>
       {error && (
@@ -106,7 +106,7 @@ export function ReminderSettings() {
         </Callout>
       )}
 
-      <div className="mt-2 divide-y divide-slate-100">
+      <div className="mt-2 divide-y divide-hairline">
         <div>
           <Switch
             label="Period prediction"
@@ -115,7 +115,7 @@ export function ReminderSettings() {
             onChange={(v) => save({ periodReminders: v })}
           />
           {prefs.periodReminders && (
-            <label className="-mt-1 mb-4 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+            <label className="-mt-1 mb-4 flex flex-wrap items-center gap-2 text-sm text-ink-soft">
               Remind me
               <select
                 value={prefs.periodLeadDays}
@@ -158,7 +158,7 @@ export function ReminderSettings() {
       </div>
 
       {(prefs.dailyLogReminders || prefs.weeklyInsights) && (
-        <label className="mt-4 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+        <label className="mt-4 flex flex-wrap items-center gap-2 text-sm text-ink-soft">
           Send daily and weekly reminders at
           <select
             value={prefs.reminderHour}
@@ -171,7 +171,7 @@ export function ReminderSettings() {
               </option>
             ))}
           </select>
-          <span className="text-xs text-slate-500">({prefs.timezone.replace(/_/g, " ")})</span>
+          <span className="text-xs text-ink-muted">({prefs.timezone.replace(/_/g, " ")})</span>
         </label>
       )}
     </div>

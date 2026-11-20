@@ -49,26 +49,26 @@ export function CycleLogModal({ isOpen, onClose, onSuccess }: CycleLogModalProps
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
+      <div className="bg-surface rounded-2xl shadow-xl w-full max-w-md p-6 relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+          className="absolute top-4 right-4 text-ink-muted hover:text-ink-soft transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-teal-50 text-teal-600 rounded-lg">
+          <div className="p-2 bg-brand-soft text-brand-ink rounded-lg">
             <Calendar className="w-5 h-5" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900">Log Period</h3>
+          <h3 className="text-lg font-semibold text-ink">Log Period</h3>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
 
           <div>
-            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="startDate" className="block text-sm font-medium text-ink-soft mb-1">
               First day of your last period
             </label>
             <input
@@ -77,7 +77,7 @@ export function CycleLogModal({ isOpen, onClose, onSuccess }: CycleLogModalProps
               required
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all"
+              className="w-full px-3 py-2 border border-field rounded-lg focus:ring-2 focus:ring-focus focus:border-brand outline-none transition-all"
             />
           </div>
 
@@ -85,14 +85,14 @@ export function CycleLogModal({ isOpen, onClose, onSuccess }: CycleLogModalProps
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+              className="flex-1 px-4 py-2 text-sm font-medium text-ink-soft bg-surface-muted border border-field rounded-lg hover:bg-surface-muted transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50 transition-colors"
+              className="flex-1 px-4 py-2 text-sm font-medium text-on-brand bg-brand rounded-lg hover:bg-brand-hover disabled:opacity-50 transition-colors"
             >
               {isLoading ? "Saving..." : "Save Log"}
             </button>

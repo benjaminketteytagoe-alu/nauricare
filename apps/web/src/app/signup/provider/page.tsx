@@ -132,16 +132,16 @@ export default function ProviderSignUpPage() {
   return (
     <div className="min-h-[100dvh] flex">
       {/* ── LEFT — Registration form ── */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 py-6 sm:py-8 bg-white overflow-y-auto">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 py-6 sm:py-8 bg-surface overflow-y-auto">
         <div className="w-full max-w-md space-y-6 my-8">
           <div className="text-center">
             <h2 className="text-3xl font-extrabold text-ink">Join as a Provider</h2>
-            <p className="text-gray-500 mt-2 text-sm">Register your clinical practice on NauriCare.</p>
+            <p className="text-ink-muted mt-2 text-sm">Register your clinical practice on NauriCare.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-200">{error}</div>
+              <div className="bg-danger-soft text-danger p-3 rounded-xl text-sm border border-danger-line">{error}</div>
             )}
 
             <div className="space-y-1.5">
@@ -175,7 +175,7 @@ export default function ProviderSignUpPage() {
                   aria-invalid={!!passwordError}
                   className="h-11 rounded-xl"
                 />
-                {passwordError && <p className="text-xs text-red-600">{passwordError}</p>}
+                {passwordError && <p className="text-xs text-danger">{passwordError}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="dateOfBirth">Date of Birth</Label>
@@ -184,7 +184,7 @@ export default function ProviderSignUpPage() {
                   name="dateOfBirth"
                   type="date"
                   required
-                  className="h-11 rounded-xl text-gray-700"
+                  className="h-11 rounded-xl text-ink-soft"
                 />
               </div>
             </div>
@@ -228,7 +228,7 @@ export default function ProviderSignUpPage() {
                   setSelectedCountry(e.target.value);
                   setLocalPhone("");
                 }}
-                className="w-full h-11 px-3 border border-input rounded-xl text-sm bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-focus text-gray-900"
+                className="w-full h-11 px-3 border border-input rounded-xl text-sm bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-focus text-ink"
               >
                 <optgroup label="Recommended regions">
                   {COUNTRIES.slice(0, PRIORITY_COUNTRY_COUNT).map((c) => (
@@ -251,7 +251,7 @@ export default function ProviderSignUpPage() {
             <div className="space-y-1.5">
               <Label htmlFor="localPhone">Phone Number</Label>
               <div className="flex h-11 rounded-xl border border-input overflow-hidden focus-within:ring-2 focus-within:ring-focus focus-within:ring-offset-0">
-                <span className="inline-flex items-center px-3 bg-gray-50 border-r border-input text-sm font-semibold text-gray-700 whitespace-nowrap select-none shrink-0">
+                <span className="inline-flex items-center px-3 bg-surface-muted border-r border-input text-sm font-semibold text-ink-soft whitespace-nowrap select-none shrink-0">
                   {dialCode || "—"}
                 </span>
                 <input
@@ -261,7 +261,7 @@ export default function ProviderSignUpPage() {
                   placeholder="788 123 456"
                   value={localPhone}
                   onChange={(e) => setLocalPhone(e.target.value)}
-                  className="flex-1 min-w-0 px-3 text-sm bg-white outline-none placeholder:text-ink-muted"
+                  className="flex-1 min-w-0 px-3 text-sm bg-surface outline-none placeholder:text-ink-muted"
                 />
               </div>
               <p className="text-xs text-ink-muted">
@@ -279,7 +279,7 @@ export default function ProviderSignUpPage() {
               />
               <Label
                 htmlFor="privacyConsent"
-                className="text-xs text-gray-600 font-normal leading-relaxed cursor-pointer"
+                className="text-xs text-ink-soft font-normal leading-relaxed cursor-pointer"
               >
                 I consent to the collection and processing of my professional information in accordance with the{" "}
                 <Link href="/privacy" className="text-brand-ink hover:underline">
@@ -311,13 +311,13 @@ export default function ProviderSignUpPage() {
             </p>
           </form>
 
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-sm text-ink-muted">
             Already have an account?{" "}
             <Link href="/login" className="text-brand-ink hover:underline font-semibold">
               Log in
             </Link>
           </p>
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-sm text-ink-muted">
             Registering as a patient?{" "}
             <Link href="/signup" className="text-brand-ink hover:underline font-semibold">
               Sign up here

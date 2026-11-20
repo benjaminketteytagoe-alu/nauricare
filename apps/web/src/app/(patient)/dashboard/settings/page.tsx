@@ -27,7 +27,7 @@ const isTab = (v: string | null): v is TabId => TABS.some((t) => t.id === v);
 
 export default function SettingsPage() {
   return (
-    <Suspense fallback={<p className="py-12 text-center text-slate-500">Loading your settings…</p>}>
+    <Suspense fallback={<p className="py-12 text-center text-ink-muted">Loading your settings…</p>}>
       <SettingsContent />
     </Suspense>
   );
@@ -97,12 +97,12 @@ function SettingsContent() {
     }
   };
 
-  if (isLoading) return <p className="py-12 text-center text-slate-500">Loading your settings…</p>;
+  if (isLoading) return <p className="py-12 text-center text-ink-muted">Loading your settings…</p>;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-12">
-      <h1 className="flex items-center gap-3 text-2xl font-bold text-nc-ink sm:text-3xl">
-        <Settings className="h-7 w-7 text-rose-600" aria-hidden /> Settings &amp; Profile
+      <h1 className="flex items-center gap-3 text-2xl font-bold text-ink sm:text-3xl">
+        <Settings className="h-7 w-7 text-brand-ink" aria-hidden /> Settings &amp; Profile
       </h1>
 
       <div className="flex flex-col gap-6 md:flex-row">
@@ -116,8 +116,8 @@ function SettingsContent() {
                 onClick={() => selectTab(id)}
                 className={`flex shrink-0 items-center gap-3 whitespace-nowrap rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
                   activeTab === id
-                    ? "bg-rose-50 text-rose-700"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                    ? "bg-brand-soft text-brand-ink"
+                    : "text-ink-muted hover:bg-surface-muted hover:text-ink"
                 }`}
               >
                 <Icon className="h-5 w-5" aria-hidden /> {label}
@@ -130,10 +130,10 @@ function SettingsContent() {
           <div className="p-5 sm:p-8">
             {activeTab === "cycle" && (
               <div className="max-w-md space-y-4">
-                <h2 className="text-xl font-bold text-nc-ink">Cycle baselines</h2>
+                <h2 className="text-xl font-bold text-ink">Cycle baselines</h2>
                 <label className="block">
-                  <span className="mb-1 block text-sm font-semibold text-slate-700">Average cycle length (days)</span>
-                  <span className="mb-3 block text-xs text-slate-500">
+                  <span className="mb-1 block text-sm font-semibold text-ink-soft">Average cycle length (days)</span>
+                  <span className="mb-3 block text-xs text-ink-muted">
                     Used to predict your next period until you&apos;ve logged two or more periods.
                   </span>
                   <input
@@ -151,8 +151,8 @@ function SettingsContent() {
 
             {activeTab === "goals" && (
               <div>
-                <h2 className="text-xl font-bold text-nc-ink">Personalised focus</h2>
-                <p className="mb-6 mt-1 text-sm text-slate-500">
+                <h2 className="text-xl font-bold text-ink">Personalised focus</h2>
+                <p className="mb-6 mt-1 text-sm text-ink-muted">
                   Choose the areas you want your dashboard to focus on.
                 </p>
                 <div className="grid gap-3">
@@ -166,22 +166,22 @@ function SettingsContent() {
                         onClick={() => toggleGoal(goal.id)}
                         className={`flex items-center justify-between gap-4 rounded-xl border-2 p-4 text-left transition-colors ${
                           isSelected
-                            ? "border-rose-500 bg-rose-50"
-                            : "border-slate-100 hover:border-rose-200 hover:bg-slate-50"
+                            ? "border-brand bg-brand-soft"
+                            : "border-hairline hover:border-brand-line hover:bg-surface-muted"
                         }`}
                       >
                         <span>
-                          <span className={`block font-bold ${isSelected ? "text-rose-900" : "text-nc-ink"}`}>
+                          <span className={`block font-bold ${isSelected ? "text-brand-ink" : "text-ink"}`}>
                             {goal.label}
                           </span>
-                          <span className={`mt-0.5 block text-xs ${isSelected ? "text-rose-700" : "text-slate-500"}`}>
+                          <span className={`mt-0.5 block text-xs ${isSelected ? "text-brand-ink" : "text-ink-muted"}`}>
                             {goal.desc}
                           </span>
                         </span>
                         {isSelected ? (
-                          <CheckCircle2 className="h-6 w-6 shrink-0 text-rose-500" aria-hidden />
+                          <CheckCircle2 className="h-6 w-6 shrink-0 text-brand-ink" aria-hidden />
                         ) : (
-                          <span className="h-6 w-6 shrink-0 rounded-full border-2 border-slate-200" aria-hidden />
+                          <span className="h-6 w-6 shrink-0 rounded-full border-2 border-hairline" aria-hidden />
                         )}
                       </button>
                     );
@@ -194,8 +194,8 @@ function SettingsContent() {
 
             {activeTab === "account" && (
               <div className="max-w-xl space-y-6">
-                <h2 className="text-xl font-bold text-nc-ink">Account &amp; security</h2>
-                <div className="border-b border-slate-100 pb-6">
+                <h2 className="text-xl font-bold text-ink">Account &amp; security</h2>
+                <div className="border-b border-hairline pb-6">
                   <AvatarPicker
                     name={userData.name || "You"}
                     avatarUrl={avatarUrl}
@@ -205,20 +205,20 @@ function SettingsContent() {
                 </div>
                 <dl className="space-y-4">
                   <div>
-                    <dt className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Full name</dt>
-                    <dd className="break-words rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium text-nc-ink">
+                    <dt className="mb-1 text-xs font-bold uppercase tracking-wider text-ink-muted">Full name</dt>
+                    <dd className="break-words rounded-xl border border-hairline bg-surface-muted px-4 py-3 font-medium text-ink">
                       {userData.name}
                     </dd>
                   </div>
                   <div>
-                    <dt className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Email address</dt>
-                    <dd className="break-all rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 font-medium text-nc-ink">
+                    <dt className="mb-1 text-xs font-bold uppercase tracking-wider text-ink-muted">Email address</dt>
+                    <dd className="break-all rounded-xl border border-hairline bg-surface-muted px-4 py-3 font-medium text-ink">
                       {userData.email}
                     </dd>
                   </div>
                 </dl>
                 <label className="block">
-                  <span className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <span className="mb-1 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink-muted">
                     <Smartphone className="h-4 w-4" aria-hidden /> Emergency contact phone
                   </span>
                   <input
@@ -236,10 +236,10 @@ function SettingsContent() {
           </div>
 
           {activeTab !== "reminders" && (
-            <div className="flex flex-col-reverse gap-3 border-t border-rose-100 bg-rose-50/30 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div className="flex flex-col-reverse gap-3 border-t border-brand-line bg-brand-soft/30 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
               <span role="status" aria-live="polite" className="text-sm font-medium">
                 {saveMessage && (
-                  <span className="flex items-center gap-2 text-emerald-700">
+                  <span className="flex items-center gap-2 text-success">
                     <CheckCircle2 className="h-4 w-4" aria-hidden /> {saveMessage}
                   </span>
                 )}

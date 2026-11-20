@@ -34,24 +34,24 @@ export default async function UserHandlePage({ params }: Props) {
 
   return (
     <div className="max-w-xl mx-auto py-12 px-4">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+      <div className="bg-surface rounded-2xl border border-hairline shadow-sm p-8 text-center">
         <Avatar name={user.name ?? "?"} avatarUrl={user.avatarUrl} size="lg" />
-        <h1 className="mt-4 text-xl font-bold text-gray-900">{user.name}</h1>
-        {user.handle && <p className="text-sm text-teal-600 font-medium">@{user.handle}</p>}
-        {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+        <h1 className="mt-4 text-xl font-bold text-ink">{user.name}</h1>
+        {user.handle && <p className="text-sm text-brand-ink font-medium">@{user.handle}</p>}
+        {subtitle && <p className="text-sm text-ink-muted mt-1">{subtitle}</p>}
         {user.role === "PROVIDER" && (
-          <span className="inline-block mt-2 text-[11px] font-extrabold tracking-wide px-3 py-1 rounded-full bg-teal-50 text-teal-700 border border-teal-100">
+          <span className="inline-block mt-2 text-[11px] font-extrabold tracking-wide px-3 py-1 rounded-full bg-brand-soft text-brand-ink border border-brand-line">
             Specialist
           </span>
         )}
-        <div className="flex justify-center gap-8 mt-6 pt-6 border-t border-gray-50">
+        <div className="flex justify-center gap-8 mt-6 pt-6 border-t border-hairline">
           <div>
-            <p className="text-lg font-bold text-gray-900">{user._count.followers}</p>
-            <p className="text-xs text-gray-400 uppercase tracking-wider">Followers</p>
+            <p className="text-lg font-bold text-ink">{user._count.followers}</p>
+            <p className="text-xs text-ink-muted uppercase tracking-wider">Followers</p>
           </div>
           <div>
-            <p className="text-lg font-bold text-gray-900">{user._count.following}</p>
-            <p className="text-xs text-gray-400 uppercase tracking-wider">Following</p>
+            <p className="text-lg font-bold text-ink">{user._count.following}</p>
+            <p className="text-xs text-ink-muted uppercase tracking-wider">Following</p>
           </div>
         </div>
       </div>

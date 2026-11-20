@@ -90,16 +90,16 @@ export default function SymptomLoggerPage() {
       )}
 
       {/* Navigation */}
-      <Link href="/dashboard" className="text-rose-700 hover:text-rose-900 flex items-center gap-2 font-medium w-fit">
+      <Link href="/dashboard" className="text-brand-ink hover:text-brand-ink flex items-center gap-2 font-medium w-fit">
         <ArrowLeft className="w-4 h-4" /> Back to Dashboard
       </Link>
 
       <div className="card-surface overflow-hidden">
-        <div className="bg-rose-800 p-6 text-white">
+        <div className="bg-brand-pressed p-6 text-white">
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Activity className="w-6 h-6 text-rose-200" /> Daily Health Log
+            <Activity className="w-6 h-6 text-on-brand/80" /> Daily Health Log
           </h1>
-          <p className="text-rose-100 mt-1">
+          <p className="text-on-brand mt-1">
             Track how you are feeling today to build a better picture of your reproductive health.
           </p>
         </div>
@@ -107,12 +107,12 @@ export default function SymptomLoggerPage() {
         <div className="p-6 md:p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
             {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{error}</div>
+              <div className="bg-danger-soft text-danger p-3 rounded-md text-sm border border-danger-line">{error}</div>
             )}
 
             {/* Symptom Selection */}
             <div className="space-y-3">
-              <Label className="text-base font-semibold text-gray-900">What are you experiencing today?</Label>
+              <Label className="text-base font-semibold text-ink">What are you experiencing today?</Label>
               <div className="flex flex-wrap gap-3 mt-2">
                 {COMMON_SYMPTOMS.map((symptom) => {
                   const isSelected = selectedSymptoms.includes(symptom);
@@ -123,8 +123,8 @@ export default function SymptomLoggerPage() {
                       onClick={() => toggleSymptom(symptom)}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${
                         isSelected
-                          ? "bg-rose-600 border-rose-600 text-white shadow-sm"
-                          : "bg-white border-gray-200 text-gray-700 hover:border-rose-300 hover:bg-rose-50"
+                          ? "bg-brand border-brand text-white shadow-sm"
+                          : "bg-surface border-hairline text-ink-soft hover:border-brand-line hover:bg-brand-soft"
                       }`}
                     >
                       {symptom}
@@ -137,7 +137,7 @@ export default function SymptomLoggerPage() {
             {/* Cycle Context */}
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="cycleDay" className="text-sm font-semibold text-gray-900">
+                <Label htmlFor="cycleDay" className="text-sm font-semibold text-ink">
                   Cycle Day (Optional)
                 </Label>
                 <Input
@@ -148,15 +148,15 @@ export default function SymptomLoggerPage() {
                   placeholder="e.g., 14"
                   value={cycleDay}
                   onChange={(e) => setCycleDay(e.target.value)}
-                  className="h-11 focus-visible:ring-rose-600"
+                  className="h-11 focus-visible:ring-focus"
                 />
-                <p className="text-xs text-gray-500">Day 1 is the first day of your period.</p>
+                <p className="text-xs text-ink-muted">Day 1 is the first day of your period.</p>
               </div>
             </div>
 
             {/* Personal Notes */}
             <div className="space-y-2">
-              <Label htmlFor="notes" className="text-sm font-semibold text-gray-900">
+              <Label htmlFor="notes" className="text-sm font-semibold text-ink">
                 Additional Notes
               </Label>
               <textarea
@@ -165,7 +165,7 @@ export default function SymptomLoggerPage() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Any emotional changes, triggers, or severity details..."
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-600"
+                className="w-full rounded-md border border-field bg-surface px-3 py-2 text-sm placeholder:text-ink-muted focus:outline-none focus:ring-2 focus:ring-focus"
               />
             </div>
 

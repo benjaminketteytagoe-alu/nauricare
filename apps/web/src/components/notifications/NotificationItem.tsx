@@ -20,18 +20,18 @@ import { formatRelative } from "@/lib/format";
 import type { NotificationView } from "./useNotifications";
 
 const ICONS: Record<UserNotificationType, { icon: LucideIcon; color: string }> = {
-  MENTION_POST: { icon: AtSign, color: "text-purple-500" },
-  MENTION_COMMENT: { icon: AtSign, color: "text-purple-500" },
-  FOLLOW: { icon: UserPlus, color: "text-rose-600" },
-  MESSAGE: { icon: MessageSquare, color: "text-nc-primary" },
-  APPOINTMENT_BOOKED: { icon: CalendarCheck, color: "text-emerald-600" },
-  APPOINTMENT_UPDATED: { icon: CalendarCheck, color: "text-emerald-600" },
-  APPOINTMENT_REMINDER: { icon: CalendarClock, color: "text-nc-amber" },
-  COMMUNITY_LIKE: { icon: Heart, color: "text-rose-500" },
-  COMMUNITY_COMMENT: { icon: MessageCircle, color: "text-blue-500" },
-  REFERRAL_UPDATE: { icon: Hospital, color: "text-nc-amber" },
-  PERIOD_REMINDER: { icon: Droplet, color: "text-rose-500" },
-  SYSTEM: { icon: Bell, color: "text-slate-500" },
+  MENTION_POST: { icon: AtSign, color: "text-lavender" },
+  MENTION_COMMENT: { icon: AtSign, color: "text-lavender" },
+  FOLLOW: { icon: UserPlus, color: "text-brand-ink" },
+  MESSAGE: { icon: MessageSquare, color: "text-brand-ink" },
+  APPOINTMENT_BOOKED: { icon: CalendarCheck, color: "text-success" },
+  APPOINTMENT_UPDATED: { icon: CalendarCheck, color: "text-success" },
+  APPOINTMENT_REMINDER: { icon: CalendarClock, color: "text-warning" },
+  COMMUNITY_LIKE: { icon: Heart, color: "text-brand-ink" },
+  COMMUNITY_COMMENT: { icon: MessageCircle, color: "text-info" },
+  REFERRAL_UPDATE: { icon: Hospital, color: "text-warning" },
+  PERIOD_REMINDER: { icon: Droplet, color: "text-brand-ink" },
+  SYSTEM: { icon: Bell, color: "text-ink-muted" },
 };
 
 const LEGACY_TEXT: Partial<Record<UserNotificationType, string>> = {
@@ -59,20 +59,20 @@ export function NotificationItem({
       {n.actor ? (
         <Avatar name={n.actor.name} avatarUrl={n.actor.avatarUrl} size="sm" />
       ) : (
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-muted">
           <Icon className={`h-4 w-4 ${color}`} aria-hidden />
         </span>
       )}
       <span className="min-w-0 flex-1">
         <span
-          className={`block leading-snug text-gray-900 ${compact ? "text-xs" : "text-sm"} ${n.isRead ? "" : "font-semibold"}`}
+          className={`block leading-snug text-ink ${compact ? "text-xs" : "text-sm"} ${n.isRead ? "" : "font-semibold"}`}
         >
           {title}
         </span>
         {body && (
-          <span className={`mt-0.5 block truncate text-gray-500 ${compact ? "text-xs" : "text-sm"}`}>{body}</span>
+          <span className={`mt-0.5 block truncate text-ink-muted ${compact ? "text-xs" : "text-sm"}`}>{body}</span>
         )}
-        <span className="mt-1 flex items-center gap-1 text-[11px] text-gray-400">
+        <span className="mt-1 flex items-center gap-1 text-[11px] text-ink-muted">
           <Icon className={`h-3 w-3 ${color}`} aria-hidden />
           {formatRelative(n.createdAt, true)}
         </span>
@@ -81,9 +81,7 @@ export function NotificationItem({
   );
 
   return (
-    <div
-      className={`flex items-start gap-3 ${compact ? "px-4 py-3" : "p-4"} ${n.isRead ? "" : "bg-nc-primary-container/40"}`}
-    >
+    <div className={`flex items-start gap-3 ${compact ? "px-4 py-3" : "p-4"} ${n.isRead ? "" : "bg-brand-soft/40"}`}>
       {n.link ? (
         <Link
           href={n.link}
@@ -100,7 +98,7 @@ export function NotificationItem({
           type="button"
           onClick={() => onRead(n.id)}
           aria-label="Mark as read"
-          className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-nc-primary hover:ring-4 hover:ring-nc-primary/20"
+          className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-brand hover:ring-4 hover:ring-brand/20"
         />
       )}
     </div>

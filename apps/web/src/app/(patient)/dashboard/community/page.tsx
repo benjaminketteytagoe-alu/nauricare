@@ -96,7 +96,7 @@ function relativeTime(iso: string): string {
 function RoleTag({ role }: { role: string }) {
   if (role !== "PROVIDER") return null;
   return (
-    <span className="inline-flex items-center text-[10px] font-extrabold tracking-wide px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-100">
+    <span className="inline-flex items-center text-[10px] font-extrabold tracking-wide px-2 py-0.5 rounded-full bg-lavender-soft text-lavender border border-lavender-line">
       Specialist
     </span>
   );
@@ -112,19 +112,19 @@ function StoryRingItem({ group, onClick }: { group: StoryGroup; onClick: () => v
       <div className="relative">
         {/* Gradient ring — conic for multi-story segmentation visual */}
         <div style={{ background: "#e11d48" }} className="p-[2.5px] rounded-full">
-          <div className="bg-white p-[2px] rounded-full">
+          <div className="bg-surface p-[2px] rounded-full">
             <Avatar name={group.author.name} avatarUrl={group.author.avatarUrl} size="lg" />
           </div>
         </div>
 
         {/* Story count badge */}
         {multiStory && (
-          <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-rose-600 text-white text-[10px] font-extrabold flex items-center justify-center border-2 border-white shadow">
+          <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-brand text-white text-[10px] font-extrabold flex items-center justify-center border-2 border-white shadow">
             {group.storyCount > 9 ? "9+" : group.storyCount}
           </span>
         )}
       </div>
-      <span className="text-[11px] text-gray-600 font-semibold max-w-[56px] truncate leading-tight">
+      <span className="text-[11px] text-ink-soft font-semibold max-w-[56px] truncate leading-tight">
         {group.author.name.split(" ")[0]}
       </span>
     </button>
@@ -146,14 +146,14 @@ function StoryViewer({ group, onClose }: { group: StoryGroup; onClose: () => voi
   return (
     <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="relative bg-gray-900 rounded-2xl overflow-hidden w-full max-w-sm shadow-2xl"
+        className="relative bg-surface-inverse rounded-2xl overflow-hidden w-full max-w-sm shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Progress segments */}
         <div className="absolute top-3 left-3 right-3 flex gap-1 z-20">
           {group.stories.map((_, i) => (
             <div key={i} className="flex-1 h-0.5 rounded-full overflow-hidden bg-white/30">
-              <div className={`h-full bg-white rounded-full ${i < idx ? "w-full" : i === idx ? "w-full" : "w-0"}`} />
+              <div className={`h-full bg-surface rounded-full ${i < idx ? "w-full" : i === idx ? "w-full" : "w-0"}`} />
             </div>
           ))}
         </div>
@@ -299,19 +299,19 @@ function CommentsThread({
   }
 
   return (
-    <div className="border-t border-gray-50 px-4 py-3 space-y-3">
+    <div className="border-t border-hairline px-4 py-3 space-y-3">
       {isLoading ? (
-        <p className="text-xs text-gray-400">Loading comments…</p>
+        <p className="text-xs text-ink-muted">Loading comments…</p>
       ) : comments.length === 0 ? (
-        <p className="text-xs text-gray-400">No comments yet — be the first to reply.</p>
+        <p className="text-xs text-ink-muted">No comments yet — be the first to reply.</p>
       ) : (
         <div className="space-y-2.5">
           {comments.map((c) => (
             <div key={c.id} className="flex items-start gap-2">
               <Avatar name={c.author.name} avatarUrl={c.author.avatarUrl} size="xs" />
-              <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2">
-                <p className="text-xs font-bold text-gray-800">{c.author.name}</p>
-                <p className="text-xs text-gray-600 leading-relaxed">
+              <div className="flex-1 bg-surface-muted rounded-xl px-3 py-2">
+                <p className="text-xs font-bold text-ink">{c.author.name}</p>
+                <p className="text-xs text-ink-soft leading-relaxed">
                   <MentionText text={c.content} />
                 </p>
               </div>
@@ -321,7 +321,7 @@ function CommentsThread({
       )}
 
       {!currentUser.canPost ? (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-ink-muted">
           Choose a community avatar at the top of the page to join the conversation.
         </p>
       ) : (
@@ -333,12 +333,12 @@ function CommentsThread({
               if (e.key === "Enter") void handleSubmit();
             }}
             placeholder="Write a comment…"
-            className="flex-1 text-sm border border-gray-100 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-300"
+            className="flex-1 text-sm border border-hairline rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-focus"
           />
           <button
             onClick={handleSubmit}
             disabled={!draft.trim() || isSubmitting}
-            className="text-sm font-bold text-rose-600 hover:text-rose-800 disabled:opacity-40 disabled:cursor-not-allowed px-2"
+            className="text-sm font-bold text-brand-ink hover:text-brand-ink disabled:opacity-40 disabled:cursor-not-allowed px-2"
           >
             Send
           </button>
@@ -365,8 +365,8 @@ function FollowButton({ isFollowing, onToggle }: { isFollowing: boolean; onToggl
       disabled={isPending}
       className={`text-xs font-bold px-3 py-1 rounded-full border transition-colors disabled:opacity-50 shrink-0 ${
         isFollowing
-          ? "text-gray-500 border-gray-200 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50"
-          : "text-rose-600 border-rose-200 hover:bg-rose-50"
+          ? "text-ink-muted border-hairline hover:border-brand-line hover:text-brand-ink hover:bg-brand-soft"
+          : "text-brand-ink border-brand-line hover:bg-brand-soft"
       }`}
     >
       {isFollowing ? "Following" : "Follow"}
@@ -396,10 +396,10 @@ function PostCard({
         <Avatar name={post.author.name} avatarUrl={post.author.avatarUrl} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="font-bold text-gray-900 text-sm truncate">{post.author.name}</p>
+            <p className="font-bold text-ink text-sm truncate">{post.author.name}</p>
             <RoleTag role={post.author.role} />
           </div>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-ink-muted">
             {post.author.practitionerProfile?.specialty
               ? post.author.practitionerProfile.specialty + " · "
               : post.author.patientProfile?.country
@@ -418,15 +418,15 @@ function PostCard({
 
       {/* ② Repost reference card */}
       {post.repostOf && (
-        <div className="mx-4 mb-3 border border-gray-100 rounded-xl p-3 bg-gray-50">
+        <div className="mx-4 mb-3 border border-hairline rounded-xl p-3 bg-surface-muted">
           <div className="flex items-center gap-2 mb-1">
             <Avatar name={post.repostOf.author.name} avatarUrl={post.repostOf.author.avatarUrl} size="xs" />
-            <span className="text-xs font-bold text-gray-600">{post.repostOf.author.name}</span>
+            <span className="text-xs font-bold text-ink-soft">{post.repostOf.author.name}</span>
             {post.repostOf.author.role === "PROVIDER" && (
-              <span className="text-[9px] font-bold text-purple-600">Specialist</span>
+              <span className="text-[9px] font-bold text-lavender">Specialist</span>
             )}
           </div>
-          <p className="text-xs text-gray-600 line-clamp-2">
+          <p className="text-xs text-ink-soft line-clamp-2">
             <MentionText text={post.repostOf.content} />
           </p>
           {post.repostOf.mediaUrl &&
@@ -453,7 +453,9 @@ function PostCard({
         <button
           onClick={() => onLike(post.id)}
           className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
-            post.isLikedByMe ? "text-rose-500 bg-rose-50" : "text-gray-400 hover:text-rose-400 hover:bg-rose-50"
+            post.isLikedByMe
+              ? "text-brand-ink bg-brand-soft"
+              : "text-ink-muted hover:text-brand-ink hover:bg-brand-soft"
           }`}
           aria-label={post.isLikedByMe ? "Unlike" : "Like"}
         >
@@ -464,7 +466,9 @@ function PostCard({
         <button
           onClick={() => setShowComments((v) => !v)}
           className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-sm font-semibold transition-all ${
-            showComments ? "text-purple-600 bg-purple-50" : "text-gray-400 hover:text-purple-500 hover:bg-purple-50"
+            showComments
+              ? "text-lavender bg-lavender-soft"
+              : "text-ink-muted hover:text-lavender hover:bg-lavender-soft"
           }`}
           aria-label="Comment"
         >
@@ -473,7 +477,7 @@ function PostCard({
         </button>
 
         <button
-          className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-sm font-semibold text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-all"
+          className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-sm font-semibold text-ink-muted hover:text-info hover:bg-info-soft transition-all"
           aria-label="Repost"
         >
           <Repeat2 className="w-5 h-5" />
@@ -484,8 +488,8 @@ function PostCard({
       {/* ⑤ Caption — below interactions, Instagram-style */}
       {post.content && (
         <div className="px-4 pb-4 pt-1">
-          <p className="text-sm text-gray-800 leading-relaxed">
-            <span className="font-bold text-gray-900 mr-1.5">{post.author.name.split(" ")[0]}</span>
+          <p className="text-sm text-ink leading-relaxed">
+            <span className="font-bold text-ink mr-1.5">{post.author.name.split(" ")[0]}</span>
             <MentionText text={post.content} />
           </p>
         </div>
@@ -514,18 +518,18 @@ function FeedSkeleton() {
   return (
     <div className="space-y-4">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden animate-pulse">
+        <div key={i} className="bg-surface rounded-2xl border border-hairline overflow-hidden animate-pulse">
           <div className="flex items-center gap-3 px-4 py-3">
-            <div className="w-10 h-10 rounded-full bg-gray-100" />
+            <div className="w-10 h-10 rounded-full bg-surface-muted" />
             <div className="space-y-2 flex-1">
-              <div className="h-3 w-32 bg-gray-200 rounded-full" />
-              <div className="h-2 w-20 bg-gray-100 rounded-full" />
+              <div className="h-3 w-32 bg-hairline rounded-full" />
+              <div className="h-2 w-20 bg-surface-muted rounded-full" />
             </div>
           </div>
-          <div className={`w-full bg-gray-100 ${i % 2 === 0 ? "h-56" : "h-36"}`} />
+          <div className={`w-full bg-surface-muted ${i % 2 === 0 ? "h-56" : "h-36"}`} />
           <div className="px-4 py-3 space-y-2">
-            <div className="h-3 w-full bg-gray-100 rounded" />
-            <div className="h-3 w-3/4 bg-gray-100 rounded" />
+            <div className="h-3 w-full bg-surface-muted rounded" />
+            <div className="h-3 w-3/4 bg-surface-muted rounded" />
           </div>
         </div>
       ))}
@@ -814,16 +818,16 @@ export default function CommunityPage() {
       {/* ── Page header ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 flex items-center gap-2.5">
-            <Users className="w-7 h-7 text-rose-600" />
+          <h1 className="text-2xl font-extrabold text-ink flex items-center gap-2.5">
+            <Users className="w-7 h-7 text-brand-ink" />
             Community
           </h1>
-          <p className="text-sm text-gray-400 mt-0.5">Share your journey with women on similar paths.</p>
+          <p className="text-sm text-ink-muted mt-0.5">Share your journey with women on similar paths.</p>
         </div>
       </div>
 
       {needsAvatar && (
-        <div className="card-surface border-2 border-nc-primary/30 p-5">
+        <div className="card-surface border-2 border-brand/30 p-5">
           <AvatarPicker
             name={userName}
             avatarUrl={null}
@@ -843,11 +847,11 @@ export default function CommunityPage() {
             className="flex flex-col items-center gap-1.5 shrink-0 disabled:opacity-40"
           >
             <div
-              className={`w-[60px] h-[60px] rounded-full border-2 border-dashed flex items-center justify-center transition-colors ${showStoryForm ? "border-rose-500 bg-rose-50 text-rose-600" : "border-rose-300 bg-gray-50 text-rose-400 hover:bg-rose-50"}`}
+              className={`w-[60px] h-[60px] rounded-full border-2 border-dashed flex items-center justify-center transition-colors ${showStoryForm ? "border-brand bg-brand-soft text-brand-ink" : "border-brand-line bg-surface-muted text-brand-ink hover:bg-brand-soft"}`}
             >
               <Plus className="w-5 h-5" />
             </div>
-            <span className="text-[11px] text-gray-500 font-semibold">Your Story</span>
+            <span className="text-[11px] text-ink-muted font-semibold">Your Story</span>
           </button>
 
           {/* Story rings */}
@@ -856,25 +860,25 @@ export default function CommunityPage() {
               <StoryRingItem key={group.author.id} group={group} onClick={() => setActiveGroup(group)} />
             ))
           ) : (
-            <p className="text-sm text-gray-400 italic self-center py-2">No active stories — be the first!</p>
+            <p className="text-sm text-ink-muted italic self-center py-2">No active stories — be the first!</p>
           )}
         </div>
 
         {/* Inline story compose form */}
         {showStoryForm && (
-          <div className="border-t border-gray-50 pt-3 space-y-2">
+          <div className="border-t border-hairline pt-3 space-y-2">
             <textarea
               value={storyText}
               onChange={(e) => setStoryText(e.target.value)}
               placeholder="Share something… disappears in 24h."
               rows={2}
-              className="w-full resize-none text-sm text-gray-800 placeholder-gray-400 border border-gray-100 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all"
+              className="w-full resize-none text-sm text-ink placeholder-ink-muted border border-hairline rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-focus transition-all"
             />
 
-            {storyError && <p className="text-xs text-rose-500 font-medium">{storyError}</p>}
+            {storyError && <p className="text-xs text-brand-ink font-medium">{storyError}</p>}
 
             {storyPreviewUrl && storyFile && (
-              <div className="relative rounded-xl overflow-hidden border border-gray-100 inline-block">
+              <div className="relative rounded-xl overflow-hidden border border-hairline inline-block">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={storyPreviewUrl} alt="" className="max-h-40 object-cover" />
                 <button
@@ -897,7 +901,7 @@ export default function CommunityPage() {
             <div className="flex items-center justify-between">
               <label
                 htmlFor="story-media-input"
-                className={`inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${storyFile ? "text-rose-600 bg-rose-50" : "text-gray-400 hover:text-rose-600 hover:bg-rose-50"}`}
+                className={`inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${storyFile ? "text-brand-ink bg-brand-soft" : "text-ink-muted hover:text-brand-ink hover:bg-brand-soft"}`}
               >
                 <ImageIcon className="w-4 h-4" />
                 Photo
@@ -908,7 +912,7 @@ export default function CommunityPage() {
                     setShowStoryForm(false);
                     handleStoryFileSelect(null);
                   }}
-                  className="text-sm text-gray-400 hover:text-gray-600 px-3 py-1.5 transition-colors"
+                  className="text-sm text-ink-muted hover:text-ink-soft px-3 py-1.5 transition-colors"
                 >
                   Cancel
                 </button>
@@ -939,14 +943,14 @@ export default function CommunityPage() {
             }
             disabled={needsAvatar}
             rows={3}
-            className="flex-1 resize-none text-sm text-gray-800 placeholder-gray-400 border border-gray-100 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-rose-300 transition-all"
+            className="flex-1 resize-none text-sm text-ink placeholder-ink-muted border border-hairline rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-focus transition-all"
           />
         </div>
 
-        {postError && <p className="text-xs text-rose-500 font-medium px-1">{postError}</p>}
+        {postError && <p className="text-xs text-brand-ink font-medium px-1">{postError}</p>}
 
         {previewUrl && selectedFile && (
-          <div className="relative rounded-xl overflow-hidden border border-gray-100">
+          <div className="relative rounded-xl overflow-hidden border border-hairline">
             {selectedFile.type.startsWith("video/") ? (
               <video src={previewUrl} className="w-full max-h-64 object-cover" controls />
             ) : (
@@ -970,10 +974,10 @@ export default function CommunityPage() {
           className="hidden"
         />
 
-        <div className="flex items-center justify-between pt-1 border-t border-gray-50">
+        <div className="flex items-center justify-between pt-1 border-t border-hairline">
           <label
             htmlFor="community-media-input"
-            className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${selectedFile ? "text-rose-600 bg-rose-50" : "text-gray-400 hover:text-rose-600 hover:bg-rose-50"}`}
+            className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${selectedFile ? "text-brand-ink bg-brand-soft" : "text-ink-muted hover:text-brand-ink hover:bg-brand-soft"}`}
           >
             <ImageIcon className="w-4 h-4" />
             Photo / Video
@@ -993,11 +997,11 @@ export default function CommunityPage() {
         <FeedSkeleton />
       ) : posts.length === 0 ? (
         <div className="card-surface py-16 text-center">
-          <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Users className="w-8 h-8 text-rose-200" />
+          <div className="w-16 h-16 bg-brand-soft rounded-full flex items-center justify-center mx-auto mb-4">
+            <Users className="w-8 h-8 text-brand-line" />
           </div>
-          <h3 className="text-lg font-bold text-gray-900">Be the first to post</h3>
-          <p className="text-gray-400 mt-1.5 text-sm max-w-[240px] mx-auto">
+          <h3 className="text-lg font-bold text-ink">Be the first to post</h3>
+          <p className="text-ink-muted mt-1.5 text-sm max-w-[240px] mx-auto">
             Start the conversation and connect with others on their wellness journey.
           </p>
         </div>
@@ -1026,7 +1030,7 @@ export default function CommunityPage() {
               <button
                 onClick={loadMorePosts}
                 disabled={isLoadingMore}
-                className="text-sm font-bold text-rose-600 hover:text-rose-800 px-6 py-2.5 rounded-xl border border-rose-100 hover:border-rose-300 hover:bg-rose-50 transition-all disabled:opacity-50"
+                className="text-sm font-bold text-brand-ink hover:text-brand-ink px-6 py-2.5 rounded-xl border border-brand-line hover:border-brand-line hover:bg-brand-soft transition-all disabled:opacity-50"
               >
                 {isLoadingMore ? "Loading…" : "Load more posts"}
               </button>

@@ -46,17 +46,17 @@ export function AvatarPicker({
   }
 
   const tile = (selected: boolean) =>
-    `relative rounded-full ring-offset-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nc-primary ${selected ? "ring-4 ring-nc-primary" : "hover:ring-2 hover:ring-slate-300"}`;
+    `relative rounded-full ring-offset-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${selected ? "ring-4 ring-brand" : "hover:ring-2 hover:ring-field"}`;
 
   return (
     <section aria-labelledby="avatar-heading">
       <div className="flex items-center gap-4">
         <Avatar name={name} avatarUrl={current} size="xl" />
         <div>
-          <h3 id="avatar-heading" className="font-semibold text-nc-ink">
+          <h3 id="avatar-heading" className="font-semibold text-ink">
             {heading}
           </h3>
-          <p className="text-sm text-slate-500">{description}</p>
+          <p className="text-sm text-ink-muted">{description}</p>
         </div>
       </div>
       {error && (
@@ -97,7 +97,7 @@ export function AvatarPicker({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={presetSrc(p.id)} alt="" className="aspect-square w-full rounded-full" />
             {selectedPreset === p.id && (
-              <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-nc-primary text-white shadow">
+              <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-brand text-white shadow">
                 <Check className="h-4 w-4" aria-hidden />
               </span>
             )}

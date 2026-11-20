@@ -24,7 +24,7 @@ import { distanceKm, formatDistance, type LatLng } from "@/lib/geo/distance";
 const ProviderMap = dynamic(() => import("@/components/provider-directory/ProviderMap"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full items-center justify-center bg-slate-100 text-sm text-slate-500">Loading map…</div>
+    <div className="flex h-full items-center justify-center bg-surface-muted text-sm text-ink-muted">Loading map…</div>
   ),
 });
 
@@ -109,10 +109,10 @@ export default function ProvidersDirectoryPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-12">
       <header>
-        <h1 className="flex items-center gap-3 text-2xl font-bold text-nc-ink sm:text-3xl">
-          <Stethoscope className="h-7 w-7 text-rose-600" aria-hidden /> Find a specialist
+        <h1 className="flex items-center gap-3 text-2xl font-bold text-ink sm:text-3xl">
+          <Stethoscope className="h-7 w-7 text-brand-ink" aria-hidden /> Find a specialist
         </h1>
-        <p className="mt-1 text-slate-600">
+        <p className="mt-1 text-ink-soft">
           Verified gynaecologists and women&apos;s health specialists. Book a video consultation or send a message.
         </p>
       </header>
@@ -121,7 +121,7 @@ export default function ProvidersDirectoryPage() {
         <label className="relative flex-1">
           <span className="sr-only">Search specialists</span>
           <Search
-            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted"
             aria-hidden
           />
           <input
@@ -139,7 +139,7 @@ export default function ProvidersDirectoryPage() {
           <div
             role="tablist"
             aria-label="View"
-            className="flex rounded-full border border-slate-200 bg-white p-1 shadow-sm"
+            className="flex rounded-full border border-hairline bg-surface p-1 shadow-sm"
           >
             {(["list", "map"] as const).map((v) => (
               <button
@@ -147,7 +147,7 @@ export default function ProvidersDirectoryPage() {
                 role="tab"
                 aria-selected={view === v}
                 onClick={() => setView(v)}
-                className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold ${view === v ? "bg-nc-primary text-white" : "text-slate-600 hover:bg-slate-50"}`}
+                className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold ${view === v ? "bg-brand text-white" : "text-ink-soft hover:bg-surface-muted"}`}
               >
                 {v === "list" ? <List className="h-4 w-4" aria-hidden /> : <MapIcon className="h-4 w-4" aria-hidden />}{" "}
                 {v === "list" ? "List" : "Map"}
@@ -171,23 +171,23 @@ export default function ProvidersDirectoryPage() {
       {providers === null ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-56 animate-pulse rounded-3xl bg-white" />
+            <div key={i} className="h-56 animate-pulse rounded-3xl bg-surface" />
           ))}
         </div>
       ) : listed.length === 0 ? (
         <div className="card-surface p-12 text-center">
-          <ShieldAlert className="mx-auto mb-4 h-12 w-12 text-slate-300" aria-hidden />
-          <h2 className="text-lg font-bold text-nc-ink">
+          <ShieldAlert className="mx-auto mb-4 h-12 w-12 text-field" aria-hidden />
+          <h2 className="text-lg font-bold text-ink">
             {query ? "No specialists match your search" : "No specialists available yet"}
           </h2>
-          <p className="mt-1 text-slate-600">
+          <p className="mt-1 text-ink-soft">
             {query ? "Try another name, specialty or area." : "Please check back soon."}
           </p>
         </div>
       ) : (
         <div className={view === "map" ? "grid gap-4 lg:grid-cols-[1.4fr_1fr]" : ""}>
           {view === "map" && (
-            <div className="relative isolate h-[55dvh] min-h-[320px] overflow-hidden rounded-3xl border border-slate-200 shadow-sm lg:sticky lg:top-6 lg:h-[calc(100dvh-12rem)]">
+            <div className="relative isolate h-[55dvh] min-h-[320px] overflow-hidden rounded-3xl border border-hairline shadow-sm lg:sticky lg:top-6 lg:h-[calc(100dvh-12rem)]">
               <ProviderMap
                 providers={mapped.map((p) => ({
                   id: p.id,
@@ -205,7 +205,7 @@ export default function ProvidersDirectoryPage() {
                 }}
               />
               {mapped.length < listed.length && (
-                <p className="absolute bottom-2 left-2 z-[400] rounded-full bg-white/95 px-3 py-1 text-xs text-slate-600 shadow">
+                <p className="absolute bottom-2 left-2 z-[400] rounded-full bg-white/95 px-3 py-1 text-xs text-ink-soft shadow">
                   {listed.length - mapped.length} without a mapped location
                 </p>
               )}
@@ -222,25 +222,26 @@ export default function ProvidersDirectoryPage() {
               <li
                 key={p.id}
                 id={`provider-${p.id}`}
-                className={`card-surface flex flex-col p-5 transition-shadow hover:shadow-md ${selectedId === p.id ? "ring-2 ring-nc-primary" : ""}`}
+                className={`card-surface flex flex-col p-5 transition-shadow hover:shadow-md ${selectedId === p.id ? "ring-2 ring-brand" : ""}`}
               >
                 <div className="flex items-start gap-3">
                   <span className="relative shrink-0">
                     <Avatar name={p.user.name} avatarUrl={p.user.avatarUrl} size="lg" />
                     {p.online && (
                       <span
-                        className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500"
+                        className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-success"
+                        role="img"
                         aria-label="Online now"
                       />
                     )}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-1.5 font-bold text-nc-ink">
+                    <p className="flex items-center gap-1.5 font-bold text-ink">
                       <span className="truncate">{doctorName(p.user.name)}</span>
-                      <BadgeCheck className="h-4 w-4 shrink-0 text-nc-primary" aria-label="Verified" />
+                      <BadgeCheck className="h-4 w-4 shrink-0 text-brand-ink" aria-label="Verified" />
                     </p>
-                    <p className="text-sm font-medium text-rose-600">{p.specialty}</p>
-                    <p className="mt-1 flex items-start gap-1 text-xs text-slate-500">
+                    <p className="text-sm font-medium text-brand-ink">{p.specialty}</p>
+                    <p className="mt-1 flex items-start gap-1 text-xs text-ink-muted">
                       <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                       <span>{[p.clinicName, p.location].filter(Boolean).join(" · ")}</span>
                     </p>
@@ -248,22 +249,22 @@ export default function ProvidersDirectoryPage() {
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2 text-xs">
                   {p.yearsExperience != null && (
-                    <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-700">
+                    <span className="rounded-full bg-surface-muted px-2.5 py-1 font-medium text-ink-soft">
                       {p.yearsExperience} years&apos; experience
                     </span>
                   )}
                   {p.km != null && (
-                    <span className="rounded-full bg-nc-primary-container px-2.5 py-1 font-medium text-nc-primary">
+                    <span className="rounded-full bg-brand-soft px-2.5 py-1 font-medium text-brand-ink">
                       {formatDistance(p.km)}
                     </span>
                   )}
                   {p.online && (
-                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">
+                    <span className="rounded-full bg-success-soft px-2.5 py-1 font-medium text-success">
                       Online now
                     </span>
                   )}
                 </div>
-                {p.bio && <p className="mt-3 line-clamp-3 text-sm text-slate-600">{p.bio}</p>}
+                {p.bio && <p className="mt-3 line-clamp-3 text-sm text-ink-soft">{p.bio}</p>}
                 <div className="mt-auto flex gap-2 pt-4">
                   <button type="button" onClick={() => setBooking(p)} className="m3-btn-filled flex-1 px-4">
                     <CalendarPlus className="h-4 w-4" aria-hidden /> Book

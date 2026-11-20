@@ -25,10 +25,10 @@ export function CalendarButtons({ appointment, title, variant = "slate" }: Props
 
   const baseBtn =
     variant === "teal"
-      ? "border border-teal-300/50 text-teal-100 hover:bg-teal-700/50"
+      ? "border border-brand-line/50 text-on-brand hover:bg-brand-hover/50"
       : variant === "rose"
-        ? "border border-rose-300/50 text-rose-100 hover:bg-rose-700/50"
-        : "border border-slate-200 text-slate-700 hover:bg-slate-50";
+        ? "border border-brand-line/50 text-on-brand hover:bg-brand-hover/50"
+        : "border border-hairline text-ink-soft hover:bg-surface-muted";
 
   return (
     <div className="flex items-center gap-1.5">

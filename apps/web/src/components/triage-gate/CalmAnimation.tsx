@@ -41,7 +41,7 @@ export default function CalmAnimation({ onReady }: { onReady?: () => void }) {
         {...tactile}
         onClick={toggle}
         aria-label={playing ? "Pause breathing animation" : "Play breathing animation"}
-        className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full border border-[#FFE4E6] bg-white text-[#475569] shadow-sm hover:text-[#0F172A] hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
+        className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full border border-[#FFE4E6] bg-surface text-[#475569] shadow-sm hover:text-[#0F172A] hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
       >
         {playing ? <Pause className="h-4 w-4" aria-hidden /> : <Play className="h-4 w-4" aria-hidden />}
       </motion.button>

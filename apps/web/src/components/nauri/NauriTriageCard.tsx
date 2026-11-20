@@ -146,21 +146,21 @@ export function NauriTriageCard() {
   return (
     <div id="nauri" className="w-full rounded-3xl border border-hairline bg-surface text-left text-ink shadow-raised">
       {/* Persona header */}
-      <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
+      <div className="flex items-center gap-3 border-b border-hairline px-5 py-4">
         <span
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-600 text-lg font-extrabold text-white shadow-sm"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-lg font-extrabold text-white shadow-sm"
           aria-hidden
         >
           N
         </span>
         <div className="min-w-0">
-          <p className="font-bold leading-tight text-nc-ink">Nauri</p>
-          <p className="truncate text-xs text-slate-500">
+          <p className="font-bold leading-tight text-ink">Nauri</p>
+          <p className="truncate text-xs text-ink-muted">
             AI clinical health assistant · reproductive & maternal health
           </p>
         </div>
         <span className="ml-auto flex items-center gap-1.5 text-xs font-medium text-success">
-          <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden /> Online
+          <span className="h-2 w-2 rounded-full bg-success" aria-hidden /> Online
         </span>
       </div>
 
@@ -175,7 +175,7 @@ export function NauriTriageCard() {
               exit={{ opacity: 0, y: -8 }}
               className="space-y-4"
             >
-              <p className="rounded-2xl rounded-tl-sm bg-rose-50 px-4 py-3 text-sm leading-relaxed text-slate-700">
+              <p className="rounded-2xl rounded-tl-sm bg-brand-soft px-4 py-3 text-sm leading-relaxed text-ink-soft">
                 Hi, I&apos;m Nauri. Tell me what&apos;s going on and I&apos;ll help you understand how soon to get care,
                 and who can help.
               </p>
@@ -192,8 +192,8 @@ export function NauriTriageCard() {
                       onClick={() => togglePill(p)}
                       className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors sm:text-sm ${
                         on
-                          ? "border-nc-primary bg-nc-primary text-white"
-                          : "border-slate-200 bg-white text-slate-700 hover:border-nc-primary/40 hover:bg-nc-primary-container"
+                          ? "border-brand bg-brand text-white"
+                          : "border-hairline bg-surface text-ink-soft hover:border-brand/40 hover:bg-brand-soft"
                       }`}
                     >
                       {on && <Check className="h-3.5 w-3.5" aria-hidden />}
@@ -223,7 +223,7 @@ export function NauriTriageCard() {
                   {...tactile}
                   disabled={loading}
                   aria-label="Ask Nauri"
-                  className="absolute bottom-2.5 right-2.5 flex h-10 w-10 items-center justify-center rounded-full bg-nc-primary text-white shadow-sm hover:bg-nc-primary-hover disabled:opacity-60"
+                  className="absolute bottom-2.5 right-2.5 flex h-10 w-10 items-center justify-center rounded-full bg-brand text-white shadow-sm hover:bg-brand-hover disabled:opacity-60"
                 >
                   {loading ? (
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -233,16 +233,16 @@ export function NauriTriageCard() {
                 </motion.button>
               </div>
 
-              {loading && <p className="text-sm text-slate-500">Nauri is reviewing what you shared…</p>}
+              {loading && <p className="text-sm text-ink-muted">Nauri is reviewing what you shared…</p>}
               {error && (
                 <Callout tone="danger" role="alert">
                   {error}
                 </Callout>
               )}
 
-              <p className="text-xs leading-relaxed text-slate-500">
+              <p className="text-xs leading-relaxed text-ink-muted">
                 Not a diagnosis. In an emergency call SAMU Rwanda on{" "}
-                <a href="tel:912" className="font-semibold text-nc-berry">
+                <a href="tel:912" className="font-semibold text-danger">
                   {EMERGENCY_NUMBERS}
                 </a>
                 .
@@ -258,7 +258,7 @@ export function NauriTriageCard() {
             >
               <div className="flex flex-wrap items-center gap-2">
                 <StatusChip tone={SEVERITY_TONE[result.triage.severity]}>{result.triage.severity} severity</StatusChip>
-                <span className="text-sm font-semibold text-nc-ink">{OUTCOME_COPY[result.triageOutcome].title}</span>
+                <span className="text-sm font-semibold text-ink">{OUTCOME_COPY[result.triageOutcome].title}</span>
               </div>
 
               {result.triage.severity === "URGENT" && (
@@ -271,16 +271,16 @@ export function NauriTriageCard() {
                 </Callout>
               )}
 
-              <div className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+              <div className="flex items-start gap-3 rounded-2xl border border-hairline bg-surface-muted p-3">
                 <Stethoscope className="mt-0.5 h-5 w-5 shrink-0 text-brand-ink" aria-hidden />
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Recommended specialty</p>
-                  <p className="font-semibold text-nc-ink">{result.triage.recommendedSpecialty}</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">Recommended specialty</p>
+                  <p className="font-semibold text-ink">{result.triage.recommendedSpecialty}</p>
                 </div>
               </div>
 
-              <p className="text-sm leading-relaxed text-slate-700">{result.triage.summary}</p>
-              <p className="text-xs text-slate-500">{OUTCOME_COPY[result.triageOutcome].body}</p>
+              <p className="text-sm leading-relaxed text-ink-soft">{result.triage.summary}</p>
+              <p className="text-xs text-ink-muted">{OUTCOME_COPY[result.triageOutcome].body}</p>
 
               {result.triageOutcome !== "SELF_CARE" ? (
                 <motion.button
@@ -308,7 +308,7 @@ export function NauriTriageCard() {
                 </Callout>
               )}
 
-              <div className="flex items-center justify-between text-xs text-slate-500">
+              <div className="flex items-center justify-between text-xs text-ink-muted">
                 <button
                   type="button"
                   onClick={reset}

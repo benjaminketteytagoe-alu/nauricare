@@ -241,17 +241,6 @@
   --color-lavender-soft: var(--nc-lavender-soft);
   --color-lavender-line: var(--nc-lavender-line);
 
-  /* Legacy Material 3 names (legal, triage, referrals), now aliases. */
-  --color-nc-primary: var(--nc-brand);
-  --color-nc-primary-hover: var(--nc-brand-hover);
-  --color-nc-primary-container: var(--nc-brand-soft);
-  --color-nc-amber: var(--nc-warning);
-  --color-nc-amber-container: var(--nc-warning-soft);
-  --color-nc-berry: var(--nc-danger);
-  --color-nc-berry-container: var(--nc-danger-soft);
-  --color-nc-ink: var(--nc-ink);
-  --color-nc-divider: var(--nc-hairline);
-
   /* Type: Fraunces for display, Inter for UI (variables set by next/font). */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: var(--font-fraunces), ui-serif, Georgia, "Times New Roman", serif;

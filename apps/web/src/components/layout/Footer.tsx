@@ -29,11 +29,11 @@ const LEGAL_LINKS: FooterLink[] = [
 function FooterColumn({ title, links }: { title: string; links: FooterLink[] }) {
   return (
     <nav aria-label={title}>
-      <h2 className="text-sm font-semibold text-nc-ink">{title}</h2>
+      <h2 className="text-sm font-semibold text-ink">{title}</h2>
       <ul className="mt-4 space-y-3">
         {links.map((l) => (
           <li key={l.href}>
-            <Link href={l.href} className="text-sm text-slate-600 transition-colors hover:text-nc-primary">
+            <Link href={l.href} className="text-sm text-ink-soft transition-colors hover:text-brand-ink">
               {l.label}
             </Link>
           </li>
@@ -45,7 +45,7 @@ function FooterColumn({ title, links }: { title: string; links: FooterLink[] }) 
 
 export default function Footer() {
   return (
-    <footer className="border-t border-nc-divider bg-white pb-safe-bottom">
+    <footer className="border-t border-hairline bg-surface pb-safe-bottom">
       <div className="mx-auto max-w-7xl px-4 pt-14 sm:px-6 lg:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:gap-12">
           {/* 1 · Brand, mission, emergency */}
@@ -53,11 +53,11 @@ export default function Footer() {
             <Link href="/" className="inline-block" aria-label="NauriCare home">
               <Image src="/logo-horizontal.jpg" alt="NauriCare" width={150} height={40} className="h-9 w-auto" />
             </Link>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-600">
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-soft">
               Empowering women&apos;s healthcare through clinical AI triage, verified hospital referrals, and private
               electronic health records.
             </p>
-            <div role="note" className="mt-5 max-w-xs rounded-2xl bg-nc-berry px-4 py-3 text-white shadow-sm">
+            <div role="note" className="mt-5 max-w-xs rounded-2xl bg-danger px-4 py-3 text-white shadow-sm">
               <p className="flex items-center gap-2 text-sm font-semibold">
                 <Siren className="h-4 w-4" aria-hidden /> Medical emergency?
               </p>
@@ -82,24 +82,24 @@ export default function Footer() {
 
           {/* 4 · Contact & support */}
           <div>
-            <h2 className="text-sm font-semibold text-nc-ink">Contact & Support</h2>
-            <ul className="mt-4 space-y-3 text-sm text-slate-600">
+            <h2 className="text-sm font-semibold text-ink">Contact & Support</h2>
+            <ul className="mt-4 space-y-3 text-sm text-ink-soft">
               <li>
                 <a
                   href={`mailto:${SUPPORT_EMAIL}`}
-                  className="inline-flex items-center gap-2 transition-colors hover:text-nc-primary"
+                  className="inline-flex items-center gap-2 transition-colors hover:text-brand-ink"
                 >
-                  <Mail className="h-4 w-4 shrink-0 text-nc-primary" aria-hidden /> {SUPPORT_EMAIL}
+                  <Mail className="h-4 w-4 shrink-0 text-brand-ink" aria-hidden /> {SUPPORT_EMAIL}
                 </a>
               </li>
               <li className="inline-flex items-center gap-2">
-                <MapPin className="h-4 w-4 shrink-0 text-nc-primary" aria-hidden /> {SITE_LOCATION}
+                <MapPin className="h-4 w-4 shrink-0 text-brand-ink" aria-hidden /> {SITE_LOCATION}
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-3 border-t border-nc-divider py-6 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 flex flex-col gap-3 border-t border-hairline py-6 text-xs text-ink-muted sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} NauriCare. Built for women in Africa.</p>
           <p>Information on NauriCare does not replace a consultation with a qualified clinician.</p>
         </div>

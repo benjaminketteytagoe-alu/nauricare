@@ -19,7 +19,7 @@ export function MentionText({ text }: { text: string }) {
             <Link
               key={i}
               href={`/user/${handle}`}
-              className="text-teal-600 font-semibold hover:underline"
+              className="text-brand-ink font-semibold hover:underline"
               onClick={(e) => e.stopPropagation()}
             >
               {part}

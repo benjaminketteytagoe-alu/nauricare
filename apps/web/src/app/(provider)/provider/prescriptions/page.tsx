@@ -6,9 +6,9 @@ import IssuePrescriptionForm from "./IssuePrescriptionForm";
 export const dynamic = "force-dynamic";
 
 const STATUS_STYLES: Record<string, string> = {
-  PENDING: "bg-amber-50 text-amber-700 border-amber-200",
-  ROUTED: "bg-blue-50 text-blue-700 border-blue-200",
-  FULFILLED: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  PENDING: "bg-warning-soft text-warning border-warning-line",
+  ROUTED: "bg-info-soft text-info border-info-line",
+  FULFILLED: "bg-success-soft text-success border-success-line",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -53,11 +53,11 @@ export default async function ProviderPrescriptionsPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-500 p-8">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-          <Pill className="w-8 h-8 text-blue-600" />
+        <h1 className="text-3xl font-bold text-ink flex items-center gap-3">
+          <Pill className="w-8 h-8 text-info" />
           Prescriptions
         </h1>
-        <p className="text-slate-500 mt-1">Issue prescriptions to patients and track their fulfilment status.</p>
+        <p className="text-ink-muted mt-1">Issue prescriptions to patients and track their fulfilment status.</p>
       </div>
 
       {/* Issue prescription form */}
@@ -65,32 +65,32 @@ export default async function ProviderPrescriptionsPage() {
 
       {/* Issued prescriptions list */}
       <div className="space-y-4">
-        <h2 className="text-lg font-bold text-slate-900">Issued Prescriptions</h2>
+        <h2 className="text-lg font-bold text-ink">Issued Prescriptions</h2>
 
         {prescriptions.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center shadow-sm">
-            <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Pill className="w-7 h-7 text-slate-300" />
+          <div className="bg-surface rounded-2xl border border-hairline p-10 text-center shadow-sm">
+            <div className="w-14 h-14 bg-surface-muted rounded-full flex items-center justify-center mx-auto mb-3">
+              <Pill className="w-7 h-7 text-field" />
             </div>
-            <h3 className="text-base font-bold text-slate-900">No Prescriptions Issued Yet</h3>
-            <p className="text-slate-500 text-sm mt-1">Use the form above to issue your first prescription.</p>
+            <h3 className="text-base font-bold text-ink">No Prescriptions Issued Yet</h3>
+            <p className="text-ink-muted text-sm mt-1">Use the form above to issue your first prescription.</p>
           </div>
         ) : (
           prescriptions.map((rx) => {
-            const statusStyle = STATUS_STYLES[rx.status] ?? "bg-gray-50 text-gray-600";
+            const statusStyle = STATUS_STYLES[rx.status] ?? "bg-surface-muted text-ink-soft";
             const statusLabel = STATUS_LABELS[rx.status] ?? rx.status;
             const StatusIcon = rx.status === "FULFILLED" ? CheckCircle2 : rx.status === "ROUTED" ? Truck : Clock;
 
             return (
-              <div key={rx.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-5 border-b border-slate-50">
+              <div key={rx.id} className="bg-surface rounded-2xl border border-hairline shadow-sm overflow-hidden">
+                <div className="p-5 border-b border-hairline">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h3 className="text-base font-bold text-slate-900">{rx.medicationName}</h3>
-                      <p className="text-sm text-slate-600 mt-0.5">
+                      <h3 className="text-base font-bold text-ink">{rx.medicationName}</h3>
+                      <p className="text-sm text-ink-soft mt-0.5">
                         <span className="font-medium">Dosage:</span> {rx.dosage}
                       </p>
-                      {rx.instructions && <p className="text-sm text-slate-500 mt-0.5">{rx.instructions}</p>}
+                      {rx.instructions && <p className="text-sm text-ink-muted mt-0.5">{rx.instructions}</p>}
                     </div>
                     <span
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border whitespace-nowrap ${statusStyle}`}
@@ -100,9 +100,9 @@ export default async function ProviderPrescriptionsPage() {
                     </span>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
                     <span>
-                      Patient: <span className="font-medium text-slate-700">{rx.patient.name}</span>
+                      Patient: <span className="font-medium text-ink-soft">{rx.patient.name}</span>
                     </span>
                     <span>
                       {new Date(rx.createdAt).toLocaleDateString("en-US", {
@@ -115,11 +115,11 @@ export default async function ProviderPrescriptionsPage() {
                 </div>
 
                 {rx.pharmacy && (
-                  <div className="px-5 py-3 bg-slate-50 flex items-center gap-2 text-sm text-slate-600">
-                    <Store className="w-4 h-4 text-slate-400 shrink-0" />
-                    <span className="font-medium text-slate-800">{rx.pharmacy.name}</span>
-                    <span className="text-slate-400">·</span>
-                    <span className="text-xs text-slate-500">{rx.pharmacy.address}</span>
+                  <div className="px-5 py-3 bg-surface-muted flex items-center gap-2 text-sm text-ink-soft">
+                    <Store className="w-4 h-4 text-ink-muted shrink-0" />
+                    <span className="font-medium text-ink">{rx.pharmacy.name}</span>
+                    <span className="text-ink-muted">·</span>
+                    <span className="text-xs text-ink-muted">{rx.pharmacy.address}</span>
                   </div>
                 )}
               </div>

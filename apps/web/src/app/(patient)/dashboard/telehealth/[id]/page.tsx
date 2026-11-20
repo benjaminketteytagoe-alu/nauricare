@@ -46,22 +46,22 @@ export default function TelehealthRoomPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center text-gray-900">
-        <Loader2 className="w-10 h-10 animate-spin mb-4 text-rose-600" />
+      <div className="min-h-[80vh] flex flex-col items-center justify-center text-ink">
+        <Loader2 className="w-10 h-10 animate-spin mb-4 text-brand-ink" />
         <h2 className="text-xl font-bold">Establishing Secure Connection...</h2>
-        <p className="text-sm text-gray-500 mt-2">Encrypting your telehealth session</p>
+        <p className="text-sm text-ink-muted mt-2">Encrypting your telehealth session</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-3xl mx-auto mt-12 bg-red-50 border border-red-100 rounded-2xl p-8 text-center shadow-sm">
-        <Shield className="w-12 h-12 text-red-400 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-red-900 mb-2">Access Denied</h2>
-        <p className="text-red-700 mb-6">{error}</p>
+      <div className="max-w-3xl mx-auto mt-12 bg-danger-soft border border-danger-line rounded-2xl p-8 text-center shadow-sm">
+        <Shield className="w-12 h-12 text-danger mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-danger mb-2">Access Denied</h2>
+        <p className="text-danger mb-6">{error}</p>
         <Link href="/dashboard">
-          <button className="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl font-medium transition-colors">
+          <button className="bg-danger hover:bg-danger text-white px-6 py-2.5 rounded-xl font-medium transition-colors">
             Return to Dashboard
           </button>
         </Link>
@@ -85,27 +85,27 @@ export default function TelehealthRoomPage() {
         <div>
           <button
             onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-rose-700 transition-colors mb-2 font-medium"
+            className="flex items-center gap-2 text-sm text-ink-muted hover:text-brand-ink transition-colors mb-2 font-medium"
           >
             <ArrowLeft className="w-4 h-4" /> Back to Dashboard
           </button>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-ink flex items-center gap-2">
             Telehealth Session
-            <span className="bg-blue-50 text-blue-700 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-blue-200">
+            <span className="bg-info-soft text-info text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-info-line">
               <Shield className="w-3 h-3" /> E2E Encrypted
             </span>
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-ink-muted mt-1">
             Dr. {appointment.practitioner?.user?.name ?? "Specialist"} &amp;{" "}
             {appointment.patient?.user?.name ?? "Patient"}
           </p>
         </div>
 
-        <div className="flex items-center gap-4 bg-rose-50/30 px-4 py-3 rounded-xl border border-rose-100">
-          <Clock className="w-5 h-5 text-rose-600" />
+        <div className="flex items-center gap-4 bg-brand-soft/30 px-4 py-3 rounded-xl border border-brand-line">
+          <Clock className="w-5 h-5 text-brand-ink" />
           <div>
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Scheduled Time</p>
-            <p className="text-sm font-bold text-gray-900">
+            <p className="text-xs font-bold text-ink-muted uppercase tracking-wider">Scheduled Time</p>
+            <p className="text-sm font-bold text-ink">
               {startTime.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} at{" "}
               {startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </p>
@@ -114,10 +114,10 @@ export default function TelehealthRoomPage() {
       </div>
 
       {/* Video Embed Panel */}
-      <div className="bg-black rounded-2xl shadow-xl overflow-hidden border border-gray-800 relative h-[600px] w-full">
+      <div className="bg-black rounded-2xl shadow-xl overflow-hidden border border-surface-inverse relative h-[600px] w-full">
         {!isPast && (
           <div className="absolute top-4 left-4 z-10 bg-black/60 backdrop-blur-md border border-white/10 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-2">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+            <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
             Waiting for participants...
           </div>
         )}
@@ -131,7 +131,7 @@ export default function TelehealthRoomPage() {
       </div>
 
       <div className="flex justify-center">
-        <p className="text-xs text-gray-400 flex items-center gap-1">
+        <p className="text-xs text-ink-muted flex items-center gap-1">
           <CheckCircle2 className="w-3 h-3" /> Powered by secure WebRTC infrastructure. Your video and audio are not
           recorded by NauriCare.
         </p>

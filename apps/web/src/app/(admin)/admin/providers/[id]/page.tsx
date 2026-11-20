@@ -37,54 +37,54 @@ export default async function ProviderDetailPage({ params }: PageProps) {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       {/* Header View */}
       <div className="border-b pb-4">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Provider Verification Portal</h1>
-        <p className="text-sm text-slate-500">Review credential submissions for regulatory compliance validation.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Provider Verification Portal</h1>
+        <p className="text-sm text-ink-muted">Review credential submissions for regulatory compliance validation.</p>
       </div>
 
       {/* Information Layout Card */}
-      <div className="bg-white border rounded-lg p-6 space-y-4 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-800">Professional Credentials</h2>
+      <div className="bg-surface border rounded-lg p-6 space-y-4 shadow-sm">
+        <h2 className="text-lg font-semibold text-ink">Professional Credentials</h2>
 
         <div className="grid grid-cols-2 gap-6 text-sm">
           <div>
-            <span className="font-medium text-slate-400 block uppercase tracking-wider text-xs">Full Name</span>
-            <span className="text-slate-900 text-base font-medium">{providerUser.name || "Unspecified User Name"}</span>
+            <span className="font-medium text-ink-muted block uppercase tracking-wider text-xs">Full Name</span>
+            <span className="text-ink text-base font-medium">{providerUser.name || "Unspecified User Name"}</span>
           </div>
           <div>
-            <span className="font-medium text-slate-400 block uppercase tracking-wider text-xs">Email Address</span>
-            <span className="text-slate-900 text-base">{providerUser.email}</span>
+            <span className="font-medium text-ink-muted block uppercase tracking-wider text-xs">Email Address</span>
+            <span className="text-ink text-base">{providerUser.email}</span>
           </div>
           <div>
-            <span className="font-medium text-slate-400 block uppercase tracking-wider text-xs">Medical Specialty</span>
-            <span className="text-slate-900 text-base">{profile?.specialty || "General Practice"}</span>
+            <span className="font-medium text-ink-muted block uppercase tracking-wider text-xs">Medical Specialty</span>
+            <span className="text-ink text-base">{profile?.specialty || "General Practice"}</span>
           </div>
           <div>
-            <span className="font-medium text-slate-400 block uppercase tracking-wider text-xs">Clinic & Location</span>
-            <span className="text-slate-900 text-base">
+            <span className="font-medium text-ink-muted block uppercase tracking-wider text-xs">Clinic & Location</span>
+            <span className="text-ink text-base">
               {profile?.clinicName || "Independent"} — {profile?.location || "N/A"}
             </span>
           </div>
           <div>
-            <span className="font-medium text-slate-400 block uppercase tracking-wider text-xs">
+            <span className="font-medium text-ink-muted block uppercase tracking-wider text-xs">
               Verification Status
             </span>
             <span
               className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold mt-1 ${
                 isVerified
-                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                  : "bg-amber-50 text-amber-700 border border-amber-200"
+                  ? "bg-success-soft text-success border border-success-line"
+                  : "bg-warning-soft text-warning border border-warning-line"
               }`}
             >
               {isVerified ? "APPROVED" : "PENDING VERIFICATION"}
             </span>
           </div>
           <div>
-            <span className="font-medium text-slate-400 block uppercase tracking-wider text-xs">Account Status</span>
+            <span className="font-medium text-ink-muted block uppercase tracking-wider text-xs">Account Status</span>
             <span
               className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold mt-1 ${
                 isDeleted
-                  ? "bg-gray-100 text-gray-500 border border-gray-200"
-                  : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  ? "bg-surface-muted text-ink-muted border border-hairline"
+                  : "bg-success-soft text-success border border-success-line"
               }`}
             >
               {isDeleted ? "DELETED" : "ACTIVE"}
