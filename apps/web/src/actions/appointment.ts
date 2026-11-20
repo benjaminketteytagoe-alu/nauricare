@@ -6,6 +6,7 @@ import { getSessionUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { idSchema, firstIssue } from "@/lib/validation/common";
 import { notify } from "@/server/notifications/notify";
+import { isApprovedProvider, PENDING_PROVIDER_MESSAGE } from "@/server/providers/approval";
 
 const UpdateStatusInput = z.object({
   appointmentId: idSchema,
@@ -21,6 +22,7 @@ export async function updateAppointmentStatus(appointmentId: string, status: "CO
   if (!caller?.id || caller.role !== "PROVIDER") {
     return { success: false, error: "Unauthorized" };
   }
+  if (!(await isApprovedProvider(caller.id))) return { success: false, error: PENDING_PROVIDER_MESSAGE };
 
   const parsed = UpdateStatusInput.safeParse({ appointmentId, status });
   if (!parsed.success) return { success: false, error: firstIssue(parsed.error) };

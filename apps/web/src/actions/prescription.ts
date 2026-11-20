@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { sanitizePlainText } from "@/lib/sanitize";
 import { firstIssue, idSchema } from "@/lib/validation/common";
 import { recordActivity } from "@/server/activity/activity.service";
+import { isApprovedProvider, PENDING_PROVIDER_MESSAGE } from "@/server/providers/approval";
 
 const CreatePrescriptionInput = z.object({
   patientId: idSchema,
@@ -31,6 +32,7 @@ export async function createPrescription(data: {
   if (!caller?.id || caller.role !== "PROVIDER") {
     return { success: false, error: "Unauthorized" };
   }
+  if (!(await isApprovedProvider(caller.id))) return { success: false, error: PENDING_PROVIDER_MESSAGE };
 
   const parsedInput = CreatePrescriptionInput.safeParse(data);
   if (!parsedInput.success) return { success: false, error: firstIssue(parsedInput.error) };

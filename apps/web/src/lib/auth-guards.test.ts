@@ -8,6 +8,11 @@ vi.mock("next-auth", () => ({ getServerSession }));
 vi.mock("next/headers", () => ({ cookies: vi.fn(async () => ({})) }));
 vi.mock("next/navigation", () => ({ redirect }));
 vi.mock("@/app/api/auth/[...nextauth]/route", () => ({ authOptions: {} }));
+const isApprovedProvider = vi.fn(async () => true);
+vi.mock("@/server/providers/approval", () => ({
+  isApprovedProvider,
+  PENDING_PROVIDER_MESSAGE: "Your provider account is awaiting verification.",
+}));
 
 const { getSessionUser, getUserIdWithRole, requireApiUser, requireRole } = await import("./auth-guards");
 
@@ -40,6 +45,19 @@ describe("auth guards", () => {
     const right = await requireApiUser("PATIENT", "PROVIDER");
     expect(right.ok && right.user).toMatchObject({ id: "u1", role: "PROVIDER" });
     expect((await requireApiUser()).ok).toBe(true);
+  });
+
+  it("requireApiUser refuses provider routes to providers awaiting approval", async () => {
+    getServerSession.mockResolvedValue(session({ id: "u1", role: "PROVIDER" }));
+    isApprovedProvider.mockResolvedValueOnce(false);
+    const pending = await requireApiUser("PROVIDER");
+    expect(!pending.ok && pending.response.status).toBe(403);
+    expect(isApprovedProvider).toHaveBeenCalledWith("u1");
+
+    // Routes that don't name PROVIDER (notifications, account) skip the lookup.
+    isApprovedProvider.mockClear();
+    expect((await requireApiUser()).ok).toBe(true);
+    expect(isApprovedProvider).not.toHaveBeenCalled();
   });
 
   it("getUserIdWithRole only returns the id for the matching role", async () => {

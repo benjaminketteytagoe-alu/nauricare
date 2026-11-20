@@ -8,7 +8,12 @@ const prisma = {
 vi.mock("@/lib/prisma", () => ({ prisma }));
 const { canMessage, isOnline } = await import("./policy");
 
-type UserRow = { role: string; practitionerProfile?: object | null; patientProfile?: object | null } | null;
+type UserRow = {
+  role: string;
+  isVerified?: boolean;
+  practitionerProfile?: object | null;
+  patientProfile?: object | null;
+} | null;
 function users(sender: UserRow, receiver: UserRow) {
   prisma.user.findUnique.mockImplementation(async ({ where }: { where: { id: string } }) =>
     where.id === "s" ? sender : receiver,
@@ -37,8 +42,18 @@ describe("messaging policy", () => {
     expect(await canMessage("s", "r")).toMatchObject({ allowed: false });
   });
 
+  it("never lets a provider awaiting approval message patients", async () => {
+    users(
+      { role: "PROVIDER", practitionerProfile: { isVerified: false } },
+      { role: "PATIENT", patientProfile: { id: "pp" } },
+    );
+    prisma.directMessage.findFirst.mockResolvedValue({ id: "m" });
+    prisma.appointment.findFirst.mockResolvedValue({ id: "a" });
+    expect(await canMessage("s", "r")).toMatchObject({ allowed: false, reason: expect.stringMatching(/verification/) });
+  });
+
   it("stops providers cold-messaging patients", async () => {
-    users({ role: "PROVIDER" }, { role: "PATIENT", patientProfile: { id: "pp" } });
+    users({ role: "PROVIDER", isVerified: true }, { role: "PATIENT", patientProfile: { id: "pp" } });
     prisma.directMessage.findFirst.mockResolvedValue(null);
     prisma.appointment.findFirst.mockResolvedValue(null);
     expect(await canMessage("s", "r")).toMatchObject({ allowed: false });

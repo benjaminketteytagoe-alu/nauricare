@@ -5,6 +5,7 @@ import type { NextResponse } from "next/server";
 import { getServerSession, type Session } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { forbidden, unauthorized } from "@/lib/api";
+import { isApprovedProvider, PENDING_PROVIDER_MESSAGE } from "@/server/providers/approval";
 
 const ROLE_HOME: Record<Role, string> = {
   PATIENT: "/dashboard",
@@ -55,7 +56,8 @@ export async function getUserIdWithRole(role: Role): Promise<string | null> {
 
 /**
  * Route handler guard. With no roles, any signed-in user passes; otherwise the
- * caller must hold one of them. Sessions still waiting for the emailed sign-in
+ * caller must hold one of them; a PROVIDER must also be approved by an admin.
+ * Sessions still waiting for the emailed sign-in
  * code have no user id, so they are treated as signed out (401).
  *
  *   const auth = await requireApiUser("PATIENT");
@@ -68,5 +70,8 @@ export async function requireApiUser(
   const user = await getSessionUser();
   if (!user) return { ok: false, response: unauthorized() };
   if (roles.length > 0 && !roles.includes(user.role)) return { ok: false, response: forbidden() };
+  // Routes that name PROVIDER serve clinical data; unapproved providers get none.
+  if (roles.includes("PROVIDER") && user.role === "PROVIDER" && !(await isApprovedProvider(user.id)))
+    return { ok: false, response: forbidden(PENDING_PROVIDER_MESSAGE) };
   return { ok: true, user };
 }

@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { isApprovedProvider, PENDING_PROVIDER_MESSAGE } from "@/server/providers/approval";
 
 // Who may message whom (one rule for every messaging entry point):
 //   * a patient may message any verified, active provider ("quick check-in");
@@ -39,6 +40,7 @@ export async function canMessage(
   }
 
   if (sender.role === "PROVIDER" && receiver.role === "PATIENT") {
+    if (!(await isApprovedProvider(senderId))) return { allowed: false, reason: PENDING_PROVIDER_MESSAGE };
     const patientWroteFirst = await prisma.directMessage.findFirst({
       where: { senderId: receiverId, receiverId: senderId },
       select: { id: true },
