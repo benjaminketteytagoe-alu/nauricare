@@ -26,12 +26,21 @@ npm run staff -- rotate --email admin@example.org   # current password stops wor
 npm run staff -- revoke --email former@example.org  # demote to PATIENT and void the password
 ```
 
+### Rotating every staff account (leaked credentials)
+
+Run **Actions → Staff password rotation**. Pick the environment, untick _dry run_, and type `rotate-all`. Production waits for the environment's required reviewer. The job runs `rotate-all` as a one-off ECS task from the deployed image, so nobody needs database credentials locally. It voids every ADMIN and PROVIDER password and emails each person their own set-password link. Run it as a dry run first to see the count.
+
+- The Actions log is public, so it shows counts only. Account ids are in the task's CloudWatch stream. Emails and links are never logged.
+- If an email fails, the password is still void and the job ends with a warning. That person uses _Forgot password_.
+- The workflow must exist on `main` to appear in the Actions tab, and the deployed image must include the bundled tool (`apps/web/scripts/staff-access.cjs`).
+- Locally, with an environment's `DATABASE_URL`, `NEXTAUTH_URL` and `RESEND_API_KEY`: `npm run staff -- rotate-all [--dry-run]`.
+
 `invite` and `rotate` print a set-password link **once**. It expires in 60 minutes. Send it through a secure channel, never a ticket or group chat. Each action is written to `AuditLog` (`ADMIN_SETTINGS_UPDATE`, `details.via = scripts/staff-access.ts`).
 
 ## When a secret leaks
 
 1. **Rotate first**, before cleaning up.
-   - User passwords: `npm run staff -- rotate --email …`.
+   - User passwords: `npm run staff -- rotate --email …`, or the **Staff password rotation** workflow for every staff account.
    - API keys: issue a new key at the provider, update SSM (`/nauricare/<env>/…`), redeploy, then revoke the old key.
    - `NEXTAUTH_SECRET`: rotating it signs everyone out. Do it if a session-forging risk exists.
    - `DATA_ENCRYPTION_KEY`: needs a re-encryption migration. Don't rotate it blind.
@@ -44,6 +53,6 @@ npm run staff -- revoke --email former@example.org  # demote to PATIENT and void
 
 ## Incident log
 
-| Date       | What                                                                                         | Status                                                                                      |
-| ---------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| 2026-11-19 | Admin and Provider plaintext passwords in `generate-hashes.js` (commit `c7d4763`, on `main`) | File deleted (PR 1). **Rotation pending:** run `npm run staff -- rotate` for both accounts. |
+| Date       | What                                                                                         | Status                                                                                                                      |
+| ---------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-19 | Admin and Provider plaintext passwords in `generate-hashes.js` (commit `c7d4763`, on `main`) | Deleted on `develop` (PR 1) and `main` (#40). **Rotation pending:** run the Staff password rotation workflow on production. |
