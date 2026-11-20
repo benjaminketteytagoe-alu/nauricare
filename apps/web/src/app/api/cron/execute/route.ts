@@ -1,5 +1,6 @@
 import { after, NextResponse } from "next/server";
 import { getClientIp } from "@/lib/getClientIp";
+import { logger } from "@/lib/logger";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { cronConfigured, isAuthorizedCron } from "@/server/reminders/cronAuth";
 import { runReminderSweep } from "@/server/reminders/sweep";
@@ -18,11 +19,16 @@ async function sweep() {
   if (g.__ncCronRunning) return null; // one sweep at a time per instance
   g.__ncCronRunning = true;
   try {
+    const started = performance.now();
     const r = await runReminderSweep();
-    console.info("[CRON] reminders", JSON.stringify(r));
+    // CloudWatch counts these lines for the "reminders stalled" alarm.
+    logger.info(
+      { event: "cron.reminders_run", ok: true, durationMs: Math.round(performance.now() - started), result: r },
+      "Reminder sweep finished",
+    );
     return r;
   } catch (e) {
-    console.error("[CRON] reminder sweep failed:", e instanceof Error ? e.message : e);
+    logger.error({ event: "cron.reminders_run", ok: false, err: e }, "Reminder sweep failed");
     throw e;
   } finally {
     g.__ncCronRunning = false;

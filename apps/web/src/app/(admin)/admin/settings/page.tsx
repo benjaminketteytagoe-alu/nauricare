@@ -1,127 +1,95 @@
-"use client";
+import { KeyRound, ShieldCheck, Timer } from "lucide-react";
+import Link from "next/link";
+import { PageHeader } from "@/components/ui/page-header";
+import { requireRole } from "@/lib/auth-guards";
+import { prisma } from "@/lib/prisma";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
-import { User, Lock, Sliders, Save } from "lucide-react";
-import { useSession } from "next-auth/react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+export const dynamic = "force-dynamic";
 
-export default function AdminSettingsPage() {
-  const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState("profile");
+const dateFmt = new Intl.DateTimeFormat("en-GB", { dateStyle: "long", timeZone: "Africa/Kigali" });
 
+// Admin accounts are created and rotated with the staff-access tool (and its
+// approval-gated workflow), never edited here, so this page only shows the
+// account and the security rules that apply to it.
+export default async function AdminSettingsPage() {
+  const session = await requireRole("ADMIN");
+  const me = await prisma.user.findUniqueOrThrow({
+    where: { id: session.user.id },
+    select: { name: true, email: true, createdAt: true },
+  });
+
+  const row = "flex flex-col gap-1 py-4 sm:flex-row sm:items-baseline sm:justify-between";
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">System Settings</h1>
-        <p className="text-gray-500 mt-1">Manage your administrative profile and global platform preferences.</p>
-      </div>
+    <div className="mx-auto max-w-3xl space-y-8">
+      <PageHeader eyebrow="Account" title="Settings" description="Your admin account and how it is protected." />
 
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Settings Navigation */}
-        <aside className="w-full md:w-64 shrink-0 space-y-1">
-          <button
-            onClick={() => setActiveTab("profile")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeTab === "profile" ? "bg-teal-50 text-teal-700" : "text-gray-600 hover:bg-gray-100"}`}
-          >
-            <User className="w-4 h-4" /> Admin Profile
-          </button>
-          <button
-            onClick={() => setActiveTab("security")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeTab === "security" ? "bg-teal-50 text-teal-700" : "text-gray-600 hover:bg-gray-100"}`}
-          >
-            <Lock className="w-4 h-4" /> Security & Access
-          </button>
-          <button
-            onClick={() => setActiveTab("preferences")}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeTab === "preferences" ? "bg-teal-50 text-teal-700" : "text-gray-600 hover:bg-gray-100"}`}
-          >
-            <Sliders className="w-4 h-4" /> System Preferences
-          </button>
-        </aside>
-
-        {/* Settings Content */}
-        <div className="flex-1 bg-white border border-gray-100 rounded-xl shadow-sm p-6 md:p-8">
-          {activeTab === "profile" && (
-            <div className="space-y-6 animate-in fade-in">
-              <h2 className="text-xl font-bold text-gray-900 border-b border-gray-100 pb-4">Admin Profile</h2>
-              <div className="space-y-4 max-w-md">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
-                  <input
-                    type="text"
-                    defaultValue={session?.user?.name || ""}
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    defaultValue={session?.user?.email || ""}
-                    readOnly
-                    className="w-full p-2.5 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Contact IT support to change your primary admin email.</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "security" && (
-            <div className="space-y-6 animate-in fade-in">
-              <h2 className="text-xl font-bold text-gray-900 border-b border-gray-100 pb-4">Security & Access</h2>
-              <div className="space-y-4 max-w-md">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                  <input
-                    type="password"
-                    placeholder="Enter new password"
-                    className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  />
-                </div>
-                <Button className="bg-gray-900 hover:bg-gray-800 text-white w-full">Update Password</Button>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "preferences" && (
-            <div className="space-y-6 animate-in fade-in">
-              <h2 className="text-xl font-bold text-gray-900 border-b border-gray-100 pb-4">System Preferences</h2>
-              <div className="space-y-6 max-w-md">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900">Email Notifications</h4>
-                    <p className="text-xs text-gray-500">Receive daily summaries of platform activity.</p>
-                  </div>
-                  <input type="checkbox" defaultChecked className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900">Auto-Approve Providers</h4>
-                    <p className="text-xs text-gray-500">Skip manual verification for onboarded doctors.</p>
-                  </div>
-                  <input type="checkbox" className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500" />
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
-            <Button className="bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-2">
-              <Save className="w-4 h-4" />
-              Save Changes
-            </Button>
+      <section aria-labelledby="account" className="rounded-card border border-hairline bg-surface px-6 shadow-card">
+        <h2 id="account" className="sr-only">
+          Account
+        </h2>
+        <dl className="divide-y divide-hairline text-sm">
+          <div className={row}>
+            <dt className="text-ink-muted">Name</dt>
+            <dd className="font-medium text-ink">{me.name}</dd>
           </div>
+          <div className={row}>
+            <dt className="text-ink-muted">Email</dt>
+            <dd className="font-medium text-ink">{me.email}</dd>
+          </div>
+          <div className={row}>
+            <dt className="text-ink-muted">Admin since</dt>
+            <dd className="font-medium text-ink">{dateFmt.format(me.createdAt)}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section aria-labelledby="security" className="space-y-4">
+        <h2 id="security" className="font-display text-display-md text-ink">
+          Security
+        </h2>
+        <ul className="grid gap-4 sm:grid-cols-3">
+          {[
+            {
+              icon: ShieldCheck,
+              title: "Code at every sign-in",
+              body: "Each sign-in needs a 6-digit code sent to your email.",
+            },
+            {
+              icon: Timer,
+              title: "15-minute idle limit",
+              body: "Admin sessions end after 15 idle minutes and can't be kept signed in.",
+            },
+            {
+              icon: KeyRound,
+              title: "Password change signs out everywhere",
+              body: "Changing your password ends every other session at once.",
+            },
+          ].map(({ icon: Icon, title, body }) => (
+            <li key={title} className="rounded-card border border-hairline bg-surface p-5 shadow-card">
+              <Icon className="size-5 text-brand-ink" aria-hidden />
+              <p className="mt-3 font-semibold text-ink">{title}</p>
+              <p className="mt-1 text-sm text-ink-soft">{body}</p>
+            </li>
+          ))}
+        </ul>
+        <div className="flex flex-wrap items-center gap-3 rounded-card border border-hairline bg-surface-muted p-5 text-sm text-ink-soft">
+          <span className="min-w-0 flex-1">
+            To change your password we email you a single-use link. Lost access or think your account is at risk?
+            Contact{" "}
+            <a className="font-medium text-brand-ink underline underline-offset-4" href={`mailto:${SUPPORT_EMAIL}`}>
+              {SUPPORT_EMAIL}
+            </a>
+            .
+          </span>
+          <Link
+            href="/forgot-password"
+            className="inline-flex h-10 items-center rounded-full bg-brand px-5 font-medium text-on-brand shadow-button hover:bg-brand-hover"
+          >
+            Change password
+          </Link>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

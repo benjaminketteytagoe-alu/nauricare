@@ -62,7 +62,9 @@ packages/
   ui/              — Shared React component library
   eslint-config/   — Shared ESLint config
   typescript-config/
+infra/terraform/   — AWS as code: bootstrap, envs/{shared,staging,production}, modules (see its README)
 docs/adr/          — architecture decision records (read before changing design, avatars, tracking, AI, infra)
+docs/runbooks/     — CI/CD, observability, incident response, data breach, DB restore, credential rotation
 ```
 
 Modules in `apps/web/src/server/**` start with `import "server-only"` so they can never be bundled into client code. Client components may import only _types_ from them.
@@ -110,13 +112,32 @@ Core models:
 
 `src/lib/prisma.ts` exports a singleton `prisma` client. Always import from there.
 
+### Logging and observability
+
+Server code logs through `logger` from `src/lib/logger.ts` (pino, JSON to stdout → CloudWatch), not `console.*`. Use `logger.error({ event: "domain.what_happened", err }, "Message")`. The `event` field is stable and alarms key off it. **Log ids and outcomes, never content**: no request bodies, notes, symptoms, lab values, emails or names. Redaction is a safety net, not permission. `src/instrumentation.ts` logs every uncaught server error (`onRequestError`) and enables OpenTelemetry when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. `/api/health` is liveness (no DB, used by ECS); `/api/health/ready` checks the DB and is used by the uptime alarm. See ADR 0006 and `docs/runbooks/observability.md`.
+
 ### Audit logging
 
 All admin and provider operations must be logged via `logAdministrativeAction()` from `src/lib/audit.ts`. It writes to the `AuditLog` table with a typed `AuditAction` enum. Errors are caught silently so logging failures never block the main operation.
 
 ### API routes
 
-REST-style route handlers in `src/app/api/`. Each handler calls `getServerSession(authOptions)` directly for auth. Appointments GET handler acts as a smart router, returning different data shapes depending on the user's role.
+REST-style route handlers in `src/app/api/`. Every handler follows the same shape (enforced by ESLint and `src/app/api/conventions.test.ts`):
+
+```ts
+const auth = await requireApiUser("PATIENT"); // lib/auth-guards: 401 signed out, 403 wrong role
+if (!auth.ok) return auth.response;
+const limited = enforceRateLimit(`thing:${auth.user.id}`); // lib/rateLimit: every write is limited
+if (limited) return limited;
+const body = await parseJson(req, Schema); // lib/api: malformed JSON and Zod errors -> 400
+if (!body.ok) return body.response;
+return handle(async () => apiSuccess(await doThing(auth.user.id, body.data), 201)); // 500s are logged, never leaked
+```
+
+- Errors are always JSON `{ error, code? }`; clients read them with `readErrorMessage(res, fallback)` from `lib/http.ts`.
+- Never call `getServerSession` or `req.json()` directly, and never use `console` in server code (`logger` instead). Lint fails on all three.
+- Use `readJson` + `validateBody` when something must run between reading and validating (Turnstile in the auth routes).
+- The appointments GET handler returns different shapes per role.
 
 ### Server Actions
 
@@ -129,7 +150,8 @@ Admin mutations use Next.js Server Actions (e.g., `(admin)/admin/actions.ts`). T
 - `sanitize.ts` — `sanitizePlainText()`; run on all user-generated text before storing.
 - `site.ts` — `SITE_URL`, `SUPPORT_EMAIL` (nauricare@gmail.com), `EMERGENCY_NUMBERS`. Never hard-code these.
 - `format.ts` — `formatDate`/`formatTime` (en-GB). `safeRedirect.ts` — open-redirect guard for `?redirect=`/`callbackUrl`.
-- UI primitives: `Callout`, `StatusChip` (+ `SEVERITY_TONE`, `REFERRAL_STATUS_TONE`), `Tooltip`. Portal navigation: `components/navigation/AppSidebar.tsx`.
+- UI primitives: `Callout`, `StatusChip` (+ `SEVERITY_TONE`, `REFERRAL_STATUS_TONE`), `Tooltip`. Portal navigation: `components/navigation/AppSidebar.tsx` (patient shell: `navigation/PatientShell.tsx`).
+- Components live in domain folders under `src/components/` (`avatar/`, `appointments/`, `community/`, `cycle/`, `layout/`, `messaging/`, `notifications/`, `provider-directory/`, `app/Providers.tsx`, …); `components/ui/` holds design-system primitives only. Don't add files at the `components/` root.
 
 ### Security utilities (`src/lib/`)
 
@@ -163,13 +185,25 @@ Use `error.issues[0]` not `error.errors[0]` — the property was renamed in v4. 
 
 ## CI/CD
 
-GitHub Actions pipeline (`.github/workflows/ci.yml`):
+See `docs/runbooks/ci-cd.md` for the full picture and the one-off setup. In short:
 
-1. **Build & test**: runs on all pushes and PRs. It applies every migration to a throwaway Postgres and fails on schema drift, then runs lint and build.
-2. **Image**: on every push, it builds the image and pushes it to AWS ECR, tagged with the commit SHA (plus `latest` for main or `develop` for develop).
-3. **Staging**: deploys from `develop`. This is still a placeholder; see ADR-0005 and the upgrade plan.
-4. **Production**: `main` deploys to ECS Fargate. It registers a task definition pinned to the SHA, then runs `prisma migrate deploy` as a one-off task, then does a rolling deploy with automatic rollback. Cloudflare DNS is synced to the new task IPs, and the deploy is verified through `/api/health`.
+1. **Checks** (`ci.yml`, every PR and push): three parallel jobs.
+   - format, type-aware lint, typecheck and Vitest unit tests with coverage
+   - migrations applied to a throwaway Postgres, with a schema-drift check
+   - build, then Playwright smoke + axe against `next start`, then Lighthouse
+2. **Image** (push only): built once per commit, Trivy-scanned (fixable CRITICAL fails), given an SBOM, signed with keyless cosign, and pushed to ECR.
+3. **Deploy**: the reusable `deploy-ecs.yml` deploys `develop` to staging and `main` to production. Production needs approval. Both deploy the same image **digest**. The deploy registers the task definition, runs `prisma migrate deploy` as a one-off task, then does a rolling deploy with automatic rollback. It then syncs Cloudflare DNS, verifies `/api/health` and smoke-tests key pages. Staging is skipped until `vars.STAGING_ECS_SERVICE` is set.
+4. **Security** (`security.yml`): CodeQL, dependency review, `npm audit` against `.github/audit-allowlist.json` (entries expire), gitleaks, hadolint and actionlint.
+
+Pin new GitHub Actions to a full commit SHA with the version in a comment. AWS access uses OIDC when `vars.AWS_ROLE_ARN` is set.
+
+Tests: `npm test` runs Vitest (`*.test.ts` next to the code). `npm run test:e2e -w web` runs Playwright (`apps/web/e2e/`) against a built app on port 3100, or against `E2E_BASE_URL`.
+
+- `npm run test:coverage -w web` enforces thresholds in `apps/web/vitest.config.mts`: 70% overall for `lib/` and `server/`, plus stricter per-file floors for triage, encryption, auth, referral sharing and account deletion. Raise thresholds as coverage grows; never lower them to pass a PR.
+- Mock the database with `createPrismaMock()` from `apps/web/test/prismaMock.ts` (`vi.mock("@/lib/prisma", async () => ({ prisma: (await import("…/test/prismaMock")).createPrismaMock() }))`).
 
 `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is a Docker build arg, so it is baked into the bundle. All other secrets come from SSM Parameter Store and are injected into the ECS task at runtime.
+
+Secrets: gitleaks runs in CI and in the pre-commit hook (when installed) with the extra rules in `.gitleaks.toml`. Staff accounts are created or rotated with `npm run staff -- invite|rotate|revoke` (single-use set-password link, no plaintext passwords); never commit passwords or hashes. See `docs/runbooks/credential-rotation.md`.
 
 Commits follow Conventional Commits, enforced by commitlint via husky. See `CONTRIBUTING.md`.

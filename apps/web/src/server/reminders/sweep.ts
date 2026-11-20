@@ -15,7 +15,7 @@ import { REMINDER_DEFAULTS } from "./preferences";
 // retried runs never send the same reminder twice, and failed sends are
 // retried on the next run. All queries are processed in batches.
 
-export const BATCH_SIZE = 100;
+const BATCH_SIZE = 100;
 const EARLIEST_LOCAL_HOUR = 8; // never ping a period reminder before 08:00 local
 const EMAIL_GAP_MS = 600; // stay under Resend's per-second rate limit
 

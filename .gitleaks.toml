@@ -1,0 +1,66 @@
+# Gitleaks configuration: the built-in rules plus rules for the kinds of leak
+# the defaults miss (plaintext passwords and password hashes in source).
+# Used by the CI "Secret Scan" job and by the pre-commit hook when gitleaks is
+# installed locally. See docs/runbooks/credential-rotation.md.
+
+title = "NauriCare gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "hardcoded-password"
+description = "Plaintext password assigned in source"
+# password = "…", password: '…', string: "…" next to a user/role, PASSWORD=…
+regex = '''(?i)(?:pass(?:word|wd)?|pwd|secret)["']?\s*[:=]\s*["']([^"'\s$<{][^"'\s]{7,})["']'''
+secretGroup = 1
+entropy = 2.5
+keywords = ["pass", "pwd", "secret"]
+[rules.allowlist]
+regexTarget = "match"
+regexes = [
+  '''(?i)(placeholder|example|changeme|dummy|generate[-_]|build_|test[_-]?pass|your[_-]|<[^>]+>|\*{3,})''',
+]
+paths = [
+  '''(^|/)(.*\.test\.[cm]?[jt]sx?|e2e/.*|.*\.spec\.[cm]?[jt]sx?)$''',
+]
+
+[[rules]]
+id = "credential-pair-literal"
+description = "User/email paired with a literal password, e.g. { user: 'Admin', string: '…' }"
+regex = '''(?i)(?:user(?:name)?|email|login|role)["']?\s*:\s*["'][^"']+["']\s*,\s*["']?(?:string|password|pass|pwd|pw|plain(?:text)?)["']?\s*:\s*["']([^"']{6,})["']'''
+secretGroup = 1
+keywords = ["user", "email", "login", "role"]
+[rules.allowlist]
+paths = [
+  '''(^|/)(.*\.test\.[cm]?[jt]sx?|e2e/.*|.*\.spec\.[cm]?[jt]sx?)$''',
+]
+
+[[rules]]
+id = "bcrypt-hash"
+description = "bcrypt password hash committed to the repository"
+regex = '''\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}'''
+keywords = ["$2a$", "$2b$", "$2y$"]
+
+[[rules]]
+id = "postgres-url-with-password"
+description = "PostgreSQL connection string with an embedded password"
+regex = '''postgres(?:ql)?://[^:\s/"']+:([^@\s"']{6,})@[^\s"']+'''
+secretGroup = 1
+keywords = ["postgres://", "postgresql://"]
+[rules.allowlist]
+regexTarget = "match"
+regexes = [
+  '''(?i)(build_pass|postgres:postgres@|user:password@|localhost|127\.0\.0\.1|nauricare_test|placeholder)''',
+]
+
+[allowlist]
+description = "Generated or vendored files, and boolean feature flags"
+regexes = [
+  '''^[A-Z][A-Z0-9_]*=(?:on|off|true|false|0|1)\s*$''',
+]
+paths = [
+  '''package-lock\.json$''',
+  '''(^|/)node_modules/''',
+  '''(^|/)\.next/''',
+]

@@ -2,7 +2,7 @@ import "server-only";
 import type { PatientActivityType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
-export const ACTIVITY_PAGE_SIZE = 30;
+const ACTIVITY_PAGE_SIZE = 30;
 
 /** A patient's own activity, newest first, cursor-paginated. */
 export async function listActivity(userId: string, opts: { types?: PatientActivityType[]; cursor?: string }) {

@@ -1,5 +1,6 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 // The reminder idempotency ledger (ReminderDispatch). Flow per reminder:
@@ -11,8 +12,8 @@ import { prisma } from "@/lib/prisma";
 // Emails carry the dedupe key as a Resend idempotency key, so even a crash
 // between "provider accepted" and "row updated" can't send twice.
 
-export const LEASE_MS = 15 * 60_000;
-export const MAX_ATTEMPTS = 5;
+const LEASE_MS = 15 * 60_000;
+const MAX_ATTEMPTS = 5;
 
 export type Claim = { id: string; dedupeKey: string; notifiedAt: Date | null; emailedAt: Date | null };
 const CLAIM_SELECT = { id: true, dedupeKey: true, notifiedAt: true, emailedAt: true } as const;
@@ -60,7 +61,7 @@ export async function deliver(c: Claim, steps: Steps): Promise<boolean> {
     await prisma.reminderDispatch
       .update({ where: { id: c.id }, data: { status: "FAILED", lastError: message } })
       .catch(() => {});
-    console.error(`[REMINDER] ${c.dedupeKey} failed:`, message);
+    logger.error({ event: "reminders.send_failed", dedupeKey: c.dedupeKey, error: message }, "Reminder send failed");
     return false;
   }
 }

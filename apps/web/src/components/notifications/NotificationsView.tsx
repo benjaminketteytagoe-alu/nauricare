@@ -13,11 +13,11 @@ export function NotificationsView() {
     <div className="mx-auto max-w-3xl space-y-6 pb-16">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="flex items-center gap-3 text-2xl font-bold text-nc-ink sm:text-3xl">
-            <Bell className="h-7 w-7 text-rose-600" aria-hidden /> Notifications
+          <h1 className="flex items-center gap-3 text-2xl font-bold text-ink sm:text-3xl">
+            <Bell className="h-7 w-7 text-brand-ink" aria-hidden /> Notifications
           </h1>
-          <p className="mt-1 flex items-center gap-2 text-sm text-slate-600">
-            <span className={`h-2 w-2 rounded-full ${live ? "bg-emerald-500" : "bg-slate-300"}`} aria-hidden />
+          <p className="mt-1 flex items-center gap-2 text-sm text-ink-soft">
+            <span className={`h-2 w-2 rounded-full ${live ? "bg-success" : "bg-field"}`} aria-hidden />
             {live ? "Live: bookings, messages and other updates appear instantly." : "Connecting for live updates…"}
           </p>
         </div>
@@ -28,14 +28,14 @@ export function NotificationsView() {
         )}
       </header>
 
-      <div className="card-surface divide-y divide-slate-100 overflow-hidden">
+      <div className="card-surface divide-y divide-hairline overflow-hidden">
         {items === null ? (
-          <p className="p-10 text-center text-sm text-slate-500">Loading…</p>
+          <p className="p-10 text-center text-sm text-ink-muted">Loading…</p>
         ) : items.length === 0 ? (
           <div className="p-12 text-center">
-            <Bell className="mx-auto h-10 w-10 text-slate-300" aria-hidden />
-            <p className="mt-3 font-semibold text-nc-ink">You&apos;re all caught up</p>
-            <p className="mt-1 text-sm text-slate-500">Bookings, messages and other updates will show up here.</p>
+            <Bell className="mx-auto h-10 w-10 text-field" aria-hidden />
+            <p className="mt-3 font-semibold text-ink">You&apos;re all caught up</p>
+            <p className="mt-1 text-sm text-ink-muted">Bookings, messages and other updates will show up here.</p>
           </div>
         ) : (
           items.map((n) => <NotificationItem key={n.id} n={n} onRead={markOne} />)

@@ -67,24 +67,26 @@ function ProfileTab({ initial }: { initial: Profile }) {
   }
 
   const field = (label: string, key: keyof Profile, type = "text", disabled = false) => (
-    <div>
-      <label className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>
+    <label className="block">
+      <span className="block text-sm font-medium text-ink-soft mb-1.5">{label}</span>
       <input
         type={type}
         disabled={disabled}
         value={form[key]}
         onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-        className={`w-full px-4 py-2.5 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 ${
-          disabled ? "bg-slate-100 text-slate-500 border-slate-200 cursor-not-allowed" : "bg-slate-50 border-slate-200"
+        className={`w-full px-4 py-2.5 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-focus ${
+          disabled
+            ? "bg-surface-muted text-ink-muted border-hairline cursor-not-allowed"
+            : "bg-surface-muted border-hairline"
         }`}
       />
-    </div>
+    </label>
   );
 
   return (
     <form onSubmit={handleSubmit} className="p-8 space-y-8">
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-slate-900">Personal Information</h3>
+        <h3 className="text-lg font-bold text-ink">Personal Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {field("Full Name", "name")}
           {field("Primary Email", "email", "email", true)}
@@ -92,37 +94,37 @@ function ProfileTab({ initial }: { initial: Profile }) {
         </div>
       </div>
 
-      <hr className="border-slate-100" />
+      <hr className="border-hairline" />
 
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-slate-900">Clinical Details</h3>
+        <h3 className="text-lg font-bold text-ink">Clinical Details</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {field("Specialization", "specialty")}
           {field("Clinic / Hospital Name", "clinicName")}
           {field("License Number", "licenseNumber")}
           {field("Hospital Affiliation", "hospitalAffiliation")}
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">
-            Professional Bio <span className="font-normal text-slate-400">(optional)</span>
-          </label>
+        <label className="block">
+          <span className="block text-sm font-medium text-ink-soft mb-1.5">
+            Professional Bio <span className="font-normal text-ink-muted">(optional)</span>
+          </span>
           <textarea
             rows={4}
             value={form.bio}
             onChange={(e) => setForm({ ...form, bio: e.target.value })}
             placeholder="Briefly describe your experience, approach, and areas of focus…"
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full px-4 py-2.5 bg-surface-muted border border-hairline rounded-xl text-sm outline-none focus:ring-2 focus:ring-focus resize-none"
           />
-        </div>
+        </label>
       </div>
 
       {error && (
-        <p className="text-sm text-rose-600 flex items-center gap-2">
+        <p className="text-sm text-brand-ink flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" /> {error}
         </p>
       )}
       {success && (
-        <p className="text-sm text-emerald-600 flex items-center gap-2">
+        <p className="text-sm text-success flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 shrink-0" /> {success}
         </p>
       )}
@@ -131,7 +133,7 @@ function ProfileTab({ initial }: { initial: Profile }) {
         <button
           type="submit"
           disabled={isPending}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors"
+          className="flex items-center gap-2 px-6 py-3 bg-info hover:bg-info disabled:opacity-60 text-white font-semibold rounded-xl transition-colors"
         >
           <Save className="w-4 h-4" />
           {isPending ? "Saving…" : "Save Profile"}
@@ -221,8 +223,8 @@ function AvailabilityTab({ initial }: { initial: AvailabilitySlot[] }) {
   return (
     <div className="p-8 space-y-6">
       <div>
-        <h3 className="text-lg font-bold text-slate-900">Availability Slots</h3>
-        <p className="text-sm text-slate-500 mt-1">
+        <h3 className="text-lg font-bold text-ink">Availability Slots</h3>
+        <p className="text-sm text-ink-muted mt-1">
           Toggle individual hour slots on/off. Patients see your available slots when booking.
         </p>
       </div>
@@ -231,14 +233,15 @@ function AvailabilityTab({ initial }: { initial: AvailabilitySlot[] }) {
       <div className="flex items-center gap-3">
         <input
           type="date"
+          aria-label="Date to add availability for"
           value={newDate}
           onChange={(e) => setNewDate(e.target.value)}
-          className="px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          className="px-4 py-2.5 border border-hairline rounded-xl text-sm outline-none focus:ring-2 focus:ring-focus bg-surface"
         />
         <button
           onClick={handleAddDate}
           disabled={!newDate || isPending}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 bg-info hover:bg-info disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add Date
@@ -246,15 +249,15 @@ function AvailabilityTab({ initial }: { initial: AvailabilitySlot[] }) {
       </div>
 
       {msg && (
-        <p className="text-sm text-rose-600 flex items-center gap-2">
+        <p className="text-sm text-brand-ink flex items-center gap-2">
           <AlertCircle className="w-4 h-4" /> {msg}
         </p>
       )}
 
       {dates.length === 0 ? (
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-10 text-center">
-          <Clock className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-slate-500 text-sm">No availability dates added yet.</p>
+        <div className="bg-surface-muted border border-hairline rounded-xl p-10 text-center">
+          <Clock className="w-8 h-8 text-field mx-auto mb-2" />
+          <p className="text-ink-muted text-sm">No availability dates added yet.</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -264,9 +267,9 @@ function AvailabilityTab({ initial }: { initial: AvailabilitySlot[] }) {
               .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
             return (
-              <div key={date} className="bg-white border border-slate-100 rounded-xl overflow-hidden">
-                <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                  <span className="text-sm font-bold text-slate-800">
+              <div key={date} className="bg-surface border border-hairline rounded-xl overflow-hidden">
+                <div className="px-5 py-3 bg-surface-muted border-b border-hairline flex justify-between items-center">
+                  <span className="text-sm font-bold text-ink">
                     {new Date(date + "T00:00:00").toLocaleDateString("en-US", {
                       weekday: "long",
                       year: "numeric",
@@ -276,7 +279,7 @@ function AvailabilityTab({ initial }: { initial: AvailabilitySlot[] }) {
                   </span>
                   <button
                     onClick={() => setSlots((prev) => prev.filter((s) => s.date !== date))}
-                    className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors rounded-lg hover:bg-rose-50"
+                    className="p-1.5 text-ink-muted hover:text-brand-ink transition-colors rounded-lg hover:bg-brand-soft"
                     title="Remove this date"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -292,8 +295,8 @@ function AvailabilityTab({ initial }: { initial: AvailabilitySlot[] }) {
                         disabled={isBusy}
                         className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-all disabled:opacity-50 ${
                           slot.isAvailable
-                            ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
-                            : "bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200"
+                            ? "bg-success-soft border-success-line text-success hover:bg-success-soft"
+                            : "bg-surface-muted border-hairline text-ink-muted hover:bg-hairline"
                         }`}
                       >
                         {slot.startTime}–{slot.endTime}
@@ -352,7 +355,7 @@ function SecurityTab({ initialSecondaryEmail }: { initialSecondaryEmail: string 
   return (
     <form onSubmit={handleSubmit} className="p-8 space-y-8">
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-slate-900">Change Password</h3>
+        <h3 className="text-lg font-bold text-ink">Change Password</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-xl">
           {(
             [
@@ -361,45 +364,46 @@ function SecurityTab({ initialSecondaryEmail }: { initialSecondaryEmail: string 
               { label: "Confirm New Password", key: "confirmPassword" },
             ] as { label: string; key: keyof typeof form }[]
           ).map(({ label, key }) => (
-            <div key={key} className={key === "currentPassword" ? "md:col-span-2" : ""}>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>
+            <label key={key} className={`block ${key === "currentPassword" ? "md:col-span-2" : ""}`}>
+              <span className="block text-sm font-medium text-ink-soft mb-1.5">{label}</span>
               <input
                 type="password"
                 required
                 value={form[key]}
                 onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 bg-surface-muted border border-hairline rounded-xl text-sm outline-none focus:ring-2 focus:ring-focus"
               />
-            </div>
+            </label>
           ))}
         </div>
       </div>
 
-      <hr className="border-slate-100" />
+      <hr className="border-hairline" />
 
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-slate-900">Secondary Email</h3>
-        <p className="text-sm text-slate-500">
+        <h3 className="text-lg font-bold text-ink">Secondary Email</h3>
+        <p className="text-sm text-ink-muted">
           Receive appointment alerts and platform notifications to an additional address.
         </p>
         <div className="max-w-sm">
           <input
             type="email"
+            aria-label="Secondary email"
             value={form.secondaryEmail}
             onChange={(e) => setForm({ ...form, secondaryEmail: e.target.value })}
             placeholder="e.g. alerts@yourhospital.org"
-            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2.5 bg-surface-muted border border-hairline rounded-xl text-sm outline-none focus:ring-2 focus:ring-focus"
           />
         </div>
       </div>
 
       {error && (
-        <p className="text-sm text-rose-600 flex items-center gap-2">
+        <p className="text-sm text-brand-ink flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" /> {error}
         </p>
       )}
       {success && (
-        <p className="text-sm text-emerald-600 flex items-center gap-2">
+        <p className="text-sm text-success flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 shrink-0" /> {success}
         </p>
       )}
@@ -408,7 +412,7 @@ function SecurityTab({ initialSecondaryEmail }: { initialSecondaryEmail: string 
         <button
           type="submit"
           disabled={isPending}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors"
+          className="flex items-center gap-2 px-6 py-3 bg-info hover:bg-info disabled:opacity-60 text-white font-semibold rounded-xl transition-colors"
         >
           <Save className="w-4 h-4" />
           {isPending ? "Saving…" : "Update Security Settings"}
@@ -436,17 +440,15 @@ export default function ProviderSettingsClient({
   ];
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+    <div className="bg-surface border border-hairline rounded-2xl shadow-sm overflow-hidden">
       {/* Tab bar */}
-      <div className="flex border-b border-slate-100 bg-slate-50 overflow-x-auto">
+      <div className="flex border-b border-hairline bg-surface-muted overflow-x-auto">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`flex items-center gap-2 px-6 py-4 text-sm font-medium shrink-0 transition-colors ${
-              tab === t.id
-                ? "text-blue-600 border-b-2 border-blue-600 bg-white font-bold"
-                : "text-slate-500 hover:text-slate-900"
+              tab === t.id ? "text-info border-b-2 border-info bg-surface font-bold" : "text-ink-muted hover:text-ink"
             }`}
           >
             {t.icon}

@@ -9,7 +9,7 @@ export function GoogleSignInButton({ text = "Continue with Google" }: { text?: s
     <Button
       type="button"
       variant="outline"
-      className="w-full h-11 border-gray-300 text-gray-700 font-medium hover:bg-gray-50 flex items-center justify-center gap-2"
+      className="w-full h-11 border-field text-ink-soft font-medium hover:bg-surface-muted flex items-center justify-center gap-2"
       // Google sign-in is patient-only (new accounts are auto-provisioned as PATIENT).
       onClick={() => signIn("google", { callbackUrl: postAuthDestination("PATIENT") })}
     >

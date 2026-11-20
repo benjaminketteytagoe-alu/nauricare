@@ -165,9 +165,9 @@ function SourcesPanel({ onRunFinished }: { onRunFinished: () => void }) {
   }
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-      <h2 className="text-lg font-semibold text-slate-900">Sources</h2>
-      <p className="mt-1 text-sm text-slate-600">
+    <section className="rounded-xl border border-hairline bg-surface p-5 shadow-sm sm:p-6">
+      <h2 className="text-lg font-semibold text-ink">Sources</h2>
+      <p className="mt-1 text-sm text-ink-soft">
         Hospital or clinic pages that list doctors. The crawler stays on that site, respects robots.txt and waits
         between requests.
       </p>
@@ -203,10 +203,10 @@ function SourcesPanel({ onRunFinished }: { onRunFinished: () => void }) {
         </Callout>
       )}
 
-      <ul className="mt-5 divide-y divide-gray-100">
-        {sources === null && <li className="py-6 text-center text-sm text-slate-500">Loading…</li>}
+      <ul className="mt-5 divide-y divide-hairline">
+        {sources === null && <li className="py-6 text-center text-sm text-ink-muted">Loading…</li>}
         {sources?.length === 0 && (
-          <li className="py-6 text-center text-sm text-slate-500">
+          <li className="py-6 text-center text-sm text-ink-muted">
             No sources yet. Add a hospital&apos;s doctors page above.
           </li>
         )}
@@ -217,17 +217,17 @@ function SourcesPanel({ onRunFinished }: { onRunFinished: () => void }) {
             <li key={s.id} className="py-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className={`font-semibold ${s.isActive ? "text-slate-900" : "text-slate-400"}`}>{s.name}</p>
+                  <p className={`font-semibold ${s.isActive ? "text-ink" : "text-ink-muted"}`}>{s.name}</p>
                   <a
                     href={s.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 truncate text-sm text-teal-700 hover:underline"
+                    className="flex items-center gap-1 truncate text-sm text-brand-ink hover:underline"
                   >
                     <Globe className="h-3.5 w-3.5 shrink-0" aria-hidden />
                     {s.url}
                   </a>
-                  <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                  <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
                     {last ? (
                       <StatusChip tone={RUN_TONE[last.status]}>{last.status.toLowerCase()}</StatusChip>
                     ) : (
@@ -245,7 +245,7 @@ function SourcesPanel({ onRunFinished }: { onRunFinished: () => void }) {
                   <button
                     type="button"
                     onClick={() => toggle(s)}
-                    className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
+                    className="rounded-full p-2 text-ink-muted hover:bg-surface-muted"
                     title={s.isActive ? "Disable source" : "Enable source"}
                     aria-label={s.isActive ? "Disable source" : "Enable source"}
                   >
@@ -255,7 +255,7 @@ function SourcesPanel({ onRunFinished }: { onRunFinished: () => void }) {
                     <button
                       type="button"
                       onClick={() => setOpenLog(openLog === s.id ? null : s.id)}
-                      className="text-sm font-medium text-slate-600 hover:underline"
+                      className="text-sm font-medium text-ink-soft hover:underline"
                     >
                       {openLog === s.id ? "Hide log" : "Log"}
                     </button>
@@ -264,7 +264,7 @@ function SourcesPanel({ onRunFinished }: { onRunFinished: () => void }) {
                     type="button"
                     onClick={() => run(s.id)}
                     disabled={!s.isActive || !!running}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-brand-hover px-4 py-2 text-sm font-semibold text-white hover:bg-brand-pressed disabled:opacity-50"
                   >
                     {running ? (
                       <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -276,7 +276,7 @@ function SourcesPanel({ onRunFinished }: { onRunFinished: () => void }) {
                 </div>
               </div>
               {openLog === s.id && last?.log && (
-                <pre className="mt-3 max-h-60 overflow-auto rounded-lg bg-slate-900 p-3 text-xs leading-relaxed text-slate-100">
+                <pre className="mt-3 max-h-60 overflow-auto rounded-lg bg-surface-inverse p-3 text-xs leading-relaxed text-ink-inverse">
                   {last.log}
                   {last.error ? `\n\nERROR: ${last.error}` : ""}
                 </pre>
@@ -355,7 +355,7 @@ function CandidateCard({ c, onChanged }: { c: Candidate; onChanged: () => void }
 
   const field = (key: keyof typeof draft, label: string, type = "text") => (
     <label className="text-xs">
-      <span className="mb-1 block font-medium text-slate-500">{label}</span>
+      <span className="mb-1 block font-medium text-ink-muted">{label}</span>
       <input
         type={type}
         value={draft[key]}
@@ -366,9 +366,9 @@ function CandidateCard({ c, onChanged }: { c: Candidate; onChanged: () => void }
   );
 
   return (
-    <li className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+    <li className="rounded-xl border border-hairline bg-surface p-4 shadow-sm sm:p-5">
       <div className="flex gap-4">
-        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-slate-100">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-surface-muted">
           {c.hasPhoto ? (
             // eslint-disable-next-line @next/next/no-img-element -- admin-only same-origin proxy, not optimisable
             <img
@@ -378,7 +378,7 @@ function CandidateCard({ c, onChanged }: { c: Candidate; onChanged: () => void }
               loading="lazy"
             />
           ) : (
-            <UserRound className="m-4 h-8 w-8 text-slate-300" aria-hidden />
+            <UserRound className="m-4 h-8 w-8 text-field" aria-hidden />
           )}
         </div>
         <div className="min-w-0 flex-1">
@@ -395,19 +395,19 @@ function CandidateCard({ c, onChanged }: { c: Candidate; onChanged: () => void }
           ) : (
             <>
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-lg font-semibold text-slate-900">{c.fullName}</p>
+                <p className="text-lg font-semibold text-ink">{c.fullName}</p>
                 <StatusChip tone={c.confidence >= 0.75 ? "success" : c.confidence >= 0.5 ? "amber" : "neutral"}>
                   {Math.round(c.confidence * 100)}% · {c.extractor}
                 </StatusChip>
               </div>
-              <p className="text-sm text-slate-700">
+              <p className="text-sm text-ink-soft">
                 {c.specialty}
                 {c.yearsExperience != null && ` · ${c.yearsExperience} years`}
               </p>
-              <ul className="mt-2 space-y-1 text-sm text-slate-600">
+              <ul className="mt-2 space-y-1 text-sm text-ink-soft">
                 <li className="flex items-center gap-2">
                   <Mail className="h-3.5 w-3.5" aria-hidden />
-                  {c.email ?? <span className="text-nc-berry">No email found (needed to invite)</span>}
+                  {c.email ?? <span className="text-danger">No email found (needed to invite)</span>}
                 </li>
                 {c.phone && (
                   <li className="flex items-center gap-2">
@@ -424,26 +424,26 @@ function CandidateCard({ c, onChanged }: { c: Candidate; onChanged: () => void }
               </ul>
             </>
           )}
-          <blockquote className="mt-3 flex gap-2 rounded-lg bg-slate-50 p-3 text-xs leading-relaxed text-slate-600">
-            <Quote className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
+          <blockquote className="mt-3 flex gap-2 rounded-lg bg-surface-muted p-3 text-xs leading-relaxed text-ink-soft">
+            <Quote className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-muted" aria-hidden />
             <span className="line-clamp-4">{c.evidence}</span>
           </blockquote>
           <a
             href={c.profileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-teal-700 hover:underline"
+            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand-ink hover:underline"
           >
             {c.source.name} <ExternalLink className="h-3 w-3" aria-hidden />
           </a>
-          {c.reviewNote && <p className="mt-2 text-xs text-slate-500">Note: {c.reviewNote}</p>}
+          {c.reviewNote && <p className="mt-2 text-xs text-ink-muted">Note: {c.reviewNote}</p>}
           {c.status === "INVITED" && c.inviteExpiresAt && (
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-ink-muted">
               Invited {formatDateTime(c.invitedAt!)}, link valid until {formatDateTime(c.inviteExpiresAt)}.
             </p>
           )}
           {c.status === "PUBLISHED" && (
-            <p className="mt-2 text-xs text-emerald-700">
+            <p className="mt-2 text-xs text-success">
               Live provider · consent: {c.consentSource === "INVITE_CLAIMED" ? "accepted invitation" : "admin-recorded"}
             </p>
           )}
@@ -457,21 +457,21 @@ function CandidateCard({ c, onChanged }: { c: Candidate; onChanged: () => void }
       )}
 
       {pending && (
-        <div className="mt-4 border-t border-gray-100 pt-4">
+        <div className="mt-4 border-t border-hairline pt-4">
           {editing ? (
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={save}
                 disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-full bg-teal-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-full bg-brand-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
               >
                 <Check className="h-4 w-4" aria-hidden /> Save
               </button>
               <button
                 type="button"
                 onClick={() => setEditing(false)}
-                className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                className="rounded-full px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-muted"
               >
                 Cancel
               </button>
@@ -479,7 +479,7 @@ function CandidateCard({ c, onChanged }: { c: Candidate; onChanged: () => void }
           ) : mode ? (
             <div className="space-y-3">
               <label className="block text-sm">
-                <span className="mb-1.5 block font-semibold text-slate-800">
+                <span className="mb-1.5 block font-semibold text-ink">
                   {mode === "publish" ? "How did the doctor consent? (who, when, how)" : "Reason (optional)"}
                 </span>
                 <textarea
@@ -496,14 +496,14 @@ function CandidateCard({ c, onChanged }: { c: Candidate; onChanged: () => void }
                   type="button"
                   onClick={() => review(mode)}
                   disabled={busy}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 ${mode === "publish" ? "bg-teal-700" : "bg-nc-berry"}`}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 ${mode === "publish" ? "bg-brand-hover" : "bg-danger"}`}
                 >
                   {mode === "publish" ? "Publish now and send account setup" : "Reject"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setMode(null)}
-                  className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                  className="rounded-full px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-muted"
                 >
                   Cancel
                 </button>
@@ -515,7 +515,7 @@ function CandidateCard({ c, onChanged }: { c: Candidate; onChanged: () => void }
                 type="button"
                 onClick={() => review("invite")}
                 disabled={busy || !c.email}
-                className="inline-flex items-center gap-1.5 rounded-full bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-full bg-brand-hover px-4 py-2 text-sm font-semibold text-white hover:bg-brand-pressed disabled:opacity-50"
                 title={c.email ? "" : "Add an email first"}
               >
                 <Mail className="h-4 w-4" aria-hidden /> Approve &amp; invite
@@ -524,14 +524,14 @@ function CandidateCard({ c, onChanged }: { c: Candidate; onChanged: () => void }
                 type="button"
                 onClick={() => setMode("publish")}
                 disabled={busy || !c.email}
-                className="rounded-full border border-teal-700 px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-50 disabled:opacity-50"
+                className="rounded-full border border-brand px-4 py-2 text-sm font-semibold text-brand-ink hover:bg-brand-soft disabled:opacity-50"
               >
                 Publish with recorded consent
               </button>
               <button
                 type="button"
                 onClick={() => setEditing(true)}
-                className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-muted"
               >
                 <Pencil className="h-4 w-4" aria-hidden /> Edit
               </button>
@@ -539,7 +539,7 @@ function CandidateCard({ c, onChanged }: { c: Candidate; onChanged: () => void }
                 type="button"
                 onClick={() => review("duplicate")}
                 disabled={busy}
-                className="rounded-full px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                className="rounded-full px-4 py-2 text-sm font-medium text-ink-soft hover:bg-surface-muted"
               >
                 Duplicate
               </button>
@@ -547,7 +547,7 @@ function CandidateCard({ c, onChanged }: { c: Candidate; onChanged: () => void }
                 type="button"
                 onClick={() => setMode("reject")}
                 disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium text-nc-berry hover:bg-rose-50"
+                className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium text-danger hover:bg-brand-soft"
               >
                 <X className="h-4 w-4" aria-hidden /> Reject
               </button>
@@ -593,7 +593,7 @@ function CandidatesPanel({ refreshKey }: { refreshKey: number }) {
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-slate-900">Candidates</h2>
+        <h2 className="text-lg font-semibold text-ink">Candidates</h2>
         <div className="flex flex-wrap gap-1" role="tablist" aria-label="Candidate status">
           {STATUS_TABS.map((t) => (
             <button
@@ -604,7 +604,7 @@ function CandidatesPanel({ refreshKey }: { refreshKey: number }) {
                 setItems(null);
                 setStatus(t.status);
               }}
-              className={`rounded-full px-3 py-1.5 text-sm font-medium ${status === t.status ? "bg-teal-700 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+              className={`rounded-full px-3 py-1.5 text-sm font-medium ${status === t.status ? "bg-brand-hover text-white" : "text-ink-soft hover:bg-surface-muted"}`}
             >
               {t.label}
             </button>
@@ -617,9 +617,9 @@ function CandidatesPanel({ refreshKey }: { refreshKey: number }) {
         </Callout>
       )}
       {items === null ? (
-        <p className="text-sm text-slate-500">Loading…</p>
+        <p className="text-sm text-ink-muted">Loading…</p>
       ) : items.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-gray-300 p-8 text-center text-sm text-slate-500">
+        <p className="rounded-xl border border-dashed border-field p-8 text-center text-sm text-ink-muted">
           Nothing here.
         </p>
       ) : (

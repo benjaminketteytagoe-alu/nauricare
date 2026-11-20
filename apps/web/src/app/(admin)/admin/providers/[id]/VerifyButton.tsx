@@ -22,7 +22,7 @@ export function VerifyButton({ providerId }: { providerId: string }) {
     <button
       onClick={handleVerify}
       disabled={isPending}
-      className="bg-emerald-600 text-white px-4 py-2 rounded-md disabled:bg-slate-400"
+      className="bg-success text-white px-4 py-2 rounded-md disabled:opacity-50"
     >
       {isPending ? "Verifying..." : "Approve Professional License"}
     </button>

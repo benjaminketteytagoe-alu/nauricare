@@ -20,11 +20,11 @@ export function Switch({
   return (
     <div className="flex items-center justify-between gap-4 py-4">
       <div className="min-w-0">
-        <p id={`${id}-l`} className="font-semibold text-nc-ink">
+        <p id={`${id}-l`} className="font-semibold text-ink">
           {label}
         </p>
         {description && (
-          <p id={`${id}-d`} className="mt-0.5 text-sm text-slate-500">
+          <p id={`${id}-d`} className="mt-0.5 text-sm text-ink-muted">
             {description}
           </p>
         )}
@@ -37,10 +37,10 @@ export function Switch({
         aria-describedby={description ? `${id}-d` : undefined}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={`relative h-7 w-12 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nc-primary focus-visible:ring-offset-2 disabled:opacity-50 ${checked ? "bg-nc-primary" : "bg-slate-300"}`}
+        className={`relative h-7 w-12 shrink-0 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50 ${checked ? "bg-brand" : "bg-field"}`}
       >
         <span
-          className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${checked ? "translate-x-6" : "translate-x-1"}`}
+          className={`absolute top-1 h-5 w-5 rounded-full bg-surface shadow-card transition-transform duration-200 ease-editorial ${checked ? "translate-x-6" : "translate-x-1"}`}
           aria-hidden
         />
       </button>

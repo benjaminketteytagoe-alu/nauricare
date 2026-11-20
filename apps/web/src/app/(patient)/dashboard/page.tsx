@@ -5,8 +5,8 @@ import { Activity, Calendar, CheckCircle2, Circle, Newspaper, Edit2, Video } fro
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
-import { CalendarButtons } from "@/components/CalendarButtons";
-import { CycleLogModal } from "@/components/CycleLogModal";
+import { CalendarButtons } from "@/components/appointments/CalendarButtons";
+import { CycleLogModal } from "@/components/cycle/CycleLogModal";
 
 interface HabitItem {
   id: number;
@@ -203,9 +203,9 @@ export default function PatientDashboardPage() {
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500 pb-12">
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">My Health</h1>
-          <p className="text-gray-500 mt-1">
-            Welcome back, <span className="font-semibold text-rose-700">{session?.user?.name || "Jane"}</span>.
+          <h1 className="text-3xl font-bold text-ink">My Health</h1>
+          <p className="text-ink-muted mt-1">
+            Welcome back, <span className="font-semibold text-brand-ink">{session?.user?.name || "Jane"}</span>.
           </p>
         </div>
         <Link href="/dashboard/symptoms">
@@ -221,20 +221,21 @@ export default function PatientDashboardPage() {
           <div className="card-surface p-8 relative overflow-hidden">
             <button
               onClick={() => setIsEditingCycle(true)}
-              className="absolute top-4 right-4 z-20 text-gray-400 p-2 rounded-full hover:bg-rose-50 hover:text-rose-600"
+              aria-label="Edit cycle details"
+              className="absolute top-4 right-4 z-20 text-ink-muted p-2 rounded-full hover:bg-brand-soft hover:text-brand-ink"
             >
-              <Edit2 className="w-4 h-4" />
+              <Edit2 className="w-4 h-4" aria-hidden />
             </button>
             <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
               <div className="relative w-40 h-40 flex items-center justify-center shrink-0">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="45" fill="none" stroke="#fce7f3" strokeWidth="8" />
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="var(--color-brand-soft)" strokeWidth="8" />
                   <circle
                     cx="50"
                     cy="50"
                     r="45"
                     fill="none"
-                    stroke="#e11d48"
+                    stroke="var(--color-brand)"
                     strokeWidth="8"
                     strokeDasharray={ringCircumference}
                     strokeDashoffset={ringOffset}
@@ -242,30 +243,30 @@ export default function PatientDashboardPage() {
                   />
                 </svg>
                 <div className="absolute text-center">
-                  <span className="text-xs font-bold text-rose-600 uppercase">Day</span>
-                  <div className="text-4xl font-bold text-gray-900">{currentCycleDay}</div>
+                  <span className="text-xs font-bold text-brand-ink uppercase">Day</span>
+                  <div className="text-4xl font-bold text-ink">{currentCycleDay}</div>
                 </div>
               </div>
               <div className="flex-1 space-y-2">
-                <span className="px-3 py-1 rounded-full bg-rose-50 text-rose-600 text-xs font-bold uppercase">
+                <span className="px-3 py-1 rounded-full bg-brand-soft text-brand-ink text-xs font-bold uppercase">
                   {phaseInfo}
                 </span>
-                <h2 className="text-xl font-bold text-gray-900">Your Body Today</h2>
-                <p className="text-sm text-gray-600">{phaseDesc}</p>
-                <div className="text-xs font-bold text-rose-700 bg-rose-50 px-2.5 py-1.5 rounded-lg inline-flex">
+                <h2 className="text-xl font-bold text-ink">Your Body Today</h2>
+                <p className="text-sm text-ink-soft">{phaseDesc}</p>
+                <div className="text-xs font-bold text-brand-ink bg-brand-soft px-2.5 py-1.5 rounded-lg inline-flex">
                   {lastPeriodDate ? `Next period in ${daysUntilNextPeriod} days` : "Log a period to begin tracking"}
                 </div>
                 {lastPeriodDate && predictedNextPeriod && (
-                  <div className="flex flex-wrap gap-4 pt-1 text-xs text-gray-500">
+                  <div className="flex flex-wrap gap-4 pt-1 text-xs text-ink-muted">
                     <span>
                       Last Period:{" "}
-                      <span className="font-semibold text-gray-700">
+                      <span className="font-semibold text-ink-soft">
                         {lastP.toLocaleDateString("en-US", dateFormat)}
                       </span>
                     </span>
                     <span>
                       Predicted Next Period:{" "}
-                      <span className="font-semibold text-gray-700">
+                      <span className="font-semibold text-ink-soft">
                         {predictedNextPeriod.toLocaleDateString("en-US", dateFormat)}
                       </span>
                     </span>
@@ -282,16 +283,16 @@ export default function PatientDashboardPage() {
 
           {/* Daily Action Plan & Tabs */}
           <div className="card-surface overflow-hidden flex flex-col">
-            <div className="flex border-b border-rose-100/60 bg-rose-50/30">
+            <div className="flex border-b border-brand-line/60 bg-brand-soft/30">
               <button
                 onClick={() => setActiveTab("today")}
-                className={`flex-1 py-4 text-sm font-bold ${activeTab === "today" ? "text-rose-700 border-b-2 border-rose-600 bg-white" : "text-gray-500"}`}
+                className={`flex-1 py-4 text-sm font-bold ${activeTab === "today" ? "text-brand-ink border-b-2 border-brand bg-surface" : "text-ink-muted"}`}
               >
                 Today&apos;s Plan
               </button>
               <button
                 onClick={() => setActiveTab("analytics")}
-                className={`flex-1 py-4 text-sm font-bold ${activeTab === "analytics" ? "text-rose-700 border-b-2 border-rose-600 bg-white" : "text-gray-500"}`}
+                className={`flex-1 py-4 text-sm font-bold ${activeTab === "analytics" ? "text-brand-ink border-b-2 border-brand bg-surface" : "text-ink-muted"}`}
               >
                 Habit Analytics
               </button>
@@ -303,7 +304,7 @@ export default function PatientDashboardPage() {
                   <button
                     key={period}
                     onClick={() => setChartPeriod(period as "week" | "month" | "year")}
-                    className={`px-3 py-1 text-xs font-bold rounded-full capitalize transition-colors ${chartPeriod === period ? "bg-rose-100 text-rose-800" : "text-gray-500 hover:bg-rose-50"}`}
+                    className={`px-3 py-1 text-xs font-bold rounded-full capitalize transition-colors ${chartPeriod === period ? "bg-brand-soft text-brand-ink" : "text-ink-muted hover:bg-brand-soft"}`}
                   >
                     {period}
                   </button>
@@ -318,25 +319,23 @@ export default function PatientDashboardPage() {
                     <div
                       key={habit.id}
                       onClick={() => toggleHabit(habit.id)}
-                      className="flex items-center gap-4 p-3 rounded-xl cursor-pointer hover:bg-gray-50"
+                      className="flex items-center gap-4 p-3 rounded-xl cursor-pointer hover:bg-surface-muted"
                     >
                       {habit.done ? (
-                        <CheckCircle2 className="w-5 h-5 text-rose-500" />
+                        <CheckCircle2 className="w-5 h-5 text-brand-ink" />
                       ) : (
-                        <Circle className="w-5 h-5 text-gray-300" />
+                        <Circle className="w-5 h-5 text-field" />
                       )}
                       <div>
-                        <p
-                          className={`text-sm font-medium ${habit.done ? "line-through text-gray-400" : "text-gray-900"}`}
-                        >
+                        <p className={`text-sm font-medium ${habit.done ? "line-through text-ink-muted" : "text-ink"}`}>
                           {habit.title}
                         </p>
-                        <p className="text-xs text-gray-500 mt-0.5">{habit.desc}</p>
+                        <p className="text-xs text-ink-muted mt-0.5">{habit.desc}</p>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="text-sm text-gray-500 py-4 text-center">Loading your personalized plan...</div>
+                  <div className="text-sm text-ink-muted py-4 text-center">Loading your personalized plan...</div>
                 )}
               </div>
             ) : (
@@ -344,10 +343,10 @@ export default function PatientDashboardPage() {
                 {analyticsData[chartPeriod as keyof typeof analyticsData]?.map((data, i) => (
                   <div key={i} className="flex flex-col items-center flex-1">
                     <div
-                      className="w-full bg-rose-500 rounded-t-sm transition-all duration-500"
+                      className="w-full bg-brand rounded-t-sm transition-all duration-500"
                       style={{ height: `${Math.max(data.value, 4)}%` }}
                     ></div>
-                    <span className="text-[9px] text-gray-400 mt-2 uppercase font-semibold">{data.label}</span>
+                    <span className="text-[9px] text-ink-muted mt-2 uppercase font-semibold">{data.label}</span>
                   </div>
                 ))}
               </div>
@@ -359,25 +358,25 @@ export default function PatientDashboardPage() {
         <div className="lg:col-span-4 space-y-6">
           {/* Dynamic Telehealth Card */}
           {nextAppointment ? (
-            <div className="bg-rose-800 rounded-2xl p-6 text-white shadow-md shadow-rose-200 space-y-4 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+            <div className="bg-brand-pressed rounded-2xl p-6 text-white shadow-md shadow-brand-line space-y-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-surface opacity-5 rounded-full -mr-10 -mt-10 blur-2xl"></div>
               <div className="flex justify-between items-center relative z-10">
-                <Calendar className="w-5 h-5 text-rose-200" />
-                <span className="bg-white/20 text-rose-50 text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></div>
+                <Calendar className="w-5 h-5 text-on-brand/80" />
+                <span className="bg-white/20 text-on-brand text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 bg-success rounded-full animate-pulse"></div>
                   {nextAppointment.status || "CONFIRMED"}
                 </span>
               </div>
               <div className="relative z-10">
                 <h3 className="text-lg font-bold">Dr. {nextAppointment.practitioner?.user?.name || "Specialist"}</h3>
-                <p className="text-sm text-rose-100 mt-1 font-medium">
+                <p className="text-sm text-on-brand mt-1 font-medium">
                   {new Date(nextAppointment.startTime).toLocaleDateString("en-US", {
                     weekday: "long",
                     month: "short",
                     day: "numeric",
                   })}
                 </p>
-                <p className="text-xs text-rose-200 mt-0.5">
+                <p className="text-xs text-on-brand/80 mt-0.5">
                   {new Date(nextAppointment.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>
               </div>
@@ -394,27 +393,27 @@ export default function PatientDashboardPage() {
                 />
               </div>
               <Link href={`/dashboard/telehealth/${nextAppointment.id}`} className="block relative z-10">
-                <button className="w-full bg-white text-rose-900 text-sm font-bold py-3 rounded-xl hover:bg-rose-50 transition-all shadow-sm flex justify-center items-center gap-2">
+                <button className="w-full bg-surface text-brand-ink text-sm font-bold py-3 rounded-xl hover:bg-brand-soft transition-all shadow-sm flex justify-center items-center gap-2">
                   <Video className="w-4 h-4" /> Join Video Room
                 </button>
               </Link>
             </div>
           ) : (
-            <div className="bg-rose-800 rounded-2xl p-6 text-white shadow-md shadow-rose-200 space-y-4">
+            <div className="bg-brand-pressed rounded-2xl p-6 text-white shadow-md shadow-brand-line space-y-4">
               <div className="flex justify-between items-center">
-                <Calendar className="w-5 h-5 text-rose-200" />
-                <span className="bg-white/20 text-rose-100 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full">
+                <Calendar className="w-5 h-5 text-on-brand/80" />
+                <span className="bg-white/20 text-on-brand text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full">
                   Available Now
                 </span>
               </div>
               <div>
                 <h3 className="text-lg font-bold">Telehealth Session</h3>
-                <p className="text-xs text-rose-100 mt-1">
+                <p className="text-xs text-on-brand mt-1">
                   Book a secure consultation with a verified specialist to discuss your health goals.
                 </p>
               </div>
               <Link href="/dashboard/providers" className="block">
-                <button className="w-full bg-white text-rose-900 text-xs font-bold py-2.5 rounded-xl hover:bg-rose-50 transition-colors">
+                <button className="w-full bg-surface text-brand-ink text-xs font-bold py-2.5 rounded-xl hover:bg-brand-soft transition-colors">
                   Find a Specialist
                 </button>
               </Link>
@@ -423,9 +422,9 @@ export default function PatientDashboardPage() {
 
           {/* Curated Feed (Dynamic) */}
           <div className="card-surface p-5 space-y-4">
-            <div className="flex justify-between items-center border-b border-rose-100/60 pb-3">
-              <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                <Newspaper className="w-4 h-4 text-purple-500" /> Today&apos;s Insights
+            <div className="flex justify-between items-center border-b border-brand-line/60 pb-3">
+              <h3 className="font-bold text-ink flex items-center gap-2">
+                <Newspaper className="w-4 h-4 text-lavender" /> Today&apos;s Insights
               </h3>
             </div>
             <div className="space-y-3">
@@ -434,13 +433,13 @@ export default function PatientDashboardPage() {
                   <Link
                     key={idx}
                     href={article.url ?? "#"}
-                    className="block text-xs font-bold text-gray-800 hover:text-rose-600 cursor-pointer"
+                    className="block text-xs font-bold text-ink hover:text-brand-ink cursor-pointer"
                   >
                     {article.title}
                   </Link>
                 ))
               ) : (
-                <div className="text-xs text-gray-500">Curating articles for you...</div>
+                <div className="text-xs text-ink-muted">Curating articles for you...</div>
               )}
             </div>
           </div>

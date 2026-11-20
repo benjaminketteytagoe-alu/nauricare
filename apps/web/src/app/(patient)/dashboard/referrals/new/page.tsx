@@ -58,13 +58,13 @@ export default async function NewReferralPage({ searchParams }: { searchParams: 
     <div className="mx-auto max-w-3xl space-y-6 pb-12">
       <Link
         href="/dashboard/referrals"
-        className="flex w-fit items-center gap-2 font-medium text-nc-primary hover:underline"
+        className="flex w-fit items-center gap-2 font-medium text-brand-ink hover:underline"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden /> My referrals
       </Link>
       <header>
-        <h1 className="text-2xl font-bold text-nc-ink sm:text-3xl">New hospital referral</h1>
-        <p className="mt-1 text-slate-600">
+        <h1 className="text-2xl font-bold text-ink sm:text-3xl">New hospital referral</h1>
+        <p className="mt-1 text-ink-soft">
           Four short steps. Your answers are saved securely to your NauriCare record.
         </p>
       </header>

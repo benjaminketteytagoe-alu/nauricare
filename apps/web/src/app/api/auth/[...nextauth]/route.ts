@@ -6,12 +6,23 @@ import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 import { isGooglePhoto } from "@/lib/avatars";
 import { getClientIp } from "@/lib/getClientIp";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
+import { canRemember, idleLimitMs, REMEMBER_MAX_AGE_MS, sessionEnd } from "@/lib/sessionPolicy";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { recordPatientActivity } from "@/server/activity/activity.service";
 import { consumeVerifiedLogin } from "@/server/auth/loginCode.service";
-import { randomToken } from "@/server/security/sealing";
+import { redeemSignupTicket } from "@/server/auth/signupTicket";
+import { keyedHash, randomToken } from "@/server/security/sealing";
+
+/** A keyed digest of the password hash: it changes whenever the password does. */
+const fingerprint = (passwordHash: string | null) => keyedHash("session-password", passwordHash ?? "").slice(0, 22);
+
+async function passwordFingerprint(userId: string) {
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { passwordHash: true } });
+  return fingerprint(u?.passwordHash ?? null);
+}
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -32,7 +43,10 @@ export const authOptions: AuthOptions = {
     EmailProvider({
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async sendVerificationRequest(_params) {
-        console.warn("[MAGIC_LINK] Native NextAuth send path called — ignored. Use /api/auth/magic-link.");
+        logger.warn(
+          { event: "auth.native_magic_link_ignored" },
+          "Native NextAuth email send path called; use /api/auth/magic-link",
+        );
       },
     }),
     CredentialsProvider({
@@ -83,16 +97,27 @@ export const authOptions: AuthOptions = {
           throw new Error("Incorrect password. Please try again.");
         }
 
-        if (!user.isEmailVerified) {
-          throw new Error("Please verify your email address before logging in.");
-        }
-
+        // Unverified emails may sign in: the emailed code that every sign-in
+        // requires proves the address and marks it verified.
         return {
           id: user.id,
           name: user.name,
           email: user.email,
           role: user.role,
         };
+      },
+    }),
+    // Straight after sign-up: the ticket from POST /api/auth/register opens a
+    // pending session without asking for the password again. The emailed code
+    // is still required to unlock it.
+    CredentialsProvider({
+      id: "signup",
+      name: "Sign-up",
+      credentials: { ticket: { label: "Ticket", type: "text" } },
+      async authorize(credentials) {
+        const user = credentials?.ticket ? await redeemSignupTicket(credentials.ticket) : null;
+        if (!user) throw new Error("Your sign-up session expired. Please log in.");
+        return user;
       },
     }),
   ],
@@ -160,49 +185,72 @@ export const authOptions: AuthOptions = {
             },
           });
         } catch (dbError) {
-          console.error("Error provisioning Google User in DB:", dbError);
+          logger.error({ event: "auth.google_provision_failed", err: dbError }, "Provisioning Google user failed");
           return false; // Reject sign in if DB creation fails completely
         }
       }
       return true;
     },
     async jwt({ token, user, trigger, session }) {
-      // 1. Initial execution on successful login. Every sign-in starts locked
-      // until the emailed 6-digit code is entered (see loginCode.service).
+      const request = session as { loginCode?: string; remember?: boolean; activity?: boolean } | undefined;
+
+      // 1. Sign-in. Every sign-in starts locked until the emailed 6-digit code
+      // is entered (see loginCode.service).
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.mfaVerified = false;
         token.mfaSid = randomToken();
+        token.remember = false;
+        token.ended = undefined;
+        token.pwf = await passwordFingerprint(user.id);
         return token;
       }
+      // An ended session stays ended until the person signs in again.
+      if (token.ended) return token;
       if (!token.mfaSid) token.mfaSid = randomToken(); // sessions from before sign-in codes
 
-      // 1b. Unlock: the client calls update({ loginCode: "verified" }) after
-      // /api/auth/code/verify succeeds. The flag is only set if the database
-      // holds a verified, unused code for this exact session.
-      if (
-        trigger === "update" &&
-        (session as { loginCode?: string } | undefined)?.loginCode === "verified" &&
-        token.id &&
-        !token.mfaVerified
-      ) {
-        if (await consumeVerifiedLogin(token.id, token.mfaSid)) token.mfaVerified = true;
+      // 2. Unlock: the client calls update({ loginCode: "verified", remember })
+      // after /api/auth/code/verify succeeds. The flag is only set if the
+      // database holds a verified, unused code for this exact session.
+      if (trigger === "update" && request?.loginCode === "verified" && token.id && !token.mfaVerified) {
+        if (await consumeVerifiedLogin(token.id, token.mfaSid)) {
+          token.mfaVerified = true;
+          token.authAt = token.lastSeen = Date.now();
+          token.remember = request.remember === true && canRemember(token.role);
+        }
       }
 
-      // 2. Background session syncs safety boundary checks
-      if (!token || !token.email) {
-        return token;
+      // 3. Inactivity and lifetime (lib/sessionPolicy). The browser reports
+      // real input with update({ activity: true }); the check runs first so a
+      // tab left open past the limit can't revive the session.
+      if (token.mfaVerified) {
+        if (!token.lastSeen) token.lastSeen = token.authAt = Date.now(); // sessions from before this policy
+        const end = sessionEnd(token);
+        if (end) {
+          token.ended = end;
+          return token;
+        }
+        if (trigger === "update" && request?.activity === true) token.lastSeen = Date.now();
       }
 
+      // 4. Keep identity in step with the database.
+      if (!token.email) return token;
       try {
         const cleanEmail = token.email.trim().toLowerCase();
         const dbUser = await prisma.user.findUnique({
           where: { email: cleanEmail },
-          select: { id: true, role: true, avatarUrl: true, deletedAt: true },
+          select: { id: true, role: true, avatarUrl: true, deletedAt: true, passwordHash: true },
         });
 
         if (dbUser && !dbUser.deletedAt) {
+          // A changed password (reset, staff rotation) ends every other session.
+          const pwf = fingerprint(dbUser.passwordHash);
+          if (token.pwf && token.pwf !== pwf) {
+            token.ended = "revoked";
+            return token;
+          }
+          token.pwf = pwf;
           token.id = dbUser.id;
           token.role = dbUser.role;
           token.avatarUrl = dbUser.avatarUrl;
@@ -213,28 +261,30 @@ export const authOptions: AuthOptions = {
           token.avatarUrl = null;
         }
       } catch (dbError) {
-        console.error("NextAuth JWT Database Lookup Error:", dbError);
+        logger.error({ event: "auth.jwt_lookup_failed", err: dbError }, "JWT user lookup failed");
       }
 
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
-        // Until the sign-in code is verified the session has no user id, so
-        // every guard (requireRole, getSessionUser, API routes) rejects it.
-        const verified = token.mfaVerified === true;
-        session.user.id = verified ? (token.id as string) : "";
+        // Until the sign-in code is verified, or once the session has ended,
+        // it has no user id, so every guard (requireRole, getSessionUser, API
+        // routes) rejects it.
+        const active = token.mfaVerified === true && !token.ended;
+        session.user.id = active ? (token.id as string) : "";
         session.user.role = token.role;
-        session.user.avatarUrl = verified ? (token.avatarUrl ?? null) : null;
-        session.loginCodePending = !verified && !!token.id;
+        session.user.avatarUrl = active ? (token.avatarUrl ?? null) : null;
+        session.loginCodePending = !token.mfaVerified && !token.ended && !!token.id;
+        session.ended = token.ended;
+        session.idleLimitMs = active ? idleLimitMs(token.role, token.remember) : null;
       }
       return session;
     },
   },
   events: {
     // Receiving and clicking a Magic Link proves inbox ownership exactly like
-    // our own /verify-email flow does — so a successful passwordless sign-in
-    // doubles as email verification for any account that hasn't completed it yet.
+    // the emailed sign-in code does, so it also verifies the email.
     async signIn({ user, account }) {
       if (user?.id) {
         const role = (await prisma.user.findUnique({ where: { id: user.id }, select: { role: true } }))?.role;
@@ -258,6 +308,8 @@ export const authOptions: AuthOptions = {
   },
   session: {
     strategy: "jwt",
+    // The cookie's ceiling; lib/sessionPolicy ends most sessions far sooner.
+    maxAge: REMEMBER_MAX_AGE_MS / 1000,
   },
   secret: process.env.NEXTAUTH_SECRET || "nauricare_local_development_fallback_secret_key_2026",
 };

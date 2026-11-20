@@ -17,19 +17,19 @@ const CalmAnimation = dynamic(() => import("./CalmAnimation"), {
 const REASSURANCES = [
   {
     icon: LockKeyhole,
-    tint: "bg-blue-50 text-[#1D4ED8]",
+    tint: "bg-info-soft text-[#1D4ED8]",
     title: "What you share stays yours",
     body: "Your symptoms are encrypted and only seen by you and the clinicians you choose. We never sell your data.",
   },
   {
     icon: Sparkles,
-    tint: "bg-amber-50 text-[#D97706]",
+    tint: "bg-warning-soft text-[#D97706]",
     title: "A gentle guide, not a doctor",
     body: "Our AI suggests how soon to seek care and who can help. It cannot diagnose or examine you.",
   },
   {
     icon: Siren,
-    tint: "bg-rose-50 text-[#BE123C]",
+    tint: "bg-brand-soft text-[#BE123C]",
     title: "In an emergency, call 112 / 912",
     body: "Heavy bleeding with dizziness, severe pain or trouble breathing? Call SAMU Rwanda now. Please don't wait for the app.",
   },
@@ -93,7 +93,7 @@ export function TriageGate({ firstName, version }: { firstName: string; version:
         <motion.div variants={riseIn} className="flex justify-center">
           <div
             ref={scope}
-            className="h-40 w-40 rounded-full border border-[#FFE4E6] bg-white p-4 shadow-sm sm:h-48 sm:w-48"
+            className="h-40 w-40 rounded-full border border-[#FFE4E6] bg-surface p-4 shadow-sm sm:h-48 sm:w-48"
           >
             <CalmAnimation onReady={handleAnimationReady} />
           </div>
@@ -115,7 +115,7 @@ export function TriageGate({ firstName, version }: { firstName: string; version:
             <motion.li
               key={title}
               variants={riseIn}
-              className="rounded-3xl border border-[#FFE4E6] bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+              className="rounded-3xl border border-[#FFE4E6] bg-surface p-5 shadow-sm transition-shadow hover:shadow-md"
             >
               <span className={`flex h-11 w-11 items-center justify-center rounded-full ${tint}`}>
                 <Icon className="h-5 w-5" aria-hidden />
@@ -129,10 +129,10 @@ export function TriageGate({ firstName, version }: { firstName: string; version:
         <motion.section
           variants={riseIn}
           aria-labelledby="consent-heading"
-          className="mt-10 rounded-3xl border border-[#FFE4E6] bg-white p-5 shadow-sm sm:p-8"
+          className="mt-10 rounded-3xl border border-[#FFE4E6] bg-surface p-5 shadow-sm sm:p-8"
         >
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-rose-50 text-[#BE123C]">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft text-[#BE123C]">
               <HeartHandshake className="h-5 w-5" aria-hidden />
             </span>
             <div>
@@ -168,7 +168,7 @@ export function TriageGate({ firstName, version }: { firstName: string; version:
           </p>
 
           {error && (
-            <p role="alert" className="mt-5 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-medium text-[#BE123C]">
+            <p role="alert" className="mt-5 rounded-2xl bg-brand-soft px-4 py-3 text-sm font-medium text-[#BE123C]">
               {error}
             </p>
           )}

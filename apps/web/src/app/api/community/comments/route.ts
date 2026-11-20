@@ -1,11 +1,9 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { parseJson } from "@/lib/api";
+import { apiError, apiSuccess, handle, notFound, parseJson } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { parseMentionsAndNotify } from "@/lib/mentions";
 import { prisma } from "@/lib/prisma";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { sanitizePlainText } from "@/lib/sanitize";
 import { idSchema } from "@/lib/validation/common";
 import { requireCommunityAvatar, scrubAuthor } from "@/server/community/avatars";
@@ -17,13 +15,12 @@ const CommentInput = z.object({
 });
 
 export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
-
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  return handle(async () => {
     const url = new URL(req.url);
     const postId = url.searchParams.get("postId");
-    if (!postId) return new NextResponse("postId required", { status: 400 });
+    if (!postId) return apiError("postId required.", 400);
 
     const comments = await prisma.communityComment.findMany({
       where: { postId },
@@ -33,38 +30,34 @@ export async function GET(req: Request) {
       },
     });
 
-    return NextResponse.json(comments.map(scrubAuthor));
-  } catch (error) {
-    console.error("[COMMUNITY_COMMENTS_GET_ERROR]", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+    return apiSuccess(comments.map(scrubAuthor));
+  });
 }
 
 export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  return handle(async () => {
+    const limited = enforceRateLimit(`community-comment:${auth.user.id}`, 30, 10 * 60_000);
+    if (limited) return limited;
 
-    const limit = rateLimit(`community-comment:${session.user.id}`, 30, 10 * 60_000);
-    if (!limit.allowed) return rateLimitResponse(limit);
-
-    const noAvatar = await requireCommunityAvatar(session.user.id);
+    const noAvatar = await requireCommunityAvatar(auth.user.id);
     if (noAvatar) return noAvatar;
 
     const parsed = await parseJson(req, CommentInput);
     if (!parsed.ok) return parsed.response;
     const { postId } = parsed.data;
     const content = sanitizePlainText(parsed.data.content);
-    if (!content) return new NextResponse("Comment cannot be empty", { status: 400 });
+    if (!content) return apiError("Comment cannot be empty.", 400);
 
     const post = await prisma.communityPost.findUnique({ where: { id: postId } });
-    if (!post) return new NextResponse("Post not found", { status: 404 });
+    if (!post) return notFound("Post not found.");
 
     const comment = await prisma.communityComment.create({
       data: {
         postId,
         content,
-        authorId: session.user.id,
+        authorId: auth.user.id,
       },
       include: {
         author: { select: { id: true, name: true, role: true, avatarUrl: true, handle: true } },
@@ -73,9 +66,9 @@ export async function POST(req: Request) {
 
     await notify({
       recipientId: post.authorId,
-      actorId: session.user.id,
+      actorId: auth.user.id,
       type: "COMMUNITY_COMMENT",
-      title: `${session.user.name ?? "Someone"} commented on your post`,
+      title: `${auth.user.name ?? "Someone"} commented on your post`,
       body: content.slice(0, 140),
       link: "/dashboard/community",
       postId,
@@ -83,11 +76,8 @@ export async function POST(req: Request) {
     });
 
     // Fire-and-forget: parse @mentions in comment content and notify matched users.
-    void parseMentionsAndNotify(comment.content, session.user.id, "MENTION_COMMENT", postId, comment.id);
+    void parseMentionsAndNotify(comment.content, auth.user.id, "MENTION_COMMENT", postId, comment.id);
 
-    return NextResponse.json(scrubAuthor(comment), { status: 201 });
-  } catch (error) {
-    console.error("[COMMUNITY_COMMENTS_POST_ERROR]", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+    return apiSuccess(scrubAuthor(comment), 201);
+  });
 }

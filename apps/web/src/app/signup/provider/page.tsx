@@ -4,13 +4,16 @@ import { Turnstile } from "@marsidev/react-turnstile";
 import { ShieldCheck, Stethoscope, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { postAuthDestination } from "@/lib/authDestination";
 import { COUNTRIES, PRIORITY_COUNTRY_COUNT, dialCodeForCountry } from "@/lib/countries";
+import { carryAuthParams } from "@/lib/safeRedirect";
 import { useTurnstileSize } from "@/lib/useTurnstileSize";
 import { passwordField } from "@/lib/validation/password";
 
@@ -110,7 +113,15 @@ export default function ProviderSignUpPage() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to register");
-      router.push("/login?registered=true");
+      // Sign straight in with the one-time sign-up ticket; the emailed code
+      // on the next screen verifies the address. postAuthDestination keeps
+      // ?redirect=&action= so a landing-page triage resumes afterwards.
+      const signedIn = await signIn("signup", { ticket: data.signupTicket, redirect: false });
+      if (!signedIn || signedIn.error) {
+        router.push(`/login?registered=true${carryAuthParams(window.location.search).replace(/^\?/, "&")}`);
+        return;
+      }
+      router.push(`/verify-code?next=${encodeURIComponent(postAuthDestination(data.user.role))}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred.");
     } finally {
@@ -121,27 +132,21 @@ export default function ProviderSignUpPage() {
   return (
     <div className="min-h-[100dvh] flex">
       {/* ── LEFT — Registration form ── */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 py-6 sm:py-8 bg-white overflow-y-auto">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 py-6 sm:py-8 bg-surface overflow-y-auto">
         <div className="w-full max-w-md space-y-6 my-8">
           <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-teal-900">Join as a Provider</h2>
-            <p className="text-gray-500 mt-2 text-sm">Register your clinical practice on NauriCare.</p>
+            <h2 className="text-3xl font-extrabold text-ink">Join as a Provider</h2>
+            <p className="text-ink-muted mt-2 text-sm">Register your clinical practice on NauriCare.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-200">{error}</div>
+              <div className="bg-danger-soft text-danger p-3 rounded-xl text-sm border border-danger-line">{error}</div>
             )}
 
             <div className="space-y-1.5">
               <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                name="name"
-                required
-                placeholder="Dr. Jane Doe"
-                className="h-11 focus-visible:ring-teal-500 rounded-xl"
-              />
+              <Input id="name" name="name" required placeholder="Dr. Jane Doe" className="h-11 rounded-xl" />
             </div>
 
             <div className="space-y-1.5">
@@ -152,7 +157,7 @@ export default function ProviderSignUpPage() {
                 type="email"
                 required
                 placeholder="jane@clinic.com"
-                className="h-11 focus-visible:ring-teal-500 rounded-xl"
+                className="h-11 rounded-xl"
               />
             </div>
 
@@ -168,9 +173,9 @@ export default function ProviderSignUpPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   aria-invalid={!!passwordError}
-                  className="h-11 focus-visible:ring-teal-500 rounded-xl"
+                  className="h-11 rounded-xl"
                 />
-                {passwordError && <p className="text-xs text-red-600">{passwordError}</p>}
+                {passwordError && <p className="text-xs text-danger">{passwordError}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="dateOfBirth">Date of Birth</Label>
@@ -179,7 +184,7 @@ export default function ProviderSignUpPage() {
                   name="dateOfBirth"
                   type="date"
                   required
-                  className="h-11 focus-visible:ring-teal-500 rounded-xl text-gray-700"
+                  className="h-11 rounded-xl text-ink-soft"
                 />
               </div>
             </div>
@@ -192,7 +197,7 @@ export default function ProviderSignUpPage() {
                   name="specialty"
                   required
                   placeholder="Gynecologist"
-                  className="h-11 focus-visible:ring-teal-500 rounded-xl"
+                  className="h-11 rounded-xl"
                 />
               </div>
               <div className="space-y-1.5">
@@ -202,20 +207,14 @@ export default function ProviderSignUpPage() {
                   name="clinicName"
                   required
                   placeholder="NauriCare Clinic"
-                  className="h-11 focus-visible:ring-teal-500 rounded-xl"
+                  className="h-11 rounded-xl"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="location">Practice Location</Label>
-              <Input
-                id="location"
-                name="location"
-                required
-                placeholder="Kigali, Rwanda"
-                className="h-11 focus-visible:ring-teal-500 rounded-xl"
-              />
+              <Input id="location" name="location" required placeholder="Kigali, Rwanda" className="h-11 rounded-xl" />
             </div>
 
             {/* Country select */}
@@ -229,7 +228,7 @@ export default function ProviderSignUpPage() {
                   setSelectedCountry(e.target.value);
                   setLocalPhone("");
                 }}
-                className="w-full h-11 px-3 border border-input rounded-xl text-sm bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 text-gray-900"
+                className="w-full h-11 px-3 border border-input rounded-xl text-sm bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-focus text-ink"
               >
                 <optgroup label="Recommended regions">
                   {COUNTRIES.slice(0, PRIORITY_COUNTRY_COUNT).map((c) => (
@@ -251,8 +250,8 @@ export default function ProviderSignUpPage() {
             {/* Phone number — dial code prefix + local number */}
             <div className="space-y-1.5">
               <Label htmlFor="localPhone">Phone Number</Label>
-              <div className="flex h-11 rounded-xl border border-input overflow-hidden focus-within:ring-2 focus-within:ring-teal-500 focus-within:ring-offset-0">
-                <span className="inline-flex items-center px-3 bg-gray-50 border-r border-input text-sm font-semibold text-gray-700 whitespace-nowrap select-none shrink-0">
+              <div className="flex h-11 rounded-xl border border-input overflow-hidden focus-within:ring-2 focus-within:ring-focus focus-within:ring-offset-0">
+                <span className="inline-flex items-center px-3 bg-surface-muted border-r border-input text-sm font-semibold text-ink-soft whitespace-nowrap select-none shrink-0">
                   {dialCode || "—"}
                 </span>
                 <input
@@ -262,10 +261,10 @@ export default function ProviderSignUpPage() {
                   placeholder="788 123 456"
                   value={localPhone}
                   onChange={(e) => setLocalPhone(e.target.value)}
-                  className="flex-1 min-w-0 px-3 text-sm bg-white outline-none placeholder:text-gray-400"
+                  className="flex-1 min-w-0 px-3 text-sm bg-surface outline-none placeholder:text-ink-muted"
                 />
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-ink-muted">
                 Enter your local number — the country code ({dialCode}) is added automatically.
               </p>
             </div>
@@ -276,14 +275,14 @@ export default function ProviderSignUpPage() {
                 id="privacyConsent"
                 name="privacyConsent"
                 required
-                className="mt-1 w-4 h-4 accent-teal-600 cursor-pointer shrink-0"
+                className="mt-1 w-4 h-4 accent-brand cursor-pointer shrink-0"
               />
               <Label
                 htmlFor="privacyConsent"
-                className="text-xs text-gray-600 font-normal leading-relaxed cursor-pointer"
+                className="text-xs text-ink-soft font-normal leading-relaxed cursor-pointer"
               >
                 I consent to the collection and processing of my professional information in accordance with the{" "}
-                <Link href="/privacy" className="text-teal-600 hover:underline">
+                <Link href="/privacy" className="text-brand-ink hover:underline">
                   Privacy Policy.
                 </Link>{" "}
                 I confirm the details above are accurate and verifiable.
@@ -302,25 +301,25 @@ export default function ProviderSignUpPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
+              className="w-full h-11 bg-brand hover:bg-brand-hover text-on-brand rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
             >
               {loading ? "Submitting application…" : "Register as Provider"}
             </Button>
 
-            <p className="text-xs text-center text-gray-400">
+            <p className="text-xs text-center text-ink-muted">
               Your account will be reviewed and verified by our compliance team before activation.
             </p>
           </form>
 
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-sm text-ink-muted">
             Already have an account?{" "}
-            <Link href="/login" className="text-teal-600 hover:underline font-semibold">
+            <Link href="/login" className="text-brand-ink hover:underline font-semibold">
               Log in
             </Link>
           </p>
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-sm text-ink-muted">
             Registering as a patient?{" "}
-            <Link href="/signup" className="text-teal-600 hover:underline font-semibold">
+            <Link href="/signup" className="text-brand-ink hover:underline font-semibold">
               Sign up here
             </Link>
           </p>

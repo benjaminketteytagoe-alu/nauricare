@@ -2,6 +2,7 @@ import "server-only";
 import { randomInt, timingSafeEqual } from "crypto";
 import { ServiceError } from "@/lib/api";
 import { sendLoginCodeEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { hashToken, keyedHash } from "@/server/security/sealing";
 
@@ -12,7 +13,7 @@ import { hashToken, keyedHash } from "@/server/security/sealing";
 // Codes: 10-minute lifetime, 5 attempts, stored only as an HMAC, bound to
 // the browser session that requested them. Sending is rate-limited.
 
-export const CODE_TTL_MS = 10 * 60_000;
+const CODE_TTL_MS = 10 * 60_000;
 export const MAX_ATTEMPTS = 5;
 const RESEND_COOLDOWN_MS = 45_000;
 const MAX_SENDS_PER_HOUR = 10;
@@ -72,6 +73,7 @@ export async function sendLoginCode(
   // Local development only (never in production): print the code instead of
   // relying on email, so the flow can be tested without a real Resend key.
   const devLog = process.env.NODE_ENV !== "production" && process.env.LOGIN_CODE_DEV_LOG === "1";
+  // eslint-disable-next-line no-restricted-globals -- deliberate dev-only output; never runs in production
   if (devLog) console.info(`[LOGIN_CODE_DEV] ${user.email} ${code}`);
   try {
     await sendLoginCodeEmail({
@@ -81,7 +83,7 @@ export async function sendLoginCode(
       minutes: CODE_TTL_MS / 60_000,
     });
   } catch (e) {
-    console.error("[LOGIN_CODE_EMAIL]", e instanceof Error ? e.message : e);
+    logger.error({ event: "auth.login_code_email_failed", err: e }, "Sign-in code email failed");
     if (!devLog) {
       await prisma.loginChallenge.update({ where: { id: challenge.id }, data: { expiresAt: new Date() } });
       throw new ServiceError("We couldn't send your code. Please try again in a moment.", 502);
@@ -127,6 +129,8 @@ export async function verifyLoginCode(userId: string, sid: string, code: string)
     data: { verifiedAt: new Date() },
   });
   if (count === 0) throw new ServiceError("This code has already been used.", 410);
+  // The code reached this inbox, so the address is proven.
+  await prisma.user.updateMany({ where: { id: userId, isEmailVerified: false }, data: { isEmailVerified: true } });
 }
 
 /**

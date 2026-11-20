@@ -44,7 +44,7 @@ export function CycleTracker({ data }: { data: CycleData }) {
   return todayKey ? (
     <Tracker data={data} todayKey={todayKey} />
   ) : (
-    <p className="py-16 text-center text-slate-500">Loading your cycle…</p>
+    <p className="py-16 text-center text-ink-muted">Loading your cycle…</p>
   );
 }
 
@@ -221,9 +221,9 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
               <CalendarRange className="h-4 w-4" aria-hidden /> {rangeMode ? "Cancel" : "Log a past period"}
             </button>
           </div>
-          <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-slate-600">
+          <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-ink-soft">
             <li className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-rose-500" /> Period
+              <span className="h-2.5 w-2.5 rounded-full bg-brand" /> Period
             </li>
             <li className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-full bg-teal-300" /> Fertile window
@@ -237,7 +237,7 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
         {/* Calendar */}
         <section aria-labelledby="calendar-heading" className="card-surface p-4 sm:p-6">
           <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 id="calendar-heading" className="text-lg font-bold text-nc-ink">
+            <h2 id="calendar-heading" className="text-lg font-bold text-ink">
               {monthLabel}
             </h2>
             <div className="flex gap-1">
@@ -245,7 +245,7 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
                 type="button"
                 aria-label="Previous month"
                 onClick={() => setView((v) => (v.m === 0 ? { y: v.y - 1, m: 11 } : { y: v.y, m: v.m - 1 }))}
-                className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
+                className="rounded-full p-2 text-ink-muted hover:bg-surface-muted"
               >
                 <ChevronLeft className="h-5 w-5" aria-hidden />
               </button>
@@ -253,14 +253,14 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
                 type="button"
                 aria-label="Next month"
                 onClick={() => setView((v) => (v.m === 11 ? { y: v.y + 1, m: 0 } : { y: v.y, m: v.m + 1 }))}
-                className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
+                className="rounded-full p-2 text-ink-muted hover:bg-surface-muted"
               >
                 <ChevronRight className="h-5 w-5" aria-hidden />
               </button>
             </div>
           </div>
           {rangeMode && (
-            <p className="mb-3 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-800">
+            <p className="mb-3 rounded-xl bg-brand-soft px-3 py-2 text-sm text-brand-ink">
               {!rangeStart
                 ? "Tap the day your period started."
                 : !rangeEnd
@@ -268,7 +268,7 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
                   : `${fmt(rangeStart)} to ${fmt(rangeEnd)}`}
             </p>
           )}
-          <div className="grid grid-cols-7 text-center text-xs font-semibold text-slate-400" aria-hidden>
+          <div className="grid grid-cols-7 text-center text-xs font-semibold text-ink-muted" aria-hidden>
             {WEEKDAYS.map((d, i) => (
               <div key={i} className="py-1">
                 {d}
@@ -297,25 +297,25 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
                       "flex h-9 w-9 items-center justify-center rounded-full text-sm transition-colors sm:h-10 sm:w-10",
                       !c.inMonth ? "opacity-40" : "",
                       filled
-                        ? "bg-rose-500 font-bold text-white"
+                        ? "bg-brand font-bold text-white"
                         : s.predicted
-                          ? "border-2 border-dashed border-rose-400 text-rose-700"
+                          ? "border-2 border-dashed border-brand text-brand-ink"
                           : s.ovulation
                             ? "bg-teal-700 font-bold text-white"
                             : s.fertile
                               ? "bg-teal-100 text-teal-900"
                               : future
-                                ? "text-slate-300"
-                                : "text-slate-700 group-hover:bg-slate-100",
+                                ? "text-ink-muted"
+                                : "text-ink-soft group-hover:bg-surface-muted",
                       c.key === todayKey && !filled ? "font-extrabold underline decoration-2 underline-offset-4" : "",
-                      isSel ? "ring-2 ring-nc-primary ring-offset-2" : "",
+                      isSel ? "ring-2 ring-brand ring-offset-2" : "",
                     ].join(" ")}
                   >
                     {c.day}
                   </span>
                   {log && (
                     <span
-                      className={`absolute bottom-0 h-1.5 w-1.5 rounded-full ${log.flow && log.flow !== "NONE" ? "bg-rose-500" : "bg-violet-500"}`}
+                      className={`absolute bottom-0 h-1.5 w-1.5 rounded-full ${log.flow && log.flow !== "NONE" ? "bg-brand" : "bg-lavender"}`}
                       aria-hidden
                     />
                   )}
@@ -335,7 +335,7 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
             </button>
           )}
           {!rangeMode && (
-            <p className="mt-3 text-center text-xs text-slate-500">
+            <p className="mt-3 text-center text-xs text-ink-muted">
               Tap a day to log how you felt. Dots mark days you&apos;ve logged.
             </p>
           )}
@@ -350,17 +350,17 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
       <div className="grid gap-6 lg:grid-cols-2">
         <CycleInsights data={data} todayKey={todayKey} />
         <section aria-labelledby="history-heading" className="card-surface p-5 sm:p-6">
-          <h2 id="history-heading" className="text-lg font-bold text-nc-ink">
+          <h2 id="history-heading" className="text-lg font-bold text-ink">
             Period history
           </h2>
           {logs.length === 0 ? (
-            <p className="mt-2 text-sm text-slate-500">No periods logged yet.</p>
+            <p className="mt-2 text-sm text-ink-muted">No periods logged yet.</p>
           ) : (
-            <ul className="mt-3 divide-y divide-slate-100">
+            <ul className="mt-3 divide-y divide-hairline">
               {logs.slice(0, 8).map((l) => (
                 <li key={l.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-                  <span className="text-slate-700">
-                    <span className="font-semibold text-nc-ink">
+                  <span className="text-ink-soft">
+                    <span className="font-semibold text-ink">
                       {fmt(l.startDate, { day: "numeric", month: "short", year: "numeric" })}
                     </span>
                     {l.endDate
@@ -374,7 +374,7 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
                     disabled={pending}
                     onClick={() => confirm("Delete this period?") && run(() => deletePeriod(l.id))}
                     aria-label={`Delete period starting ${fmt(l.startDate)}`}
-                    className="rounded-full p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                    className="rounded-full p-2 text-ink-muted hover:bg-danger-soft hover:text-danger"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden />
                   </button>
@@ -386,7 +386,7 @@ function Tracker({ data, todayKey }: { data: CycleData; todayKey: string }) {
             <button
               type="button"
               onClick={() => setSelected(todayKey)}
-              className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-nc-primary hover:underline"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-ink hover:underline"
             >
               <X className="h-4 w-4" aria-hidden /> Back to today
             </button>

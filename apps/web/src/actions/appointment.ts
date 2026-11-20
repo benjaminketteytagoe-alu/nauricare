@@ -1,12 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getServerSession } from "next-auth/next";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getSessionUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { idSchema, firstIssue } from "@/lib/validation/common";
 import { notify } from "@/server/notifications/notify";
+import { isApprovedProvider, PENDING_PROVIDER_MESSAGE } from "@/server/providers/approval";
 
 const UpdateStatusInput = z.object({
   appointmentId: idSchema,
@@ -18,16 +18,17 @@ type AppointmentStatus = "SCHEDULED" | "COMPLETED" | "CANCELLED" | "MISSED";
 const TERMINAL_STATUSES: AppointmentStatus[] = ["COMPLETED", "CANCELLED", "MISSED"];
 
 export async function updateAppointmentStatus(appointmentId: string, status: "COMPLETED" | "MISSED" | "CANCELLED") {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== "PROVIDER") {
+  const caller = await getSessionUser();
+  if (!caller?.id || caller.role !== "PROVIDER") {
     return { success: false, error: "Unauthorized" };
   }
+  if (!(await isApprovedProvider(caller.id))) return { success: false, error: PENDING_PROVIDER_MESSAGE };
 
   const parsed = UpdateStatusInput.safeParse({ appointmentId, status });
   if (!parsed.success) return { success: false, error: firstIssue(parsed.error) };
 
   const practitioner = await prisma.practitionerProfile.findUnique({
-    where: { userId: session.user.id },
+    where: { userId: caller.id },
     select: { id: true },
   });
   if (!practitioner) return { success: false, error: "Practitioner profile not found" };
@@ -59,7 +60,7 @@ export async function updateAppointmentStatus(appointmentId: string, status: "CO
   const label = { COMPLETED: "completed", MISSED: "marked as missed", CANCELLED: "cancelled" }[parsed.data.status];
   await notify({
     recipientId: appointment.patient.userId,
-    actorId: session.user.id,
+    actorId: caller.id,
     type: "APPOINTMENT_UPDATED",
     title: `Your appointment was ${label}`,
     body: `Consultation on ${appointment.startTime.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}.`,

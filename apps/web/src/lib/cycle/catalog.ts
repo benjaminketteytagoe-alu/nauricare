@@ -55,7 +55,7 @@ export interface PhaseContent {
   eat: string[];
   move: string;
   care: string;
-  tone: { bg: string; text: string; ring: string };
+  tone: { bg: string; text: string };
 }
 
 export const PHASES: Record<PhaseId, PhaseContent> = {
@@ -72,7 +72,7 @@ export const PHASES: Record<PhaseId, PhaseContent> = {
     ],
     move: "Gentle walks, stretching or rest. Listen to your body.",
     care: "A warm cloth or bottle on your lower belly can ease cramps.",
-    tone: { bg: "bg-rose-50", text: "text-rose-700", ring: "#E11D48" },
+    tone: { bg: "bg-brand-soft", text: "text-brand-ink" },
   },
   follicular: {
     id: "follicular",
@@ -87,7 +87,7 @@ export const PHASES: Record<PhaseId, PhaseContent> = {
     ],
     move: "A good time for dancing, brisk walks or trying something new.",
     care: "Plan the things that need focus and energy for these days.",
-    tone: { bg: "bg-amber-50", text: "text-amber-700", ring: "#F59E0B" },
+    tone: { bg: "bg-warning-soft", text: "text-warning" },
   },
   ovulation: {
     id: "ovulation",
@@ -102,7 +102,7 @@ export const PHASES: Record<PhaseId, PhaseContent> = {
     ],
     move: "Higher-energy movement such as running, dance classes or sport.",
     care: "If you're avoiding or planning pregnancy, these are the key days.",
-    tone: { bg: "bg-teal-50", text: "text-teal-700", ring: "#0D9488" },
+    tone: { bg: "bg-teal-50", text: "text-teal-700" },
   },
   luteal: {
     id: "luteal",
@@ -117,7 +117,7 @@ export const PHASES: Record<PhaseId, PhaseContent> = {
     ],
     move: "Yoga, walking and lighter strength work.",
     care: "Early nights and journaling can help with PMS. Be kind to yourself.",
-    tone: { bg: "bg-violet-50", text: "text-violet-700", ring: "#7C3AED" },
+    tone: { bg: "bg-lavender-soft", text: "text-lavender" },
   },
 };
 

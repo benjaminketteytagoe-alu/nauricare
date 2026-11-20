@@ -1,50 +1,43 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { parseJson } from "@/lib/api";
+import { apiSuccess, handle, notFound, parseJson } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { idSchema } from "@/lib/validation/common";
 import { notify } from "@/server/notifications/notify";
 
 const LikeInput = z.object({ postId: idSchema });
 
+// Toggles the caller's like on a post.
 export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const { id: userId, name } = auth.user;
+  const limited = enforceRateLimit(`community-like:${userId}`, 120, 60_000);
+  if (limited) return limited;
+  const body = await parseJson(req, LikeInput);
+  if (!body.ok) return body.response;
+  const { postId } = body.data;
 
-    const parsed = await parseJson(req, LikeInput);
-    if (!parsed.ok) return parsed.response;
-    const { postId } = parsed.data;
-
+  return handle(async () => {
     const post = await prisma.communityPost.findUnique({ where: { id: postId }, select: { id: true, authorId: true } });
-    if (!post) return new NextResponse("Post not found", { status: 404 });
+    if (!post) return notFound("Post not found.");
 
-    const existing = await prisma.communityLike.findUnique({
-      where: { postId_userId: { postId, userId: session.user.id } },
-    });
-
+    const existing = await prisma.communityLike.findUnique({ where: { postId_userId: { postId, userId } } });
     if (existing) {
       await prisma.communityLike.delete({ where: { id: existing.id } });
-      return NextResponse.json({ liked: false });
+      return apiSuccess({ liked: false });
     }
 
-    await prisma.communityLike.create({
-      data: { postId, userId: session.user.id },
-    });
+    await prisma.communityLike.create({ data: { postId, userId } });
     await notify({
       recipientId: post.authorId,
-      actorId: session.user.id,
+      actorId: userId,
       type: "COMMUNITY_LIKE",
-      title: `${session.user.name ?? "Someone"} liked your post`,
+      title: `${name ?? "Someone"} liked your post`,
       link: "/dashboard/community",
       postId,
     });
-
-    return NextResponse.json({ liked: true });
-  } catch (error) {
-    console.error("[COMMUNITY_LIKE_ERROR]", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+    return apiSuccess({ liked: true });
+  });
 }

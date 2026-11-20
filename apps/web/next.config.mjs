@@ -75,6 +75,16 @@ const nextConfig = {
     ],
   },
 
+  // Sign-up no longer sends a verification link (the emailed sign-in code
+  // verifies the address). Links already in inboxes land on the login page.
+  async redirects() {
+    return [
+      { source: "/verify-email", destination: "/login", permanent: false },
+      // The compliance log moved to the single audit page.
+      { source: "/admin/audit-logs", destination: "/admin/audit", permanent: true },
+    ];
+  },
+
   async headers() {
     return [
       { source: "/:path*", headers: SECURITY_HEADERS },

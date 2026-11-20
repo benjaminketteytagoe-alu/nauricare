@@ -45,17 +45,17 @@ export function FeedbackForm() {
   return (
     <section aria-labelledby="feedback-form-title" className="card-surface overflow-hidden">
       <div className="px-5 pb-2 pt-6 sm:px-6">
-        <h2 id="feedback-form-title" className="text-lg font-bold text-nc-ink">
+        <h2 id="feedback-form-title" className="text-lg font-bold text-ink">
           Share your feedback
         </h2>
-        <p className="mt-1 text-sm text-slate-500">It goes straight to the NauriCare team.</p>
+        <p className="mt-1 text-sm text-ink-muted">It goes straight to the NauriCare team.</p>
       </div>
 
       {submitted ? (
         <div className="space-y-3 px-5 pb-8 pt-6 text-center sm:px-6">
-          <CheckCircle2 className="mx-auto h-12 w-12 text-nc-primary" aria-hidden />
-          <h3 className="text-lg font-bold text-nc-ink">Thank you!</h3>
-          <p className="text-sm text-slate-600">
+          <CheckCircle2 className="mx-auto h-12 w-12 text-brand-ink" aria-hidden />
+          <h3 className="text-lg font-bold text-ink">Thank you!</h3>
+          <p className="text-sm text-ink-soft">
             Your feedback helps us make NauriCare better for every woman who uses it.
           </p>
           <button type="button" onClick={reset} className="m3-btn-outlined mt-2">
@@ -71,7 +71,7 @@ export function FeedbackForm() {
           )}
 
           <fieldset>
-            <legend className="mb-2 text-sm font-semibold text-nc-ink">How satisfied are you with NauriCare?</legend>
+            <legend className="mb-2 text-sm font-semibold text-ink">How satisfied are you with NauriCare?</legend>
             <div role="radiogroup" className="grid grid-cols-5 gap-2">
               {CSAT_SCALE.map((s) => {
                 const selected = rating === s.value;
@@ -85,8 +85,8 @@ export function FeedbackForm() {
                     onClick={() => setRating(s.value)}
                     className={`flex flex-col items-center gap-1 rounded-2xl border px-1 py-2.5 transition-all ${
                       selected
-                        ? "scale-105 border-nc-primary bg-nc-primary-container shadow-sm"
-                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                        ? "scale-105 border-brand bg-brand-soft shadow-sm"
+                        : "border-hairline hover:border-field hover:bg-surface-muted"
                     }`}
                   >
                     <span
@@ -99,9 +99,9 @@ export function FeedbackForm() {
                 );
               })}
             </div>
-            <div className="mt-1.5 flex justify-between text-xs text-slate-500">
+            <div className="mt-1.5 flex justify-between text-xs text-ink-muted">
               <span>Very dissatisfied</span>
-              <span className="font-medium text-nc-primary">
+              <span className="font-medium text-brand-ink">
                 {CSAT_SCALE.find((s) => s.value === rating)?.label ?? ""}
               </span>
               <span>Very satisfied</span>
@@ -109,7 +109,7 @@ export function FeedbackForm() {
           </fieldset>
 
           <div>
-            <label htmlFor="feedback-category" className="mb-1.5 block text-sm font-semibold text-nc-ink">
+            <label htmlFor="feedback-category" className="mb-1.5 block text-sm font-semibold text-ink">
               Category
             </label>
             <select
@@ -128,10 +128,10 @@ export function FeedbackForm() {
 
           <div>
             <div className="mb-1.5 flex items-center justify-between">
-              <label htmlFor="feedback-comment" className="text-sm font-semibold text-nc-ink">
+              <label htmlFor="feedback-comment" className="text-sm font-semibold text-ink">
                 Tell us more
               </label>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-ink-muted">
                 {comment.length}/{COMMENT_MAX}
               </span>
             </div>
@@ -150,9 +150,9 @@ export function FeedbackForm() {
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
             {isSubmitting ? "Sending…" : "Send feedback"}
           </button>
-          <p className="text-center text-xs text-slate-500">
+          <p className="text-center text-xs text-ink-muted">
             Prefer email? Write to{" "}
-            <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-nc-primary hover:underline">
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-brand-ink hover:underline">
               {SUPPORT_EMAIL}
             </a>
           </p>

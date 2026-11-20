@@ -6,6 +6,7 @@ import { ServiceError as SourcingError } from "@/lib/api";
 import { logAdministrativeAction } from "@/lib/audit";
 import { sendProviderInvitationEmail } from "@/lib/email";
 import { formatDate } from "@/lib/format";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { SITE_URL } from "@/lib/site";
 import { geocodePractice } from "@/server/geo/geocode";
@@ -24,7 +25,7 @@ const MAX_CONCURRENT_RUNS = 2;
 
 // ── Sources ──────────────────────────────────────────────────────────────────
 
-export function assertCrawlableUrl(raw: string): string {
+function assertCrawlableUrl(raw: string): string {
   let url: URL;
   try {
     url = new URL(raw);
@@ -120,10 +121,6 @@ export async function startScrapeRun(adminId: string, sourceId: string) {
   return run;
 }
 
-export function getRun(id: string) {
-  return prisma.providerScrapeRun.findUnique({ where: { id } });
-}
-
 function dedupeKeyFor(c: ExtractedCandidate, host: string): string {
   if (c.email) return `email:${c.email.toLowerCase()}`;
   const name = c.fullName
@@ -142,7 +139,7 @@ function dedupeKeyFor(c: ExtractedCandidate, host: string): string {
  * touching reviewed candidates). Separate from the crawl so it can be tested
  * with fixture pages.
  */
-export async function ingestPages(
+async function ingestPages(
   ctx: { runId: string; sourceId: string; sourceName: string; host: string },
   pages: CrawledPage[],
   log: (line: string) => void,
@@ -348,7 +345,7 @@ async function issueInvite(c: ProviderCandidate, alreadyListed: boolean) {
     });
     return { emailSent: true as const };
   } catch (e) {
-    console.error("[PROVIDER_INVITE_EMAIL]", e instanceof Error ? e.message : e);
+    logger.error({ event: "sourcing.invite_email_failed", err: e }, "Provider invite email failed");
     return { emailSent: false as const };
   }
 }

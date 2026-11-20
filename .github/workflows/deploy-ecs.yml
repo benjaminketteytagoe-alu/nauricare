@@ -1,0 +1,300 @@
+name: Deploy to ECS
+
+# Reusable deploy for staging and production. No load balancer and no NAT: each
+# Fargate task has a public IP and Cloudflare proxies the hostnames straight to
+# it. Release flow:
+#   1. register a task definition pinned to the image DIGEST, with an ECS
+#      health check on /api/health
+#   2. run database migrations as a one-off task from that image
+#   3. roll the service out (automatic rollback on failure)
+#   4. as soon as new tasks are HEALTHY, ADD their IPs to Cloudflare (old tasks
+#      still serve, so there is no gap)
+#   5. once the rollout is stable, REMOVE the old tasks' IPs
+#   6. confirm the check URL reports this commit's version, then smoke-test pages
+# The scheduled "Cloudflare DNS Sync" workflow repairs DNS if ECS replaces a
+# task between deploys (its IP changes).
+
+on:
+  workflow_call:
+    inputs:
+      environment: { type: string, required: true, description: "GitHub environment (staging | production)" }
+      image: { type: string, required: true, description: "registry/repo@sha256:… built by ci.yml" }
+      aws_region: { type: string, required: true }
+      ecs_cluster: { type: string, required: true }
+      ecs_service: { type: string, required: true }
+      dns_names: { type: string, required: true, description: "Space-separated hostnames synced to task IPs" }
+      public_url: { type: string, required: true }
+      check_url: { type: string, required: true, description: "Hostname that only ever points at ECS tasks" }
+      ssm_prefix: { type: string, required: true, description: "SSM path for app secrets, e.g. /nauricare/production/" }
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.environment }}
+    runs-on: ubuntu-24.04
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ inputs.public_url }}
+    timeout-minutes: 45
+    concurrency:
+      group: deploy-${{ inputs.environment }}
+      cancel-in-progress: false
+    env:
+      AWS_REGION: ${{ inputs.aws_region }}
+      ECS_CLUSTER: ${{ inputs.ecs_cluster }}
+      ECS_SERVICE: ${{ inputs.ecs_service }}
+      DNS_NAMES: ${{ inputs.dns_names }}
+      IMAGE: ${{ inputs.image }}
+      CHECK_URL: ${{ inputs.check_url }}
+      SSM_PREFIX: ${{ inputs.ssm_prefix }}
+      PRISMA_SCHEMA: packages/database/prisma/schema.prisma
+      CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+    steps:
+      - name: Checkout deploy scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Check required inputs and secrets
+        run: |
+          missing=0
+          for v in CF_API_TOKEN CF_ZONE_ID ECS_SERVICE DNS_NAMES CHECK_URL; do
+            if [ -z "${!v}" ]; then echo "::error::$v is not set for ${{ inputs.environment }}."; missing=1; fi
+          done
+          case "$IMAGE" in *@sha256:*) ;; *) echo "::error::image must be pinned by digest, got '$IMAGE'"; missing=1 ;; esac
+          exit $missing
+
+      - name: AWS credentials (OIDC)
+        if: vars.AWS_ROLE_ARN != ''
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: AWS credentials (static keys, legacy)
+        if: vars.AWS_ROLE_ARN == ''
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS Account Identity
+        run: aws sts get-caller-identity
+
+      - name: Verify ECS service
+        run: .github/scripts/ecs-service-check.sh check
+
+      - name: Register task definition for this release
+        id: taskdef
+        env:
+          # Comma-separated app secret names stored in SSM under $SSM_PREFIX.
+          # Empty until the admin setup has run, so deploys never reference a
+          # parameter that doesn't exist (the task would fail to start).
+          APP_SSM_SECRETS: ${{ vars.APP_SSM_SECRETS }}
+        run: |
+          set -euo pipefail
+          CURRENT_TD=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
+            --query 'services[0].taskDefinition' --output text)
+          if [ -z "$CURRENT_TD" ] || [ "$CURRENT_TD" = "None" ]; then
+            echo "::error::ECS service '$ECS_SERVICE' was not found in cluster '$ECS_CLUSTER'."
+            exit 1
+          fi
+          aws ecs describe-task-definition --task-definition "$CURRENT_TD" --query taskDefinition > current-taskdef.json
+
+          # The app container is the one whose image comes from our ECR repo
+          # (current image may be pinned by tag or by digest).
+          REPO_URI="${IMAGE%%@*}"
+          CONTAINER=$(jq -r --arg repo "$REPO_URI" \
+            '[.containerDefinitions[] | select(.image | startswith($repo))][0].name // empty' current-taskdef.json)
+          if [ -z "$CONTAINER" ]; then
+            echo "::error::No container in $CURRENT_TD runs an image from $REPO_URI."
+            exit 1
+          fi
+
+          # Pin the image digest. Add an ECS health check if there is none:
+          # without a load balancer it is the only signal ECS (and the DNS sync)
+          # has that a task is serving. App secrets are injected by ECS from
+          # SSM (by ARN) and never pass through this workflow; same-named plain
+          # env vars are dropped so the secret is the only source.
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          SECRETS=$(jq -nc --arg names "${APP_SSM_SECRETS:-}" \
+            --arg prefix "arn:aws:ssm:${AWS_REGION}:${ACCOUNT_ID}:parameter${SSM_PREFIX}" '
+            [$names | split(",")[] | gsub("\\s"; "") | select(test("^[A-Z][A-Z0-9_]*$"))
+             | {name: ., valueFrom: ($prefix + .)}]')
+          echo "App secrets from SSM: $(jq -r 'map(.name) | join(", ") | if . == "" then "none" else . end' <<<"$SECRETS")"
+
+          jq --arg img "$IMAGE" --arg c "$CONTAINER" --argjson s "$SECRETS" '
+            ($s | map(.name)) as $names
+            | .containerDefinitions |= map(
+              if .name == $c then
+                .image = $img
+                | .secrets = (((.secrets // []) | map(select(.name as $n | $names | index($n) | not))) + $s)
+                | .environment = ((.environment // []) | map(select(.name as $n | $names | index($n) | not)))
+                | .healthCheck //= {
+                    command: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health >/dev/null || exit 1"],
+                    interval: 15, timeout: 5, retries: 3, startPeriod: 30
+                  }
+              else . end)
+            | del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
+                  .compatibilities, .registeredAt, .registeredBy, .deregisteredAt)
+          ' current-taskdef.json > release-taskdef.json
+
+          NEW_TD=$(aws ecs register-task-definition --cli-input-json file://release-taskdef.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "Registered $NEW_TD (container '$CONTAINER' -> $IMAGE)"
+          echo "arn=$NEW_TD" >> "$GITHUB_OUTPUT"
+          echo "container=$CONTAINER" >> "$GITHUB_OUTPUT"
+
+      # `prisma migrate deploy` from the new image, with the same network and
+      # runtime configuration (DATABASE_URL etc.) as the service itself.
+      - name: Run database migrations
+        env:
+          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
+          CONTAINER: ${{ steps.taskdef.outputs.container }}
+        run: |
+          set -euo pipefail
+          aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
+            --query 'services[0]' > service.json
+          if [ "$(jq -r '.networkConfiguration.awsvpcConfiguration.assignPublicIp' service.json)" != "ENABLED" ]; then
+            echo "::error::$ECS_SERVICE must have assignPublicIp=ENABLED (no NAT: tasks need it to reach ECR, the database and Cloudflare)."
+            exit 1
+          fi
+          NETWORK=$(jq -c '.networkConfiguration' service.json)
+          if [ "$(jq '.capacityProviderStrategy | length' service.json)" -gt 0 ]; then
+            PLACEMENT=(--capacity-provider-strategy "$(jq -c '.capacityProviderStrategy' service.json)")
+          else
+            PLACEMENT=(--launch-type "$(jq -r '.launchType // "FARGATE"' service.json)")
+          fi
+          OVERRIDES=$(jq -nc --arg c "$CONTAINER" --arg s "$PRISMA_SCHEMA" \
+            '{containerOverrides: [{name: $c, command: ["prisma", "migrate", "deploy", ("--schema=" + $s)]}]}')
+
+          aws ecs run-task --cluster "$ECS_CLUSTER" --task-definition "$TASK_DEF" \
+            --network-configuration "$NETWORK" "${PLACEMENT[@]}" \
+            --overrides "$OVERRIDES" --started-by "gha-migrate-${GITHUB_RUN_ID}" > run-task.json
+          if [ "$(jq '.failures | length' run-task.json)" -gt 0 ]; then
+            echo "::error::Could not start the migration task: $(jq -c '.failures' run-task.json)"
+            exit 1
+          fi
+          TASK_ARN=$(jq -r '.tasks[0].taskArn' run-task.json)
+          echo "Migration task: $TASK_ARN"
+
+          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN"
+          aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN" > task.json
+          EXIT_CODE=$(jq -r --arg c "$CONTAINER" '.tasks[0].containers[] | select(.name == $c) | .exitCode // "none"' task.json)
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "::error::Database migrations failed (exit code: $EXIT_CODE, reason: $(jq -r '.tasks[0].stoppedReason' task.json)). The service was NOT updated. See the task's CloudWatch logs."
+            exit 1
+          fi
+          echo "Migrations applied."
+
+      - name: Start rollout
+        env:
+          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
+        run: |
+          set -euo pipefail
+          # 200/100: a new task starts before an old one stops. The circuit
+          # breaker rolls back automatically if new tasks never become healthy.
+          aws ecs update-service --cluster "$ECS_CLUSTER" --service "$ECS_SERVICE" \
+            --task-definition "$TASK_DEF" --force-new-deployment \
+            --deployment-configuration "maximumPercent=200,minimumHealthyPercent=100,deploymentCircuitBreaker={enable=true,rollback=true}" \
+            > /dev/null
+
+      - name: Add new tasks to Cloudflare as soon as they are healthy
+        env:
+          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
+          MODE: add
+        run: |
+          set -euo pipefail
+          # Up to ~10 minutes for the first new task to pass its health check.
+          # Output is captured so expected "not healthy yet" messages don't
+          # appear as errors; only the final attempt's output is shown.
+          LAST_OUTPUT=""
+          for _ in $(seq 1 60); do
+            if LAST_OUTPUT=$(.github/scripts/cloudflare-ecs-dns.sh 2>&1); then
+              echo "$LAST_OUTPUT"
+              exit 0
+            fi
+            ROLLOUT=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
+              --query "services[0].deployments[?taskDefinition=='$TASK_DEF'].rolloutState | [0]" --output text)
+            if [ "$ROLLOUT" = "FAILED" ]; then
+              echo "::error::The new tasks failed their health checks and ECS rolled back. Check the task logs."
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "${LAST_OUTPUT//::error::/Last attempt: }"
+          echo "::error::No new task became healthy within 10 minutes."
+          exit 1
+
+      - name: Wait for the rollout to finish
+        env:
+          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
+        run: |
+          set -euo pipefail
+          aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE"
+          # A rollback also ends "stable": make sure it is OUR release running.
+          PRIMARY_TD=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
+            --query "services[0].deployments[?status=='PRIMARY'].taskDefinition | [0]" --output text)
+          if [ "$PRIMARY_TD" != "$TASK_DEF" ]; then
+            echo "::error::ECS rolled back to $PRIMARY_TD. This release is not live."
+            exit 1
+          fi
+
+      - name: Remove old tasks from Cloudflare
+        env:
+          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
+          MODE: reconcile
+        run: .github/scripts/cloudflare-ecs-dns.sh
+
+      - name: Verify the tasks serve this release through Cloudflare
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 24); do
+            VERSION=$(curl -fsS --max-time 10 "$CHECK_URL/api/health" 2>/dev/null | jq -r '.version // empty' || true)
+            if [ "$VERSION" = "$GITHUB_SHA" ]; then
+              echo "$CHECK_URL is serving $GITHUB_SHA."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::$CHECK_URL/api/health did not report $GITHUB_SHA within 2 minutes (last seen: ${VERSION:-no response}). Check the Cloudflare Origin Rule (port 3000), SSL mode and the security group."
+          exit 1
+
+      - name: Smoke-test key pages
+        run: |
+          set -uo pipefail
+          failed=0
+          for path in / /login /signup /privacy /terms; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$CHECK_URL$path")
+            echo "$path -> $code"
+            if [ "$code" -ge 400 ] || [ "$code" = "000" ]; then
+              echo "::error::$CHECK_URL$path returned $code"
+              failed=1
+            fi
+          done
+          exit $failed
+
+      - name: Summary
+        if: success()
+        env:
+          TASK_DEF: ${{ steps.taskdef.outputs.arn }}
+          PUBLIC_URL: ${{ inputs.public_url }}
+        run: |
+          {
+            echo "### ${{ inputs.environment }} deploy"
+            echo "- Commit \`$GITHUB_SHA\` is live at $PUBLIC_URL"
+            echo "- Image \`$IMAGE\`"
+            echo "- Task definition \`$TASK_DEF\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # If anything above failed, point DNS at whatever is healthy right now
+      # (old tasks after a rollback), so the site is never left dark.
+      - name: Repair Cloudflare DNS after a failure
+        if: failure() && steps.taskdef.outcome == 'success'
+        env:
+          MODE: reconcile
+        run: .github/scripts/cloudflare-ecs-dns.sh

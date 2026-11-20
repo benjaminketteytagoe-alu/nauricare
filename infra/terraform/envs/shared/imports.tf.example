@@ -1,0 +1,5 @@
+# The registry already exists (created by hand). cp to imports.tf, plan, apply, delete.
+import {
+  to = module.ecr.aws_ecr_repository.this
+  id = "nauricare-api"
+}

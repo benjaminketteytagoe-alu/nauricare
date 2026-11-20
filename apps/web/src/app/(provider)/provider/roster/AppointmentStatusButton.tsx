@@ -21,9 +21,9 @@ export function AppointmentStatusButton({
 
   if (TERMINAL.includes(status)) {
     const styles: Record<string, string> = {
-      COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      CANCELLED: "bg-slate-100 text-slate-500 border-slate-200",
-      MISSED: "bg-rose-50 text-rose-600 border-rose-200",
+      COMPLETED: "bg-success-soft text-success border-success-line",
+      CANCELLED: "bg-surface-muted text-ink-muted border-hairline",
+      MISSED: "bg-brand-soft text-brand-ink border-brand-line",
     };
     const labels: Record<string, string> = {
       COMPLETED: "Completed",
@@ -56,7 +56,7 @@ export function AppointmentStatusButton({
         <button
           onClick={() => act("COMPLETED")}
           disabled={isPending}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-success-soft hover:bg-success-soft text-success border border-success-line rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
         >
           <CheckCircle2 className="w-3.5 h-3.5" />
           Mark Done
@@ -64,13 +64,13 @@ export function AppointmentStatusButton({
         <button
           onClick={() => act("MISSED")}
           disabled={isPending}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-soft hover:bg-brand-soft text-brand-ink border border-brand-line rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
         >
           <XCircle className="w-3.5 h-3.5" />
           DNA
         </button>
       </div>
-      {error && <p className="text-xs text-rose-500">{error}</p>}
+      {error && <p className="text-xs text-brand-ink">{error}</p>}
     </div>
   );
 }

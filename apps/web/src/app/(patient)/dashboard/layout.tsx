@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { PatientShell } from "@/components/Sidebar";
+import { PatientShell } from "@/components/navigation/PatientShell";
 import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 

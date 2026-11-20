@@ -1,10 +1,13 @@
 import type { Role } from "@prisma/client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import type { NextResponse } from "next/server";
 import { getServerSession, type Session } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { forbidden, unauthorized } from "@/lib/api";
+import { isApprovedProvider, PENDING_PROVIDER_MESSAGE } from "@/server/providers/approval";
 
-export const ROLE_HOME: Record<Role, string> = {
+const ROLE_HOME: Record<Role, string> = {
   PATIENT: "/dashboard",
   PROVIDER: "/provider",
   ADMIN: "/admin",
@@ -20,19 +23,22 @@ type AuthedSession = Session & { user: NonNullable<Session["user"]> & { id: stri
 export async function requireRole(role: Role): Promise<AuthedSession> {
   await cookies(); // forces dynamic rendering — prevents cross-user cache leak
   const session = await getServerSession(authOptions);
+  if (session?.ended) redirect(`/login?ended=${session.ended}`);
   if (session?.loginCodePending) redirect("/verify-code");
   if (!session?.user?.id) redirect("/login");
   if (session.user.role !== role) redirect(ROLE_HOME[session.user.role] ?? "/login");
   return session as AuthedSession;
 }
 
-/** Route handler / server action helper: the caller's user, or null. */
-export async function getSessionUser(): Promise<{
+export interface SessionUser {
   id: string;
   role: Role;
   email?: string | null;
   name?: string | null;
-} | null> {
+}
+
+/** Route handler / server action helper: the caller's user, or null. */
+export async function getSessionUser(): Promise<SessionUser | null> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
   return {
@@ -47,4 +53,26 @@ export async function getSessionUser(): Promise<{
 export async function getUserIdWithRole(role: Role): Promise<string | null> {
   const user = await getSessionUser();
   return user && user.role === role ? user.id : null;
+}
+
+/**
+ * Route handler guard. With no roles, any signed-in user passes; otherwise the
+ * caller must hold one of them; a PROVIDER must also be approved by an admin.
+ * Sessions still waiting for the emailed sign-in
+ * code have no user id, so they are treated as signed out (401).
+ *
+ *   const auth = await requireApiUser("PATIENT");
+ *   if (!auth.ok) return auth.response;
+ *   auth.user.id
+ */
+export async function requireApiUser(
+  ...roles: Role[]
+): Promise<{ ok: true; user: SessionUser } | { ok: false; response: NextResponse }> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, response: unauthorized() };
+  if (roles.length > 0 && !roles.includes(user.role)) return { ok: false, response: forbidden() };
+  // Routes that name PROVIDER serve clinical data; unapproved providers get none.
+  if (roles.includes("PROVIDER") && user.role === "PROVIDER" && !(await isApprovedProvider(user.id)))
+    return { ok: false, response: forbidden(PENDING_PROVIDER_MESSAGE) };
+  return { ok: true, user };
 }

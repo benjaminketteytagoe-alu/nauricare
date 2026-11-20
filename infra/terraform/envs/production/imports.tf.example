@@ -1,0 +1,78 @@
+# Adopt the existing production resources instead of recreating them.
+#   1. cp imports.tf.example imports.tf and fill in the <...> ids
+#      (aws ecs describe-services --cluster default --services nauricare-api-0acf, etc.)
+#   2. terraform plan   -> must show "import" for these and NO destroy/replace of the service
+#   3. terraform apply  -> then delete imports.tf (imports are one-off)
+
+import {
+  to = module.app.module.service.aws_ecs_cluster.this
+  id = "default"
+}
+
+import {
+  to = module.app.module.service.aws_ecs_service.this
+  id = "default/nauricare-api-0acf"
+}
+
+# The running task definition revision (CI keeps registering new ones).
+import {
+  to = module.app.module.service.aws_ecs_task_definition.bootstrap
+  id = "<task-definition-arn>"
+}
+
+# Set var.execution_role_name / var.task_role_name to the existing role names first.
+import {
+  to = module.app.module.service.aws_iam_role.execution
+  id = "<execution-role-name>"
+}
+
+import {
+  to = module.app.module.service.aws_iam_role.task
+  id = "<task-role-name>"
+}
+
+import {
+  to = module.app.module.service.aws_cloudwatch_log_group.app
+  id = "<existing-log-group, e.g. /ecs/nauricare-api>"
+}
+
+# Reminders (created by .github/scripts/setup-reminder-scheduler.sh)
+import {
+  to = module.app.module.reminders.aws_cloudwatch_event_connection.this
+  id = "nauricare-reminders"
+}
+
+import {
+  to = module.app.module.reminders.aws_cloudwatch_event_api_destination.this
+  id = "nauricare-reminders"
+}
+
+import {
+  to = module.app.module.reminders.aws_cloudwatch_event_rule.this
+  id = "nauricare-reminders"
+}
+
+import {
+  to = module.app.module.reminders.aws_cloudwatch_event_target.this
+  id = "nauricare-reminders/cron-execute"
+}
+
+import {
+  to = module.app.module.reminders.aws_iam_role.invoke
+  id = "nauricare-reminders-invoke"
+}
+
+import {
+  to = module.app.module.reminders.aws_iam_role_policy.invoke
+  id = "nauricare-reminders-invoke:invoke-api-destination"
+}
+
+import {
+  to = module.app.module.reminders.aws_sqs_queue.dlq
+  id = "https://sqs.us-east-1.amazonaws.com/<account-id>/nauricare-reminders-dlq"
+}
+
+import {
+  to = module.app.module.reminders.aws_sqs_queue_policy.dlq
+  id = "https://sqs.us-east-1.amazonaws.com/<account-id>/nauricare-reminders-dlq"
+}

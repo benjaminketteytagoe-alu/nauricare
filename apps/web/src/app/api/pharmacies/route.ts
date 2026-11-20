@@ -1,25 +1,17 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { apiSuccess, handle } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 
-// GET: returns all partner pharmacies for the routing dropdown.
-// Any authenticated role may call this.
+// Partner pharmacies for the routing dropdown. Any signed-in role may call this.
 export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const pharmacies = await prisma.pharmacy.findMany({
-      select: { id: true, name: true, address: true, contactEmail: true, tags: true },
-      orderBy: { name: "asc" },
-    });
-
-    return NextResponse.json(pharmacies);
-  } catch (error) {
-    console.error("[PHARMACIES_GET_ERROR]", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  }
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  return handle(async () =>
+    apiSuccess(
+      await prisma.pharmacy.findMany({
+        select: { id: true, name: true, address: true, contactEmail: true, tags: true },
+        orderBy: { name: "asc" },
+      }),
+    ),
+  );
 }

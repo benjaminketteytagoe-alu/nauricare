@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getSessionUser } from "@/lib/auth-guards";
 import { AVATAR_PRESET_IDS, isGooglePhoto, presetSrc } from "@/lib/avatars";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { recordPatientActivity } from "@/server/activity/activity.service";
 
@@ -40,7 +41,7 @@ export async function chooseAvatar(
     revalidatePath("/dashboard", "layout");
     return { success: true, avatarUrl };
   } catch (error) {
-    console.error("[CHOOSE_AVATAR_ERROR]", error);
+    logger.error({ event: "settings.choose_avatar_failed", err: error }, "Choosing avatar failed");
     return { success: false, error: "Failed to update your avatar." };
   }
 }

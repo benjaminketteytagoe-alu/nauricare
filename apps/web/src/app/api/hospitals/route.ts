@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
-import { NextResponse } from "next/server";
-import { getUserIdWithRole } from "@/lib/auth-guards";
+import { apiSuccess, handle } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 import { INSURANCE_VALUES, KIGALI_DISTRICTS } from "@/lib/referrals/constants";
 
@@ -9,8 +9,8 @@ const PUBLIC_SCHEMES = new Set<string>(["RSSB_RAMA", "MMI"]);
 // GET /api/hospitals?insurance=RSSB_RAMA&district=Gasabo
 // Both filters are optional and ignored when they are not recognised values.
 export async function GET(req: Request) {
-  const userId = await getUserIdWithRole("PATIENT");
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireApiUser("PATIENT");
+  if (!auth.ok) return auth.response;
 
   const url = new URL(req.url);
   const insurance = url.searchParams.get("insurance");
@@ -30,10 +30,12 @@ export async function GET(req: Request) {
     where.district = district;
   }
 
-  const hospitals = await prisma.hospital.findMany({
-    where,
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, address: true, district: true, phone: true, supportedInsurances: true },
+  return handle(async () => {
+    const hospitals = await prisma.hospital.findMany({
+      where,
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, address: true, district: true, phone: true, supportedInsurances: true },
+    });
+    return apiSuccess({ hospitals });
   });
-  return NextResponse.json({ hospitals });
 }

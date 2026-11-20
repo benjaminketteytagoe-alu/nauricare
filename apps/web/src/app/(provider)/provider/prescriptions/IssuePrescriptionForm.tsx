@@ -65,27 +65,27 @@ export default function IssuePrescriptionForm({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-surface rounded-2xl border border-hairline shadow-sm overflow-hidden">
       <button
         onClick={() => setIsOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-slate-50 transition-colors"
+        className="w-full flex items-center justify-between px-6 py-5 text-left hover:bg-surface-muted transition-colors"
       >
         <div className="flex items-center gap-3">
-          <PlusCircle className="w-5 h-5 text-blue-600" />
-          <span className="font-semibold text-slate-900">Issue New Prescription</span>
+          <PlusCircle className="w-5 h-5 text-info" />
+          <span className="font-semibold text-ink">Issue New Prescription</span>
         </div>
-        <span className="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+        <span className="text-xs font-medium text-info bg-info-soft px-3 py-1 rounded-full">
           {isOpen ? "Close" : "Open Form"}
         </span>
       </button>
 
       {isOpen && (
-        <form onSubmit={handleSubmit} className="border-t border-slate-100 p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="border-t border-hairline p-6 space-y-5">
           {/* Patient */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Patient</label>
+            <label className="block text-sm font-medium text-ink-soft mb-1.5">Patient</label>
             {patients.length === 0 ? (
-              <p className="text-sm text-slate-500 italic">
+              <p className="text-sm text-ink-muted italic">
                 No patients on your roster yet. Patients appear here after booking a consultation.
               </p>
             ) : (
@@ -93,7 +93,7 @@ export default function IssuePrescriptionForm({
                 required
                 value={form.patientId}
                 onChange={(e) => setForm({ ...form, patientId: e.target.value })}
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full px-3 py-2.5 border border-hairline rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-focus bg-surface"
               >
                 <option value="">— Select a patient —</option>
                 {patients.map((p) => (
@@ -107,54 +107,54 @@ export default function IssuePrescriptionForm({
 
           {/* Medication name */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Medication Name</label>
+            <label className="block text-sm font-medium text-ink-soft mb-1.5">Medication Name</label>
             <input
               required
               type="text"
               placeholder="e.g. Metformin"
               value={form.medicationName}
               onChange={(e) => setForm({ ...form, medicationName: e.target.value })}
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2.5 border border-hairline rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-focus"
             />
           </div>
 
           {/* Dosage */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Dosage &amp; Frequency</label>
+            <label className="block text-sm font-medium text-ink-soft mb-1.5">Dosage &amp; Frequency</label>
             <input
               required
               type="text"
               placeholder="e.g. 500 mg twice daily"
               value={form.dosage}
               onChange={(e) => setForm({ ...form, dosage: e.target.value })}
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2.5 border border-hairline rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-focus"
             />
           </div>
 
           {/* Instructions */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              Special Instructions <span className="text-slate-400 font-normal">(optional)</span>
+            <label className="block text-sm font-medium text-ink-soft mb-1.5">
+              Special Instructions <span className="text-ink-muted font-normal">(optional)</span>
             </label>
             <textarea
               rows={3}
               placeholder="e.g. Take with food. Avoid grapefruit juice."
               value={form.instructions}
               onChange={(e) => setForm({ ...form, instructions: e.target.value })}
-              className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2.5 border border-hairline rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-focus resize-none"
             />
           </div>
 
           {/* Suggest a pharmacy */}
           {pharmacies.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                Suggest a Pharmacy <span className="text-slate-400 font-normal">(optional — patient can override)</span>
+              <label className="block text-sm font-medium text-ink-soft mb-1.5">
+                Suggest a Pharmacy <span className="text-ink-muted font-normal">(optional — patient can override)</span>
               </label>
               <select
                 value={form.suggestedPharmacyId}
                 onChange={(e) => setForm({ ...form, suggestedPharmacyId: e.target.value })}
-                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full px-3 py-2.5 border border-hairline rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-focus bg-surface"
               >
                 <option value="">— No suggestion —</option>
                 {pharmacies.map((p) => (
@@ -167,13 +167,13 @@ export default function IssuePrescriptionForm({
           )}
 
           {error && (
-            <p className="text-sm text-rose-600 flex items-center gap-2">
+            <p className="text-sm text-brand-ink flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               {error}
             </p>
           )}
           {success && (
-            <p className="text-sm text-emerald-600 flex items-center gap-2">
+            <p className="text-sm text-success flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               {success}
             </p>
@@ -183,14 +183,14 @@ export default function IssuePrescriptionForm({
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+              className="px-5 py-2.5 text-sm font-medium text-ink-soft bg-surface border border-hairline rounded-xl hover:bg-surface-muted transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isPending || patients.length === 0}
-              className="px-6 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-xl transition-colors"
+              className="px-6 py-2.5 text-sm font-semibold text-white bg-info hover:bg-info disabled:opacity-60 rounded-xl transition-colors"
             >
               {isPending ? "Issuing…" : "Issue Prescription"}
             </button>

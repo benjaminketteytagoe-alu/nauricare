@@ -81,9 +81,9 @@ export function TriageHandover({ consentValid }: { consentValid: boolean }) {
   return (
     <div
       role="status"
-      className="fixed inset-0 z-[80] flex flex-col items-center justify-center gap-3 bg-white/90 text-nc-ink backdrop-blur-sm"
+      className="fixed inset-0 z-[80] flex flex-col items-center justify-center gap-3 bg-white/90 text-ink backdrop-blur-sm"
     >
-      <Loader2 className="h-8 w-8 animate-spin text-nc-primary" aria-hidden />
+      <Loader2 className="h-8 w-8 animate-spin text-brand-ink" aria-hidden />
       <p className="font-semibold">Bringing your Nauri assessment across…</p>
     </div>
   );

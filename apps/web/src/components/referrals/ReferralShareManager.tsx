@@ -98,12 +98,12 @@ export function ReferralShareManager({
   }
 
   return (
-    <div className="mt-4 border-t border-nc-divider pt-4">
+    <div className="mt-4 border-t border-hairline pt-4">
       <button
         type="button"
         onClick={toggleOpen}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 text-left text-sm font-semibold text-nc-primary"
+        className="flex w-full items-center justify-between gap-2 text-left text-sm font-semibold text-brand-ink"
       >
         <span className="flex items-center gap-2">
           <Link2 className="h-4 w-4" aria-hidden /> Share with {hospitalName}
@@ -126,9 +126,9 @@ export function ReferralShareManager({
           )}
 
           {created ? (
-            <div className="rounded-xl border border-nc-primary/30 bg-nc-primary-container p-4">
-              <p className="text-sm font-semibold text-nc-ink">Your link is ready</p>
-              <p className="mt-1 text-xs text-slate-600">
+            <div className="rounded-xl border border-brand/30 bg-brand-soft p-4">
+              <p className="text-sm font-semibold text-ink">Your link is ready</p>
+              <p className="mt-1 text-xs text-ink-soft">
                 Copy it now: for your privacy we can&apos;t show it again. It expires on{" "}
                 {formatDate(created.expiresAt, "long")}.
               </p>
@@ -152,7 +152,7 @@ export function ReferralShareManager({
               <button
                 type="button"
                 onClick={() => setCreated(null)}
-                className="mt-3 text-xs font-medium text-nc-primary hover:underline"
+                className="mt-3 text-xs font-medium text-brand-ink hover:underline"
               >
                 Done
               </button>
@@ -160,7 +160,7 @@ export function ReferralShareManager({
           ) : (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
               <label className="flex-1 text-sm">
-                <span className="mb-1.5 block font-semibold text-nc-ink">Link expires after</span>
+                <span className="mb-1.5 block font-semibold text-ink">Link expires after</span>
                 <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="m3-input">
                   {[1, 3, 7, 14, 30].map((d) => (
                     <option key={d} value={d}>
@@ -180,14 +180,14 @@ export function ReferralShareManager({
               {shares.map((s) => (
                 <li
                   key={s.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/60 px-3 py-2.5 text-sm"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-hairline bg-surface-muted/60 px-3 py-2.5 text-sm"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <StatusChip tone={STATE_TONE[s.state]}>{s.state}</StatusChip>
-                      <span className="text-slate-600">Created {formatDate(s.createdAt)}</span>
+                      <span className="text-ink-soft">Created {formatDate(s.createdAt)}</span>
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-ink-muted">
                       {s.accessCount > 0
                         ? `Opened ${s.accessCount} time${s.accessCount > 1 ? "s" : ""}, last ${formatDateTime(s.lastAccessedAt!)}`
                         : "Not opened yet"}
@@ -202,14 +202,14 @@ export function ReferralShareManager({
                           type="button"
                           onClick={() => revoke(s.id)}
                           disabled={busy}
-                          className="rounded-full bg-nc-berry px-3 py-1 text-xs font-semibold text-white"
+                          className="rounded-full bg-danger px-3 py-1 text-xs font-semibold text-white"
                         >
                           Revoke
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfirmRevoke(null)}
-                          className="text-xs font-medium text-slate-600"
+                          className="text-xs font-medium text-ink-soft"
                         >
                           Cancel
                         </button>
@@ -218,7 +218,7 @@ export function ReferralShareManager({
                       <button
                         type="button"
                         onClick={() => setConfirmRevoke(s.id)}
-                        className="text-xs font-semibold text-nc-berry hover:underline"
+                        className="text-xs font-semibold text-danger hover:underline"
                       >
                         Revoke
                       </button>

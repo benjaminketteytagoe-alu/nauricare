@@ -1,70 +1,40 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { apiSuccess, handle, parseJson } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
-const onboardingSchema = z.object({
-  country: z.string().trim().min(1, "Country is required"),
-  menstrualCycle: z.string().trim().optional().nullable(),
+const OnboardingInput = z.object({
+  country: z.string().trim().min(1, "Country is required").max(100),
+  menstrualCycle: z.string().trim().max(10).optional().nullable(),
   emergencyContact: z.string().trim().max(200).optional().nullable(),
-  dateOfBirth: z.string().optional().nullable(),
+  dateOfBirth: z.string().max(40).optional().nullable(),
 });
 
+// Completes the patient profile after sign-up (Google sign-ins arrive without one).
 export async function POST(req: Request) {
-  try {
-    // 1. Authenticate the request
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const auth = await requireApiUser("PATIENT");
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
+  const limited = enforceRateLimit(`onboarding:${userId}`, 20, 60 * 60_000);
+  if (limited) return limited;
+  const body = await parseJson(req, OnboardingInput);
+  if (!body.ok) return body.response;
+  const { country, menstrualCycle, emergencyContact, dateOfBirth } = body.data;
 
-    // 2. Parse the incoming form data
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-    }
+  // Google sign-ins often have no date of birth; ignore anything unparseable.
+  const dob = dateOfBirth ? new Date(dateOfBirth) : null;
+  const validDob = dob && !Number.isNaN(dob.getTime()) ? dob : null;
 
-    const parsed = onboardingSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
-    }
-    const { country, menstrualCycle, emergencyContact, dateOfBirth } = parsed.data;
-
-    // Parse dateOfBirth safely — Google OAuth users often omit this field
-    const parsedDob = dateOfBirth ? new Date(dateOfBirth) : null;
-    const validDob = parsedDob && !isNaN(parsedDob.getTime()) ? parsedDob : null;
-
-    if (validDob) {
-      await prisma.user.update({
-        where: { id: session.user.id },
-        data: { dateOfBirth: validDob },
-      });
-    }
-
-    // 3. Upsert the Patient Profile — idempotent for double-submits and
-    //    Google OAuth re-entries where the profile already exists.
+  return handle(async () => {
+    if (validDob) await prisma.user.update({ where: { id: userId }, data: { dateOfBirth: validDob } });
+    // Upsert keeps double-submits and repeat Google sign-ins idempotent.
+    const fields = { country, menstrualCycle: menstrualCycle || null, emergencyContact: emergencyContact || null };
     const profile = await prisma.patientProfile.upsert({
-      where: { userId: session.user.id },
-      update: {
-        country,
-        menstrualCycle: menstrualCycle || null,
-        emergencyContact: emergencyContact || null,
-      },
-      create: {
-        userId: session.user.id,
-        country,
-        menstrualCycle: menstrualCycle || null,
-        emergencyContact: emergencyContact || null,
-      },
+      where: { userId },
+      update: fields,
+      create: { userId, ...fields },
     });
-
-    return NextResponse.json(profile, { status: 201 });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal Server Error";
-    console.error("[ONBOARDING_ERROR]", message);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+    return apiSuccess(profile, 201);
+  });
 }

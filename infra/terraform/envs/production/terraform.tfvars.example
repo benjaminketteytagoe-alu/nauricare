@@ -1,0 +1,8 @@
+# cp terraform.tfvars.example terraform.tfvars, fill in, and COMMIT it (CI plans read it).
+# No secret values here: secrets live in SSM and are created out-of-band.
+account_id      = "<aws-account-id>"
+bootstrap_image = "<account-id>.dkr.ecr.us-east-1.amazonaws.com/nauricare-api@sha256:<digest>"
+alert_emails    = ["<on-call-address>"]
+# uploads_bucket_name = "<media-bucket>"
+# reminders_enabled   = true
+# monthly_budget_usd  = 100

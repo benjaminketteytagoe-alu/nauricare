@@ -49,25 +49,25 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-surface-muted px-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-8 space-y-6">
+        <div className="bg-surface rounded-2xl shadow-sm border border-hairline p-5 sm:p-8 space-y-6">
           {submitted ? (
             <div className="text-center space-y-4">
               <div className="flex justify-center">
-                <div className="bg-teal-50 p-4 rounded-full">
-                  <CheckCircle className="w-8 h-8 text-teal-600" />
+                <div className="bg-brand-soft p-4 rounded-full">
+                  <CheckCircle className="w-8 h-8 text-brand-ink" />
                 </div>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">Check your email</h2>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                If an account exists for <span className="font-medium text-gray-700">{email}</span>, we&apos;ve sent a
+              <h2 className="text-2xl font-bold text-ink">Check your email</h2>
+              <p className="text-ink-muted text-sm leading-relaxed">
+                If an account exists for <span className="font-medium text-ink-soft">{email}</span>, we&apos;ve sent a
                 password reset link. Check your inbox and spam folder.
               </p>
-              <p className="text-xs text-gray-400">The link expires in 1 hour.</p>
+              <p className="text-xs text-ink-muted">The link expires in 1 hour.</p>
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 text-sm text-teal-600 hover:underline font-medium mt-4"
+                className="inline-flex items-center gap-2 text-sm text-brand-ink hover:underline font-medium mt-4"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back to login
@@ -77,17 +77,19 @@ export default function ForgotPasswordPage() {
             <>
               <div className="text-center space-y-2">
                 <div className="flex justify-center mb-4">
-                  <div className="bg-teal-50 p-3 rounded-full">
-                    <Mail className="w-6 h-6 text-teal-600" />
+                  <div className="bg-brand-soft p-3 rounded-full">
+                    <Mail className="w-6 h-6 text-brand-ink" />
                   </div>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">Forgot your password?</h2>
-                <p className="text-gray-500 text-sm">Enter your email and we&apos;ll send you a secure reset link.</p>
+                <h2 className="text-2xl font-bold text-ink">Forgot your password?</h2>
+                <p className="text-ink-muted text-sm">Enter your email and we&apos;ll send you a secure reset link.</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {error && (
-                  <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm border border-red-200">{error}</div>
+                  <div className="bg-danger-soft text-danger p-3 rounded-xl text-sm border border-danger-line">
+                    {error}
+                  </div>
                 )}
                 <div className="space-y-1.5">
                   <Label htmlFor="email">Email Address</Label>
@@ -98,7 +100,7 @@ export default function ForgotPasswordPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="jane@example.com"
-                    className="h-11 focus-visible:ring-teal-600"
+                    className="h-11"
                   />
                 </div>
 
@@ -111,11 +113,7 @@ export default function ForgotPasswordPage() {
                   onError={() => setTurnstileToken("")}
                 />
 
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white"
-                >
+                <Button type="submit" disabled={loading} className="w-full h-11">
                   {loading ? "Sending…" : "Send Reset Link"}
                 </Button>
               </form>
@@ -123,7 +121,7 @@ export default function ForgotPasswordPage() {
               <p className="text-center">
                 <Link
                   href="/login"
-                  className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-teal-600 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-brand-ink transition-colors"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   Back to login

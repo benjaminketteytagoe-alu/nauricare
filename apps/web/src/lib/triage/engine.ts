@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 import { SPECIALTIES, TRIAGE_SEVERITIES, type Specialty, type TriageSeverity } from "@/lib/referrals/constants";
 import { maxSeverity, screenRedFlags } from "./redFlags";
 
@@ -176,7 +177,10 @@ export async function runTriage(input: TriageInput, options: { rulesOnly?: boole
         engine: attempt.engine,
       };
     } catch (err) {
-      console.error(`[TRIAGE_${attempt.engine.toUpperCase()}_ERROR]`, err instanceof Error ? err.message : err);
+      logger.warn(
+        { event: "triage.engine_failed", engine: attempt.engine, err },
+        "Triage engine failed; trying the next one",
+      );
     }
   }
 

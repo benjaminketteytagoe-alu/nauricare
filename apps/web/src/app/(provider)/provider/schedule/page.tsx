@@ -1,6 +1,6 @@
 import { Calendar, Search, Clock, Video, MapPin, CheckCircle } from "lucide-react";
 import Link from "next/link";
-import { CalendarButtons } from "@/components/CalendarButtons";
+import { CalendarButtons } from "@/components/appointments/CalendarButtons";
 import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 
@@ -13,7 +13,7 @@ export default async function ProviderSchedulePage() {
   });
 
   if (!practitioner) {
-    return <div className="p-8 text-center text-gray-500">Practitioner profile not found.</div>;
+    return <div className="p-8 text-center text-ink-muted">Practitioner profile not found.</div>;
   }
 
   // 2. Fetch upcoming appointments
@@ -38,20 +38,20 @@ export default async function ProviderSchedulePage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-            <Calendar className="w-8 h-8 text-blue-600" />
+          <h1 className="text-3xl font-bold text-ink flex items-center gap-3">
+            <Calendar className="w-8 h-8 text-info" />
             Appointments
           </h1>
-          <p className="text-slate-500 mt-1">Manage your daily schedule and upcoming consultations.</p>
+          <p className="text-ink-muted mt-1">Manage your daily schedule and upcoming consultations.</p>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-ink-muted absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search appointments..."
-              className="pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none w-64 bg-white"
+              className="pl-9 pr-4 py-2 border border-hairline rounded-xl text-sm focus:ring-2 focus:ring-focus outline-none w-64 bg-surface"
             />
           </div>
         </div>
@@ -59,45 +59,45 @@ export default async function ProviderSchedulePage() {
 
       {/* Schedule Feed */}
       {appointments.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm">
-          <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Calendar className="w-8 h-8 text-slate-300" />
+        <div className="bg-surface rounded-2xl border border-hairline p-12 text-center shadow-sm">
+          <div className="w-16 h-16 bg-surface-muted rounded-full flex items-center justify-center mx-auto mb-4">
+            <Calendar className="w-8 h-8 text-field" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900">No Appointments Scheduled</h3>
-          <p className="text-slate-500 mt-1">Your calendar is clear. New bookings will appear here.</p>
+          <h3 className="text-lg font-bold text-ink">No Appointments Scheduled</h3>
+          <p className="text-ink-muted mt-1">Your calendar is clear. New bookings will appear here.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {appointments.map((appt) => (
             <div
               key={appt.id}
-              className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-sm hover:shadow-md transition-shadow"
+              className="bg-surface rounded-2xl border border-hairline p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="flex items-center gap-5">
-                <div className="hidden sm:flex flex-col items-center justify-center w-16 h-16 bg-blue-50 rounded-xl border border-blue-100">
-                  <span className="text-xs font-bold text-blue-600 uppercase">
+                <div className="hidden sm:flex flex-col items-center justify-center w-16 h-16 bg-info-soft rounded-xl border border-info-line">
+                  <span className="text-xs font-bold text-info uppercase">
                     {new Date(appt.startTime).toLocaleDateString("en-US", { month: "short" })}
                   </span>
-                  <span className="text-xl font-black text-blue-900">{new Date(appt.startTime).getDate()}</span>
+                  <span className="text-xl font-black text-info">{new Date(appt.startTime).getDate()}</span>
                 </div>
 
                 <div>
-                  <h4 className="text-lg font-bold text-slate-900">{appt.patient?.user?.name || "Unknown Patient"}</h4>
-                  <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-slate-600">
-                    <span className="flex items-center gap-1.5 font-medium text-slate-800">
-                      <Clock className="w-4 h-4 text-blue-500" />
+                  <h4 className="text-lg font-bold text-ink">{appt.patient?.user?.name || "Unknown Patient"}</h4>
+                  <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-ink-soft">
+                    <span className="flex items-center gap-1.5 font-medium text-ink">
+                      <Clock className="w-4 h-4 text-info" />
                       {new Date(appt.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </span>
                     <span className="flex items-center gap-1.5">
                       {appt.meetingLink ? (
-                        <Video className="w-4 h-4 text-slate-400" />
+                        <Video className="w-4 h-4 text-ink-muted" />
                       ) : (
-                        <MapPin className="w-4 h-4 text-slate-400" />
+                        <MapPin className="w-4 h-4 text-ink-muted" />
                       )}
                       {appt.meetingLink ? "Virtual Consultation" : "In-person Consultation"}
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <CheckCircle className="w-4 h-4 text-emerald-500" />
+                      <CheckCircle className="w-4 h-4 text-success" />
                       {appt.status || "CONFIRMED"}
                     </span>
                   </div>
@@ -116,7 +116,7 @@ export default async function ProviderSchedulePage() {
                   variant="slate"
                 />
                 <Link href={`/provider/roster/${appt.patientProfileId}`} className="flex-1 sm:flex-none">
-                  <button className="w-full px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors">
+                  <button className="w-full px-4 py-2.5 bg-surface border border-hairline text-ink-soft rounded-xl text-sm font-medium hover:bg-surface-muted transition-colors">
                     Patient File
                   </button>
                 </Link>
@@ -125,14 +125,14 @@ export default async function ProviderSchedulePage() {
                     href={appt.meetingLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-info text-white rounded-xl text-sm font-medium hover:bg-info transition-colors"
                   >
                     <Video className="w-4 h-4" /> Join Room
                   </a>
                 ) : (
                   <button
                     disabled
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-200 text-slate-400 rounded-xl text-sm font-medium cursor-not-allowed"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-hairline text-ink-muted rounded-xl text-sm font-medium cursor-not-allowed"
                   >
                     <Video className="w-4 h-4" /> No Link
                   </button>

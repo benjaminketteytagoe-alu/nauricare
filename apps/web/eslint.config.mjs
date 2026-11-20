@@ -24,5 +24,41 @@ export default defineConfig([
       "no-console": ["warn", { allow: ["warn", "error", "info"] }],
     },
   },
+  {
+    // Server code logs through src/lib/logger.ts (structured JSON, PHI redaction), never console.
+    files: [
+      "src/app/api/**/*.ts",
+      "src/server/**/*.ts",
+      "src/lib/**/*.ts",
+      "src/actions/**/*.ts",
+      "src/**/actions.ts",
+      "src/proxy.ts",
+      "src/instrumentation.ts",
+    ],
+    rules: {
+      "no-console": "off",
+      "no-restricted-globals": [
+        "error",
+        { name: "console", message: "Server code logs through `logger` from @/lib/logger (structured, redacted)." },
+      ],
+    },
+  },
+  {
+    // One way to read the caller: the guards in src/lib/auth-guards.ts.
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/lib/auth-guards.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: ["next-auth", "next-auth/next"].map((name) => ({
+            name,
+            importNames: ["getServerSession"],
+            message: "Use requireApiUser, getSessionUser or requireRole from @/lib/auth-guards.",
+          })),
+        },
+      ],
+    },
+  },
   globalIgnores([".next/**", "out/**", "build/**", "coverage/**", "next-env.d.ts"]),
 ]);

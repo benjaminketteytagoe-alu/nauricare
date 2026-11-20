@@ -8,6 +8,7 @@ import { getSession, signOut, useSession } from "next-auth/react";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Callout } from "@/components/ui/callout";
 import { ROLE_HOME_PATHS } from "@/lib/authDestination";
+import { canRemember } from "@/lib/sessionPolicy";
 
 export default function VerifyCodePage() {
   return (
@@ -41,6 +42,8 @@ function VerifyCode() {
   const [busy, setBusy] = useState(false);
   const [sending, setSending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [remember, setRemember] = useState(false);
+  const offerRemember = canRemember(session?.user?.role);
   const sentOnce = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -67,6 +70,7 @@ function VerifyCode() {
   // Already verified, or not signed in: leave this page. Otherwise send the first code.
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login");
+    else if (session?.ended) router.replace(`/login?ended=${session.ended}`);
     else if (status === "authenticated" && !session?.loginCodePending && session?.user?.id)
       router.replace(destination(next, session.user.role));
     else if (status === "authenticated" && session?.loginCodePending && !sentOnce.current) {
@@ -95,7 +99,7 @@ function VerifyCode() {
       });
       const d = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d.error || "That code didn't work.");
-      await update({ loginCode: "verified" });
+      await update({ loginCode: "verified", remember: offerRemember && remember });
       const fresh = await getSession();
       if (!fresh?.user?.id) throw new Error("We couldn't finish signing you in. Please request a new code.");
       router.replace(destination(next, fresh.user.role));
@@ -108,19 +112,19 @@ function VerifyCode() {
   }
 
   return (
-    <main className="flex min-h-[100dvh] items-center justify-center bg-slate-50 px-4 py-10">
-      <div className="w-full max-w-md space-y-6 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm sm:p-8">
+    <main className="flex min-h-[100dvh] items-center justify-center bg-surface-muted px-4 py-10">
+      <div className="w-full max-w-md space-y-6 rounded-3xl border border-hairline bg-surface p-5 shadow-sm sm:p-8">
         <Link href="/" aria-label="NauriCare home" className="inline-block">
           <Image src="/logo-horizontal.jpg" alt="NauriCare" width={140} height={36} className="h-8 w-auto" priority />
         </Link>
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-nc-ink">
-            <ShieldCheck className="h-6 w-6 text-nc-primary" aria-hidden /> Check your email
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-ink">
+            <ShieldCheck className="h-6 w-6 text-brand-ink" aria-hidden /> Check your email
           </h1>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-ink-soft">
             {maskedEmail ? (
               <>
-                We sent a 6-digit code to <strong className="text-nc-ink">{maskedEmail}</strong>. Enter it to continue.
+                We sent a 6-digit code to <strong className="text-ink">{maskedEmail}</strong>. Enter it to continue.
               </>
             ) : sending ? (
               "Sending your sign-in code…"
@@ -148,8 +152,27 @@ function VerifyCode() {
           }}
           className="space-y-4"
         >
+          {/* Before the code: the code submits itself on the sixth digit. */}
+          {offerRemember && (
+            <label className="flex items-start gap-3 rounded-field border border-hairline bg-surface-muted p-3 text-sm">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                className="mt-0.5 size-4 accent-brand"
+                aria-describedby="remember-help"
+              />
+              <span>
+                <span className="block font-semibold text-ink">Keep me signed in on this device</span>
+                <span id="remember-help" className="block text-ink-muted">
+                  For up to 30 days, without the 30-minute inactivity sign-out. Only on a device that&apos;s yours
+                  alone. Changing your password signs you out everywhere.
+                </span>
+              </span>
+            </label>
+          )}
           <label className="block">
-            <span className="mb-1.5 block text-sm font-semibold text-nc-ink">Sign-in code</span>
+            <span className="mb-1.5 block text-sm font-semibold text-ink">Sign-in code</span>
             <input
               ref={inputRef}
               value={code}
@@ -168,7 +191,7 @@ function VerifyCode() {
               className="m3-input text-center font-mono text-3xl tracking-[0.5em]"
               placeholder="••••••"
             />
-            <span id="code-help" className="mt-1.5 block text-xs text-slate-500">
+            <span id="code-help" className="mt-1.5 block text-xs text-ink-muted">
               The code expires after 10 minutes. Never share it with anyone.
             </span>
           </label>
@@ -183,14 +206,14 @@ function VerifyCode() {
             type="button"
             onClick={() => void send()}
             disabled={sending || cooldown > 0}
-            className="font-semibold text-nc-primary hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
+            className="font-semibold text-brand-ink hover:underline disabled:cursor-not-allowed disabled:text-ink-muted disabled:no-underline"
           >
             {cooldown > 0 ? `Resend code in ${cooldown}s` : sending ? "Sending…" : "Resend code"}
           </button>
           <button
             type="button"
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="text-slate-500 hover:text-slate-800 hover:underline"
+            className="text-ink-muted hover:text-ink hover:underline"
           >
             Use a different account
           </button>
