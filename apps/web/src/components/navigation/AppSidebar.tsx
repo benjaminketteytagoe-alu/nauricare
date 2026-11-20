@@ -1,24 +1,37 @@
 "use client";
 
+import { Menu, PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { Menu, PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "lucide-react";
 import { Tooltip } from "@/components/ui/tooltip";
 
 // ─── Shared collapsible sidebar for the patient, provider and admin portals ──
 // Desktop (lg+): in-flow sticky column, collapsible between w-64 and w-20,
 // state persisted in localStorage. Below lg: off-canvas drawer, always
-// expanded. Each portal keeps its own colour tone.
+// expanded. Patients get the light ivory tone; staff portals the plum one.
+// Colours are semantic tokens only (tokens.css), so dark mode follows.
 
 export interface NavItem {
   name: string;
   href: string;
   icon: LucideIcon;
+}
+
+/** A labelled group of links. Omit the label for the first, top-level group. */
+export interface NavSection {
+  label?: string;
+  items: NavItem[];
 }
 
 export type SidebarTone = "light" | "dark";
@@ -36,7 +49,7 @@ interface SidebarState {
 
 const SidebarContext = createContext<SidebarState | null>(null);
 
-export function useSidebar(): SidebarState {
+function useSidebar(): SidebarState {
   const ctx = useContext(SidebarContext);
   if (!ctx) throw new Error("useSidebar must be used inside <SidebarProvider>");
   return ctx;
@@ -127,26 +140,30 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
 
 const TONE = {
   light: {
-    aside: "nav-glass border-r border-rose-100",
-    divider: "border-rose-100",
-    label: "text-rose-600",
-    active: "nav-pill-active",
-    idle: "rounded-xl text-slate-600 hover:bg-rose-50 hover:text-rose-600",
-    iconIdle: "text-slate-400 group-hover:text-rose-600",
-    iconActive: "text-white",
-    monogram: "bg-rose-600 text-white",
-    control: "text-slate-500 hover:bg-rose-50 hover:text-rose-600",
+    aside: "bg-surface border-r border-hairline",
+    divider: "border-hairline",
+    portal: "text-brand-ink",
+    section: "text-ink-muted",
+    active: "bg-brand-soft text-brand-ink font-semibold",
+    indicator: "bg-brand",
+    idle: "text-ink-soft hover:bg-surface-muted hover:text-ink",
+    iconIdle: "text-ink-muted group-hover:text-ink",
+    iconActive: "text-brand-ink",
+    monogram: "bg-brand text-on-brand",
+    control: "text-ink-soft hover:bg-surface-muted hover:text-ink",
   },
   dark: {
-    aside: "bg-teal-900 text-teal-50 lg:shadow-xl",
-    divider: "border-teal-800",
-    label: "text-teal-300",
-    active: "rounded-xl bg-teal-800 text-white shadow-sm",
-    idle: "rounded-xl text-teal-100 hover:bg-teal-800/50 hover:text-white",
-    iconIdle: "text-teal-200 group-hover:text-white",
-    iconActive: "text-white",
-    monogram: "bg-white text-teal-900",
-    control: "text-teal-100 hover:bg-teal-800/50 hover:text-white",
+    aside: "bg-surface-inverse text-ink-inverse",
+    divider: "border-ink-inverse/10",
+    portal: "text-brand-line",
+    section: "text-ink-inverse/60",
+    active: "bg-ink-inverse/10 text-ink-inverse font-semibold",
+    indicator: "bg-brand-line",
+    idle: "text-ink-inverse/75 hover:bg-ink-inverse/5 hover:text-ink-inverse",
+    iconIdle: "text-ink-inverse/60 group-hover:text-ink-inverse",
+    iconActive: "text-ink-inverse",
+    monogram: "bg-ink-inverse text-ink",
+    control: "text-ink-inverse/75 hover:bg-ink-inverse/5 hover:text-ink-inverse",
   },
 } as const;
 
@@ -170,11 +187,11 @@ export function SidebarAction({
         type="button"
         onClick={onClick}
         aria-label={collapsed ? label : undefined}
-        className={`group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${TONE[tone].control} ${
+        className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-150 ease-editorial ${TONE[tone].control} ${
           collapsed ? "justify-center px-0" : ""
         }`}
       >
-        <Icon className="h-5 w-5 shrink-0" aria-hidden />
+        <Icon className="size-5 shrink-0" aria-hidden />
         <span className={collapsed ? "sr-only" : ""}>{label}</span>
       </button>
     </Tooltip>
@@ -188,7 +205,7 @@ export function SidebarMobileTrigger({ className = "" }: { className?: string })
       type="button"
       onClick={() => setMobileOpen(true)}
       aria-label="Open navigation menu"
-      className={`rounded-xl p-2 transition-colors lg:hidden ${className}`}
+      className={`rounded-xl p-2 text-ink-soft transition-colors hover:bg-surface-muted hover:text-ink lg:hidden ${className}`}
     >
       <Menu className="h-6 w-6" aria-hidden />
     </button>
@@ -200,12 +217,22 @@ function Brand({ homeHref, tone, compact }: { homeHref: string; tone: SidebarTon
   return (
     <Link href={homeHref} className="flex items-center transition-opacity hover:opacity-80" aria-label="NauriCare home">
       {compact ? (
-        <span className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg font-extrabold shadow-sm ${t.monogram}`} aria-hidden>
+        <span
+          className={`flex size-10 items-center justify-center rounded-xl font-display text-xl shadow-button ${t.monogram}`}
+          aria-hidden
+        >
           N
         </span>
       ) : (
-        <span className={tone === "dark" ? "rounded-lg bg-white p-1.5 shadow-sm" : ""}>
-          <Image src="/logo-horizontal.jpg" alt="NauriCare" width={160} height={40} className="h-8 w-auto object-contain" priority />
+        <span className={tone === "dark" ? "rounded-lg bg-surface p-1.5 shadow-sm" : ""}>
+          <Image
+            src="/logo-horizontal.jpg"
+            alt="NauriCare"
+            width={160}
+            height={40}
+            className="h-8 w-auto object-contain"
+            priority
+          />
         </span>
       )}
     </Link>
@@ -213,13 +240,13 @@ function Brand({ homeHref, tone, compact }: { homeHref: string; tone: SidebarTon
 }
 
 export function AppSidebar({
-  items,
+  sections,
   homeHref,
   portalLabel,
   tone,
   footer,
 }: {
-  items: NavItem[];
+  sections: NavSection[];
   homeHref: string;
   portalLabel: string;
   tone: SidebarTone;
@@ -236,7 +263,7 @@ export function AppSidebar({
   return (
     <>
       {mobileOpen && (
-        <div aria-hidden onClick={() => setMobileOpen(false)} className="fixed inset-0 z-40 bg-black/50 lg:hidden" />
+        <div aria-hidden onClick={() => setMobileOpen(false)} className="fixed inset-0 z-40 bg-ink/40 lg:hidden" />
       )}
 
       <aside
@@ -244,18 +271,20 @@ export function AppSidebar({
         className={[
           "fixed inset-y-0 left-0 z-50 flex w-72 flex-col shadow-xl",
           "lg:sticky lg:top-0 lg:z-20 lg:h-screen lg:shrink-0 lg:translate-x-0 lg:shadow-none",
-          ready ? "transition-all duration-300 ease-in-out" : "",
+          ready ? "transition-[width,transform] duration-300 ease-editorial" : "",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           collapsed ? "lg:w-20" : "lg:w-64",
           t.aside,
         ].join(" ")}
       >
         {/* Brand */}
-        <div className={`flex h-16 shrink-0 items-center justify-between border-b px-4 lg:h-20 ${t.divider} ${iconOnly ? "lg:justify-center lg:px-0" : ""}`}>
+        <div
+          className={`flex h-16 shrink-0 items-center justify-between border-b px-4 lg:h-20 ${t.divider} ${iconOnly ? "lg:justify-center lg:px-0" : ""}`}
+        >
           <div className="min-w-0">
             <Brand homeHref={homeHref} tone={tone} compact={iconOnly} />
             {!iconOnly && (
-              <p className={`ml-1 mt-1.5 hidden text-[10px] font-extrabold uppercase tracking-[0.2em] lg:block ${t.label}`}>
+              <p className={`ml-1 mt-1.5 hidden text-eyebrow font-semibold uppercase lg:block ${t.portal}`}>
                 {portalLabel}
               </p>
             )}
@@ -271,26 +300,47 @@ export function AppSidebar({
         </div>
 
         {/* Navigation */}
-        <nav className={`flex-1 space-y-1 overflow-y-auto overflow-x-hidden p-3 ${iconOnly ? "lg:px-2" : ""}`}>
-          {items.map((item) => {
-            const active = pathname === item.href || (item.href !== homeHref && pathname?.startsWith(`${item.href}/`));
-            const Icon = item.icon;
-            return (
-              <Tooltip key={item.href} label={item.name} disabled={!iconOnly}>
-                <Link
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  aria-label={iconOnly ? item.name : undefined}
-                  className={`group flex items-center gap-3 px-3 py-3 text-sm font-medium transition-colors ${
-                    active ? t.active : t.idle
-                  } ${iconOnly ? "justify-center px-0" : ""}`}
-                >
-                  <Icon className={`h-5 w-5 shrink-0 ${active ? t.iconActive : t.iconIdle}`} aria-hidden />
-                  <span className={`truncate ${iconOnly ? "sr-only" : ""}`}>{item.name}</span>
-                </Link>
-              </Tooltip>
-            );
-          })}
+        <nav className={`flex-1 space-y-4 overflow-y-auto overflow-x-hidden p-3 ${iconOnly ? "lg:px-2" : ""}`}>
+          {sections.map((section, i) => (
+            <div key={section.label ?? i} role="group" aria-label={section.label}>
+              {section.label &&
+                (iconOnly ? (
+                  <hr className={`mx-3 mb-3 ${t.divider}`} />
+                ) : (
+                  <p className={`mb-1 px-3 text-eyebrow font-semibold uppercase ${t.section}`}>{section.label}</p>
+                ))}
+              <ul className="space-y-0.5">
+                {section.items.map((item) => {
+                  const active =
+                    pathname === item.href || (item.href !== homeHref && pathname?.startsWith(`${item.href}/`));
+                  const Icon = item.icon;
+                  return (
+                    <li key={item.href}>
+                      <Tooltip label={item.name} disabled={!iconOnly}>
+                        <Link
+                          href={item.href}
+                          aria-current={active ? "page" : undefined}
+                          aria-label={iconOnly ? item.name : undefined}
+                          className={`group relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-150 ease-editorial ${
+                            active ? t.active : t.idle
+                          } ${iconOnly ? "justify-center px-0" : ""}`}
+                        >
+                          {active && (
+                            <span
+                              aria-hidden
+                              className={`absolute inset-y-2 -left-3 w-1 rounded-r-full ${t.indicator} ${iconOnly ? "lg:-left-2" : ""}`}
+                            />
+                          )}
+                          <Icon className={`size-5 shrink-0 ${active ? t.iconActive : t.iconIdle}`} aria-hidden />
+                          <span className={`truncate ${iconOnly ? "sr-only" : ""}`}>{item.name}</span>
+                        </Link>
+                      </Tooltip>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
         </nav>
 
         {/* Footer */}

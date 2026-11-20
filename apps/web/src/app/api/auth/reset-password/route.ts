@@ -1,51 +1,37 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { z } from "zod";
 import { createHash } from "crypto";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
+import { apiError, apiSuccess, handle, readJson, validateBody } from "@/lib/api";
 import { getClientIp } from "@/lib/getClientIp";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rateLimit";
+import { passwordField } from "@/lib/validation/password";
 
-const PASSWORD_REGEX = /^(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/;
-
-const schema = z.object({
-  token: z.string().min(1),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(PASSWORD_REGEX, "Password must contain at least one number and one special character"),
-});
+const schema = z.object({ token: z.string().min(1).max(200), password: passwordField });
 
 export async function POST(req: Request) {
-  try {
+  return handle(async () => {
     const ip = getClientIp(req.headers);
-    const limit = rateLimit(`auth-reset-password:${ip}`, 10, 15 * 60_000);
-    if (!limit.allowed) return rateLimitResponse(limit);
-    const burst = rateLimit(`auth-reset-password-burst:${ip}`, 5, 60_000);
-    if (!burst.allowed) return rateLimitResponse(burst);
+    const limit = enforceRateLimit(`auth-reset-password:${ip}`, 10, 15 * 60_000);
+    if (limit) return limit;
+    const burst = enforceRateLimit(`auth-reset-password-burst:${ip}`, 5, 60_000);
+    if (burst) return burst;
 
-    const body = await req.json();
-    const parsed = schema.safeParse(body);
-    if (!parsed.success) {
-      const firstError = parsed.error.issues[0];
-      return NextResponse.json({ error: firstError.message }, { status: 400 });
-    }
+    const parsed = validateBody(await readJson(req), schema);
+    if (!parsed.ok) return parsed.response;
 
     const { token, password } = parsed.data;
     const tokenHash = createHash("sha256").update(token).digest("hex");
 
-    const resetToken = await prisma.resetToken.findUnique({
-      where: { tokenHash },
-      include: { user: true },
-    });
+    const resetToken = await prisma.resetToken.findUnique({ where: { tokenHash } });
 
     if (!resetToken) {
-      return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
+      return apiError("Invalid or expired reset link", 400);
     }
 
     if (resetToken.expiresAt < new Date()) {
       await prisma.resetToken.delete({ where: { tokenHash } });
-      return NextResponse.json({ error: "Reset link has expired. Please request a new one." }, { status: 400 });
+      return apiError("Reset link has expired. Please request a new one.", 400);
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
@@ -58,9 +44,6 @@ export async function POST(req: Request) {
       prisma.resetToken.delete({ where: { tokenHash } }),
     ]);
 
-    return NextResponse.json({ message: "Password updated successfully" });
-  } catch (error) {
-    console.error("[RESET_PASSWORD_ERROR]", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+    return apiSuccess({ message: "Password updated successfully" });
+  });
 }

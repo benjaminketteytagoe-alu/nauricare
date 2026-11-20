@@ -1,6 +1,7 @@
-import { prisma } from "@/lib/prisma";
+import "server-only";
 import { ServiceError } from "@/lib/api";
 import { logAdministrativeAction } from "@/lib/audit";
+import { prisma } from "@/lib/prisma";
 import { notify } from "@/server/notifications/notify";
 
 // GitHub-style account deletion for patients: type your username to confirm.
@@ -20,19 +21,31 @@ export function deletionPhrase(user: { handle: string | null; email: string }): 
 }
 
 export async function getDeletionPhrase(userId: string): Promise<string> {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { handle: true, email: true, role: true, deletedAt: true } });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { handle: true, email: true, role: true, deletedAt: true },
+  });
   if (!user || user.deletedAt) throw new ServiceError("Account not found.", 404);
-  if (user.role !== "PATIENT") throw new ServiceError("Only patient accounts can be deleted here. Please contact support.", 403);
+  if (user.role !== "PATIENT")
+    throw new ServiceError("Only patient accounts can be deleted here. Please contact support.", 403);
   return deletionPhrase(user);
 }
 
 export async function deletePatientAccount(userId: string, confirmation: string, ipAddress?: string): Promise<void> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, handle: true, email: true, role: true, deletedAt: true, patientProfile: { select: { id: true } } },
+    select: {
+      id: true,
+      handle: true,
+      email: true,
+      role: true,
+      deletedAt: true,
+      patientProfile: { select: { id: true } },
+    },
   });
   if (!user || user.deletedAt) throw new ServiceError("Account not found.", 404);
-  if (user.role !== "PATIENT") throw new ServiceError("Only patient accounts can be deleted here. Please contact support.", 403);
+  if (user.role !== "PATIENT")
+    throw new ServiceError("Only patient accounts can be deleted here. Please contact support.", 403);
   if (confirmation.trim().toLowerCase() !== deletionPhrase(user).toLowerCase()) {
     throw new ServiceError("That doesn't match. Type it exactly as shown to confirm.", 400);
   }
@@ -69,22 +82,39 @@ export async function deletePatientAccount(userId: string, confirmation: string,
     prisma.account.deleteMany({ where: { userId: user.id } }),
     prisma.session.deleteMany({ where: { userId: user.id } }),
     prisma.resetToken.deleteMany({ where: { userId: user.id } }),
-    prisma.emailVerificationToken.deleteMany({ where: { userId: user.id } }),
     prisma.follow.deleteMany({ where: { OR: [{ followerId: user.id }, { followingId: user.id }] } }),
     prisma.reminderPreference.deleteMany({ where: { userId: user.id } }),
     prisma.patientInsurance.deleteMany({ where: { userId: user.id } }),
     prisma.userNotification.deleteMany({ where: { recipientId: user.id } }),
-    prisma.referralShare.updateMany({ where: { referral: { patientId: user.id }, revokedAt: null }, data: { revokedAt: now } }),
+    prisma.referralShare.updateMany({
+      where: { referral: { patientId: user.id }, revokedAt: null },
+      data: { revokedAt: now },
+    }),
     ...(profileId
       ? [
           prisma.patientProfile.update({ where: { id: profileId }, data: { emergencyContact: null } }),
-          prisma.appointment.updateMany({ where: { id: { in: upcoming.map((a) => a.id) } }, data: { status: "CANCELLED" } }),
+          prisma.appointment.updateMany({
+            where: { id: { in: upcoming.map((a) => a.id) } },
+            data: { status: "CANCELLED" },
+          }),
         ]
       : []),
   ]);
 
   for (const a of upcoming) {
-    await notify({ recipientId: a.practitioner.userId, type: "APPOINTMENT_UPDATED", title: "A consultation was cancelled", body: "The patient closed their NauriCare account, so this consultation was cancelled.", link: "/provider/schedule" });
+    await notify({
+      recipientId: a.practitioner.userId,
+      type: "APPOINTMENT_UPDATED",
+      title: "A consultation was cancelled",
+      body: "The patient closed their NauriCare account, so this consultation was cancelled.",
+      link: "/provider/schedule",
+    });
   }
-  await logAdministrativeAction({ action: "ACCOUNT_DELETED", actorId: user.id, targetId: user.id, details: { cancelledAppointments: upcoming.length }, ipAddress });
+  await logAdministrativeAction({
+    action: "ACCOUNT_DELETED",
+    actorId: user.id,
+    targetId: user.id,
+    details: { cancelledAppointments: upcoming.length },
+    ipAddress,
+  });
 }

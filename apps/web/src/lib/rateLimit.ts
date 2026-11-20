@@ -55,3 +55,21 @@ export function rateLimitResponse(result: RateLimitResult): NextResponse {
     { status: 429, headers: { "Retry-After": Math.ceil((result.resetAt - Date.now()) / 1000).toString() } },
   );
 }
+
+/** Default budget for authenticated writes that have no stricter limit of their own. */
+const WRITE_LIMIT = { limit: 60, windowMs: 60_000 } as const;
+
+/**
+ * Applies a limit and returns the 429 response to send, or null to carry on.
+ *
+ *   const limited = enforceRateLimit(`habits:${userId}`);
+ *   if (limited) return limited;
+ */
+export function enforceRateLimit(
+  key: string,
+  limit: number = WRITE_LIMIT.limit,
+  windowMs: number = WRITE_LIMIT.windowMs,
+): NextResponse | null {
+  const result = rateLimit(key, limit, windowMs);
+  return result.allowed ? null : rateLimitResponse(result);
+}

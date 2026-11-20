@@ -88,24 +88,103 @@ Tracking these patterns over 2–3 cycles builds a personalised performance and 
   },
 ];
 
-
 // Partner hospitals for the referral wizard. Phone numbers are intentionally
 // blank and insurance lists are a starting point: VERIFY both with each
 // hospital before production. The wizard hides an empty phone and tells
 // patients to confirm coverage before they visit.
-type SeedInsurance = "RSSB_RAMA" | "MMI" | "RADIANT" | "SANLAM" | "BRITAM" | "UAP_OLD_MUTUAL" | "EDENCARE" | "OTHER_PRIVATE" | "NONE_CASH";
-const PUBLIC_COVER: SeedInsurance[] = ["RSSB_RAMA", "MMI", "RADIANT", "SANLAM", "BRITAM", "UAP_OLD_MUTUAL", "NONE_CASH"];
-const PRIVATE_COVER: SeedInsurance[] = ["RSSB_RAMA", "MMI", "RADIANT", "SANLAM", "BRITAM", "UAP_OLD_MUTUAL", "OTHER_PRIVATE", "NONE_CASH"];
+type SeedInsurance =
+  | "RSSB_RAMA"
+  | "MMI"
+  | "RADIANT"
+  | "SANLAM"
+  | "BRITAM"
+  | "UAP_OLD_MUTUAL"
+  | "EDENCARE"
+  | "OTHER_PRIVATE"
+  | "NONE_CASH";
+const PUBLIC_COVER: SeedInsurance[] = [
+  "RSSB_RAMA",
+  "MMI",
+  "RADIANT",
+  "SANLAM",
+  "BRITAM",
+  "UAP_OLD_MUTUAL",
+  "NONE_CASH",
+];
+const PRIVATE_COVER: SeedInsurance[] = [
+  "RSSB_RAMA",
+  "MMI",
+  "RADIANT",
+  "SANLAM",
+  "BRITAM",
+  "UAP_OLD_MUTUAL",
+  "OTHER_PRIVATE",
+  "NONE_CASH",
+];
 
-const SEED_HOSPITALS: { name: string; address: string; district: string; phone: string; supportedInsurances: SeedInsurance[] }[] = [
-  { name: "King Faisal Hospital Rwanda", address: "Kacyiru, Kigali", district: "Gasabo", phone: "", supportedInsurances: PRIVATE_COVER },
-  { name: "University Teaching Hospital of Kigali (CHUK)", address: "Nyarugenge, Kigali", district: "Nyarugenge", phone: "", supportedInsurances: PUBLIC_COVER },
-  { name: "Rwanda Military Hospital", address: "Kanombe, Kigali", district: "Kicukiro", phone: "", supportedInsurances: PUBLIC_COVER },
-  { name: "Kacyiru District Hospital", address: "Kacyiru, Kigali", district: "Gasabo", phone: "", supportedInsurances: PUBLIC_COVER },
-  { name: "Kibagabaga Hospital", address: "Kibagabaga, Kigali", district: "Gasabo", phone: "", supportedInsurances: PUBLIC_COVER },
-  { name: "Muhima District Hospital", address: "Muhima, Kigali", district: "Nyarugenge", phone: "", supportedInsurances: PUBLIC_COVER },
-  { name: "Masaka District Hospital", address: "Masaka, Kigali", district: "Kicukiro", phone: "", supportedInsurances: PUBLIC_COVER },
-  { name: "Baho International Hospital", address: "Nyarutarama, Kigali", district: "Gasabo", phone: "", supportedInsurances: PRIVATE_COVER },
+const SEED_HOSPITALS: {
+  name: string;
+  address: string;
+  district: string;
+  phone: string;
+  supportedInsurances: SeedInsurance[];
+}[] = [
+  {
+    name: "King Faisal Hospital Rwanda",
+    address: "Kacyiru, Kigali",
+    district: "Gasabo",
+    phone: "",
+    supportedInsurances: PRIVATE_COVER,
+  },
+  {
+    name: "University Teaching Hospital of Kigali (CHUK)",
+    address: "Nyarugenge, Kigali",
+    district: "Nyarugenge",
+    phone: "",
+    supportedInsurances: PUBLIC_COVER,
+  },
+  {
+    name: "Rwanda Military Hospital",
+    address: "Kanombe, Kigali",
+    district: "Kicukiro",
+    phone: "",
+    supportedInsurances: PUBLIC_COVER,
+  },
+  {
+    name: "Kacyiru District Hospital",
+    address: "Kacyiru, Kigali",
+    district: "Gasabo",
+    phone: "",
+    supportedInsurances: PUBLIC_COVER,
+  },
+  {
+    name: "Kibagabaga Hospital",
+    address: "Kibagabaga, Kigali",
+    district: "Gasabo",
+    phone: "",
+    supportedInsurances: PUBLIC_COVER,
+  },
+  {
+    name: "Muhima District Hospital",
+    address: "Muhima, Kigali",
+    district: "Nyarugenge",
+    phone: "",
+    supportedInsurances: PUBLIC_COVER,
+  },
+  {
+    name: "Masaka District Hospital",
+    address: "Masaka, Kigali",
+    district: "Kicukiro",
+    phone: "",
+    supportedInsurances: PUBLIC_COVER,
+  },
+  {
+    name: "Baho International Hospital",
+    address: "Nyarutarama, Kigali",
+    district: "Gasabo",
+    phone: "",
+    supportedInsurances: PRIVATE_COVER,
+  },
 ];
 
 async function main() {
@@ -133,7 +212,6 @@ async function main() {
     console.log(`  ✓ ${h.name} (${h.district})`);
   }
   console.log(`Done. ${SEED_HOSPITALS.length} hospitals upserted.`);
-
 }
 
 main()

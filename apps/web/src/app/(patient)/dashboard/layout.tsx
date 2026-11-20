@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { PatientShell } from "@/components/navigation/PatientShell";
 import { requireRole } from "@/lib/auth-guards";
-import { PatientShell } from "@/components/Sidebar";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 

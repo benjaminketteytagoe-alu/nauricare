@@ -55,7 +55,7 @@ export interface PhaseContent {
   eat: string[];
   move: string;
   care: string;
-  tone: { bg: string; text: string; ring: string };
+  tone: { bg: string; text: string };
 }
 
 export const PHASES: Record<PhaseId, PhaseContent> = {
@@ -64,40 +64,60 @@ export const PHASES: Record<PhaseId, PhaseContent> = {
     name: "Menstrual phase",
     tagline: "Rest and replenish",
     body: "Oestrogen and progesterone are at their lowest. It's normal to feel tired. Be gentle with yourself.",
-    eat: ["Beans (ibishyimbo) and isombe for iron", "Dodo (amaranth) and other dark greens", "Passion fruit with meals to help absorb iron", "Warm ginger tea for cramps"],
+    eat: [
+      "Beans (ibishyimbo) and isombe for iron",
+      "Dodo (amaranth) and other dark greens",
+      "Passion fruit with meals to help absorb iron",
+      "Warm ginger tea for cramps",
+    ],
     move: "Gentle walks, stretching or rest. Listen to your body.",
     care: "A warm cloth or bottle on your lower belly can ease cramps.",
-    tone: { bg: "bg-rose-50", text: "text-rose-700", ring: "#E11D48" },
+    tone: { bg: "bg-brand-soft", text: "text-brand-ink" },
   },
   follicular: {
     id: "follicular",
     name: "Follicular phase",
     tagline: "Rising energy",
     body: "Oestrogen is climbing, and many women feel brighter, more social and more creative.",
-    eat: ["Avocado and groundnuts for healthy fats", "Isambaza or tilapia for protein", "Igikoma (sorghum porridge) for steady energy", "Fresh fruit like pineapple and mango"],
+    eat: [
+      "Avocado and groundnuts for healthy fats",
+      "Isambaza or tilapia for protein",
+      "Igikoma (sorghum porridge) for steady energy",
+      "Fresh fruit like pineapple and mango",
+    ],
     move: "A good time for dancing, brisk walks or trying something new.",
     care: "Plan the things that need focus and energy for these days.",
-    tone: { bg: "bg-amber-50", text: "text-amber-700", ring: "#F59E0B" },
+    tone: { bg: "bg-warning-soft", text: "text-warning" },
   },
   ovulation: {
     id: "ovulation",
     name: "Ovulation",
     tagline: "Your peak",
     body: "An egg is released around now. Energy and confidence often peak, and this is your most fertile time.",
-    eat: ["Plenty of water", "Leafy greens and colourful vegetables", "Sweet potato and whole grains", "Fruit rich in vitamin C"],
+    eat: [
+      "Plenty of water",
+      "Leafy greens and colourful vegetables",
+      "Sweet potato and whole grains",
+      "Fruit rich in vitamin C",
+    ],
     move: "Higher-energy movement such as running, dance classes or sport.",
     care: "If you're avoiding or planning pregnancy, these are the key days.",
-    tone: { bg: "bg-teal-50", text: "text-teal-700", ring: "#0D9488" },
+    tone: { bg: "bg-teal-50", text: "text-teal-700" },
   },
   luteal: {
     id: "luteal",
     name: "Luteal phase",
     tagline: "Slow down and nourish",
     body: "Progesterone rises then falls. Cravings, bloating and mood changes are common before your period.",
-    eat: ["Bananas and ibitoke (plantain) for magnesium and potassium", "Groundnuts (ubunyobwa) and seeds", "Less salt to ease bloating", "Regular meals to steady your mood"],
+    eat: [
+      "Bananas and ibitoke (plantain) for magnesium and potassium",
+      "Groundnuts (ubunyobwa) and seeds",
+      "Less salt to ease bloating",
+      "Regular meals to steady your mood",
+    ],
     move: "Yoga, walking and lighter strength work.",
     care: "Early nights and journaling can help with PMS. Be kind to yourself.",
-    tone: { bg: "bg-violet-50", text: "text-violet-700", ring: "#7C3AED" },
+    tone: { bg: "bg-lavender-soft", text: "text-lavender" },
   },
 };
 

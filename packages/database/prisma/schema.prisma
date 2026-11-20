@@ -59,6 +59,8 @@ enum AuditAction {
   PROVIDER_CANDIDATE_REVIEW
   PROVIDER_CANDIDATE_PUBLISH
   ACCOUNT_DELETED
+  DATA_EXPORT
+  STAFF_ACCESS_CHANGE
 }
 
 enum MediaType {
@@ -138,7 +140,6 @@ model User {
   providerProfile         ProviderProfile?
   auditLogs               AuditLog[]
   resetTokens             ResetToken[]
-  emailVerificationTokens EmailVerificationToken[]
   accounts                Account[]
   sessions                Session[]
   feedback                Feedback[]
@@ -422,17 +423,6 @@ model ProviderAvailability {
 }
 
 model ResetToken {
-  id        String   @id @default(cuid())
-  tokenHash String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-}
-
-model EmailVerificationToken {
   id        String   @id @default(cuid())
   tokenHash String   @unique
   userId    String

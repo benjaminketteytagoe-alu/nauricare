@@ -1,10 +1,11 @@
 "use server";
 
-import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 import { getSessionUser } from "@/lib/auth-guards";
 import { AVATAR_PRESET_IDS, isGooglePhoto, presetSrc } from "@/lib/avatars";
+import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/prisma";
 import { recordPatientActivity } from "@/server/activity/activity.service";
 
 const AvatarChoice = z.union([
@@ -16,7 +17,9 @@ const AvatarChoice = z.union([
  * Set the signed-in user's avatar to a predefined avatar or their own synced
  * Google photo. Arbitrary URLs and uploads are not accepted.
  */
-export async function chooseAvatar(input: z.infer<typeof AvatarChoice>): Promise<{ success: true; avatarUrl: string } | { success: false; error: string }> {
+export async function chooseAvatar(
+  input: z.infer<typeof AvatarChoice>,
+): Promise<{ success: true; avatarUrl: string } | { success: false; error: string }> {
   const user = await getSessionUser();
   if (!user) return { success: false, error: "Unauthorized" };
   const parsed = AvatarChoice.safeParse(input);
@@ -27,7 +30,8 @@ export async function chooseAvatar(input: z.infer<typeof AvatarChoice>): Promise
     avatarUrl = presetSrc(parsed.data.preset);
   } else {
     const row = await prisma.user.findUnique({ where: { id: user.id }, select: { googlePhotoUrl: true } });
-    if (!isGooglePhoto(row?.googlePhotoUrl)) return { success: false, error: "No Google photo is linked to your account." };
+    if (!isGooglePhoto(row?.googlePhotoUrl))
+      return { success: false, error: "No Google photo is linked to your account." };
     avatarUrl = row!.googlePhotoUrl!;
   }
 
@@ -37,7 +41,7 @@ export async function chooseAvatar(input: z.infer<typeof AvatarChoice>): Promise
     revalidatePath("/dashboard", "layout");
     return { success: true, avatarUrl };
   } catch (error) {
-    console.error("[CHOOSE_AVATAR_ERROR]", error);
+    logger.error({ event: "settings.choose_avatar_failed", err: error }, "Choosing avatar failed");
     return { success: false, error: "Failed to update your avatar." };
   }
 }

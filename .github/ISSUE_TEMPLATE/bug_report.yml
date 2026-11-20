@@ -1,0 +1,17 @@
+name: Bug report
+description: Something is broken
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Do not include real patient data. For security issues, see SECURITY.md instead."
+  - type: textarea
+    id: what
+    attributes: { label: What happened, description: Steps to reproduce, expected vs actual }
+    validations: { required: true }
+  - type: dropdown
+    id: portal
+    attributes: { label: Portal, options: [Public site, Patient, Provider, Admin, Email, Other] }
+  - type: input
+    id: env
+    attributes: { label: Environment, placeholder: "production / staging / local, browser, device" }

@@ -9,7 +9,7 @@ colors:
   primary-pressed: "#be123c"
   primary-active: "#9f1239"
   on-primary: "#ffffff"
-  
+
   # Core Ink & Typography
   ink: "#0f172a"
   body: "#334155"
@@ -161,6 +161,7 @@ components:
 ## Overview
 
 The NauriCare design language balances clinical reliability with a warm, accessible, and vibrant patient health experience[cite: 1]. The system takes structural cue from the signature **NauriCare horizontal brand mark**[cite: 1]:
+
 1. **The Four Logo Accent Stripes:** Vibrant **Cobalt Blue** (`#1d4ed8`), **Crimson Red** (`#dc2626`), **Warm Amber** (`#d97706`), and **Deep Charcoal Black** (`#0f172a`) serve as key semantic category anchors across clinical records, prescription statuses, and role navigation[cite: 1].
 2. **The Patient Portal Theme:** A primary **Vibrant Rose / Magenta** gradient (`#e11d48` → `#ec4899`) backed by a soft blush ambient canvas (`from-rose-50 via-pink-50 to-slate-50`) that evokes warmth, empathy, and personalized health tracking.
 
@@ -171,6 +172,7 @@ Card interfaces sit inside rounded glassmorphic containers (`rounded-3xl` / `rou
 ## Colors
 
 ### Brand & Logo Palette
+
 - **Primary Rose / Magenta** (`{colors.primary}` — `#e11d48`): The universal brand action color across patient workflows, period logging, and primary buttons.
 - **NauriCare Logo Blue** (`{colors.logo-blue}` — `#1d4ed8`): Used for clinical lab results, telehealth video indicators, and verified medical badges[cite: 1].
 - **NauriCare Logo Red** (`{colors.logo-red}` — `#dc2626`): Reserved for urgent health alerts, emergency contacts, and high-priority symptoms[cite: 1].
@@ -178,12 +180,13 @@ Card interfaces sit inside rounded glassmorphic containers (`rounded-3xl` / `rou
 - **NauriCare Logo Slate Black** (`{colors.logo-black}` — `#0f172a`): High-contrast ink color for headings, titles, and structural sidebars[cite: 1].
 
 ### Surfaces & Backgrounds
+
 - **Ambient Canvas** (`app-shell-canvas`): Soft top-to-bottom gradient (`from-rose-50/90 via-pink-50/40 to-slate-50`) creating a soothing backdrop for patient dashboards.
 - **Card Surface** (`card-surface`): Glassmorphic white fill (`rgba(255,255,255,0.9)`) with a `1px` warm border (`#ffe4e6`) and subtle backdrop blur.
 - **Pastel Insight Cards:**
-  - *Fertile Window / Quiz:* Soft Lavender (`#f3e8ff` / `border-purple-200`)
-  - *Health Tips / Analytics:* Soft Mint Teal (`#ccfbf1` / `border-teal-200`)
-  - *Reminders / Cycle Logs:* Soft Rose Peach (`#fff1f2` / `border-rose-200`)
+  - _Fertile Window / Quiz:_ Soft Lavender (`#f3e8ff` / `border-purple-200`)
+  - _Health Tips / Analytics:_ Soft Mint Teal (`#ccfbf1` / `border-teal-200`)
+  - _Reminders / Cycle Logs:_ Soft Rose Peach (`#fff1f2` / `border-rose-200`)
 
 ---
 
@@ -201,15 +204,18 @@ Card interfaces sit inside rounded glassmorphic containers (`rounded-3xl` / `rou
 ## Key App Layouts & Components
 
 ### 1. Compact Cycle Calendar Card (`CycleCalendarClient.tsx`)
+
 - **Restrained Grid:** Centered `max-w-md` desktop card container with compact `w-9 h-9` day cells.
 - **Logged Days:** Vibrant Rose pill (`bg-rose-600 text-white font-bold`).
 - **Predicted Days:** Dashed Rose Coral badge (`bg-rose-100 text-rose-800 border-2 border-dashed border-rose-400`).
 - **Ovulation Day:** Lavender Pill (`bg-purple-100 text-purple-900 border-2 border-dashed border-purple-400`).
 
 ### 2. Primary Action Buttons (`btn-brand`)
+
 - **Gradient Pill:** `bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white rounded-full shadow-md shadow-rose-200`.
 
 ### 3. Glassmorphic Navigation Shell (`nav-glass`)
+
 - Top bar and patient sidebars rendered in `bg-white/80 backdrop-blur-md border-rose-100`. Active menu items highlight in solid rose pills (`nav-pill-active`).
 
 ---
@@ -217,12 +223,14 @@ Card interfaces sit inside rounded glassmorphic containers (`rounded-3xl` / `rou
 ## Do's and Don'ts
 
 ### Do
+
 - Use the warm blush gradient (`from-rose-50 via-pink-50`) for all patient portal backgrounds.
 - Keep card corners soft and rounded (`rounded-2xl` or `rounded-3xl`).
 - Utilize the logo accents (Blue, Crimson, Amber) for semantic medical badges (Lab results, Refills, Urgent alerts)[cite: 1].
 - Restrain calendar grids to compact cards (`max-w-md`) on desktop views.
 
 ### Don't
+
 - Don't use harsh dark charcoal or pitch-black full-page backgrounds on patient views.
 - Don't mix unstyled white cards without the subtle `border-rose-100` warm border.
 - Don't alter the core shadcn `--primary` theme CSS variables on Admin or Provider portals.

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { motion, useAnimate, useReducedMotion } from "framer-motion";
+import { HeartHandshake, Loader2, LockKeyhole, Siren, Sparkles } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, useAnimate, useReducedMotion } from "framer-motion";
-import { HeartHandshake, Loader2, LockKeyhole, Siren, Sparkles } from "lucide-react";
+import { useState } from "react";
 import { ConsentToggle } from "./ConsentToggle";
 import { SPRING, riseIn, stagger, tactile } from "./motion";
 
@@ -17,19 +17,19 @@ const CalmAnimation = dynamic(() => import("./CalmAnimation"), {
 const REASSURANCES = [
   {
     icon: LockKeyhole,
-    tint: "bg-blue-50 text-[#1D4ED8]",
+    tint: "bg-info-soft text-[#1D4ED8]",
     title: "What you share stays yours",
     body: "Your symptoms are encrypted and only seen by you and the clinicians you choose. We never sell your data.",
   },
   {
     icon: Sparkles,
-    tint: "bg-amber-50 text-[#D97706]",
+    tint: "bg-warning-soft text-[#D97706]",
     title: "A gentle guide, not a doctor",
     body: "Our AI suggests how soon to seek care and who can help. It cannot diagnose or examine you.",
   },
   {
     icon: Siren,
-    tint: "bg-rose-50 text-[#BE123C]",
+    tint: "bg-brand-soft text-[#BE123C]",
     title: "In an emergency, call 112 / 912",
     body: "Heavy bleeding with dizziness, severe pain or trouble breathing? Call SAMU Rwanda now. Please don't wait for the app.",
   },
@@ -75,8 +75,14 @@ export function TriageGate({ firstName, version }: { firstName: string; version:
   return (
     <div className="font-friendly relative isolate overflow-hidden rounded-[2.5rem] bg-[#FFFDF9] px-5 py-10 sm:px-10 sm:py-14">
       {/* Soft organic blush shapes, solid colours only, no gradients */}
-      <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 -z-10 h-72 w-72 rounded-full bg-[#FDF2F0]" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-20 -z-10 h-80 w-80 rounded-full bg-[#FDF2F0]" />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-24 -top-24 -z-10 h-72 w-72 rounded-full bg-[#FDF2F0]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-32 -left-20 -z-10 h-80 w-80 rounded-full bg-[#FDF2F0]"
+      />
 
       <motion.div
         variants={stagger}
@@ -87,7 +93,7 @@ export function TriageGate({ firstName, version }: { firstName: string; version:
         <motion.div variants={riseIn} className="flex justify-center">
           <div
             ref={scope}
-            className="h-40 w-40 rounded-full border border-[#FFE4E6] bg-white p-4 shadow-sm sm:h-48 sm:w-48"
+            className="h-40 w-40 rounded-full border border-[#FFE4E6] bg-surface p-4 shadow-sm sm:h-48 sm:w-48"
           >
             <CalmAnimation onReady={handleAnimationReady} />
           </div>
@@ -99,8 +105,8 @@ export function TriageGate({ firstName, version }: { firstName: string; version:
             Hi {firstName}, let&apos;s take a breath together
           </h1>
           <p className="mx-auto mt-4 max-w-lg text-lg leading-relaxed text-[#475569]">
-            Whatever you&apos;re feeling, you&apos;re not alone. Before we look at your symptoms, here is how we care for
-            what you tell us.
+            Whatever you&apos;re feeling, you&apos;re not alone. Before we look at your symptoms, here is how we care
+            for what you tell us.
           </p>
         </motion.header>
 
@@ -109,7 +115,7 @@ export function TriageGate({ firstName, version }: { firstName: string; version:
             <motion.li
               key={title}
               variants={riseIn}
-              className="rounded-3xl border border-[#FFE4E6] bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
+              className="rounded-3xl border border-[#FFE4E6] bg-surface p-5 shadow-sm transition-shadow hover:shadow-md"
             >
               <span className={`flex h-11 w-11 items-center justify-center rounded-full ${tint}`}>
                 <Icon className="h-5 w-5" aria-hidden />
@@ -123,30 +129,32 @@ export function TriageGate({ firstName, version }: { firstName: string; version:
         <motion.section
           variants={riseIn}
           aria-labelledby="consent-heading"
-          className="mt-10 rounded-3xl border border-[#FFE4E6] bg-white p-5 shadow-sm sm:p-8"
+          className="mt-10 rounded-3xl border border-[#FFE4E6] bg-surface p-5 shadow-sm sm:p-8"
         >
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-rose-50 text-[#BE123C]">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft text-[#BE123C]">
               <HeartHandshake className="h-5 w-5" aria-hidden />
             </span>
             <div>
-              <h2 id="consent-heading" className="text-xl font-bold text-[#0F172A]">Your consent</h2>
+              <h2 id="consent-heading" className="text-xl font-bold text-[#0F172A]">
+                Your consent
+              </h2>
               <p className="text-sm text-[#475569]">Required by Rwanda&apos;s data protection law (Nº 058/2021)</p>
             </div>
           </div>
 
           <div className="mt-6 space-y-3">
             <ConsentToggle checked={privacy} onChange={setPrivacy} title="I agree to the processing of my health data">
-              NauriCare may process sensitive health data I enter here, such as symptoms, cycle details and notes, to give
-              me triage guidance and keep it in my health record, as set out in the{" "}
+              NauriCare may process sensitive health data I enter here, such as symptoms, cycle details and notes, to
+              give me triage guidance and keep it in my health record, as set out in the{" "}
               <Link href="/privacy" target="_blank" className="font-medium text-[#1D4ED8] underline underline-offset-2">
                 Privacy Policy
               </Link>
               .
             </ConsentToggle>
             <ConsentToggle checked={triage} onChange={setTriage} title="I understand how AI triage works">
-              AI triage is not a diagnosis and can be wrong. My symptom text, without my name or contact details, is sent
-              to Google&apos;s MedGemma or Gemini models, which may process it outside Rwanda. See the{" "}
+              AI triage is not a diagnosis and can be wrong. My symptom text, without my name or contact details, is
+              sent to Google&apos;s MedGemma or Gemini models, which may process it outside Rwanda. See the{" "}
               <Link href="/consent" target="_blank" className="font-medium text-[#1D4ED8] underline underline-offset-2">
                 Informed Consent
               </Link>
@@ -160,7 +168,7 @@ export function TriageGate({ firstName, version }: { firstName: string; version:
           </p>
 
           {error && (
-            <p role="alert" className="mt-5 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-medium text-[#BE123C]">
+            <p role="alert" className="mt-5 rounded-2xl bg-brand-soft px-4 py-3 text-sm font-medium text-[#BE123C]">
               {error}
             </p>
           )}

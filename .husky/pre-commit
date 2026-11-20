@@ -1,0 +1,12 @@
+# Block secrets before they reach history. CI's Secret Scan is the backstop,
+# but a pushed secret is already leaked, so catch it here when possible.
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --pre-commit --staged --redact --no-banner --config .gitleaks.toml || {
+    echo "gitleaks found a possible secret in the staged changes. Remove it (see docs/runbooks/credential-rotation.md)." >&2
+    exit 1
+  }
+else
+  echo "Tip: install gitleaks (https://github.com/gitleaks/gitleaks) to scan commits for secrets locally." >&2
+fi
+
+npx lint-staged

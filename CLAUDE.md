@@ -17,9 +17,12 @@ All commands run from the monorepo root unless noted.
 npm run dev                                          # start all apps via Turbo
 npx turbo dev --filter=web                           # start only the web app
 
-# Build & lint
+# Quality gates (all run in CI)
+npm run format:check                                 # Prettier (npm run format to fix)
+npm run lint                                         # type-aware ESLint, zero warnings allowed
+npm run typecheck                                    # tsc --noEmit in every workspace
+npm test                                             # unit tests via Turbo
 npm run build                                        # build all packages via Turbo
-cd apps/web && npm run lint                          # lint the web app
 
 # Database (always pass --schema explicitly)
 npx prisma generate --schema=packages/database/prisma/schema.prisma
@@ -32,6 +35,7 @@ docker-compose up -d
 ```
 
 Required environment variables (`apps/web/.env.local`):
+
 - `DATABASE_URL` — PostgreSQL connection string
 - `NEXTAUTH_SECRET` — JWT signing secret
 - `NEXTAUTH_URL` — e.g. `http://localhost:3000`
@@ -58,19 +62,23 @@ packages/
   ui/              — Shared React component library
   eslint-config/   — Shared ESLint config
   typescript-config/
-  validation/
+infra/terraform/   — AWS as code: bootstrap, envs/{shared,staging,production}, modules (see its README)
+docs/adr/          — architecture decision records (read before changing design, avatars, tracking, AI, infra)
+docs/runbooks/     — CI/CD, observability, incident response, data breach, DB restore, credential rotation
 ```
+
+Modules in `apps/web/src/server/**` start with `import "server-only"` so they can never be bundled into client code. Client components may import only _types_ from them.
 
 ### Route groups (Next.js App Router)
 
 The app uses route groups to scope layouts per role:
 
-| Group | Path prefix | Role required |
-|---|---|---|
-| `(public)` | `/` | None |
-| `(patient)` | `/dashboard` | `PATIENT` |
-| `(provider)` | `/provider` | `PROVIDER` |
-| `(admin)` | `/admin` | `ADMIN` |
+| Group        | Path prefix  | Role required |
+| ------------ | ------------ | ------------- |
+| `(public)`   | `/`          | None          |
+| `(patient)`  | `/dashboard` | `PATIENT`     |
+| `(provider)` | `/provider`  | `PROVIDER`    |
+| `(admin)`    | `/admin`     | `ADMIN`       |
 
 Proxy (Next 16's renamed middleware) at `apps/web/src/proxy.ts` enforces role boundaries: unauthenticated requests are rejected; authenticated users hitting `/dashboard` are redirected to their role-specific root. Each layout and protected page adds a second layer via `requireRole(role)` from `src/lib/auth-guards.ts` (forces dynamic rendering, requires a session, bounces other roles to their portal).
 
@@ -89,6 +97,7 @@ NextAuth v4 with JWT strategy. Two auth providers: Google OAuth and email/passwo
 PostgreSQL via Prisma. Schema: `packages/database/prisma/schema.prisma`.
 
 Core models:
+
 - `User` — base identity with `role: PATIENT | PROVIDER | ADMIN`; has `isEmailVerified Boolean` flag
 - `PatientProfile` — one-to-one with User for patients; holds health data
 - `PractitionerProfile` — one-to-one with User for providers; includes `verificationStatus`
@@ -103,13 +112,32 @@ Core models:
 
 `src/lib/prisma.ts` exports a singleton `prisma` client. Always import from there.
 
+### Logging and observability
+
+Server code logs through `logger` from `src/lib/logger.ts` (pino, JSON to stdout → CloudWatch), not `console.*`. Use `logger.error({ event: "domain.what_happened", err }, "Message")`. The `event` field is stable and alarms key off it. **Log ids and outcomes, never content**: no request bodies, notes, symptoms, lab values, emails or names. Redaction is a safety net, not permission. `src/instrumentation.ts` logs every uncaught server error (`onRequestError`) and enables OpenTelemetry when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. `/api/health` is liveness (no DB, used by ECS); `/api/health/ready` checks the DB and is used by the uptime alarm. See ADR 0006 and `docs/runbooks/observability.md`.
+
 ### Audit logging
 
 All admin and provider operations must be logged via `logAdministrativeAction()` from `src/lib/audit.ts`. It writes to the `AuditLog` table with a typed `AuditAction` enum. Errors are caught silently so logging failures never block the main operation.
 
 ### API routes
 
-REST-style route handlers in `src/app/api/`. Each handler calls `getServerSession(authOptions)` directly for auth. Appointments GET handler acts as a smart router, returning different data shapes depending on the user's role.
+REST-style route handlers in `src/app/api/`. Every handler follows the same shape (enforced by ESLint and `src/app/api/conventions.test.ts`):
+
+```ts
+const auth = await requireApiUser("PATIENT"); // lib/auth-guards: 401 signed out, 403 wrong role
+if (!auth.ok) return auth.response;
+const limited = enforceRateLimit(`thing:${auth.user.id}`); // lib/rateLimit: every write is limited
+if (limited) return limited;
+const body = await parseJson(req, Schema); // lib/api: malformed JSON and Zod errors -> 400
+if (!body.ok) return body.response;
+return handle(async () => apiSuccess(await doThing(auth.user.id, body.data), 201)); // 500s are logged, never leaked
+```
+
+- Errors are always JSON `{ error, code? }`; clients read them with `readErrorMessage(res, fallback)` from `lib/http.ts`.
+- Never call `getServerSession` or `req.json()` directly, and never use `console` in server code (`logger` instead). Lint fails on all three.
+- Use `readJson` + `validateBody` when something must run between reading and validating (Turnstile in the auth routes).
+- The appointments GET handler returns different shapes per role.
 
 ### Server Actions
 
@@ -122,7 +150,8 @@ Admin mutations use Next.js Server Actions (e.g., `(admin)/admin/actions.ts`). T
 - `sanitize.ts` — `sanitizePlainText()`; run on all user-generated text before storing.
 - `site.ts` — `SITE_URL`, `SUPPORT_EMAIL` (nauricare@gmail.com), `EMERGENCY_NUMBERS`. Never hard-code these.
 - `format.ts` — `formatDate`/`formatTime` (en-GB). `safeRedirect.ts` — open-redirect guard for `?redirect=`/`callbackUrl`.
-- UI primitives: `Callout`, `StatusChip` (+ `SEVERITY_TONE`, `REFERRAL_STATUS_TONE`), `Tooltip`. Portal navigation: `components/navigation/AppSidebar.tsx`.
+- UI primitives: `Callout`, `StatusChip` (+ `SEVERITY_TONE`, `REFERRAL_STATUS_TONE`), `Tooltip`. Portal navigation: `components/navigation/AppSidebar.tsx` (patient shell: `navigation/PatientShell.tsx`).
+- Components live in domain folders under `src/components/` (`avatar/`, `appointments/`, `community/`, `cycle/`, `layout/`, `messaging/`, `notifications/`, `provider-directory/`, `app/Providers.tsx`, …); `components/ui/` holds design-system primitives only. Don't add files at the `components/` root.
 
 ### Security utilities (`src/lib/`)
 
@@ -133,6 +162,7 @@ Admin mutations use Next.js Server Actions (e.g., `(admin)/admin/actions.ts`). T
 ### Cloudflare Turnstile enforcement
 
 All credential-auth flows verify the widget token server-side:
+
 - **Login**: token passed as `turnstileToken` credential to NextAuth's `CredentialsProvider`, verified in `authorize()`.
 - **Register** (`api/auth/register`): verified before Zod schema parsing.
 - **Forgot-password** (`api/auth/forgot-password`): verified before DB lookup.
@@ -155,12 +185,25 @@ Use `error.issues[0]` not `error.errors[0]` — the property was renamed in v4. 
 
 ## CI/CD
 
-GitHub Actions pipeline (`.github/workflows/ci.yml`) has four stages:
-1. **Build & typecheck** — runs on all pushes and PRs
-2. **Docker image** — built and pushed to GHCR on every push
-3. **Staging** — deploys from the `develop` branch to staging server (port 3001)
-4. **Production** — deploys from the `main` branch (port 3000)
+See `docs/runbooks/ci-cd.md` for the full picture and the one-off setup. In short:
 
-Prisma migrations run inside the container post-deploy using `prisma@6.19.3` (pinned explicitly to avoid version drift).
+1. **Checks** (`ci.yml`, every PR and push): three parallel jobs.
+   - format, type-aware lint, typecheck and Vitest unit tests with coverage
+   - migrations applied to a throwaway Postgres, with a schema-drift check
+   - build, then Playwright smoke + axe against `next start`, then Lighthouse
+2. **Image** (push only): built once per commit, Trivy-scanned (fixable CRITICAL fails), given an SBOM, signed with keyless cosign, and pushed to ECR.
+3. **Deploy**: the reusable `deploy-ecs.yml` deploys `develop` to staging and `main` to production. Production needs approval. Both deploy the same image **digest**. The deploy registers the task definition, runs `prisma migrate deploy` as a one-off task, then does a rolling deploy with automatic rollback. It then syncs Cloudflare DNS, verifies `/api/health` and smoke-tests key pages. Staging is skipped until `vars.STAGING_ECS_SERVICE` is set.
+4. **Security** (`security.yml`): CodeQL, dependency review, `npm audit` against `.github/audit-allowlist.json` (entries expire), gitleaks, hadolint and actionlint.
 
-`NEXT_PUBLIC_TURNSTILE_SITE_KEY` is passed as a Docker `--build-arg` (baked into the bundle). All other secrets (`TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`) are injected at runtime via `-e` flags on `docker run`.
+Pin new GitHub Actions to a full commit SHA with the version in a comment. AWS access uses OIDC when `vars.AWS_ROLE_ARN` is set.
+
+Tests: `npm test` runs Vitest (`*.test.ts` next to the code). `npm run test:e2e -w web` runs Playwright (`apps/web/e2e/`) against a built app on port 3100, or against `E2E_BASE_URL`.
+
+- `npm run test:coverage -w web` enforces thresholds in `apps/web/vitest.config.mts`: 70% overall for `lib/` and `server/`, plus stricter per-file floors for triage, encryption, auth, referral sharing and account deletion. Raise thresholds as coverage grows; never lower them to pass a PR.
+- Mock the database with `createPrismaMock()` from `apps/web/test/prismaMock.ts` (`vi.mock("@/lib/prisma", async () => ({ prisma: (await import("…/test/prismaMock")).createPrismaMock() }))`).
+
+`NEXT_PUBLIC_TURNSTILE_SITE_KEY` is a Docker build arg, so it is baked into the bundle. All other secrets come from SSM Parameter Store and are injected into the ECS task at runtime.
+
+Secrets: gitleaks runs in CI and in the pre-commit hook (when installed) with the extra rules in `.gitleaks.toml`. Staff accounts are created or rotated with `npm run staff -- invite|rotate|revoke` (single-use set-password link, no plaintext passwords); never commit passwords or hashes. See `docs/runbooks/credential-rotation.md`.
+
+Commits follow Conventional Commits, enforced by commitlint via husky. See `CONTRIBUTING.md`.

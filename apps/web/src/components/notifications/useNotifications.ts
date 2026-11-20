@@ -1,8 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import type { UserNotificationType } from "@prisma/client";
-import { getNotifications, getUnreadCount, markAllNotificationsRead, markNotificationRead } from "@/actions/notification";
+import { useCallback, useEffect, useState } from "react";
+import {
+  getNotifications,
+  getUnreadCount,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "@/actions/notification";
 import { useRealtime } from "@/components/realtime/RealtimeProvider";
 
 export interface NotificationView {
@@ -26,7 +31,13 @@ export function useNotifications({ listEnabled, take = 50 }: { listEnabled: bool
   const [unread, setUnread] = useState(0);
   const [items, setItems] = useState<NotificationView[] | null>(null);
 
-  const refreshUnread = useCallback(() => getUnreadCount().then(setUnread).catch(() => {}), []);
+  const refreshUnread = useCallback(
+    () =>
+      getUnreadCount()
+        .then(setUnread)
+        .catch(() => {}),
+    [],
+  );
   const refreshList = useCallback(
     () =>
       getNotifications(take)

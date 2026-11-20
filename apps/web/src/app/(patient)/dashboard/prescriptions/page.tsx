@@ -1,11 +1,8 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { Pill, Store, CheckCircle2, Clock, Truck, ChevronDown, AlertCircle, Sparkles } from "lucide-react";
 import { useSession } from "next-auth/react";
-import {
-  Pill, Store, CheckCircle2, Clock, Truck,
-  ChevronDown, AlertCircle, Sparkles,
-} from "lucide-react";
+import { useState, useEffect, useTransition } from "react";
 import { routeToPharmacy } from "@/actions/prescription";
 
 interface PharmacyOption {
@@ -27,23 +24,20 @@ interface Prescription {
   suggestedPharmacy: { id: string; name: string; address: string } | null;
 }
 
-const STATUS_BADGE: Record<
-  Prescription["status"],
-  { label: string; class: string; icon: React.ReactNode }
-> = {
+const STATUS_BADGE: Record<Prescription["status"], { label: string; class: string; icon: React.ReactNode }> = {
   PENDING: {
     label: "Awaiting Routing",
-    class: "bg-amber-50 text-amber-700 border-amber-200",
+    class: "bg-warning-soft text-warning border-warning-line",
     icon: <Clock className="w-3 h-3" />,
   },
   ROUTED: {
     label: "Sent to Pharmacy",
-    class: "bg-blue-50 text-blue-700 border-blue-200",
+    class: "bg-info-soft text-info border-info-line",
     icon: <Truck className="w-3 h-3" />,
   },
   FULFILLED: {
     label: "Ready for Pickup",
-    class: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    class: "bg-success-soft text-success border-success-line",
     icon: <CheckCircle2 className="w-3 h-3" />,
   },
 };
@@ -61,10 +55,7 @@ export default function PatientPrescriptionsPage() {
 
   useEffect(() => {
     if (!session?.user?.id) return;
-    Promise.all([
-      fetch("/api/prescriptions").then((r) => r.json()),
-      fetch("/api/pharmacies").then((r) => r.json()),
-    ])
+    Promise.all([fetch("/api/prescriptions").then((r) => r.json()), fetch("/api/pharmacies").then((r) => r.json())])
       .then(([rxData, phData]) => {
         const rxList: Prescription[] = Array.isArray(rxData) ? rxData : [];
         const phList: PharmacyOption[] = Array.isArray(phData) ? phData : [];
@@ -103,9 +94,7 @@ export default function PatientPrescriptionsPage() {
               ? {
                   ...rx,
                   status: "ROUTED",
-                  pharmacy: pharmacy
-                    ? { id: pharmacy.id, name: pharmacy.name, address: pharmacy.address }
-                    : null,
+                  pharmacy: pharmacy ? { id: pharmacy.id, name: pharmacy.name, address: pharmacy.address } : null,
                 }
               : rx,
           ),
@@ -118,34 +107,28 @@ export default function PatientPrescriptionsPage() {
   };
 
   if (isFetching) {
-    return (
-      <div className="max-w-3xl mx-auto p-8 text-center text-gray-400">
-        Loading your prescriptions…
-      </div>
-    );
+    return <div className="max-w-3xl mx-auto p-8 text-center text-ink-muted">Loading your prescriptions…</div>;
   }
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 pb-12">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-          <Pill className="w-8 h-8 text-rose-600" />
+        <h1 className="text-3xl font-bold text-ink flex items-center gap-3">
+          <Pill className="w-8 h-8 text-brand-ink" />
           My Prescriptions
         </h1>
-        <p className="text-gray-500 mt-1">
+        <p className="text-ink-muted mt-1">
           Review prescriptions from your providers and send them to a partner pharmacy.
         </p>
       </div>
 
       {prescriptions.length === 0 ? (
         <div className="card-surface p-12 text-center">
-          <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Pill className="w-8 h-8 text-rose-400" />
+          <div className="w-16 h-16 bg-brand-soft rounded-full flex items-center justify-center mx-auto mb-4">
+            <Pill className="w-8 h-8 text-brand-ink" />
           </div>
-          <h3 className="text-lg font-bold text-gray-900">No Prescriptions Yet</h3>
-          <p className="text-gray-500 mt-1 text-sm">
-            Your provider will issue prescriptions after a consultation.
-          </p>
+          <h3 className="text-lg font-bold text-ink">No Prescriptions Yet</h3>
+          <p className="text-ink-muted mt-1 text-sm">Your provider will issue prescriptions after a consultation.</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -157,20 +140,17 @@ export default function PatientPrescriptionsPage() {
             const isSuggestionSelected = suggested && selectedId === suggested.id;
 
             return (
-              <div
-                key={rx.id}
-                className="card-surface overflow-hidden"
-              >
+              <div key={rx.id} className="card-surface overflow-hidden">
                 {/* Header */}
-                <div className="p-5 border-b border-gray-50">
+                <div className="p-5 border-b border-hairline">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">{rx.medicationName}</h3>
-                      <p className="text-sm text-gray-600 mt-0.5">
+                      <h3 className="text-lg font-bold text-ink">{rx.medicationName}</h3>
+                      <p className="text-sm text-ink-soft mt-0.5">
                         <span className="font-medium">Dosage:</span> {rx.dosage}
                       </p>
                       {rx.instructions && (
-                        <p className="text-sm text-gray-500 mt-0.5">
+                        <p className="text-sm text-ink-muted mt-0.5">
                           <span className="font-medium">Instructions:</span> {rx.instructions}
                         </p>
                       )}
@@ -182,10 +162,9 @@ export default function PatientPrescriptionsPage() {
                       {badge.label}
                     </span>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
                     <span>
-                      Issued by{" "}
-                      <span className="font-medium text-gray-700">Dr. {rx.provider.name}</span>
+                      Issued by <span className="font-medium text-ink-soft">Dr. {rx.provider.name}</span>
                     </span>
                     <span>
                       {new Date(rx.createdAt).toLocaleDateString("en-US", {
@@ -198,7 +177,7 @@ export default function PatientPrescriptionsPage() {
                 </div>
 
                 {/* Pharmacy section */}
-                <div className="p-5 bg-rose-50/30">
+                <div className="p-5 bg-brand-soft/30">
                   {rx.status === "PENDING" ? (
                     <div className="space-y-3">
                       {/* Suggestion banner */}
@@ -206,8 +185,8 @@ export default function PatientPrescriptionsPage() {
                         <div
                           className={`flex items-start gap-2.5 px-3 py-2.5 rounded-xl text-xs border transition-colors ${
                             isSuggestionSelected
-                              ? "bg-rose-50 border-rose-200 text-rose-800"
-                              : "bg-amber-50 border-amber-200 text-amber-800"
+                              ? "bg-brand-soft border-brand-line text-brand-ink"
+                              : "bg-warning-soft border-warning-line text-warning"
                           }`}
                         >
                           <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5" />
@@ -218,8 +197,8 @@ export default function PatientPrescriptionsPage() {
                         </div>
                       )}
 
-                      <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                        <Store className="w-4 h-4 text-gray-400" />
+                      <p className="text-sm font-medium text-ink-soft flex items-center gap-2">
+                        <Store className="w-4 h-4 text-ink-muted" />
                         {suggested ? "Confirm or change pharmacy" : "Select a Partner Pharmacy"}
                       </p>
 
@@ -227,10 +206,8 @@ export default function PatientPrescriptionsPage() {
                         <div className="relative flex-1">
                           <select
                             value={selectedId}
-                            onChange={(e) =>
-                              setSelections((prev) => ({ ...prev, [rx.id]: e.target.value }))
-                            }
-                            className="w-full appearance-none pl-3 pr-8 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+                            onChange={(e) => setSelections((prev) => ({ ...prev, [rx.id]: e.target.value }))}
+                            className="w-full appearance-none pl-3 pr-8 py-2.5 text-sm border border-hairline rounded-xl bg-surface focus:outline-none focus:ring-2 focus:ring-focus"
                           >
                             <option value="">— Choose a pharmacy —</option>
                             {pharmacies.map((p) => (
@@ -240,7 +217,7 @@ export default function PatientPrescriptionsPage() {
                               </option>
                             ))}
                           </select>
-                          <ChevronDown className="w-4 h-4 text-gray-400 absolute right-2.5 top-3 pointer-events-none" />
+                          <ChevronDown className="w-4 h-4 text-ink-muted absolute right-2.5 top-3 pointer-events-none" />
                         </div>
                         <button
                           onClick={() => handleRoute(rx.id)}
@@ -252,18 +229,18 @@ export default function PatientPrescriptionsPage() {
                       </div>
 
                       {errors[rx.id] && (
-                        <p className="text-xs text-rose-600 flex items-center gap-1.5">
+                        <p className="text-xs text-brand-ink flex items-center gap-1.5">
                           <AlertCircle className="w-3.5 h-3.5" />
                           {errors[rx.id]}
                         </p>
                       )}
                     </div>
                   ) : (
-                    <div className="flex items-center gap-3 text-sm text-gray-600">
-                      <Store className="w-4 h-4 text-gray-400 shrink-0" />
+                    <div className="flex items-center gap-3 text-sm text-ink-soft">
+                      <Store className="w-4 h-4 text-ink-muted shrink-0" />
                       <div>
-                        <p className="font-semibold text-gray-900">{rx.pharmacy?.name}</p>
-                        <p className="text-xs text-gray-500">{rx.pharmacy?.address}</p>
+                        <p className="font-semibold text-ink">{rx.pharmacy?.name}</p>
+                        <p className="text-xs text-ink-muted">{rx.pharmacy?.address}</p>
                       </div>
                     </div>
                   )}

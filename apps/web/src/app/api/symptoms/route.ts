@@ -1,11 +1,10 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { runTriage, toLegacyRiskLevel } from "@/lib/triage/engine";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { apiError, apiSuccess, handle, parseJson } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { getTriageConsent } from "@/lib/consent";
+import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rateLimit";
+import { runTriage, toLegacyRiskLevel } from "@/lib/triage/engine";
 import { recordActivity } from "@/server/activity/activity.service";
 
 const SymptomInput = z.object({
@@ -15,44 +14,41 @@ const SymptomInput = z.object({
 });
 
 export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user?.email || !session.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
 
+  return handle(async () => {
     // Server-side consent gate: the UI gate can be bypassed, this cannot.
-    const consent = await getTriageConsent(session.user.id);
+    const consent = await getTriageConsent(userId);
     if (!consent.valid) {
-      return NextResponse.json(
-        { error: "Please review and accept the AI triage consent before using the symptom checker.", code: "CONSENT_REQUIRED" },
-        { status: 403 },
+      return apiError(
+        "Please review and accept the AI triage consent before using the symptom checker.",
+        403,
+        "CONSENT_REQUIRED",
       );
     }
 
-    // AI triage is an LLM call — rate-limit distinctly from generic API abuse.
-    const limit = rateLimit(`symptoms-ai:${session.user.id}`, 10, 10 * 60_000);
-    if (!limit.allowed) return rateLimitResponse(limit);
+    // AI triage is an LLM call, so it has a tighter budget than other writes.
+    const limited = enforceRateLimit(`symptoms-ai:${userId}`, 10, 10 * 60_000);
+    if (limited) return limited;
 
-    const body = await req.json().catch(() => null);
-    const parsed = SymptomInput.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
-    }
-    const { symptoms, cycleDay, notes } = parsed.data;
+    const body = await parseJson(req, SymptomInput);
+    if (!body.ok) return body.response;
+    const { symptoms, cycleDay, notes } = body.data;
 
     const triage = await runTriage({ symptoms, cycleDay, notes });
 
-    const newSymptomLog = await prisma.symptomCheck.create({
+    const log = await prisma.symptomCheck.create({
       data: {
-        userId: session.user.id,
+        userId,
         answers: { symptoms, cycleDay, notes, triage: { ...triage } },
         riskLevel: toLegacyRiskLevel(triage.severity),
       },
     });
 
     await recordActivity({
-      userId: session.user.id,
+      userId,
       type: "AI_TRIAGE",
       title: `AI symptom check: ${triage.severity.toLowerCase()} urgency`,
       details: {
@@ -66,52 +62,22 @@ export async function POST(req: Request) {
           engine: triage.engine,
         },
       },
-      ref: { type: "SymptomCheck", id: newSymptomLog.id },
+      ref: { type: "SymptomCheck", id: log.id },
     });
 
-    return NextResponse.json(
-      {
-        message: "Symptoms logged successfully",
-        log: newSymptomLog,
-        aiInsight: triage.summary,
-        triage,
-      },
-      { status: 201 },
-    );
-
-  } catch (error) {
-    console.error("Detailed Backend Error:", error instanceof Error ? error.message : error);
-    return NextResponse.json(
-      { error: "Failed to process symptoms. Check terminal for details." },
-      { status: 500 }
-    );
-  }
+    return apiSuccess({ message: "Symptoms logged successfully", log, aiInsight: triage.summary, triage }, 201);
+  });
 }
 
 export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user?.email || !session.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const dbUser = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!dbUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
+  const auth = await requireApiUser();
+  if (!auth.ok) return auth.response;
+  return handle(async () => {
     const logs = await prisma.symptomCheck.findMany({
-      where: { userId: dbUser.id },
+      where: { userId: auth.user.id },
       orderBy: { createdAt: "desc" },
       take: 30,
     });
-
-    return NextResponse.json({ logs }, { status: 200 });
-  } catch (error) {
-    console.error("[SYMPTOM_LOGS_ERROR]", error instanceof Error ? error.message : error);
-    return NextResponse.json({ error: "Failed to fetch logs" }, { status: 500 });
-  }
+    return apiSuccess({ logs }, 200, { "Cache-Control": "private, no-store" });
+  });
 }

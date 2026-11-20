@@ -1,47 +1,36 @@
 import { S3Client } from "@aws-sdk/client-s3";
+import { logger } from "@/lib/logger";
 
-// ── Startup env-var audit ──────────────────────────────────────────────────────
-// Run once when the module is first imported (server startup / first warm lambda).
-// Logs a sanitised warning — never prints the secret values themselves.
+// ── Credentials ────────────────────────────────────────────────────────────────
+// On ECS the task role supplies short-lived credentials through the SDK's
+// default provider chain, so no AWS keys need to exist at runtime (see
+// infra/terraform/modules/ecs-service). Static keys are still honoured when
+// both are set, for local development against a real bucket.
 
-const REQUIRED_VARS = [
-  "AWS_ACCESS_KEY_ID",
-  "AWS_SECRET_ACCESS_KEY",
-  "AWS_REGION",
-  "AWS_S3_BUCKET_NAME",
-] as const;
+const STATIC_KEYS = Boolean(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
 
-type RequiredVar = (typeof REQUIRED_VARS)[number];
+export const AWS_REGION = process.env.AWS_REGION ?? "us-east-1";
+export const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET_NAME ?? "";
 
-const MISSING_VARS: RequiredVar[] = (REQUIRED_VARS as readonly RequiredVar[]).filter(
-  (v) => !process.env[v],
-);
-
-if (MISSING_VARS.length > 0) {
-  // Use warn (not error) — the server is still bootable; only uploads will fail.
-  console.warn(
-    `[S3 CONFIG] Missing required env vars: ${MISSING_VARS.join(", ")}. ` +
-      "Profile picture and media uploads will return 503 until these are set.",
+if (!AWS_S3_BUCKET) {
+  // Use warn (not error): the server still boots; only uploads return 503.
+  logger.warn(
+    { event: "config.s3_bucket_missing" },
+    "AWS_S3_BUCKET_NAME is not set: profile picture and media uploads will return 503",
   );
 }
 
-// ── Exported constants ─────────────────────────────────────────────────────────
-// Fall back to empty strings so the S3Client constructor never receives
-// `undefined` — the SDK accepts empty strings and defers the error to the
-// actual network call, where our catch block can surface it cleanly.
-
-export const AWS_REGION    = process.env.AWS_REGION         ?? "us-east-1";
-export const AWS_S3_BUCKET = process.env.AWS_S3_BUCKET_NAME ?? "";
-
 export const s3 = new S3Client({
   region: AWS_REGION,
-  credentials: {
-    accessKeyId:     process.env.AWS_ACCESS_KEY_ID     ?? "",
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "",
-  },
+  ...(STATIC_KEYS && {
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+  }),
 });
 
-/** Returns true only when all four required env vars are present. */
+/** True when a bucket is configured. Credentials come from the task role or static keys. */
 export function s3IsConfigured(): boolean {
-  return MISSING_VARS.length === 0;
+  return AWS_S3_BUCKET !== "";
 }

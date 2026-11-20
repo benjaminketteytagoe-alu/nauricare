@@ -1,9 +1,9 @@
-import { requireRole } from "@/lib/auth-guards";
-import { prisma } from "@/lib/prisma";
-import { CURRENT_CONSENT_VERSION, evaluateConsent } from "@/lib/consent";
-import { TriageGate } from "@/components/triage-gate/TriageGate";
 import { ConsentStatusBar } from "@/components/triage-gate/ConsentStatusBar";
+import { TriageGate } from "@/components/triage-gate/TriageGate";
 import { TriageHandover } from "@/components/triage-gate/TriageHandover";
+import { requireRole } from "@/lib/auth-guards";
+import { CURRENT_CONSENT_VERSION, evaluateConsent } from "@/lib/consent";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 

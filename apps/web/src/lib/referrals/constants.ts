@@ -33,7 +33,10 @@ export function matchListedInsurer(name: string): InsuranceProvider | null {
   const key = insurerKey(name);
   if (!key) return null;
   const hit = INSURANCE_OPTIONS.find(
-    (o) => o.value !== "OTHER_PRIVATE" && o.value !== "NONE_CASH" && (insurerKey(o.label) === key || insurerKey(o.value) === key),
+    (o) =>
+      o.value !== "OTHER_PRIVATE" &&
+      o.value !== "NONE_CASH" &&
+      (insurerKey(o.label) === key || insurerKey(o.value) === key),
   );
   return hit?.value ?? null;
 }
@@ -51,5 +54,3 @@ export const KIGALI_DISTRICTS = ["Gasabo", "Kicukiro", "Nyarugenge"] as const;
 
 export const TRIAGE_SEVERITIES = ["LOW", "MODERATE", "URGENT"] as const;
 export type TriageSeverity = (typeof TRIAGE_SEVERITIES)[number];
-
-export { EMERGENCY_NUMBERS } from "@/lib/site";

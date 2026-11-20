@@ -1,18 +1,19 @@
-// apps/web/src/app/api/appointments/route.ts
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
-import { sendPatientConfirmationEmail, sendProviderAlertEmail } from "@/lib/email";
-import { recordActivity } from "@/server/activity/activity.service";
-import { notify } from "@/server/notifications/notify";
 import { z } from "zod";
-import { apiError, parseJson } from "@/lib/api";
+import { apiSuccess, handle, notFound, parseJson } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
+import { sendPatientConfirmationEmail, sendProviderAlertEmail } from "@/lib/email";
+import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { sanitizePlainText } from "@/lib/sanitize";
 import { idSchema } from "@/lib/validation/common";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { recordActivity } from "@/server/activity/activity.service";
+import { notify } from "@/server/notifications/notify";
 
-const isoDate = z.string().max(40).refine((v) => !Number.isNaN(Date.parse(v)), "Invalid date.");
+const isoDate = z
+  .string()
+  .max(40)
+  .refine((v) => !Number.isNaN(Date.parse(v)), "Invalid date.");
 const BookingInput = z
   .object({
     practitionerProfileId: idSchema,
@@ -20,29 +21,25 @@ const BookingInput = z
     endTime: isoDate,
     notes: z.string().max(2000, "Notes must be under 2000 characters.").optional().or(z.null()),
   })
-  .refine((v) => Date.parse(v.endTime) > Date.parse(v.startTime), { message: "The appointment must end after it starts." })
+  .refine((v) => Date.parse(v.endTime) > Date.parse(v.startTime), {
+    message: "The appointment must end after it starts.",
+  })
   .refine((v) => Date.parse(v.startTime) > Date.now() - 5 * 60_000, { message: "Please choose a time in the future." });
 
 export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.role !== "PATIENT") {
-      return new NextResponse("Unauthorized. Only patients can book appointments.", { status: 401 });
-    }
+  const auth = await requireApiUser("PATIENT");
+  if (!auth.ok) return auth.response;
+  const patient = auth.user;
+  const limited = enforceRateLimit(`booking:${patient.id}`, 10, 60 * 60_000);
+  if (limited) return limited;
+  const parsed = await parseJson(req, BookingInput);
+  if (!parsed.ok) return parsed.response;
+  const { practitionerProfileId, startTime, endTime } = parsed.data;
+  const notes = parsed.data.notes ? sanitizePlainText(parsed.data.notes) : "";
 
-    const limit = rateLimit(`booking:${session.user.id}`, 10, 60 * 60_000);
-    if (!limit.allowed) return rateLimitResponse(limit);
-
-    const parsed = await parseJson(req, BookingInput);
-    if (!parsed.ok) return parsed.response;
-    const { practitionerProfileId, startTime, endTime } = parsed.data;
-    const notes = parsed.data.notes ? sanitizePlainText(parsed.data.notes) : "";
-
-    const patientProfile = await prisma.patientProfile.findUnique({
-      where: { userId: session.user.id },
-    });
-
-    if (!patientProfile) return new NextResponse("Patient profile not found.", { status: 404 });
+  return handle(async () => {
+    const patientProfile = await prisma.patientProfile.findUnique({ where: { userId: patient.id } });
+    if (!patientProfile) return notFound("Patient profile not found.");
 
     const practitioner = await prisma.practitionerProfile.findUnique({
       where: { id: practitionerProfileId },
@@ -51,14 +48,12 @@ export async function POST(req: Request) {
 
     // Only verified, active practitioners can be booked (same rule as the directory).
     if (!practitioner || !practitioner.isVerified || !practitioner.isActive) {
-      return apiError("This specialist isn't available for booking.", 404);
+      return notFound("This specialist isn't available for booking.");
     }
 
     const start = new Date(startTime);
     const dateLabel =
-      start.toDateString() +
-      " at " +
-      start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      start.toDateString() + " at " + start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
     // Atomic booking: create appointment → derive meetingLink → notify both parties.
     // All four writes succeed together or none do.
@@ -84,7 +79,7 @@ export async function POST(req: Request) {
         }),
         tx.notification.create({
           data: {
-            userId: session.user.id,
+            userId: patient.id,
             type: "EMAIL",
             status: "PENDING",
             message: `Your NauriCare telehealth appointment is confirmed for ${dateLabel}. Join here: ${meetingLink}`,
@@ -119,105 +114,110 @@ export async function POST(req: Request) {
     // allSettled (not all) so a failure on one side doesn't hide the other's
     // outcome — Promise.all only ever surfaces the first rejection.
     const emailJobs = [
-      { label: "patient", to: session.user.email, fn: () => sendPatientConfirmationEmail({
-          to: session.user.email!,
-          patientName: session.user.name ?? "Patient",
-          providerName: practitioner.user.name ?? "Your Provider",
-          date: apptDate,
-          time: apptTime,
-          meetingLink: appointment.meetingLink ?? "",
-        }) },
-      { label: "provider", to: practitioner.user.email, fn: () => sendProviderAlertEmail({
-          to: practitioner.user.email,
-          providerName: practitioner.user.name ?? "Provider",
-          patientName: session.user.name ?? "Patient",
-          date: apptDate,
-          time: apptTime,
-          meetingLink: appointment.meetingLink ?? "",
-        }) },
+      {
+        recipient: "patient",
+        fn: async () => {
+          if (!patient.email) throw new Error("patient has no email address");
+          return sendPatientConfirmationEmail({
+            to: patient.email,
+            patientName: patient.name ?? "Patient",
+            providerName: practitioner.user.name ?? "Your Provider",
+            date: apptDate,
+            time: apptTime,
+            meetingLink: appointment.meetingLink ?? "",
+          });
+        },
+      },
+      {
+        recipient: "provider",
+        fn: () =>
+          sendProviderAlertEmail({
+            to: practitioner.user.email,
+            providerName: practitioner.user.name ?? "Provider",
+            patientName: patient.name ?? "Patient",
+            date: apptDate,
+            time: apptTime,
+            meetingLink: appointment.meetingLink ?? "",
+          }),
+      },
     ];
 
     const results = await Promise.allSettled(emailJobs.map((job) => job.fn()));
+    // Ids and outcomes only: recipient addresses never go to the logs.
     results.forEach((result, i) => {
-      const { label, to } = emailJobs[i];
+      const { recipient } = emailJobs[i];
       if (result.status === "rejected") {
-        console.error(`[APPOINTMENT_EMAIL_ERROR] ${label} (to=${to}):`, result.reason);
+        logger.error(
+          { event: "appointments.email_failed", recipient, appointmentId: appointment.id, err: result.reason },
+          "Appointment email failed",
+        );
       } else {
-        console.log(`[APPOINTMENT_EMAIL_OK] ${label} (to=${to})`);
+        logger.info(
+          { event: "appointments.email_sent", recipient, appointmentId: appointment.id },
+          "Appointment email sent",
+        );
       }
     });
 
     await notify({
       recipientId: practitioner.userId,
-      actorId: session.user.id,
+      actorId: patient.id,
       type: "APPOINTMENT_BOOKED",
       title: `New booking: ${dateLabel}`,
-      body: `${session.user.name ?? "A patient"} booked a video consultation.`,
+      body: `${patient.name ?? "A patient"} booked a video consultation.`,
       link: "/provider/schedule",
     });
 
     await recordActivity({
-      userId: session.user.id,
+      userId: patient.id,
       type: "APPOINTMENT_BOOKED",
       title: `Booked a consultation with ${practitioner.user.name}`,
       details: { startTime: start.toISOString(), clinic: practitioner.clinicName },
       ref: { type: "Appointment", id: appointment.id },
     });
 
-    return NextResponse.json(appointment, { status: 201 });
-  } catch (error) {
-    console.error("[APPOINTMENT_BOOKING_ERROR]", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+    return apiSuccess(appointment, 201);
+  });
 }
 
-// GET: Smart Router for fetching schedules
+// GET: upcoming appointments, shaped for the caller's role.
 export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+  const auth = await requireApiUser("PATIENT", "PROVIDER");
+  if (!auth.ok) return auth.response;
+  const { id: userId, role } = auth.user;
 
-    // --- SCENARIO A: The user is a DOCTOR (Provider) ---
-    if (session.user.role === "PROVIDER") {
-      const practitionerProfile = await prisma.practitionerProfile.findUnique({
-        where: { userId: session.user.id }
-      });
-      if (!practitionerProfile) return NextResponse.json([]); // No profile yet
+  return handle(async () => {
+    if (role === "PROVIDER") {
+      const practitionerProfile = await prisma.practitionerProfile.findUnique({ where: { userId } });
+      if (!practitionerProfile) return apiSuccess([]); // No profile yet
 
       const doctorSchedule = await prisma.appointment.findMany({
-        where: { 
+        where: {
           practitionerProfileId: practitionerProfile.id,
-          startTime: { gte: new Date() } // Only future appointments
+          startTime: { gte: new Date() }, // Only future appointments
         },
         include: {
           // Pull the patient's name and email so the doctor knows who they are seeing
-          patient: { include: { user: { select: { name: true, email: true } } } }
+          patient: { include: { user: { select: { name: true, email: true } } } },
         },
-        orderBy: { startTime: 'asc' }
+        orderBy: { startTime: "asc" },
       });
-      return NextResponse.json(doctorSchedule);
+      return apiSuccess(doctorSchedule);
     }
 
-    // --- SCENARIO B: The user is a PATIENT ---
-    const patientProfile = await prisma.patientProfile.findUnique({
-      where: { userId: session.user.id },
-    });
-    if (!patientProfile) return NextResponse.json([]); 
+    const patientProfile = await prisma.patientProfile.findUnique({ where: { userId } });
+    if (!patientProfile) return apiSuccess([]);
 
     const patientSchedule = await prisma.appointment.findMany({
-      where: { 
+      where: {
         patientProfileId: patientProfile.id,
-        startTime: { gte: new Date() } 
+        startTime: { gte: new Date() },
       },
       include: {
-        practitioner: { include: { user: { select: { name: true, email: true } } } }
+        practitioner: { include: { user: { select: { name: true, email: true } } } },
       },
-      orderBy: { startTime: 'asc' }
+      orderBy: { startTime: "asc" },
     });
-    return NextResponse.json(patientSchedule);
-
-  } catch (error) {
-    console.error("[APPOINTMENT_FETCH_ERROR]", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+    return apiSuccess(patientSchedule);
+  });
 }

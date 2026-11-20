@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 const SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
 interface TurnstileVerifyResponse {
@@ -8,7 +9,7 @@ interface TurnstileVerifyResponse {
 export async function verifyTurnstileToken(token: string, ip?: string): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) {
-    console.error("[TURNSTILE] TURNSTILE_SECRET_KEY is not set");
+    logger.error({ event: "config.turnstile_secret_missing" }, "TURNSTILE_SECRET_KEY is not set");
     return false;
   }
 
@@ -27,7 +28,7 @@ export async function verifyTurnstileToken(token: string, ip?: string): Promise<
     const data = (await res.json()) as TurnstileVerifyResponse;
     return data.success === true;
   } catch (err) {
-    console.error("[TURNSTILE] Verification request failed:", err);
+    logger.error({ event: "turnstile.verify_failed", err }, "Turnstile verification request failed");
     return false;
   }
 }

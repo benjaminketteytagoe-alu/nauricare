@@ -1,7 +1,9 @@
+import "server-only";
+import type { LatLng } from "@/lib/geo/distance";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { SUPPORT_EMAIL } from "@/lib/site";
 import { safeGet } from "@/server/net/safeFetch";
-import type { LatLng } from "@/lib/geo/distance";
 
 // Address -> coordinates via OpenStreetMap Nominatim (free; usage policy:
 // max 1 request/second, identifying User-Agent, cache results). Results are
@@ -27,21 +29,31 @@ export async function geocode(query: string): Promise<LatLng | null> {
   await throttle();
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=rw&q=${encodeURIComponent(q)}`;
-    const res = await safeGet(url, { accept: "application/json", timeoutMs: 10_000, maxBytes: 200_000, userAgent: `NauriCare/1.0 (${SUPPORT_EMAIL})` });
+    const res = await safeGet(url, {
+      accept: "application/json",
+      timeoutMs: 10_000,
+      maxBytes: 200_000,
+      userAgent: `NauriCare/1.0 (${SUPPORT_EMAIL})`,
+    });
     if (res.status !== 200) return null;
     const [hit] = JSON.parse(res.body.toString("utf8")) as { lat: string; lon: string }[];
     const result = hit ? { lat: Number(hit.lat), lng: Number(hit.lon) } : null;
     memo.set(key, result);
     return result;
   } catch (e) {
-    console.error("[GEOCODE]", e instanceof Error ? e.message : e);
+    logger.warn({ event: "geo.geocode_failed", err: e }, "Geocoding failed");
     return null;
   }
 }
 
 /** Best-effort coordinates for a practice from its location and clinic name. */
-export async function geocodePractice(location: string | null | undefined, clinic: string | null | undefined): Promise<LatLng | null> {
-  for (const q of [location && clinic ? `${clinic}, ${location}` : null, location, clinic].filter(Boolean) as string[]) {
+export async function geocodePractice(
+  location: string | null | undefined,
+  clinic: string | null | undefined,
+): Promise<LatLng | null> {
+  for (const q of [location && clinic ? `${clinic}, ${location}` : null, location, clinic].filter(
+    Boolean,
+  ) as string[]) {
     const hit = await geocode(q.includes("Rwanda") ? q : `${q}, Rwanda`);
     if (hit) return hit;
   }
@@ -63,7 +75,11 @@ export async function backfillCoordinates(limit = 40) {
       result.providers++;
     } else result.notFound++;
   }
-  const hospitals = await prisma.hospital.findMany({ where: { latitude: null }, select: { id: true, name: true, address: true }, take: limit });
+  const hospitals = await prisma.hospital.findMany({
+    where: { latitude: null },
+    select: { id: true, name: true, address: true },
+    take: limit,
+  });
   for (const h of hospitals) {
     const hit = await geocodePractice(h.address, h.name);
     if (hit) {

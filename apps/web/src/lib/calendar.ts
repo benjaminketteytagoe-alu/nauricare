@@ -11,7 +11,10 @@ function toCalendarDate(iso: string): string {
   return iso.replace(/[-:]/g, "").split(".")[0] + "Z";
 }
 
-export function generateGoogleCalendarUrl(appt: AppointmentForCalendar, title = "NauriCare Telehealth Consultation"): string {
+export function generateGoogleCalendarUrl(
+  appt: AppointmentForCalendar,
+  title = "NauriCare Telehealth Consultation",
+): string {
   const link = appt.meetingLink ?? "";
   const params = new URLSearchParams({
     action: "TEMPLATE",

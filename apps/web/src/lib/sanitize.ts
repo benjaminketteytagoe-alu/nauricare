@@ -7,7 +7,13 @@ import sanitizeHtml from "sanitize-html";
 
 const STRIP_ALL: sanitizeHtml.IOptions = { allowedTags: [], allowedAttributes: {}, disallowedTagsMode: "discard" };
 
-const decode = (s: string) => s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
+const decode = (s: string) =>
+  s
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
 
 export function sanitizePlainText(input: string): string {
   // sanitize-html entity-encodes &, < and >. We store readable characters

@@ -1,14 +1,15 @@
 "use server";
 
-import { z } from "zod";
-import { revalidatePath } from "next/cache";
 import type { FlowLevel, PatientProfile } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { getSessionUser } from "@/lib/auth-guards";
-import { sanitizePlainText } from "@/lib/sanitize";
-import { addDays, diffInDays, parseDateKey, toDateKey } from "@/lib/cycleDates";
-import { DEFAULT_CYCLE_LENGTH, DEFAULT_PERIOD_LENGTH, predictCycle } from "@/lib/cycle/predict";
 import { MOOD_IDS, SYMPTOM_IDS } from "@/lib/cycle/catalog";
+import { DEFAULT_CYCLE_LENGTH, DEFAULT_PERIOD_LENGTH, predictCycle } from "@/lib/cycle/predict";
+import { addDays, diffInDays, parseDateKey, toDateKey } from "@/lib/cycleDates";
+import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/prisma";
+import { sanitizePlainText } from "@/lib/sanitize";
 import { recordActivity } from "@/server/activity/activity.service";
 
 export type CycleLogEntry = {
@@ -30,7 +31,13 @@ export type CyclePrediction = {
 
 export type CycleAverages = { cycleLength: number; periodLength: number };
 
-export type DayLogEntry = { date: string; flow: FlowLevel | null; symptoms: string[]; moods: string[]; notes: string | null };
+export type DayLogEntry = {
+  date: string;
+  flow: FlowLevel | null;
+  symptoms: string[];
+  moods: string[];
+  notes: string | null;
+};
 
 export type CycleData = {
   logs: CycleLogEntry[];
@@ -50,7 +57,10 @@ const EMPTY: CycleData = {
   goals: [],
 };
 const DAY_LOG_WINDOW_DAYS = 200;
-const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date.").refine((k) => !Number.isNaN(parseDateKey(k).getTime()), "Invalid date.");
+const dateKey = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date.")
+  .refine((k) => !Number.isNaN(parseDateKey(k).getTime()), "Invalid date.");
 
 async function requirePatientProfile(): Promise<{ error: string } | { profile: PatientProfile }> {
   const user = await getSessionUser();
@@ -83,11 +93,21 @@ async function overlapping(profileId: string, start: Date, end: Date, excludeId?
   });
 }
 
-export async function logPeriodRange({ startDate, endDate, notes }: { startDate: string; endDate: string; notes?: string }): Promise<Result> {
+export async function logPeriodRange({
+  startDate,
+  endDate,
+  notes,
+}: {
+  startDate: string;
+  endDate: string;
+  notes?: string;
+}): Promise<Result> {
   try {
     const auth = await requirePatientProfile();
     if ("error" in auth) return { success: false, error: auth.error };
-    const parsed = z.object({ startDate: dateKey, endDate: dateKey, notes: z.string().max(1000).optional() }).safeParse({ startDate, endDate, notes });
+    const parsed = z
+      .object({ startDate: dateKey, endDate: dateKey, notes: z.string().max(1000).optional() })
+      .safeParse({ startDate, endDate, notes });
     if (!parsed.success) return { success: false, error: parsed.error.issues[0].message };
 
     const start = parseDateKey(startDate);
@@ -95,8 +115,13 @@ export async function logPeriodRange({ startDate, endDate, notes }: { startDate:
     if (end < start) return { success: false, error: "End date must be on or after the start date." };
     if (isFuture(endDate)) return { success: false, error: "You can't log a period in the future." };
     const periodLength = diffInDays(end, start) + 1;
-    if (periodLength > 14) return { success: false, error: "A period longer than 14 days should be checked by a doctor. Please log up to 14 days." };
-    if (await overlapping(auth.profile.id, start, end)) return { success: false, error: "These dates overlap a period you've already logged." };
+    if (periodLength > 14)
+      return {
+        success: false,
+        error: "A period longer than 14 days should be checked by a doctor. Please log up to 14 days.",
+      };
+    if (await overlapping(auth.profile.id, start, end))
+      return { success: false, error: "These dates overlap a period you've already logged." };
 
     const previousLog = await prisma.cycleLog.findFirst({
       where: { patientProfileId: auth.profile.id, startDate: { lt: start } },
@@ -114,11 +139,16 @@ export async function logPeriodRange({ startDate, endDate, notes }: { startDate:
         notes: notes ? sanitizePlainText(notes) || undefined : undefined,
       },
     });
-    await recordActivity({ userId: auth.profile.userId, type: "CYCLE_LOGGED", title: `Logged a period (${periodLength} day${periodLength === 1 ? "" : "s"})`, details: { startDate, endDate } });
+    await recordActivity({
+      userId: auth.profile.userId,
+      type: "CYCLE_LOGGED",
+      title: `Logged a period (${periodLength} day${periodLength === 1 ? "" : "s"})`,
+      details: { startDate, endDate },
+    });
     refresh();
     return { success: true };
   } catch (error) {
-    console.error("[LOG_PERIOD_RANGE_ERROR]", error);
+    logger.error({ event: "cycle.log_period_range_failed", err: error }, "Logging period range failed");
     return { success: false, error: "Failed to save period log." };
   }
 }
@@ -128,18 +158,32 @@ export async function startPeriod(day: string): Promise<Result> {
   try {
     const auth = await requirePatientProfile();
     if ("error" in auth) return { success: false, error: auth.error };
-    if (!dateKey.safeParse(day).success || isFuture(day)) return { success: false, error: "Choose today or a past date." };
+    if (!dateKey.safeParse(day).success || isFuture(day))
+      return { success: false, error: "Choose today or a past date." };
     const start = parseDateKey(day);
-    if (await overlapping(auth.profile.id, start, start)) return { success: false, error: "You've already logged a period around this date." };
-    const previous = await prisma.cycleLog.findFirst({ where: { patientProfileId: auth.profile.id, startDate: { lt: start } }, orderBy: { startDate: "desc" } });
-    await prisma.cycleLog.create({
-      data: { patientProfileId: auth.profile.id, startDate: start, ...(previous ? { cycleLength: diffInDays(start, previous.startDate) } : {}) },
+    if (await overlapping(auth.profile.id, start, start))
+      return { success: false, error: "You've already logged a period around this date." };
+    const previous = await prisma.cycleLog.findFirst({
+      where: { patientProfileId: auth.profile.id, startDate: { lt: start } },
+      orderBy: { startDate: "desc" },
     });
-    await recordActivity({ userId: auth.profile.userId, type: "CYCLE_LOGGED", title: "Logged the start of a period", details: { startDate: day } });
+    await prisma.cycleLog.create({
+      data: {
+        patientProfileId: auth.profile.id,
+        startDate: start,
+        ...(previous ? { cycleLength: diffInDays(start, previous.startDate) } : {}),
+      },
+    });
+    await recordActivity({
+      userId: auth.profile.userId,
+      type: "CYCLE_LOGGED",
+      title: "Logged the start of a period",
+      details: { startDate: day },
+    });
     refresh();
     return { success: true };
   } catch (error) {
-    console.error("[START_PERIOD_ERROR]", error);
+    logger.error({ event: "cycle.start_period_failed", err: error }, "Starting period failed");
     return { success: false, error: "Failed to log your period." };
   }
 }
@@ -149,17 +193,24 @@ export async function endPeriod(day: string): Promise<Result> {
   try {
     const auth = await requirePatientProfile();
     if ("error" in auth) return { success: false, error: auth.error };
-    if (!dateKey.safeParse(day).success || isFuture(day)) return { success: false, error: "Choose today or a past date." };
-    const latest = await prisma.cycleLog.findFirst({ where: { patientProfileId: auth.profile.id }, orderBy: { startDate: "desc" } });
+    if (!dateKey.safeParse(day).success || isFuture(day))
+      return { success: false, error: "Choose today or a past date." };
+    const latest = await prisma.cycleLog.findFirst({
+      where: { patientProfileId: auth.profile.id },
+      orderBy: { startDate: "desc" },
+    });
     const open = latest && !latest.endDate && diffInDays(parseDateKey(day), latest.startDate) < 14 ? latest : null;
     if (!open) return { success: false, error: "There's no ongoing period to end." };
     const end = parseDateKey(day);
     if (end < open.startDate) return { success: false, error: "The end date must be on or after the start date." };
-    await prisma.cycleLog.update({ where: { id: open.id }, data: { endDate: end, periodLength: diffInDays(end, open.startDate) + 1 } });
+    await prisma.cycleLog.update({
+      where: { id: open.id },
+      data: { endDate: end, periodLength: diffInDays(end, open.startDate) + 1 },
+    });
     refresh();
     return { success: true };
   } catch (error) {
-    console.error("[END_PERIOD_ERROR]", error);
+    logger.error({ event: "cycle.end_period_failed", err: error }, "Ending period failed");
     return { success: false, error: "Failed to update your period." };
   }
 }
@@ -169,12 +220,14 @@ export async function deletePeriod(id: string): Promise<Result> {
     const auth = await requirePatientProfile();
     if ("error" in auth) return { success: false, error: auth.error };
     // Scoped to the caller's own profile, so another patient's id matches nothing.
-    const { count } = await prisma.cycleLog.deleteMany({ where: { id: z.string().max(64).parse(id), patientProfileId: auth.profile.id } });
+    const { count } = await prisma.cycleLog.deleteMany({
+      where: { id: z.string().max(64).parse(id), patientProfileId: auth.profile.id },
+    });
     if (count === 0) return { success: false, error: "Period not found." };
     refresh();
     return { success: true };
   } catch (error) {
-    console.error("[DELETE_PERIOD_ERROR]", error);
+    logger.error({ event: "cycle.delete_period_failed", err: error }, "Deleting period failed");
     return { success: false, error: "Failed to delete that period." };
   }
 }
@@ -203,12 +256,16 @@ export async function saveDayLog(input: z.infer<typeof DayLogInput>): Promise<Re
       await prisma.cycleDayLog.deleteMany({ where: { patientProfileId: auth.profile.id, date: parseDateKey(date) } });
     } else {
       const data = { flow, symptoms: [...new Set(symptoms)], moods: [...new Set(moods)], notes };
-      await prisma.cycleDayLog.upsert({ where: key, create: { patientProfileId: auth.profile.id, date: parseDateKey(date), ...data }, update: data });
+      await prisma.cycleDayLog.upsert({
+        where: key,
+        create: { patientProfileId: auth.profile.id, date: parseDateKey(date), ...data },
+        update: data,
+      });
     }
     refresh();
     return { success: true };
   } catch (error) {
-    console.error("[SAVE_DAY_LOG_ERROR]", error);
+    logger.error({ event: "cycle.save_day_log_failed", err: error }, "Saving day log failed");
     return { success: false, error: "Failed to save today's log." };
   }
 }
@@ -218,7 +275,11 @@ export async function getCycleData(): Promise<CycleData> {
   if ("error" in auth) return EMPTY;
 
   const [logs, dayLogs] = await Promise.all([
-    prisma.cycleLog.findMany({ where: { patientProfileId: auth.profile.id }, orderBy: { startDate: "desc" }, take: 24 }),
+    prisma.cycleLog.findMany({
+      where: { patientProfileId: auth.profile.id },
+      orderBy: { startDate: "desc" },
+      take: 24,
+    }),
     prisma.cycleDayLog.findMany({
       where: { patientProfileId: auth.profile.id, date: { gte: addDays(new Date(), -DAY_LOG_WINDOW_DAYS) } },
       orderBy: { date: "asc" },
@@ -238,10 +299,22 @@ export async function getCycleData(): Promise<CycleData> {
       notes: log.notes,
     })),
     prediction: p
-      ? { nextStart: toDateKey(p.nextStart), nextEnd: toDateKey(p.nextEnd), ovulationDay: toDateKey(p.ovulationDay), fertileStart: toDateKey(p.fertileStart), fertileEnd: toDateKey(p.fertileEnd) }
+      ? {
+          nextStart: toDateKey(p.nextStart),
+          nextEnd: toDateKey(p.nextEnd),
+          ovulationDay: toDateKey(p.ovulationDay),
+          fertileStart: toDateKey(p.fertileStart),
+          fertileEnd: toDateKey(p.fertileEnd),
+        }
       : null,
     averages: { cycleLength: stats.cycleLength, periodLength: stats.periodLength },
-    dayLogs: dayLogs.map((d) => ({ date: toDateKey(d.date), flow: d.flow, symptoms: d.symptoms, moods: d.moods, notes: d.notes })),
+    dayLogs: dayLogs.map((d) => ({
+      date: toDateKey(d.date),
+      flow: d.flow,
+      symptoms: d.symptoms,
+      moods: d.moods,
+      notes: d.notes,
+    })),
     goals: auth.profile.healthGoals,
   };
 }

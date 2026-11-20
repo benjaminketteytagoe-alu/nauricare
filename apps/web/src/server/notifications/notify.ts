@@ -1,4 +1,6 @@
+import "server-only";
 import type { UserNotificationType } from "@prisma/client";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { publish } from "@/server/realtime/bus";
 
@@ -41,7 +43,7 @@ export async function notify(input: NotifyInput): Promise<void> {
   try {
     await notifyOrThrow(input);
   } catch (error) {
-    console.error(`[NOTIFY] ${input.type} failed:`, error instanceof Error ? error.message : error);
+    logger.error({ event: "notifications.notify_failed", type: input.type, err: error }, "Notification failed");
   }
 }
 

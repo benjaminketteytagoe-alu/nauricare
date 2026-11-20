@@ -1,11 +1,12 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
+import { apiSuccess, forbidden, handle, notFound, parseJson, validationError } from "@/lib/api";
 import { logAdministrativeAction } from "@/lib/audit";
+import { requireApiUser } from "@/lib/auth-guards";
+import { getClientIp } from "@/lib/getClientIp";
+import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rateLimit";
 
-const createRecordSchema = z.object({
+const CreateRecord = z.object({
   patientProfileId: z.string().min(1),
   type: z.string().trim().min(1).max(100),
   content: z.string().trim().min(1).max(10_000),
@@ -13,134 +14,90 @@ const createRecordSchema = z.object({
   documentUrl: z.url().optional(),
 });
 
+const recordInclude = { practitioner: { include: { user: { select: { name: true } } } } } as const;
+
+/** The caller's practitioner profile id when they have seen this patient, else null. */
+async function careRelationship(userId: string, patientProfileId: string): Promise<string | null | "no-profile"> {
+  const practitioner = await prisma.practitionerProfile.findUnique({ where: { userId }, select: { id: true } });
+  if (!practitioner) return "no-profile";
+  const shared = await prisma.appointment.findFirst({
+    where: { practitionerProfileId: practitioner.id, patientProfileId },
+    select: { id: true },
+  });
+  return shared ? practitioner.id : null;
+}
+
+// PATIENT: their own records. PROVIDER: one patient's records, only with a
+// care relationship (at least one appointment), and every read is audited.
 export async function GET(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+  const auth = await requireApiUser("PATIENT", "PROVIDER");
+  if (!auth.ok) return auth.response;
+  const { id: userId, role } = auth.user;
 
-    // ── PATIENT path: patients can read their own records without a URL param ──
-    if (session.user.role === "PATIENT") {
-      const profile = await prisma.patientProfile.findUnique({
-        where: { userId: session.user.id },
-      });
-      if (!profile) return new NextResponse("Patient profile not found", { status: 404 });
-
-      const records = await prisma.healthRecord.findMany({
-        where: { patientProfileId: profile.id },
-        include: {
-          practitioner: { include: { user: { select: { name: true } } } },
-        },
-        orderBy: { createdAt: "desc" },
-      });
-
-      return NextResponse.json(records);
-    }
-
-    // ── PROVIDER path: relationship-gated access to a specific patient ──
-    if (session.user.role !== "PROVIDER") {
-      return new NextResponse("Forbidden", { status: 403 });
+  return handle(async () => {
+    if (role === "PATIENT") {
+      const profile = await prisma.patientProfile.findUnique({ where: { userId }, select: { id: true } });
+      if (!profile) return notFound("Patient profile not found.");
+      return apiSuccess(
+        await prisma.healthRecord.findMany({
+          where: { patientProfileId: profile.id },
+          include: recordInclude,
+          orderBy: { createdAt: "desc" },
+        }),
+      );
     }
 
     const patientProfileId = new URL(req.url).searchParams.get("patientProfileId");
-    if (!patientProfileId) {
-      return new NextResponse("Missing patientProfileId", { status: 400 });
-    }
+    if (!patientProfileId) return validationError("Missing patientProfileId.");
 
-    const practitioner = await prisma.practitionerProfile.findUnique({
-      where: { userId: session.user.id },
-    });
-    if (!practitioner) {
-      return new NextResponse("Practitioner profile not found", { status: 404 });
-    }
-
-    // Gate: the provider must have at least one appointment with this patient
-    const sharedAppointment = await prisma.appointment.findFirst({
-      where: {
-        practitionerProfileId: practitioner.id,
-        patientProfileId,
-      },
-    });
-    if (!sharedAppointment) {
-      return new NextResponse("Forbidden: no active patient relationship", { status: 403 });
-    }
+    const practitionerProfileId = await careRelationship(userId, patientProfileId);
+    if (practitionerProfileId === "no-profile") return notFound("Practitioner profile not found.");
+    if (!practitionerProfileId) return forbidden("No active patient relationship.");
 
     const records = await prisma.healthRecord.findMany({
       where: { patientProfileId },
-      include: {
-        practitioner: { include: { user: { select: { name: true } } } },
-      },
+      include: recordInclude,
       orderBy: { createdAt: "desc" },
     });
 
-    // Fire-and-forget: audit failures must never block the response
+    // Fire-and-forget: audit failures must never block the response.
     void logAdministrativeAction({
       action: "RECORD_ACCESS",
-      actorId: session.user.id,
+      actorId: userId,
       targetId: patientProfileId,
-      details: {
-        practitionerProfileId: practitioner.id,
-        recordCount: records.length,
-      },
-      ipAddress: req.headers.get("x-forwarded-for") ?? undefined,
+      details: { practitionerProfileId, recordCount: records.length },
+      ipAddress: getClientIp(req.headers),
     });
-
-    return NextResponse.json(records);
-  } catch (error) {
-    console.error("[EHR_GET_ERROR]", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+    return apiSuccess(records);
+  });
 }
 
 export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.role !== "PROVIDER") {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+  const auth = await requireApiUser("PROVIDER");
+  if (!auth.ok) return auth.response;
+  const limited = enforceRateLimit(`records:${auth.user.id}`);
+  if (limited) return limited;
+  const body = await parseJson(req, CreateRecord);
+  if (!body.ok) return body.response;
+  const { patientProfileId, type, content, notes, documentUrl } = body.data;
 
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch {
-      return new NextResponse("Invalid JSON body", { status: 400 });
-    }
-
-    const parsed = createRecordSchema.safeParse(body);
-    if (!parsed.success) {
-      return new NextResponse(parsed.error.issues[0].message, { status: 400 });
-    }
-    const { patientProfileId, type, content, notes, documentUrl } = parsed.data;
-
-    const practitioner = await prisma.practitionerProfile.findUnique({
-      where: { userId: session.user.id }
-    });
-
-    if (!practitioner) return new NextResponse("Practitioner not found", { status: 404 });
-
-    // BOLA guard: a provider may only write a record for a patient they have
-    // an actual appointment relationship with — without this, any provider
-    // could write clinical records against any patient in the system.
-    const sharedAppointment = await prisma.appointment.findFirst({
-      where: { practitionerProfileId: practitioner.id, patientProfileId },
-    });
-    if (!sharedAppointment) {
-      return new NextResponse("Forbidden: no active patient relationship", { status: 403 });
-    }
+  return handle(async () => {
+    // BOLA guard: a provider may only write records for patients they have an
+    // appointment relationship with.
+    const practitionerProfileId = await careRelationship(auth.user.id, patientProfileId);
+    if (practitionerProfileId === "no-profile") return notFound("Practitioner not found.");
+    if (!practitionerProfileId) return forbidden("No active patient relationship.");
 
     const record = await prisma.healthRecord.create({
       data: {
         patientProfileId,
-        practitionerProfileId: practitioner.id,
+        practitionerProfileId,
         type,
         content,
         notes: notes || null,
         documentUrl: documentUrl || null,
-      }
+      },
     });
-
-    return NextResponse.json(record, { status: 201 });
-  } catch (error) {
-    console.error("[EHR_POST_ERROR]", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+    return apiSuccess(record, 201);
+  });
 }

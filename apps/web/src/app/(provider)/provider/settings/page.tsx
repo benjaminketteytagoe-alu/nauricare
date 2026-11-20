@@ -1,7 +1,7 @@
+import { Settings } from "lucide-react";
+import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
-import { Settings } from "lucide-react";
 import ProviderSettingsClient from "./ProviderSettingsClient";
 
 export const dynamic = "force-dynamic";
@@ -32,11 +32,11 @@ export default async function ProviderSettingsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-8 p-8">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-          <Settings className="w-8 h-8 text-blue-600" />
+        <h1 className="text-3xl font-bold text-ink flex items-center gap-3">
+          <Settings className="w-8 h-8 text-info" />
           Settings &amp; Preferences
         </h1>
-        <p className="text-slate-500 mt-1">Manage your professional profile and account security.</p>
+        <p className="text-ink-muted mt-1">Manage your professional profile and account security.</p>
       </div>
 
       <ProviderSettingsClient

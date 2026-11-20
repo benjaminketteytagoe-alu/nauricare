@@ -1,12 +1,12 @@
-"use server"
+"use server";
 
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { logAdministrativeAction } from "@/lib/audit";
-import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { logAdministrativeAction } from "@/lib/audit";
+import { getSessionUser } from "@/lib/auth-guards";
 import { getClientIp } from "@/lib/getClientIp";
+import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/prisma";
 import { idSchema } from "@/lib/validation/common";
 
 /**
@@ -15,8 +15,8 @@ import { idSchema } from "@/lib/validation/common";
  * browser sends (admin id, IP) can be trusted.
  */
 export async function approveProviderProfile(providerUserId: string) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== "ADMIN") {
+  const caller = await getSessionUser();
+  if (!caller?.id || caller.role !== "ADMIN") {
     return { success: false as const, error: "Unauthorized" };
   }
   if (!idSchema.safeParse(providerUserId).success) {
@@ -39,7 +39,7 @@ export async function approveProviderProfile(providerUserId: string) {
 
     await logAdministrativeAction({
       action: "PROVIDER_VERIFY",
-      actorId: session.user.id,
+      actorId: caller.id,
       targetId: providerUserId,
       ipAddress: getClientIp(await headers()),
       details: {
@@ -56,7 +56,7 @@ export async function approveProviderProfile(providerUserId: string) {
 
     return { success: true as const };
   } catch (error) {
-    console.error("Failed to execute provider approval transaction:", error);
+    logger.error({ event: "admin.provider_approval_failed", err: error }, "Provider approval failed");
     return { success: false as const, error: "Internal operational execution failure." };
   }
 }
@@ -72,8 +72,8 @@ export async function approveProviderProfile(providerUserId: string) {
  */
 export async function deleteProviderProfile(providerId: string) {
   // Strict server-side authorization — do not trust a client-supplied admin id.
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== "ADMIN") {
+  const caller = await getSessionUser();
+  if (!caller?.id || caller.role !== "ADMIN") {
     return { success: false, error: "Unauthorized", status: 403 as const };
   }
 
@@ -98,7 +98,7 @@ export async function deleteProviderProfile(providerId: string) {
 
     await logAdministrativeAction({
       action: "PROVIDER_SUSPEND",
-      actorId: session.user.id,
+      actorId: caller.id,
       targetId: providerId,
       details: {
         providerEmail: provider.email,
@@ -114,7 +114,7 @@ export async function deleteProviderProfile(providerId: string) {
 
     return { success: true, data: updated };
   } catch (error) {
-    console.error("Failed to execute provider deletion transaction:", error);
+    logger.error({ event: "admin.provider_deletion_failed", err: error }, "Provider deletion failed");
     return { success: false, error: "Internal operational execution failure." };
   }
 }

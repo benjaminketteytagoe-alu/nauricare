@@ -1,78 +1,63 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
 import { z } from "zod";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { apiSuccess, handle, notFound, parseJson } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { recordActivity } from "@/server/activity/activity.service";
 
-const settingsSchema = z.object({
+const SettingsInput = z.object({
   healthGoals: z.array(z.string().max(100)).max(20),
-  menstrualCycle: z.union([z.string(), z.number()]).optional(),
+  menstrualCycle: z.union([z.string().max(10), z.number()]).optional(),
   emergencyContact: z.string().trim().max(200).optional().nullable(),
 });
 
-// GET: Fetch all user preferences for the settings UI
+// The patient's health-profile preferences (Settings page).
 export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
-
+  const auth = await requireApiUser("PATIENT");
+  if (!auth.ok) return auth.response;
+  return handle(async () => {
     const profile = await prisma.patientProfile.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: auth.user.id },
       include: {
-        user: { select: { name: true, email: true, phoneNumber: true, avatarUrl: true, googlePhotoUrl: true } }
-      }
+        user: { select: { name: true, email: true, phoneNumber: true, avatarUrl: true, googlePhotoUrl: true } },
+      },
     });
-
-    if (!profile) return new NextResponse("Profile not found", { status: 404 });
-
-    return NextResponse.json({
-      name: profile.user.name,
-      email: profile.user.email,
-      avatarUrl: profile.user.avatarUrl,
-      googlePhotoUrl: profile.user.googlePhotoUrl,
-      healthGoals: profile.healthGoals,
-      menstrualCycle: profile.menstrualCycle || "28",
-      emergencyContact: profile.emergencyContact || ""
-    });
-  } catch (error) {
-    console.error("[GET_SETTINGS_ERROR]", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+    if (!profile) return notFound("Profile not found.");
+    return apiSuccess(
+      {
+        name: profile.user.name,
+        email: profile.user.email,
+        avatarUrl: profile.user.avatarUrl,
+        googlePhotoUrl: profile.user.googlePhotoUrl,
+        healthGoals: profile.healthGoals,
+        menstrualCycle: profile.menstrualCycle || "28",
+        emergencyContact: profile.emergencyContact || "",
+      },
+      200,
+      { "Cache-Control": "private, no-store" },
+    );
+  });
 }
 
-// POST: Save holistic settings
 export async function POST(req: Request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
+  const auth = await requireApiUser("PATIENT");
+  if (!auth.ok) return auth.response;
+  const limited = enforceRateLimit(`settings:${auth.user.id}`);
+  if (limited) return limited;
+  const body = await parseJson(req, SettingsInput);
+  if (!body.ok) return body.response;
+  const { healthGoals, menstrualCycle, emergencyContact } = body.data;
 
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch {
-      return new NextResponse("Invalid JSON body", { status: 400 });
-    }
-
-    const parsed = settingsSchema.safeParse(body);
-    if (!parsed.success) {
-      return new NextResponse(parsed.error.issues[0].message, { status: 400 });
-    }
-    const { healthGoals, menstrualCycle, emergencyContact } = parsed.data;
-
-    const updatedProfile = await prisma.patientProfile.update({
-      where: { userId: session.user.id },
+  return handle(async () => {
+    const profile = await prisma.patientProfile.update({
+      where: { userId: auth.user.id },
       data: {
         healthGoals,
         menstrualCycle: menstrualCycle !== undefined ? menstrualCycle.toString() : undefined,
         emergencyContact,
       },
     });
-
-    await recordActivity({ userId: session.user.id, type: "PROFILE_UPDATED", title: "Updated health profile settings" });
-    return NextResponse.json(updatedProfile);
-  } catch (error) {
-    console.error("[POST_SETTINGS_ERROR]", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+    await recordActivity({ userId: auth.user.id, type: "PROFILE_UPDATED", title: "Updated health profile settings" });
+    return apiSuccess(profile);
+  });
 }

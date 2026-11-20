@@ -43,10 +43,13 @@ export function saveGuestConsent(version: string): void {
 
 export function savePendingTriage(p: PendingTriage): void {
   safe(() => sessionStorage.setItem(PENDING_KEY, JSON.stringify(p)), undefined);
-  safe(() => localStorage.setItem(TOKEN_KEY, JSON.stringify({ t: p.claimToken, exp: p.expiresAt, action: p.action })), undefined);
+  safe(
+    () => localStorage.setItem(TOKEN_KEY, JSON.stringify({ t: p.claimToken, exp: p.expiresAt, action: p.action })),
+    undefined,
+  );
 }
 
-export function readPendingTriage(): PendingTriage | null {
+function readPendingTriage(): PendingTriage | null {
   const p = safe<PendingTriage | null>(() => JSON.parse(sessionStorage.getItem(PENDING_KEY) ?? "null"), null);
   return p && p.expiresAt > Date.now() ? p : null;
 }

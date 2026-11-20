@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Clock, Hospital, ShieldAlert, Stethoscope, Video } from "lucide-react";
+import Link from "next/link";
+import { SEVERITY_TONE, StatusChip } from "@/components/ui/status-chip";
 import type { TriageSeverity } from "@/lib/referrals/constants";
 import { EmergencyBanner } from "./EmergencyBanner";
-import { SEVERITY_TONE, StatusChip } from "@/components/ui/status-chip";
 
 export interface TriageView {
   severity: TriageSeverity;
@@ -36,33 +36,33 @@ export function TriageResultCard({ triage, symptomCheckId }: { triage: TriageVie
       aria-live="polite"
       className="m3-card overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500"
     >
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-nc-divider px-6 py-4">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-6 py-4">
         <StatusChip tone={SEVERITY_TONE[triage.severity]} className="px-3 py-1 text-sm">
           <Icon className="h-4 w-4" aria-hidden />
           {style.label}
         </StatusChip>
-        <span className="text-xs font-medium text-slate-500">{ENGINE_LABEL[triage.engine]}</span>
+        <span className="text-xs font-medium text-ink-muted">{ENGINE_LABEL[triage.engine]}</span>
       </header>
 
       <div className="space-y-6 p-6">
         {triage.severity === "URGENT" && <EmergencyBanner />}
 
-        <p className="leading-relaxed text-slate-700">{triage.summary}</p>
+        <p className="leading-relaxed text-ink-soft">{triage.summary}</p>
 
         <dl className="grid gap-3 sm:grid-cols-2">
-          <div className="flex items-start gap-3 rounded-xl border border-nc-divider p-3">
-            <Stethoscope className="mt-0.5 h-5 w-5 text-nc-primary" aria-hidden />
+          <div className="flex items-start gap-3 rounded-xl border border-hairline p-3">
+            <Stethoscope className="mt-0.5 h-5 w-5 text-brand-ink" aria-hidden />
             <div>
-              <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Suggested specialist</dt>
-              <dd className="font-semibold text-nc-ink">{triage.recommendedSpecialty}</dd>
+              <dt className="text-xs font-medium uppercase tracking-wide text-ink-muted">Suggested specialist</dt>
+              <dd className="font-semibold text-ink">{triage.recommendedSpecialty}</dd>
             </div>
           </div>
           {triage.seekCareWithin && (
-            <div className="flex items-start gap-3 rounded-xl border border-nc-divider p-3">
-              <Clock className="mt-0.5 h-5 w-5 text-nc-primary" aria-hidden />
+            <div className="flex items-start gap-3 rounded-xl border border-hairline p-3">
+              <Clock className="mt-0.5 h-5 w-5 text-brand-ink" aria-hidden />
               <div>
-                <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">Seek care</dt>
-                <dd className="font-semibold text-nc-ink">{triage.seekCareWithin}</dd>
+                <dt className="text-xs font-medium uppercase tracking-wide text-ink-muted">Seek care</dt>
+                <dd className="font-semibold text-ink">{triage.seekCareWithin}</dd>
               </div>
             </div>
           )}
@@ -70,11 +70,11 @@ export function TriageResultCard({ triage, symptomCheckId }: { triage: TriageVie
 
         {triage.redFlags.length > 0 && (
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-nc-ink">Warning signs we noticed</h3>
+            <h3 className="mb-2 text-sm font-semibold text-ink">Warning signs we noticed</h3>
             <ul className="space-y-1.5">
               {triage.redFlags.map((flag) => (
-                <li key={flag} className="flex gap-2 text-sm text-slate-700">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-nc-amber" aria-hidden />
+                <li key={flag} className="flex gap-2 text-sm text-ink-soft">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />
                   {flag}
                 </li>
               ))}
@@ -84,8 +84,8 @@ export function TriageResultCard({ triage, symptomCheckId }: { triage: TriageVie
 
         {triage.selfCare.length > 0 && (
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-nc-ink">What may help now</h3>
-            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+            <h3 className="mb-2 text-sm font-semibold text-ink">What may help now</h3>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-ink-soft">
               {triage.selfCare.map((tip) => (
                 <li key={tip}>{tip}</li>
               ))}
@@ -94,8 +94,11 @@ export function TriageResultCard({ triage, symptomCheckId }: { triage: TriageVie
         )}
 
         {needsCare && (
-          <div className="flex flex-wrap gap-3 border-t border-nc-divider pt-5">
-            <Link href={`/dashboard/referrals/new?checkId=${encodeURIComponent(symptomCheckId)}`} className="m3-btn-filled">
+          <div className="flex flex-wrap gap-3 border-t border-hairline pt-5">
+            <Link
+              href={`/dashboard/referrals/new?checkId=${encodeURIComponent(symptomCheckId)}`}
+              className="m3-btn-filled"
+            >
               <Hospital className="h-4 w-4" aria-hidden /> Create hospital referral
             </Link>
             <Link href="/dashboard/providers" className="m3-btn-outlined">
@@ -104,9 +107,9 @@ export function TriageResultCard({ triage, symptomCheckId }: { triage: TriageVie
           </div>
         )}
 
-        <p className="text-xs leading-relaxed text-slate-500">
+        <p className="text-xs leading-relaxed text-ink-muted">
           This is AI-assisted triage, not a diagnosis. It cannot examine you. Read our{" "}
-          <Link href="/consent" className="font-medium text-nc-primary underline underline-offset-2">
+          <Link href="/consent" className="font-medium text-brand-ink underline underline-offset-2">
             AI triage consent
           </Link>{" "}
           to understand its limits.

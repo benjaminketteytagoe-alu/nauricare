@@ -1,4 +1,6 @@
+import "server-only";
 import type { PatientActivityType, Prisma } from "@prisma/client";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 
 // Patient-facing activity history (Records tab). Distinct from AuditLog, which
@@ -26,7 +28,7 @@ export async function recordActivity(input: ActivityInput): Promise<void> {
       },
     });
   } catch (error) {
-    console.error(`[ACTIVITY] failed to record ${input.type}:`, error instanceof Error ? error.message : error);
+    logger.error({ event: "activity.record_failed", type: input.type, err: error }, "Recording activity failed");
   }
 }
 

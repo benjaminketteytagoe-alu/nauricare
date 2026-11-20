@@ -1,11 +1,12 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
+import { apiError, apiSuccess, handle, parseJson } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { INSURANCE_VALUES, insuranceLabel, matchListedInsurer } from "@/lib/referrals/constants";
 import { sanitizePlainText } from "@/lib/sanitize";
-import { knownPrivateInsurers } from "@/server/insurance/insurers";
 import { recordActivity } from "@/server/activity/activity.service";
-import { getUserIdWithRole } from "@/lib/auth-guards";
+import { knownPrivateInsurers } from "@/server/insurance/insurers";
 
 const InsuranceInput = z
   .object({
@@ -29,30 +30,31 @@ const InsuranceInput = z
   });
 
 export async function GET() {
-  const userId = await getUserIdWithRole("PATIENT");
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const [insurance, knownInsurers] = await Promise.all([
-    prisma.patientInsurance.findUnique({ where: { userId } }),
-    knownPrivateInsurers(),
-  ]);
-  return NextResponse.json({ insurance, knownInsurers });
+  const auth = await requireApiUser("PATIENT");
+  if (!auth.ok) return auth.response;
+  return handle(async () => {
+    const [insurance, knownInsurers] = await Promise.all([
+      prisma.patientInsurance.findUnique({ where: { userId: auth.user.id } }),
+      knownPrivateInsurers(),
+    ]);
+    return apiSuccess({ insurance, knownInsurers });
+  });
 }
 
 export async function PUT(req: Request) {
-  const userId = await getUserIdWithRole("PATIENT");
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const parsed = InsuranceInput.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
-  }
+  const auth = await requireApiUser("PATIENT");
+  if (!auth.ok) return auth.response;
+  const userId = auth.user.id;
+  const limited = enforceRateLimit(`insurance:${userId}`);
+  if (limited) return limited;
+  const parsed = await parseJson(req, InsuranceInput);
+  if (!parsed.ok) return parsed.response;
   const { policyNumber, principalMember, expiryDate } = parsed.data;
   let { provider } = parsed.data;
   let otherProviderName: string | null = null;
   if (provider === "OTHER_PRIVATE") {
     const name = sanitizePlainText(parsed.data.otherProviderName).replace(/\s+/g, " ").trim();
-    if (name.length < 2) return NextResponse.json({ error: "Enter the name of your insurer." }, { status: 400 });
+    if (name.length < 2) return apiError("Enter the name of your insurer.", 400);
     // "Britam" typed under Other is really the listed Britam option.
     const listed = matchListedInsurer(name);
     if (listed) provider = listed;
@@ -67,16 +69,18 @@ export async function PUT(req: Request) {
     expiryDate: cash || !expiryDate ? null : new Date(expiryDate),
   };
 
-  try {
+  return handle(async () => {
     const insurance = await prisma.patientInsurance.upsert({
       where: { userId },
       update: data,
       create: { userId, ...data },
     });
-    await recordActivity({ userId, type: "INSURANCE_UPDATED", title: `Updated insurance details (${insuranceLabel(provider, otherProviderName)})`, details: { provider } });
-    return NextResponse.json({ insurance });
-  } catch (error) {
-    console.error("[INSURANCE_SAVE_ERROR]", error);
-    return NextResponse.json({ error: "Could not save your insurance details." }, { status: 500 });
-  }
+    await recordActivity({
+      userId,
+      type: "INSURANCE_UPDATED",
+      title: `Updated insurance details (${insuranceLabel(provider, otherProviderName)})`,
+      details: { provider },
+    });
+    return apiSuccess({ insurance });
+  });
 }

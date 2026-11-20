@@ -1,57 +1,64 @@
 "use server";
 
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { revalidatePath } from "next/cache";
+import { getSessionUser } from "@/lib/auth-guards";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { notify } from "@/server/notifications/notify";
-import { revalidatePath } from "next/cache";
 
 export async function followUser(followingId: string) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
-    if (session.user.id === followingId) {
+    const caller = await getSessionUser();
+    if (!caller?.id) return { success: false, error: "Unauthorized" };
+    if (caller.id === followingId) {
       return { success: false, error: "You can't follow yourself." };
     }
 
     // Check existence before upsert so we only notify on a genuinely new follow.
     const existing = await prisma.follow.findUnique({
-      where: { followerId_followingId: { followerId: session.user.id, followingId } },
+      where: { followerId_followingId: { followerId: caller.id, followingId } },
       select: { id: true },
     });
 
     await prisma.follow.upsert({
-      where: { followerId_followingId: { followerId: session.user.id, followingId } },
+      where: { followerId_followingId: { followerId: caller.id, followingId } },
       update: {},
-      create: { followerId: session.user.id, followingId },
+      create: { followerId: caller.id, followingId },
     });
 
     if (!existing) {
-      void notify({ recipientId: followingId, actorId: session.user.id, type: "FOLLOW", title: `${session.user.name ?? "Someone"} started following you`, link: "/dashboard/community" })
-        .catch((err) => console.error("[FOLLOW_NOTIFICATION_ERROR]", err));
+      void notify({
+        recipientId: followingId,
+        actorId: caller.id,
+        type: "FOLLOW",
+        title: `${caller.name ?? "Someone"} started following you`,
+        link: "/dashboard/community",
+      }).catch((err: unknown) =>
+        logger.error({ event: "community.follow_notify_failed", err }, "Follow notification failed"),
+      );
     }
 
     revalidatePath("/dashboard/community");
     return { success: true };
   } catch (error) {
-    console.error("[FOLLOW_USER_ERROR]", error);
+    logger.error({ event: "community.follow_failed", err: error }, "Follow failed");
     return { success: false, error: "Failed to follow user." };
   }
 }
 
 export async function unfollowUser(followingId: string) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return { success: false, error: "Unauthorized" };
+    const caller = await getSessionUser();
+    if (!caller?.id) return { success: false, error: "Unauthorized" };
 
     await prisma.follow.deleteMany({
-      where: { followerId: session.user.id, followingId },
+      where: { followerId: caller.id, followingId },
     });
 
     revalidatePath("/dashboard/community");
     return { success: true };
   } catch (error) {
-    console.error("[UNFOLLOW_USER_ERROR]", error);
+    logger.error({ event: "community.unfollow_failed", err: error }, "Unfollow failed");
     return { success: false, error: "Failed to unfollow user." };
   }
 }

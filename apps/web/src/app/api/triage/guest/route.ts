@@ -1,24 +1,26 @@
 import { z } from "zod";
 import { apiError, apiSuccess, parseJson } from "@/lib/api";
+import { CURRENT_CONSENT_VERSION } from "@/lib/consent";
 import { getClientIp } from "@/lib/getClientIp";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { sanitizePlainText } from "@/lib/sanitize";
-import { CURRENT_CONSENT_VERSION } from "@/lib/consent";
-import { runTriage, toTriageOutcome } from "@/lib/triage/engine";
 import { sealGuestTriage } from "@/lib/triage/claimToken";
+import { runTriage, toTriageOutcome } from "@/lib/triage/engine";
 
 // Public "Nauri" triage for signed-out visitors on the landing page.
 // Abuse controls: strict per-IP limit, plus a global hourly budget after
 // which requests are answered by the deterministic safety rules only, so a
 // distributed flood cannot run up unbounded model costs.
 
-const GuestTriageInput = z.object({
-  symptoms: z.array(z.string().trim().min(1).max(60)).max(10).default([]),
-  notes: z.string().max(1000, "Please keep your description under 1000 characters.").default(""),
-  consentVersion: z.string().max(20),
-}).refine((v) => v.symptoms.length > 0 || v.notes.trim().length >= 3, {
-  message: "Tell Nauri a little about how you're feeling.",
-});
+const GuestTriageInput = z
+  .object({
+    symptoms: z.array(z.string().trim().min(1).max(60)).max(10).default([]),
+    notes: z.string().max(1000, "Please keep your description under 1000 characters.").default(""),
+    consentVersion: z.string().max(20),
+  })
+  .refine((v) => v.symptoms.length > 0 || v.notes.trim().length >= 3, {
+    message: "Tell Nauri a little about how you're feeling.",
+  });
 
 const GLOBAL_GUEST_MODEL_BUDGET_PER_HOUR = 300;
 

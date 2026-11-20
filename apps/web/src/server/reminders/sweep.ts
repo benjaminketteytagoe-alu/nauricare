@@ -1,12 +1,13 @@
+import "server-only";
+import { predictCycle } from "@/lib/cycle/predict";
+import { diffInDays, parseDateKey, toDateKey } from "@/lib/cycleDates";
+import { sendReminderEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { SITE_URL } from "@/lib/site";
-import { sendReminderEmail } from "@/lib/email";
-import { diffInDays, parseDateKey, toDateKey } from "@/lib/cycleDates";
-import { predictCycle } from "@/lib/cycle/predict";
 import { formatInZone, zonedParts } from "@/lib/time/zoned";
 import { notifyOrThrow } from "@/server/notifications/notify";
-import { REMINDER_DEFAULTS } from "./preferences";
 import { claim, deliver } from "./dispatch";
+import { REMINDER_DEFAULTS } from "./preferences";
 
 // The reminder sweep, triggered by AWS EventBridge via POST /api/cron/execute.
 // Safe to run often, concurrently and repeatedly: every reminder goes through
@@ -14,7 +15,7 @@ import { claim, deliver } from "./dispatch";
 // retried runs never send the same reminder twice, and failed sends are
 // retried on the next run. All queries are processed in batches.
 
-export const BATCH_SIZE = 100;
+const BATCH_SIZE = 100;
 const EARLIEST_LOCAL_HOUR = 8; // never ping a period reminder before 08:00 local
 const EMAIL_GAP_MS = 600; // stay under Resend's per-second rate limit
 
@@ -44,7 +45,10 @@ function createMailer() {
 type Mailer = ReturnType<typeof createMailer>;
 
 /** Cursor-paginate a query in batches of BATCH_SIZE. */
-async function forEachBatch<T extends { id: string }>(page: (cursor?: string) => Promise<T[]>, handle: (rows: T[]) => Promise<void>) {
+async function forEachBatch<T extends { id: string }>(
+  page: (cursor?: string) => Promise<T[]>,
+  handle: (rows: T[]) => Promise<void>,
+) {
   let cursor: string | undefined;
   for (;;) {
     const rows = await page(cursor);
@@ -54,13 +58,18 @@ async function forEachBatch<T extends { id: string }>(page: (cursor?: string) =>
     cursor = rows.at(-1)!.id;
   }
 }
-const paging = (cursor?: string) => ({ orderBy: { id: "asc" as const }, take: BATCH_SIZE, ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}) });
+const paging = (cursor?: string) => ({
+  orderBy: { id: "asc" as const },
+  take: BATCH_SIZE,
+  ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+});
 
 export async function runReminderSweep(now = new Date()): Promise<SweepResult> {
   const started = Date.now();
   const result: SweepResult = { period: 0, daily: 0, weekly: 0, appointments: 0, failed: 0, ms: 0 };
   const mail = createMailer();
-  const tally = (ok: boolean, key: "period" | "daily" | "weekly" | "appointments") => (ok ? result[key]++ : result.failed++);
+  const tally = (ok: boolean, key: "period" | "daily" | "weekly" | "appointments") =>
+    ok ? result[key]++ : result.failed++;
 
   await periodReminders(now, mail, (ok) => tally(ok, "period"));
   await dailyLogReminders(now, mail, (ok) => tally(ok, "daily"));
@@ -69,7 +78,9 @@ export async function runReminderSweep(now = new Date()): Promise<SweepResult> {
 
   result.ms = Date.now() - started;
   // Heartbeat: lets admins (and alarms) see that the scheduler is alive.
-  await prisma.auditEvent.create({ data: { action: "CRON_REMINDERS_RUN", details: { ...result, at: now.toISOString() } } }).catch(() => {});
+  await prisma.auditEvent
+    .create({ data: { action: "CRON_REMINDERS_RUN", details: { ...result, at: now.toISOString() } } })
+    .catch(() => {});
   return result;
 }
 
@@ -80,13 +91,22 @@ async function periodReminders(now: Date, mail: Mailer, tally: (ok: boolean) => 
       prisma.patientProfile.findMany({
         where: {
           cycleLogs: { some: {} },
-          user: { deletedAt: null, OR: [{ reminderPreference: { is: null } }, { reminderPreference: { is: { periodReminders: true } } }] },
+          user: {
+            deletedAt: null,
+            OR: [{ reminderPreference: { is: null } }, { reminderPreference: { is: { periodReminders: true } } }],
+          },
         },
         select: {
           id: true,
           userId: true,
           menstrualCycle: true,
-          user: { select: { name: true, email: true, reminderPreference: { select: { periodLeadDays: true, timezone: true, emailEnabled: true } } } },
+          user: {
+            select: {
+              name: true,
+              email: true,
+              reminderPreference: { select: { periodLeadDays: true, timezone: true, emailEnabled: true } },
+            },
+          },
           cycleLogs: { select: { startDate: true, endDate: true }, orderBy: { startDate: "desc" }, take: 13 },
         },
         ...paging(cursor),
@@ -105,12 +125,25 @@ async function periodReminders(now: Date, mail: Mailer, tally: (ok: boolean) => 
         if (!c) continue;
         const when = daysUntil === 0 ? "today" : daysUntil === 1 ? "tomorrow" : `in ${daysUntil} days`;
         const title = `Your period is predicted to start ${when}`;
-        const body = "A gentle heads-up so you can be prepared. Log it in My Cycle when it starts to keep predictions accurate.";
+        const body =
+          "A gentle heads-up so you can be prepared. Log it in My Cycle when it starts to keep predictions accurate.";
         tally(
           await deliver(c, {
-            notify: () => notifyOrThrow({ recipientId: p.userId, type: "PERIOD_REMINDER", title, body, link: "/dashboard/cycle" }),
+            notify: () =>
+              notifyOrThrow({ recipientId: p.userId, type: "PERIOD_REMINDER", title, body, link: "/dashboard/cycle" }),
             email: prefs.emailEnabled
-              ? (idempotencyKey) => mail({ to: p.user.email, subject: title, name: firstName(p.user.name), heading: title, body, ctaLabel: "Open My Cycle", ctaUrl: `${SITE_URL}/dashboard/cycle`, settingsUrl, idempotencyKey })
+              ? (idempotencyKey) =>
+                  mail({
+                    to: p.user.email,
+                    subject: title,
+                    name: firstName(p.user.name),
+                    heading: title,
+                    body,
+                    ctaLabel: "Open My Cycle",
+                    ctaUrl: `${SITE_URL}/dashboard/cycle`,
+                    settingsUrl,
+                    idempotencyKey,
+                  })
               : undefined,
           }),
         );
@@ -125,7 +158,14 @@ async function dailyLogReminders(now: Date, mail: Mailer, tally: (ok: boolean) =
     (cursor) =>
       prisma.reminderPreference.findMany({
         where: { dailyLogReminders: true, user: { role: "PATIENT", deletedAt: null } },
-        select: { id: true, userId: true, reminderHour: true, timezone: true, emailEnabled: true, user: { select: { name: true, email: true, patientProfile: { select: { id: true } } } } },
+        select: {
+          id: true,
+          userId: true,
+          reminderHour: true,
+          timezone: true,
+          emailEnabled: true,
+          user: { select: { name: true, email: true, patientProfile: { select: { id: true } } } },
+        },
         ...paging(cursor),
       }),
     async (prefs) => {
@@ -144,12 +184,25 @@ async function dailyLogReminders(now: Date, mail: Mailer, tally: (ok: boolean) =
         const c = await claim(`daily:${pref.userId}:${local.dateKey}`, "daily", pref.userId);
         if (!c) continue;
         const title = "How are you feeling today?";
-        const body = "Take 30 seconds to log your symptoms and mood. Small daily notes make your cycle insights much more accurate.";
+        const body =
+          "Take 30 seconds to log your symptoms and mood. Small daily notes make your cycle insights much more accurate.";
         tally(
           await deliver(c, {
-            notify: () => notifyOrThrow({ recipientId: pref.userId, type: "SYSTEM", title, body, link: "/dashboard/cycle" }),
+            notify: () =>
+              notifyOrThrow({ recipientId: pref.userId, type: "SYSTEM", title, body, link: "/dashboard/cycle" }),
             email: pref.emailEnabled
-              ? (idempotencyKey) => mail({ to: pref.user.email, subject: title, name: firstName(pref.user.name), heading: title, body, ctaLabel: "Log today", ctaUrl: `${SITE_URL}/dashboard/cycle`, settingsUrl, idempotencyKey })
+              ? (idempotencyKey) =>
+                  mail({
+                    to: pref.user.email,
+                    subject: title,
+                    name: firstName(pref.user.name),
+                    heading: title,
+                    body,
+                    ctaLabel: "Log today",
+                    ctaUrl: `${SITE_URL}/dashboard/cycle`,
+                    settingsUrl,
+                    idempotencyKey,
+                  })
               : undefined,
           }),
         );
@@ -164,7 +217,14 @@ async function weeklyInsights(now: Date, mail: Mailer, tally: (ok: boolean) => v
     (cursor) =>
       prisma.reminderPreference.findMany({
         where: { weeklyInsights: true, user: { role: "PATIENT", deletedAt: null } },
-        select: { id: true, userId: true, reminderHour: true, timezone: true, emailEnabled: true, user: { select: { name: true, email: true, patientProfile: { select: { id: true, menstrualCycle: true } } } } },
+        select: {
+          id: true,
+          userId: true,
+          reminderHour: true,
+          timezone: true,
+          emailEnabled: true,
+          user: { select: { name: true, email: true, patientProfile: { select: { id: true, menstrualCycle: true } } } },
+        },
         ...paging(cursor),
       }),
     async (prefs) => {
@@ -181,7 +241,12 @@ async function weeklyInsights(now: Date, mail: Mailer, tally: (ok: boolean) => v
           const weekAgo = new Date(today.getTime() - 7 * 86_400_000);
           const [dayLogs, logs] = await Promise.all([
             prisma.cycleDayLog.count({ where: { patientProfileId: profile.id, date: { gte: weekAgo, lt: today } } }),
-            prisma.cycleLog.findMany({ where: { patientProfileId: profile.id }, select: { startDate: true, endDate: true }, orderBy: { startDate: "desc" }, take: 13 }),
+            prisma.cycleLog.findMany({
+              where: { patientProfileId: profile.id },
+              select: { startDate: true, endDate: true },
+              orderBy: { startDate: "desc" },
+              take: 13,
+            }),
           ]);
           const { prediction } = predictCycle(logs, Number(profile.menstrualCycle) || null);
           const parts = [`You logged ${dayLogs} of the last 7 days.`];
@@ -194,9 +259,21 @@ async function weeklyInsights(now: Date, mail: Mailer, tally: (ok: boolean) => v
         const title = "Your weekly health check-in";
         tally(
           await deliver(c, {
-            notify: () => notifyOrThrow({ recipientId: pref.userId, type: "SYSTEM", title, body, link: "/dashboard/cycle" }),
+            notify: () =>
+              notifyOrThrow({ recipientId: pref.userId, type: "SYSTEM", title, body, link: "/dashboard/cycle" }),
             email: pref.emailEnabled
-              ? (idempotencyKey) => mail({ to: pref.user.email, subject: title, name: firstName(pref.user.name), heading: title, body, ctaLabel: "See my cycle", ctaUrl: `${SITE_URL}/dashboard/cycle`, settingsUrl, idempotencyKey })
+              ? (idempotencyKey) =>
+                  mail({
+                    to: pref.user.email,
+                    subject: title,
+                    name: firstName(pref.user.name),
+                    heading: title,
+                    body,
+                    ctaLabel: "See my cycle",
+                    ctaUrl: `${SITE_URL}/dashboard/cycle`,
+                    settingsUrl,
+                    idempotencyKey,
+                  })
               : undefined,
           }),
         );
@@ -210,11 +287,27 @@ async function appointmentReminders(now: Date, mail: Mailer, tally: (ok: boolean
   await forEachBatch(
     (cursor) =>
       prisma.appointment.findMany({
-        where: { status: "SCHEDULED", reminderSentAt: null, startTime: { gt: now, lte: new Date(now.getTime() + 24 * 3_600_000) } },
+        where: {
+          status: "SCHEDULED",
+          reminderSentAt: null,
+          startTime: { gt: now, lte: new Date(now.getTime() + 24 * 3_600_000) },
+        },
         select: {
           id: true,
           startTime: true,
-          patient: { select: { user: { select: { id: true, name: true, email: true, deletedAt: true, reminderPreference: { select: { appointmentReminders: true, emailEnabled: true, timezone: true } } } } } },
+          patient: {
+            select: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  deletedAt: true,
+                  reminderPreference: { select: { appointmentReminders: true, emailEnabled: true, timezone: true } },
+                },
+              },
+            },
+          },
           practitioner: { select: { user: { select: { id: true, name: true } } } },
         },
         ...paging(cursor),
@@ -228,7 +321,16 @@ async function appointmentReminders(now: Date, mail: Mailer, tally: (ok: boolean
         // Provider: always reminded (in-app).
         const pc = await claim(`appointment:${a.id}:provider`, "appointment-provider", doctor.id);
         const providerDone = pc
-          ? await deliver(pc, { notify: () => notifyOrThrow({ recipientId: doctor.id, type: "APPOINTMENT_REMINDER", title: `Consultation with ${patient.name} soon`, body: `Starts ${formatInZone(a.startTime, "Africa/Kigali")}.`, link: "/provider/schedule" }) })
+          ? await deliver(pc, {
+              notify: () =>
+                notifyOrThrow({
+                  recipientId: doctor.id,
+                  type: "APPOINTMENT_REMINDER",
+                  title: `Consultation with ${patient.name} soon`,
+                  body: `Starts ${formatInZone(a.startTime, "Africa/Kigali")}.`,
+                  link: "/provider/schedule",
+                }),
+            })
           : await alreadySent(`appointment:${a.id}:provider`);
 
         // Patient: per their settings.
@@ -239,9 +341,27 @@ async function appointmentReminders(now: Date, mail: Mailer, tally: (ok: boolean
             const title = `Reminder: your consultation with ${doctor.name}`;
             const body = `Your video consultation starts ${formatInZone(a.startTime, prefs.timezone)}. Join a few minutes early and check your camera and microphone.`;
             patientDone = await deliver(c, {
-              notify: () => notifyOrThrow({ recipientId: patient.id, type: "APPOINTMENT_REMINDER", title, body, link: `/dashboard/telehealth/${a.id}` }),
+              notify: () =>
+                notifyOrThrow({
+                  recipientId: patient.id,
+                  type: "APPOINTMENT_REMINDER",
+                  title,
+                  body,
+                  link: `/dashboard/telehealth/${a.id}`,
+                }),
               email: prefs.emailEnabled
-                ? (idempotencyKey) => mail({ to: patient.email, subject: title, name: firstName(patient.name), heading: title, body, ctaLabel: "View my consultation", ctaUrl: `${SITE_URL}/dashboard/telehealth/${a.id}`, settingsUrl, idempotencyKey })
+                ? (idempotencyKey) =>
+                    mail({
+                      to: patient.email,
+                      subject: title,
+                      name: firstName(patient.name),
+                      heading: title,
+                      body,
+                      ctaLabel: "View my consultation",
+                      ctaUrl: `${SITE_URL}/dashboard/telehealth/${a.id}`,
+                      settingsUrl,
+                      idempotencyKey,
+                    })
                 : undefined,
             });
             tally(patientDone);
@@ -250,7 +370,10 @@ async function appointmentReminders(now: Date, mail: Mailer, tally: (ok: boolean
 
         // The "reminder sent" flag is only set once every reminder was delivered.
         if (providerDone && patientDone) {
-          await prisma.appointment.updateMany({ where: { id: a.id, reminderSentAt: null }, data: { reminderSentAt: new Date() } });
+          await prisma.appointment.updateMany({
+            where: { id: a.id, reminderSentAt: null },
+            data: { reminderSentAt: new Date() },
+          });
         }
       }
     },

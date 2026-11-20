@@ -1,52 +1,40 @@
-import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import { withAuth } from "next-auth/middleware";
+import { sessionEnd } from "@/lib/sessionPolicy";
 
+// First line only: is there a live, code-verified session at all? Which
+// portal a user may open is decided by each portal layout's requireRole(),
+// which reads the role from the database. (The role inside this cookie can
+// be stale after a role change, and redirecting on it caused loops.)
 export default withAuth(
   function proxy(req) {
     const token = req.nextauth.token;
     const path = req.nextUrl.pathname;
 
-    // 0. Signed in but the emailed sign-in code isn't verified yet.
+    // Ended by inactivity, lifetime or a password change.
+    const ended = token?.ended ?? (token?.mfaVerified ? sessionEnd(token) : null);
+    if (ended) {
+      const url = new URL("/login", req.url);
+      url.searchParams.set("ended", ended);
+      return NextResponse.redirect(url);
+    }
+
+    // Signed in but the emailed sign-in code isn't verified yet.
     if (token && token.mfaVerified !== true) {
       const url = new URL("/verify-code", req.url);
       url.searchParams.set("next", path + req.nextUrl.search);
       return NextResponse.redirect(url);
     }
 
-    // 1. THE TRAFFIC COP: Automatically route users to their correct workspaces
-    if (path === "/dashboard") {
-      if (token?.role === "ADMIN") {
-        return NextResponse.redirect(new URL("/admin", req.url));
-      }
-      if (token?.role === "PROVIDER") {
-        return NextResponse.redirect(new URL("/provider", req.url));
-      }
-      // If role is PATIENT, they stay on /dashboard
-    }
-
-    // 2. Lock down the Admin dashboard
-    if (path.startsWith("/admin") && token?.role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
-
-    // 3. Lock down the Provider dashboard
-    if (path.startsWith("/provider") && token?.role !== "PROVIDER") {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
-    }
-    
     return NextResponse.next();
   },
   {
     callbacks: {
       authorized: ({ token }) => !!token,
     },
-  }
+  },
 );
 
 export const config = {
-  matcher: [
-    "/admin/:path*",
-    "/provider/:path*",
-    "/dashboard/:path*",
-  ],
+  matcher: ["/admin/:path*", "/provider/:path*", "/dashboard/:path*"],
 };

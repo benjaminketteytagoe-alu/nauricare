@@ -1,11 +1,12 @@
-import { NextResponse } from "next/server";
-import { z } from "zod";
 import { randomBytes, createHash } from "crypto";
-import { prisma } from "@/lib/prisma";
-import { verifyTurnstileToken } from "@/lib/turnstile";
-import { getClientIp } from "@/lib/getClientIp";
+import { z } from "zod";
+import { apiError, apiSuccess, handle, readJson } from "@/lib/api";
 import { sendMagicLinkEmail } from "@/lib/email";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getClientIp";
+import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rateLimit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 const schema = z.object({
   email: z.string().email(),
@@ -19,24 +20,21 @@ const schema = z.object({
 // next-auth/core/lib/utils#hashToken does (sha256 of token + NEXTAUTH_SECRET)
 // so the standard /api/auth/callback/email route can verify it normally.
 export async function POST(req: Request) {
-  try {
-    const ip = getClientIp(req.headers as Headers);
-    const limit = rateLimit(`auth-magic-link:${ip}`, 5, 15 * 60_000);
-    if (!limit.allowed) return rateLimitResponse(limit);
+  return handle(async () => {
+    const ip = getClientIp(req.headers);
+    const limit = enforceRateLimit(`auth-magic-link:${ip}`, 5, 15 * 60_000);
+    if (limit) return limit;
 
-    const body = await req.json();
+    const body = (await readJson(req)) as Record<string, unknown> | undefined;
 
-    const isHuman = await verifyTurnstileToken(body?.turnstileToken ?? "", ip);
+    const isHuman = await verifyTurnstileToken(typeof body?.turnstileToken === "string" ? body.turnstileToken : "", ip);
     if (!isHuman) {
-      return NextResponse.json(
-        { error: "Security verification failed. Please try again." },
-        { status: 403 },
-      );
+      return apiError("Security verification failed. Please try again.", 403);
     }
 
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Valid email required" }, { status: 400 });
+      return apiError("Valid email required", 400);
     }
 
     const email = parsed.data.email.trim().toLowerCase();
@@ -46,9 +44,7 @@ export async function POST(req: Request) {
     // mirrors the anti-enumeration pattern in forgot-password.
     if (user) {
       const rawToken = randomBytes(32).toString("hex");
-      const tokenHash = createHash("sha256")
-        .update(`${rawToken}${process.env.NEXTAUTH_SECRET}`)
-        .digest("hex");
+      const tokenHash = createHash("sha256").update(`${rawToken}${process.env.NEXTAUTH_SECRET}`).digest("hex");
       const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
       await prisma.verificationToken.create({
@@ -65,13 +61,10 @@ export async function POST(req: Request) {
       try {
         await sendMagicLinkEmail({ to: email, url: magicUrl });
       } catch (emailError) {
-        console.error("[MAGIC_LINK_EMAIL_ERROR]", emailError);
+        logger.error({ event: "magic_link_email_error", err: emailError }, "Magic link email error");
       }
     }
 
-    return NextResponse.json({ message: "If an account exists, a login link has been sent." });
-  } catch (error) {
-    console.error("[MAGIC_LINK_ERROR]", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+    return apiSuccess({ message: "If an account exists, a login link has been sent." });
+  });
 }

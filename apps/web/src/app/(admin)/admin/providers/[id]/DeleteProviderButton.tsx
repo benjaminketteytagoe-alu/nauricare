@@ -1,16 +1,10 @@
-"use client"
+"use client";
 
-import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { deleteProviderProfile } from "../../actions";
 
-export function DeleteProviderButton({
-  providerId,
-  providerName,
-}: {
-  providerId: string;
-  providerName: string;
-}) {
+export function DeleteProviderButton({ providerId, providerName }: { providerId: string; providerName: string }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -35,7 +29,7 @@ export function DeleteProviderButton({
     <button
       onClick={handleDelete}
       disabled={isPending}
-      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md disabled:bg-slate-400"
+      className="bg-danger hover:opacity-90 text-white px-4 py-2 rounded-md disabled:opacity-50"
     >
       {isPending ? "Deleting..." : "Delete Provider"}
     </button>

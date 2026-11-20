@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess, parseJson } from "@/lib/api";
 import { getClientIp } from "@/lib/getClientIp";
+import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { sanitizePlainText } from "@/lib/sanitize";
 import { verifyTurnstileToken } from "@/lib/turnstile";
@@ -65,7 +66,7 @@ export async function POST(req: Request) {
     });
     return apiSuccess({ ok: true }, 201);
   } catch (error) {
-    console.error("[WAITLIST_ERROR]", error instanceof Error ? error.message : error);
+    logger.error({ event: "waitlist.join_failed", err: error }, "Waitlist join failed");
     return apiError("We couldn't add you right now. Please try again shortly.", 500);
   }
 }

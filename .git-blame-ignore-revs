@@ -1,0 +1,3 @@
+# Mechanical formatting commits (git config blame.ignoreRevsFile .git-blame-ignore-revs)
+# style: format the repository with Prettier
+253a48e679ace51298128c3fdce278f6dd309f0a

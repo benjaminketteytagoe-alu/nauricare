@@ -1,52 +1,70 @@
-import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils" // Ensure you have this utility
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import { Loader2 } from "lucide-react";
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
+// The primary variant's inset top highlight and press scale are adapted from
+// Pixel Perfect's "Stripe button" (MIT, see THIRD_PARTY_NOTICES.txt), recoloured
+// to the brand tokens. The press scale is a transform, so reduced motion
+// removes it with every other transition.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-[color,background-color,border-color,box-shadow,transform] duration-150 ease-editorial select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 aria-busy:cursor-progress [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
-        outline: "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "bg-brand text-on-brand shadow-button hover:bg-brand-hover active:bg-brand-pressed",
+        // The one hero call to action: Pixel Perfect's "Premium button" depth
+        // and "Shiny button" sweep (MIT), on the brand gradient. Both ends of
+        // the gradient are contrast-tested against on-brand.
+        premium:
+          "relative isolate overflow-hidden bg-[linear-gradient(145deg,var(--nc-brand),var(--nc-brand-hover))] text-on-brand shadow-premium after:pointer-events-none after:absolute after:inset-0 after:-z-10 after:-translate-x-[120%] after:bg-[linear-gradient(105deg,transparent_30%,rgb(255_255_255/0.32)_50%,transparent_70%)] hover:after:animate-sheen active:bg-brand-pressed",
+        secondary: "bg-surface-muted text-ink hover:bg-hairline",
+        outline: "border border-field bg-surface text-ink hover:border-ink-muted hover:bg-surface-muted",
+        ghost: "text-ink-soft hover:bg-surface-muted hover:text-ink",
+        link: "rounded-sm px-0 text-brand-ink underline-offset-4 hover:underline active:scale-100",
+        destructive: "bg-danger text-surface shadow-button hover:opacity-90",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        default: "h-10 px-5",
+        sm: "h-8 px-3.5 text-xs",
+        lg: "h-12 px-7 text-base",
+        icon: "size-10",
       },
     },
     defaultVariants: {
       variant: "default",
       size: "default",
     },
-  }
-)
+  },
+);
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+  /** Render the child element (e.g. a Next <Link>) with button styling. */
+  asChild?: boolean;
+  /** Shows a spinner, sets aria-busy and blocks clicks. Ignored with asChild. */
+  loading?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
+  ({ className, variant, size, asChild = false, loading = false, disabled, children, ...props }, ref) => {
+    const classes = cn(buttonVariants({ variant, size, className }));
+    if (asChild) {
+      return (
+        <Slot className={classes} ref={ref} {...props}>
+          {children}
+        </Slot>
+      );
+    }
     return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
-    )
-  }
-)
-Button.displayName = "Button"
+      <button className={classes} ref={ref} disabled={disabled || loading} aria-busy={loading || undefined} {...props}>
+        {loading && <Loader2 className="animate-spin" aria-hidden />}
+        {children}
+      </button>
+    );
+  },
+);
+Button.displayName = "Button";
 
-export { Button, buttonVariants }
+export { Button, buttonVariants };

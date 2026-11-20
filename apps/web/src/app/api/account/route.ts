@@ -5,13 +5,17 @@ import { getClientIp } from "@/lib/getClientIp";
 import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { deletePatientAccount, getDeletionPhrase } from "@/server/account/deletion.service";
 
-const DeleteInput = z.object({ confirmation: z.string().trim().min(1, "Type the confirmation text.").max(254) }).strict();
+const DeleteInput = z
+  .object({ confirmation: z.string().trim().min(1, "Type the confirmation text.").max(254) })
+  .strict();
 
 /** The phrase the signed-in patient must type to delete their account. */
 export async function GET() {
   const userId = await getUserIdWithRole("PATIENT");
   if (!userId) return unauthorized();
-  return handle(async () => apiSuccess({ phrase: await getDeletionPhrase(userId) }, 200, { "Cache-Control": "private, no-store" }));
+  return handle(async () =>
+    apiSuccess({ phrase: await getDeletionPhrase(userId) }, 200, { "Cache-Control": "private, no-store" }),
+  );
 }
 
 /** Permanently close the signed-in patient's account (soft delete + anonymise). */

@@ -32,9 +32,10 @@ export interface CycleStats {
  * average. Gaps outside 15–60 days are treated as missed logs and ignored.
  */
 export function predictCycle(logs: PeriodLog[], fallbackCycleLength?: number | null): CycleStats {
-  const fallback = fallbackCycleLength && fallbackCycleLength >= PLAUSIBLE_CYCLE.min && fallbackCycleLength <= PLAUSIBLE_CYCLE.max
-    ? Math.round(fallbackCycleLength)
-    : DEFAULT_CYCLE_LENGTH;
+  const fallback =
+    fallbackCycleLength && fallbackCycleLength >= PLAUSIBLE_CYCLE.min && fallbackCycleLength <= PLAUSIBLE_CYCLE.max
+      ? Math.round(fallbackCycleLength)
+      : DEFAULT_CYCLE_LENGTH;
   const ascending = [...logs].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
 
   const gaps: number[] = [];
@@ -45,8 +46,13 @@ export function predictCycle(logs: PeriodLog[], fallbackCycleLength?: number | n
   const recent = gaps.slice(-6); // the last six cycles reflect the current pattern best
   const cycleLength = recent.length ? Math.round(recent.reduce((a, b) => a + b, 0) / recent.length) : fallback;
 
-  const durations = ascending.filter((l) => l.endDate).map((l) => diffInDays(l.endDate as Date, l.startDate) + 1).filter((d) => d > 0 && d <= 14);
-  const periodLength = durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : DEFAULT_PERIOD_LENGTH;
+  const durations = ascending
+    .filter((l) => l.endDate)
+    .map((l) => diffInDays(l.endDate as Date, l.startDate) + 1)
+    .filter((d) => d > 0 && d <= 14);
+  const periodLength = durations.length
+    ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
+    : DEFAULT_PERIOD_LENGTH;
 
   const last = ascending.at(-1);
   if (!last) return { cycleLength, periodLength, prediction: null };

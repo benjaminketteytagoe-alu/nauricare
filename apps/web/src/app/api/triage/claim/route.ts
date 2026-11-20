@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess, parseJson, unauthorized } from "@/lib/api";
 import { getUserIdWithRole } from "@/lib/auth-guards";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { getTriageConsent } from "@/lib/consent";
-import { toLegacyRiskLevel } from "@/lib/triage/engine";
+import { prisma } from "@/lib/prisma";
+import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
 import { openGuestTriage } from "@/lib/triage/claimToken";
+import { toLegacyRiskLevel } from "@/lib/triage/engine";
 import { recordActivity } from "@/server/activity/activity.service";
 
 // Moves a guest's sealed landing-page triage into the signed-in patient's
@@ -29,7 +29,8 @@ export async function POST(req: Request) {
   if (!consent.valid) return apiError("Please confirm your consent first.", 403, "CONSENT_REQUIRED");
 
   const payload = openGuestTriage(parsed.data.claimToken);
-  if (!payload) return apiError("This assessment has expired. Please run the symptom guide again.", 410, "CLAIM_EXPIRED");
+  if (!payload)
+    return apiError("This assessment has expired. Please run the symptom guide again.", 410, "CLAIM_EXPIRED");
 
   // Idempotent: claiming the same token twice returns the same record.
   const existing = await prisma.symptomCheck.findFirst({

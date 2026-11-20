@@ -1,0 +1,131 @@
+name: Staff password rotation
+
+# Incident response for leaked staff credentials. Runs the staff-access tool
+# (apps/web/scripts/staff-access.ts, bundled into the image) as a one-off ECS
+# task from the image that is currently deployed, with the service's own
+# network and secrets, so nobody needs database credentials on a laptop.
+#
+# `rotate-all` voids every ADMIN and PROVIDER password and emails each person
+# a single-use set-password link. Defaults to a dry run. The production
+# environment requires a reviewer, so a real run waits for approval.
+#
+# This repository is public, and so are its Actions logs: the job prints
+# counts only. Per-account lines (ids, never emails or links) are in the
+# task's CloudWatch log stream.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Where to rotate
+        type: choice
+        options: [production, staging]
+        required: true
+      dry_run:
+        description: Only count the staff accounts; change nothing
+        type: boolean
+        default: true
+      confirm:
+        description: Type rotate-all to really change passwords (ignored for dry runs)
+        type: string
+        required: false
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: staff-rotate-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  rotate:
+    name: rotate-all (${{ inputs.environment }}${{ inputs.dry_run && ', dry run' || '' }})
+    runs-on: ubuntu-24.04
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 20
+    env:
+      AWS_REGION: us-east-1
+      # Production is pinned exactly as in ci.yml, so a stray variable can
+      # never point this at another service.
+      ECS_CLUSTER: ${{ inputs.environment == 'production' && 'default' || (vars.STAGING_ECS_CLUSTER || 'nauricare-staging') }}
+      ECS_SERVICE: ${{ inputs.environment == 'production' && 'arn:aws:ecs:us-east-1:706162600712:service/default/nauricare-api-0acf' || vars.STAGING_ECS_SERVICE }}
+      DRY_RUN: ${{ inputs.dry_run }}
+      CONFIRM: ${{ inputs.confirm }}
+      OPERATOR: ${{ github.actor }}
+    steps:
+      - name: Check inputs
+        run: |
+          if [ -z "$ECS_SERVICE" ]; then echo "::error::No ECS service is configured for ${{ inputs.environment }}."; exit 1; fi
+          if [ "$DRY_RUN" != "true" ] && [ "$CONFIRM" != "rotate-all" ]; then
+            echo "::error::Type rotate-all in the confirm box to change passwords, or tick dry run."
+            exit 1
+          fi
+
+      - name: AWS credentials (OIDC)
+        if: vars.AWS_ROLE_ARN != ''
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: AWS credentials (static keys, legacy)
+        if: vars.AWS_ROLE_ARN == ''
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run staff-access rotate-all as a one-off task
+        run: |
+          set -euo pipefail
+          aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" --query 'services[0]' > service.json
+          TASK_DEF=$(jq -r '.taskDefinition' service.json)
+          aws ecs describe-task-definition --task-definition "$TASK_DEF" --query taskDefinition > taskdef.json
+          CONTAINER=$(jq -r '[.containerDefinitions[] | select(.essential != false)][0].name' taskdef.json)
+          NETWORK=$(jq -c '.networkConfiguration' service.json)
+          if [ "$(jq '.capacityProviderStrategy | length' service.json)" -gt 0 ]; then
+            PLACEMENT=(--capacity-provider-strategy "$(jq -c '.capacityProviderStrategy' service.json)")
+          else
+            PLACEMENT=(--launch-type "$(jq -r '.launchType // "FARGATE"' service.json)")
+          fi
+
+          ARGS='["node", "apps/web/scripts/staff-access.cjs", "rotate-all"]'
+          if [ "$DRY_RUN" = "true" ]; then ARGS='["node", "apps/web/scripts/staff-access.cjs", "rotate-all", "--dry-run"]'; fi
+          OVERRIDES=$(jq -nc --arg c "$CONTAINER" --argjson cmd "$ARGS" --arg op "$OPERATOR" \
+            '{containerOverrides: [{name: $c, command: $cmd, environment: [{name: "STAFF_OPERATOR", value: $op}]}]}')
+
+          aws ecs run-task --cluster "$ECS_CLUSTER" --task-definition "$TASK_DEF" \
+            --network-configuration "$NETWORK" "${PLACEMENT[@]}" \
+            --overrides "$OVERRIDES" --started-by "gha-staff-${GITHUB_RUN_ID}" > run-task.json
+          if [ "$(jq '.failures | length' run-task.json)" -gt 0 ]; then
+            echo "::error::Could not start the task: $(jq -c '.failures' run-task.json)"
+            exit 1
+          fi
+          TASK_ARN=$(jq -r '.tasks[0].taskArn' run-task.json)
+          echo "Task: ${TASK_ARN##*/} (task definition ${TASK_DEF##*/})"
+
+          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN"
+          aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN" > task.json
+          EXIT_CODE=$(jq -r --arg c "$CONTAINER" '.tasks[0].containers[] | select(.name == $c) | .exitCode // "none"' task.json)
+
+          # Counts only: the per-account lines stay in CloudWatch.
+          GROUP=$(jq -r --arg c "$CONTAINER" '.containerDefinitions[] | select(.name == $c) | .logConfiguration.options["awslogs-group"] // empty' taskdef.json)
+          PREFIX=$(jq -r --arg c "$CONTAINER" '.containerDefinitions[] | select(.name == $c) | .logConfiguration.options["awslogs-stream-prefix"] // empty' taskdef.json)
+          if [ -n "$GROUP" ] && [ -n "$PREFIX" ]; then
+            STREAM="$PREFIX/$CONTAINER/${TASK_ARN##*/}"
+            aws logs get-log-events --log-group-name "$GROUP" --log-stream-name "$STREAM" --start-from-head \
+              --query 'events[].message' --output text 2>/dev/null \
+              | tr '\t' '\n' | grep -E '^(Done:|Dry run|[0-9]+ staff account)' \
+              || echo "Summary not readable from here; see CloudWatch $GROUP / $STREAM."
+          fi
+
+          if [ "$EXIT_CODE" = "0" ]; then
+            echo "Finished."
+          elif [ "$EXIT_CODE" = "1" ] && [ "$DRY_RUN" != "true" ]; then
+            echo "::warning::Every staff password is void, but some emails failed. Those people can use Forgot password. See CloudWatch."
+            exit 1
+          else
+            echo "::error::Task failed (exit $EXIT_CODE: $(jq -r '.tasks[0].stoppedReason' task.json)). If the deployed image predates the bundled staff tool, deploy first."
+            exit 1
+          fi

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import LandingPageClient from "@/components/landing/LandingPageClient";
-
 import { SITE_URL as BASE_URL, SUPPORT_EMAIL } from "@/lib/site";
 
 // Page-level metadata inherits the root template: "NauriCare — Women's Health, Connected | NauriCare"
@@ -35,35 +34,27 @@ const jsonLd = {
   logo: `${BASE_URL}/logo-horizontal.jpg`,
   description:
     "NauriCare is a secure telehealth platform providing evidence-based women's reproductive health care — specialising in PCOS, uterine fibroids, and menstrual health — with verified OB-GYN specialists serving patients in Kigali, Rwanda, and across Africa.",
-  medicalSpecialty: [
-    "Gynecology",
-    "ObstetricsAndGynecology",
-    "ReproductiveMedicine",
-  ],
+  medicalSpecialty: ["Gynecology", "ObstetricsAndGynecology", "ReproductiveMedicine"],
   availableService: [
     {
       "@type": "MedicalTherapy",
       name: "Virtual Gynaecology Consultations",
-      description:
-        "Secure end-to-end encrypted video consultations with verified OB-GYN specialists.",
+      description: "Secure end-to-end encrypted video consultations with verified OB-GYN specialists.",
     },
     {
       "@type": "MedicalTherapy",
       name: "PCOS Management",
-      description:
-        "Personalised, evidence-based care plans for polycystic ovary syndrome.",
+      description: "Personalised, evidence-based care plans for polycystic ovary syndrome.",
     },
     {
       "@type": "MedicalTherapy",
       name: "Fibroid Assessment & Monitoring",
-      description:
-        "Remote assessment and ongoing monitoring for uterine fibroids with specialist guidance.",
+      description: "Remote assessment and ongoing monitoring for uterine fibroids with specialist guidance.",
     },
     {
       "@type": "MedicalTherapy",
       name: "Menstrual Health Tracking",
-      description:
-        "AI-powered cycle tracking and predictive health insights for women's reproductive wellness.",
+      description: "AI-powered cycle tracking and predictive health insights for women's reproductive wellness.",
     },
   ],
   address: {
@@ -114,10 +105,7 @@ const jsonLd = {
 export default function LandingPage() {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <LandingPageClient />
     </>
   );

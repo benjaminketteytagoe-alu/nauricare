@@ -21,6 +21,7 @@
 ## Overview & Key Features
 
 ### 🧑‍⚕️ Patient Portal
+
 - Unified health dashboard with symptom logging and provider consultations
 - Interactive **cycle & body tracking calendar** — log period start/end dates and view predicted next-cycle and ovulation windows
 - Appointment booking with Jitsi-powered video consultations
@@ -28,12 +29,14 @@
 - Community feed (posts, comments, follows, stories) and appointment-gated direct messaging
 
 ### 🩺 Provider Portal
+
 - Patient roster and health record (EHR) management
 - Digital prescription issuing, tied to specific consultations
 - Availability scheduling and appointment lifecycle management
 - Direct messaging with patients
 
 ### 🔐 Security & Auth
+
 - **NextAuth v4** (JWT strategy) with Google OAuth and email/password (bcrypt) credential login
 - **Resend**-powered transactional email verification with resend/enumeration protection
 - **Cloudflare Turnstile** bot mitigation on all credential-auth flows (login, register, forgot-password)
@@ -41,18 +44,19 @@
 - Typed audit logging (`AuditLog`) for compliance-sensitive admin/provider actions
 
 ### ☁️ Cloud Storage
+
 - **AWS S3** direct-to-cloud uploads via short-lived presigned URLs (client uploads directly to S3, bypassing the app server)
 
 ---
 
 ## Quick Links
 
-| Resource | URL |
-|---|---|
-| **Production** | [https://nauricare.org](https://nauricare.org) |
-| **Repository** | [https://github.com/benjaminketteytagoe-alu/nauricare](https://github.com/benjaminketteytagoe-alu/nauricare) |
-| **AWS S3 Console** | [https://console.aws.amazon.com/s3/](https://console.aws.amazon.com/s3/) |
-| **Resend Dashboard** | [https://resend.com/emails](https://resend.com/emails) |
+| Resource             | URL                                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Production**       | [https://nauricare.org](https://nauricare.org)                                                               |
+| **Repository**       | [https://github.com/benjaminketteytagoe-alu/nauricare](https://github.com/benjaminketteytagoe-alu/nauricare) |
+| **AWS S3 Console**   | [https://console.aws.amazon.com/s3/](https://console.aws.amazon.com/s3/)                                     |
+| **Resend Dashboard** | [https://resend.com/emails](https://resend.com/emails)                                                       |
 
 ---
 
@@ -60,19 +64,20 @@
 
 NauriCare is a **Turborepo** monorepo (`npm` workspaces) separating the application from shared, versioned packages.
 
-| Layer | Technology |
-|---|---|
-| Monorepo tooling | Turborepo, npm workspaces |
-| Framework | Next.js 16 (App Router, React Server Components, Server Actions) |
-| UI | React 19, Tailwind CSS v4, `shadcn`, Framer Motion |
-| Database | PostgreSQL (Neon-hosted), Prisma ORM v6 |
-| Auth | NextAuth v4 (JWT), bcrypt, Cloudflare Turnstile |
-| Object Storage | AWS S3 (`@aws-sdk/client-s3`, presigned uploads) |
-| Transactional Email | Resend + `@react-email/components` |
-| Video | Jitsi Meet |
-| Language | TypeScript (strict mode) |
+| Layer               | Technology                                                       |
+| ------------------- | ---------------------------------------------------------------- |
+| Monorepo tooling    | Turborepo, npm workspaces                                        |
+| Framework           | Next.js 16 (App Router, React Server Components, Server Actions) |
+| UI                  | React 19, Tailwind CSS v4, `shadcn`, Framer Motion               |
+| Database            | PostgreSQL (Neon-hosted), Prisma ORM v6                          |
+| Auth                | NextAuth v4 (JWT), bcrypt, Cloudflare Turnstile                  |
+| Object Storage      | AWS S3 (`@aws-sdk/client-s3`, presigned uploads)                 |
+| Transactional Email | Resend + `@react-email/components`                               |
+| Video               | Jitsi Meet                                                       |
+| Language            | TypeScript (strict mode)                                         |
 
 **Monorepo layout:**
+
 - `apps/web` — the Next.js 16 application (all product surface area)
 - `packages/database` — Prisma schema, migrations, seed script (`@nauricare/database`)
 - `packages/ui` — shared React component library
@@ -246,18 +251,18 @@ The upload flow issues short-lived presigned `PUT` URLs directly to the client, 
 
 ## Essential Terminal Commands
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start all apps in dev mode (Turbo) |
-| `npx turbo dev --filter=web` | Start only the web app |
-| `npm run build` | Build all packages/apps via Turbo |
-| `cd apps/web && npm run lint` | Lint the web app (ESLint) |
-| `cd apps/web && npx tsc --noEmit` | Type-check the web app with zero emitted output |
-| `npx prisma generate --schema=packages/database/prisma/schema.prisma` | Regenerate the Prisma client |
-| `npx prisma migrate dev --schema=packages/database/prisma/schema.prisma` | Create & apply a new migration (local dev) |
-| `npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma` | Apply pending migrations (CI / production) |
-| `npx prisma studio --schema=packages/database/prisma/schema.prisma` | Open the Prisma Studio DB browser |
-| `docker-compose up -d` | Start local PostgreSQL on port 5433 |
+| Command                                                                     | Description                                     |
+| --------------------------------------------------------------------------- | ----------------------------------------------- |
+| `npm run dev`                                                               | Start all apps in dev mode (Turbo)              |
+| `npx turbo dev --filter=web`                                                | Start only the web app                          |
+| `npm run build`                                                             | Build all packages/apps via Turbo               |
+| `cd apps/web && npm run lint`                                               | Lint the web app (ESLint)                       |
+| `cd apps/web && npx tsc --noEmit`                                           | Type-check the web app with zero emitted output |
+| `npx prisma generate --schema=packages/database/prisma/schema.prisma`       | Regenerate the Prisma client                    |
+| `npx prisma migrate dev --schema=packages/database/prisma/schema.prisma`    | Create & apply a new migration (local dev)      |
+| `npx prisma migrate deploy --schema=packages/database/prisma/schema.prisma` | Apply pending migrations (CI / production)      |
+| `npx prisma studio --schema=packages/database/prisma/schema.prisma`         | Open the Prisma Studio DB browser               |
+| `docker-compose up -d`                                                      | Start local PostgreSQL on port 5433             |
 
 ---
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export interface AuthVisualSlide {
   src: string;
@@ -41,7 +41,7 @@ export function AuthVisualPanel({ slides, quote, chips = [], intervalMs = 5000 }
   const active = slides[activeIdx];
 
   return (
-    <div className="hidden lg:block lg:w-1/2 sticky top-0 h-[100dvh] overflow-hidden bg-teal-950">
+    <div className="hidden lg:block lg:w-1/2 sticky top-0 h-[100dvh] overflow-hidden bg-surface-inverse">
       <AnimatePresence>
         <motion.img
           key={active.src}
@@ -56,8 +56,8 @@ export function AuthVisualPanel({ slides, quote, chips = [], intervalMs = 5000 }
       </AnimatePresence>
 
       {/* Multi-layer gradient for text legibility */}
-      <div className="absolute inset-0 bg-gradient-to-t from-teal-950 via-teal-950/60 to-teal-900/20 pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-teal-950/30 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-surface-inverse via-surface-inverse/60 to-surface-inverse/20 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-surface-inverse/30 pointer-events-none" />
 
       {/* Content */}
       <div className="absolute inset-0 flex flex-col justify-end p-10 pb-12 text-white">
@@ -69,9 +69,7 @@ export function AuthVisualPanel({ slides, quote, chips = [], intervalMs = 5000 }
               onClick={() => setActiveIdx(i)}
               aria-label={`View slide ${i + 1}`}
               className={`rounded-full transition-all duration-500 ${
-                i === activeIdx
-                  ? "w-7 h-2 bg-white"
-                  : "w-2 h-2 bg-white/35 hover:bg-white/60"
+                i === activeIdx ? "w-7 h-2 bg-surface" : "w-2 h-2 bg-white/35 hover:bg-white/60"
               }`}
             />
           ))}
@@ -79,7 +77,7 @@ export function AuthVisualPanel({ slides, quote, chips = [], intervalMs = 5000 }
 
         {/* Current slide caption */}
         <div className="mb-7 space-y-1 min-h-[52px]">
-          <p className="text-xs font-extrabold tracking-[0.18em] uppercase text-teal-300 transition-opacity duration-500">
+          <p className="text-xs font-extrabold tracking-[0.18em] uppercase text-brand-line transition-opacity duration-500">
             {active.tag}
           </p>
           <p className="text-sm text-white/70 leading-relaxed max-w-xs transition-opacity duration-500">
@@ -100,7 +98,7 @@ export function AuthVisualPanel({ slides, quote, chips = [], intervalMs = 5000 }
                 key={label}
                 className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/15 rounded-full px-4 py-2 text-xs font-semibold text-white/90"
               >
-                <Icon className="w-3.5 h-3.5 text-teal-300 shrink-0" />
+                <Icon className="w-3.5 h-3.5 text-brand-line shrink-0" />
                 {label}
               </div>
             ))}

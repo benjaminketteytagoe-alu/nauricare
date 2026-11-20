@@ -1,5 +1,6 @@
-import * as cheerio from "cheerio";
+import "server-only";
 import { GoogleGenerativeAI, SchemaType, type ResponseSchema } from "@google/generative-ai";
+import * as cheerio from "cheerio";
 import { z } from "zod";
 
 // Turns crawled pages into gynaecologist candidates. Two extractors share one
@@ -31,7 +32,8 @@ export interface ExtractedCandidate {
   extractor: "ai" | "heuristic";
 }
 
-const GYN_RE = /gyn(a)?ecolog|obstetric|ob[\s/-]?gyn|o&g|women'?s health|maternal[- ]fetal|reproductive (health|medicine)|fertility/i;
+const GYN_RE =
+  /gyn(a)?ecolog|obstetric|ob[\s/-]?gyn|o&g|women'?s health|maternal[- ]fetal|reproductive (health|medicine)|fertility/i;
 const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
 const PHONE_RE = /(?:\+?250[\s-]?)?(?:0?7[2389])\d[\s-]?\d{3}[\s-]?\d{3}/g;
 const MAX_TEXT = 14_000;
@@ -76,7 +78,14 @@ export function toDocument(url: string, html: string): PageDocument {
   const text = $("body").text().replace(/\s+/g, " ").trim().slice(0, MAX_TEXT);
   for (const m of text.match(EMAIL_RE) ?? []) emails.add(m.toLowerCase());
   for (const m of text.match(PHONE_RE) ?? []) phones.add(m.trim());
-  return { url, title: $("title").first().text().trim().slice(0, 200), text, emails: [...emails], phones: [...phones], images };
+  return {
+    url,
+    title: $("title").first().text().trim().slice(0, 200),
+    text,
+    emails: [...emails],
+    phones: [...phones],
+    images,
+  };
 }
 
 // ── Validation shared by both extractors ────────────────────────────────────
@@ -115,23 +124,36 @@ export function segmentFor(text: string, name: string): string {
   return text.slice(start, end).trim();
 }
 
-export function validateCandidate(raw: Raw, doc: PageDocument, extractor: "ai" | "heuristic"): ExtractedCandidate | null {
+export function validateCandidate(
+  raw: Raw,
+  doc: PageDocument,
+  extractor: "ai" | "heuristic",
+): ExtractedCandidate | null {
   const fullName = raw.fullName.replace(/\s+/g, " ").trim();
   const textN = norm(doc.text);
   // The name must literally appear on the page.
   if (!textN.includes(norm(fullName))) return null;
   const evidence = segmentFor(doc.text, fullName);
   // It must be a gynaecology / obstetrics doctor, stated near the name or in the specialty.
-  const specialty = raw.specialty && GYN_RE.test(raw.specialty) ? raw.specialty : GYN_RE.test(evidence) ? "Obstetrician & Gynaecologist" : null;
+  const specialty =
+    raw.specialty && GYN_RE.test(raw.specialty)
+      ? raw.specialty
+      : GYN_RE.test(evidence)
+        ? "Obstetrician & Gynaecologist"
+        : null;
   if (!specialty) return null;
 
   // Contact details must be on the page AND in this doctor's own segment.
   const email =
-    raw.email && doc.emails.includes(raw.email.toLowerCase()) && evidence.toLowerCase().includes(raw.email.toLowerCase())
+    raw.email &&
+    doc.emails.includes(raw.email.toLowerCase()) &&
+    evidence.toLowerCase().includes(raw.email.toLowerCase())
       ? raw.email.toLowerCase()
       : null;
   const phone =
-    raw.phone && digits(raw.phone).length >= 9 && digits(evidence).includes(digits(raw.phone).slice(-9)) ? raw.phone : null;
+    raw.phone && digits(raw.phone).length >= 9 && digits(evidence).includes(digits(raw.phone).slice(-9))
+      ? raw.phone
+      : null;
   const years =
     raw.yearsExperience != null && new RegExp(`\\b${raw.yearsExperience}\\+?\\s*(years?|yrs?)\\b`, "i").test(evidence)
       ? raw.yearsExperience
@@ -214,7 +236,9 @@ async function extractWithAI(doc: PageDocument): Promise<Raw[]> {
 
 const NAME_RE = /\b(?:Dr\.?|Doctor|Prof\.?)\s+((?:[A-Z][a-zA-Z'’-]+\s?){1,4})/g;
 const TITLE_WORDS = new Set(
-  "consultant senior junior head chief specialist obstetrician gynaecologist gynecologist obstetrics gynaecology gynecology department director medical officer resident general practitioner md mbchb phd msc frcog fcs with at of and in is".split(" "),
+  "consultant senior junior head chief specialist obstetrician gynaecologist gynecologist obstetrics gynaecology gynecology department director medical officer resident general practitioner md mbchb phd msc frcog fcs with at of and in is".split(
+    " ",
+  ),
 );
 
 function cleanName(prefix: string, tokens: string): string | null {
@@ -242,7 +266,14 @@ function extractHeuristically(doc: PageDocument): Raw[] {
     const yearsMatch = ctx.match(/\b(\d{1,2})\+?\s*(?:years?|yrs?)\b/i);
     const lastName = name.split(" ").pop()!.toLowerCase();
     const photo = doc.images.find((i) => i.alt.toLowerCase().includes(lastName))?.src ?? null;
-    out.push({ fullName: name, specialty: null, email, phone, yearsExperience: yearsMatch ? Number(yearsMatch[1]) : null, photoUrl: photo });
+    out.push({
+      fullName: name,
+      specialty: null,
+      email,
+      phone,
+      yearsExperience: yearsMatch ? Number(yearsMatch[1]) : null,
+      photoUrl: photo,
+    });
   }
   return out;
 }
@@ -254,7 +285,9 @@ export async function extractCandidates(doc: PageDocument, log: (l: string) => v
   try {
     raws = await extractWithAI(doc);
   } catch (e) {
-    log(`AI extraction failed on ${new URL(doc.url).pathname} (${e instanceof Error ? e.message.slice(0, 120) : "error"}); using heuristics`);
+    log(
+      `AI extraction failed on ${new URL(doc.url).pathname} (${e instanceof Error ? e.message.slice(0, 120) : "error"}); using heuristics`,
+    );
   }
   if (!process.env.GEMINI_API_KEY || raws.length === 0) {
     const heuristic = extractHeuristically(doc);

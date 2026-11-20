@@ -1,26 +1,16 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { apiSuccess, handle, notFound } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { prisma } from "@/lib/prisma";
 
- 
 // A perfect day = 4 completions (100%).
 const TOTAL_DAILY_HABITS = 4;
 
 export async function GET() {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id || session.user.role !== "PATIENT") {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
-
-    const profile = await prisma.patientProfile.findUnique({
-      where: { userId: session.user.id },
-    });
-
-    if (!profile) {
-      return new NextResponse("Profile not found", { status: 404 });
-    }
+  const auth = await requireApiUser("PATIENT");
+  if (!auth.ok) return auth.response;
+  return handle(async () => {
+    const profile = await prisma.patientProfile.findUnique({ where: { userId: auth.user.id }, select: { id: true } });
+    if (!profile) return notFound("Profile not found.");
 
     // 1. Fetch all completed logs for the current year
     const currentYear = new Date().getFullYear();
@@ -36,30 +26,45 @@ export async function GET() {
 
     // 2. Initialize the exact data structures  frontend expects
     const weekData = [
-      { label: 'Sun', value: 0 }, { label: 'Mon', value: 0 }, { label: 'Tue', value: 0 },
-      { label: 'Wed', value: 0 }, { label: 'Thu', value: 0 }, { label: 'Fri', value: 0 }, { label: 'Sat', value: 0 }
+      { label: "Sun", value: 0 },
+      { label: "Mon", value: 0 },
+      { label: "Tue", value: 0 },
+      { label: "Wed", value: 0 },
+      { label: "Thu", value: 0 },
+      { label: "Fri", value: 0 },
+      { label: "Sat", value: 0 },
     ];
     const monthData = [
-      { label: 'Week 1', value: 0 }, { label: 'Week 2', value: 0 },
-      { label: 'Week 3', value: 0 }, { label: 'Week 4', value: 0 }
+      { label: "Week 1", value: 0 },
+      { label: "Week 2", value: 0 },
+      { label: "Week 3", value: 0 },
+      { label: "Week 4", value: 0 },
     ];
     const yearData = [
-      { label: 'Jan', value: 0 }, { label: 'Feb', value: 0 }, { label: 'Mar', value: 0 },
-      { label: 'Apr', value: 0 }, { label: 'May', value: 0 }, { label: 'Jun', value: 0 },
-      { label: 'Jul', value: 0 }, { label: 'Aug', value: 0 }, { label: 'Sep', value: 0 },
-      { label: 'Oct', value: 0 }, { label: 'Nov', value: 0 }, { label: 'Dec', value: 0 }
+      { label: "Jan", value: 0 },
+      { label: "Feb", value: 0 },
+      { label: "Mar", value: 0 },
+      { label: "Apr", value: 0 },
+      { label: "May", value: 0 },
+      { label: "Jun", value: 0 },
+      { label: "Jul", value: 0 },
+      { label: "Aug", value: 0 },
+      { label: "Sep", value: 0 },
+      { label: "Oct", value: 0 },
+      { label: "Nov", value: 0 },
+      { label: "Dec", value: 0 },
     ];
 
     // 3. Process the logs into their respective buckets
     const today = new Date();
     const currentMonth = today.getMonth();
-    
+
     // Calculate the start of the current week (Sunday)
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
 
-    logs.forEach(log => {
+    logs.forEach((log) => {
       const logDate = new Date(log.date);
 
       // Add to Yearly bucket
@@ -79,27 +84,25 @@ export async function GET() {
     });
 
     // 4. Convert raw counts into percentages
-    const calculatePercentage = (count: number, maxPossible: number) => 
+    const calculatePercentage = (count: number, maxPossible: number) =>
       Math.min(Math.round((count / maxPossible) * 100), 100);
 
     // Format Week: Monday first, Sunday last (matching your UI)
-    const formattedWeekData = weekData.map(d => ({ ...d, value: calculatePercentage(d.value, TOTAL_DAILY_HABITS) }));
+    const formattedWeekData = weekData.map((d) => ({ ...d, value: calculatePercentage(d.value, TOTAL_DAILY_HABITS) }));
     const shiftedWeek = [...formattedWeekData.slice(1), formattedWeekData[0]];
 
     // Format Month: ~28 habits max per week
-    const formattedMonthData = monthData.map(d => ({ ...d, value: calculatePercentage(d.value, TOTAL_DAILY_HABITS * 7) }));
+    const formattedMonthData = monthData.map((d) => ({
+      ...d,
+      value: calculatePercentage(d.value, TOTAL_DAILY_HABITS * 7),
+    }));
 
     // Format Year: ~120 habits max per month
-    const formattedYearData = yearData.map(d => ({ ...d, value: calculatePercentage(d.value, TOTAL_DAILY_HABITS * 30) }));
+    const formattedYearData = yearData.map((d) => ({
+      ...d,
+      value: calculatePercentage(d.value, TOTAL_DAILY_HABITS * 30),
+    }));
 
-    return NextResponse.json({
-      week: shiftedWeek,
-      month: formattedMonthData,
-      year: formattedYearData
-    });
-
-  } catch (error) {
-    console.error("[ANALYTICS_ERROR]", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
-  }
+    return apiSuccess({ week: shiftedWeek, month: formattedMonthData, year: formattedYearData });
+  });
 }

@@ -17,7 +17,8 @@ FROM node:24-alpine AS base
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1 \
-    TURBO_TELEMETRY_DISABLED=1
+    TURBO_TELEMETRY_DISABLED=1 \
+    HUSKY=0
 
 # ----------------------------------------------------------------------------
 # 1. Pruner: extract only the `web` app and its internal dependencies
@@ -64,6 +65,10 @@ ENV NODE_ENV=production \
     NEXTAUTH_URL="http://localhost:3000"
 
 RUN npx turbo run build --filter=web
+# The staff-access tool as one self-contained file (only @prisma/client is
+# external, and the standalone output already ships it). It runs as a one-off
+# ECS task: .github/workflows/staff-rotate.yml.
+RUN npm run build:staff-tool -w web
 
 # ----------------------------------------------------------------------------
 # 3. Runner: minimal image with the standalone server
@@ -81,9 +86,14 @@ RUN addgroup --system --gid 1001 nodejs \
 # one-off task from this same image (ECS `run-task`, or `docker exec ... prisma
 # migrate deploy`) with no package download at deploy time.
 COPY --from=pruner /app/out/package-lock.json /tmp/package-lock.json
+# The package managers are removed afterwards: nothing installs at runtime,
+# and dropping them removes their bundled dependencies' CVEs and attack surface.
 RUN npm install -g "prisma@$(node -p "require('/tmp/package-lock.json').packages['node_modules/prisma'].version")" \
  && rm /tmp/package-lock.json \
- && npm cache clean --force
+ && npm cache clean --force \
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+           /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+           /opt/yarn-* /usr/local/bin/yarn /usr/local/bin/yarnpkg /root/.npm
 
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
@@ -91,6 +101,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 # Prisma schema + migrations: the deploy job runs `prisma migrate deploy`
 # inside this container after start-up.
 COPY --from=builder --chown=nextjs:nodejs /app/packages/database/prisma ./packages/database/prisma
+
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/dist/staff-access.cjs ./apps/web/scripts/staff-access.cjs
 
 # Build identifier, surfaced by /api/health (CI passes the commit SHA).
 ARG APP_VERSION=unknown

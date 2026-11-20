@@ -1,3 +1,4 @@
+import "server-only";
 import { EventEmitter } from "events";
 
 // In-process pub/sub for server-sent events. Events published here reach
@@ -6,7 +7,15 @@ import { EventEmitter } from "events";
 // arrive within a few seconds.
 
 export type RealtimeEvent =
-  | { type: "message"; id: string; senderId: string; receiverId: string; content: string; createdAt: string; sender: { id: string; name: string } }
+  | {
+      type: "message";
+      id: string;
+      senderId: string;
+      receiverId: string;
+      content: string;
+      createdAt: string;
+      sender: { id: string; name: string };
+    }
   | { type: "notification"; id: string }
   | { type: "presence"; userId: string; online: boolean };
 

@@ -1,3 +1,4 @@
+import "server-only";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { isValidTimeZone } from "@/lib/time/zoned";
@@ -5,7 +6,7 @@ import { isValidTimeZone } from "@/lib/time/zoned";
 // Patient reminder settings. A patient without a row gets the schema
 // defaults; the row is created on first save (or by the sweep on claim).
 
-export const REMINDER_PREF_SELECT = {
+const REMINDER_PREF_SELECT = {
   periodReminders: true,
   periodLeadDays: true,
   dailyLogReminders: true,
@@ -58,7 +59,10 @@ export async function getReminderPrefs(userId: string): Promise<ReminderPrefs> {
   return row ?? REMINDER_DEFAULTS;
 }
 
-export async function updateReminderPrefs(userId: string, patch: z.infer<typeof ReminderPrefsPatch>): Promise<ReminderPrefs> {
+export async function updateReminderPrefs(
+  userId: string,
+  patch: z.infer<typeof ReminderPrefsPatch>,
+): Promise<ReminderPrefs> {
   return prisma.reminderPreference.upsert({
     where: { userId },
     create: { userId, ...patch },

@@ -1,9 +1,9 @@
+import { CURRENT_CONSENT_VERSION } from "@/lib/consentVersion";
 import { prisma } from "@/lib/prisma";
 
 // The version lives in a client-safe module. Bumping it shows everyone the
 // gate again, because Law N° 058/2021 consent must be informed by the notice
 // that actually applies.
-import { CURRENT_CONSENT_VERSION } from "@/lib/consentVersion";
 export { CURRENT_CONSENT_VERSION };
 
 export interface TriageConsent {
@@ -24,10 +24,10 @@ interface ConsentFields {
 export function evaluateConsent(u: ConsentFields | null): TriageConsent {
   const valid = Boolean(
     u &&
-      u.hasConsentedToPrivacy &&
-      u.hasConsentedToTriage &&
-      u.consentTimestamp &&
-      u.consentVersion === CURRENT_CONSENT_VERSION,
+    u.hasConsentedToPrivacy &&
+    u.hasConsentedToTriage &&
+    u.consentTimestamp &&
+    u.consentVersion === CURRENT_CONSENT_VERSION,
   );
   return {
     valid,

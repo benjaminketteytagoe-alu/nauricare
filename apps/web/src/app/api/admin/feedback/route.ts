@@ -1,18 +1,15 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { Prisma } from "@prisma/client";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { prisma } from "@/lib/prisma";
+import { type Prisma } from "@prisma/client";
+import { apiSuccess, handle } from "@/lib/api";
+import { requireApiUser } from "@/lib/auth-guards";
 import { ALL_FEEDBACK_CATEGORIES } from "@/lib/feedback/categories";
+import { prisma } from "@/lib/prisma";
 
 const VALID_CATEGORIES = new Set<string>(ALL_FEEDBACK_CATEGORIES);
 const VALID_STATUSES = new Set(["NEW", "REVIEWED", "ACTIONED"]);
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
+  const auth = await requireApiUser("ADMIN");
+  if (!auth.ok) return auth.response;
 
   const url = new URL(req.url);
   const ratingParam = url.searchParams.get("rating");
@@ -35,28 +32,30 @@ export async function GET(req: Request) {
     where.comment = { contains: search, mode: "insensitive" };
   }
 
-  const [items, total, avgAgg, satisfiedCount, categoryGroups, statusGroups] = await Promise.all([
-    prisma.feedback.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: 200,
-      include: { user: { select: { name: true, email: true, role: true } } },
-    }),
-    prisma.feedback.count(),
-    prisma.feedback.aggregate({ _avg: { rating: true } }),
-    prisma.feedback.count({ where: { rating: { gte: 4 } } }),
-    prisma.feedback.groupBy({ by: ["category"], _count: { _all: true } }),
-    prisma.feedback.groupBy({ by: ["status"], _count: { _all: true } }),
-  ]);
+  return handle(async () => {
+    const [items, total, avgAgg, satisfiedCount, categoryGroups, statusGroups] = await Promise.all([
+      prisma.feedback.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take: 200,
+        include: { user: { select: { name: true, email: true, role: true } } },
+      }),
+      prisma.feedback.count(),
+      prisma.feedback.aggregate({ _avg: { rating: true } }),
+      prisma.feedback.count({ where: { rating: { gte: 4 } } }),
+      prisma.feedback.groupBy({ by: ["category"], _count: { _all: true } }),
+      prisma.feedback.groupBy({ by: ["status"], _count: { _all: true } }),
+    ]);
 
-  return NextResponse.json({
-    items,
-    stats: {
-      total,
-      averageRating: avgAgg._avg.rating ?? 0,
-      csatPercent: total > 0 ? Math.round((satisfiedCount / total) * 100) : 0,
-      byCategory: Object.fromEntries(categoryGroups.map((g) => [g.category, g._count._all])),
-      byStatus: Object.fromEntries(statusGroups.map((g) => [g.status, g._count._all])),
-    },
+    return apiSuccess({
+      items,
+      stats: {
+        total,
+        averageRating: avgAgg._avg.rating ?? 0,
+        csatPercent: total > 0 ? Math.round((satisfiedCount / total) * 100) : 0,
+        byCategory: Object.fromEntries(categoryGroups.map((g) => [g.category, g._count._all])),
+        byStatus: Object.fromEntries(statusGroups.map((g) => [g.status, g._count._all])),
+      },
+    });
   });
 }

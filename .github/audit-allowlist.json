@@ -1,0 +1,11 @@
+{
+  "$comment": "Advisories accepted temporarily. Each entry needs a reason and an expiry; CI fails once it passes.",
+  "advisories": [
+    {
+      "id": "GHSA-ggr8-5vv4-36mx",
+      "package": "deepmerge-ts",
+      "reason": "Only reachable through the prisma CLI's config loader (@prisma/config), which runs at build/migrate time on trusted input, never on user data. The fix requires the Prisma 7 major upgrade, tracked separately.",
+      "expires": "2027-02-28"
+    }
+  ]
+}

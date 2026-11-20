@@ -13,5 +13,7 @@ export async function POST(req: NextRequest) {
   const ip = getClientIp(req.headers);
   const limit = rateLimit(`login-code-send:${ip}`, 20, 60 * 60_000);
   if (!limit.allowed) return rateLimitResponse(limit);
-  return handle(async () => apiSuccess(await sendLoginCode(login.userId, login.sid, ip), 200, { "Cache-Control": "no-store" }));
+  return handle(async () =>
+    apiSuccess(await sendLoginCode(login.userId, login.sid, ip), 200, { "Cache-Control": "no-store" }),
+  );
 }

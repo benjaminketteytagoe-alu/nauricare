@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { apiSuccess, handle, parseJson, unauthorized } from "@/lib/api";
 import { getUserIdWithRole } from "@/lib/auth-guards";
+import { enforceRateLimit } from "@/lib/rateLimit";
 import { sanitizePlainText } from "@/lib/sanitize";
 import { createSource, listSources } from "@/server/sourcing/sourcing.service";
 
@@ -18,6 +19,8 @@ export async function GET() {
 export async function POST(req: Request) {
   const adminId = await getUserIdWithRole("ADMIN");
   if (!adminId) return unauthorized();
+  const limited = enforceRateLimit(`admin-sourcing:${adminId}`);
+  if (limited) return limited;
   const parsed = await parseJson(req, SourceInput);
   if (!parsed.ok) return parsed.response;
   return handle(async () => {

@@ -20,7 +20,10 @@ export interface GuestTriagePayload {
   consentVersion: string;
 }
 
-export function sealGuestTriage(data: Omit<GuestTriagePayload, "v" | "jti" | "exp">): { token: string; expiresAt: number } {
+export function sealGuestTriage(data: Omit<GuestTriagePayload, "v" | "jti" | "exp">): {
+  token: string;
+  expiresAt: number;
+} {
   const payload: GuestTriagePayload = { v: 1, jti: randomUUID(), exp: Date.now() + TTL_MS, ...data };
   const token = sealJson(PURPOSE, payload);
   return { token, expiresAt: payload.exp };

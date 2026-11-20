@@ -1,6 +1,7 @@
+import "server-only";
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { communityAvatar, presetIdOf } from "@/lib/avatars";
+import { prisma } from "@/lib/prisma";
 
 // Community avatar policy: patients appear with a predefined avatar only
 // (never an uploaded or Google photo) and must choose one before posting.

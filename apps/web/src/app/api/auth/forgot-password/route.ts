@@ -1,11 +1,12 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { z } from "zod";
 import { randomBytes, createHash } from "crypto";
-import { verifyTurnstileToken } from "@/lib/turnstile";
-import { getClientIp } from "@/lib/getClientIp";
+import { z } from "zod";
+import { apiError, apiSuccess, handle, readJson } from "@/lib/api";
 import { sendPasswordResetEmail } from "@/lib/email";
-import { rateLimit, rateLimitResponse } from "@/lib/rateLimit";
+import { getClientIp } from "@/lib/getClientIp";
+import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/rateLimit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 const schema = z.object({
   email: z.string().email(),
@@ -13,24 +14,21 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
-  try {
-    const ip = getClientIp(req.headers as Headers);
-    const limit = rateLimit(`auth-forgot-password:${ip}`, 5, 15 * 60_000);
-    if (!limit.allowed) return rateLimitResponse(limit);
+  return handle(async () => {
+    const ip = getClientIp(req.headers);
+    const limit = enforceRateLimit(`auth-forgot-password:${ip}`, 5, 15 * 60_000);
+    if (limit) return limit;
 
-    const body = await req.json();
+    const body = (await readJson(req)) as Record<string, unknown> | undefined;
 
-    const isHuman = await verifyTurnstileToken(body?.turnstileToken ?? "", ip);
+    const isHuman = await verifyTurnstileToken(typeof body?.turnstileToken === "string" ? body.turnstileToken : "", ip);
     if (!isHuman) {
-      return NextResponse.json(
-        { error: "Security verification failed. Please try again." },
-        { status: 403 },
-      );
+      return apiError("Security verification failed. Please try again.", 403);
     }
 
     const parsed = schema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Valid email required" }, { status: 400 });
+      return apiError("Valid email required", 400);
     }
 
     const { email } = parsed.data; // turnstileToken already verified above
@@ -39,7 +37,7 @@ export async function POST(req: Request) {
 
     // Always return 200 to prevent email enumeration attacks
     if (!user) {
-      return NextResponse.json({ message: "If an account exists, a reset link has been sent." });
+      return apiSuccess({ message: "If an account exists, a reset link has been sent." });
     }
 
     // Delete any existing tokens for this user to prevent token accumulation
@@ -62,12 +60,9 @@ export async function POST(req: Request) {
     try {
       await sendPasswordResetEmail({ to: email, resetUrl });
     } catch (resendError) {
-      console.error("[PASSWORD_RESET_EMAIL_ERROR]", resendError);
+      logger.error({ event: "password_reset_email_error", err: resendError }, "Password reset email error");
     }
 
-    return NextResponse.json({ message: "If an account exists, a reset link has been sent." });
-  } catch (error) {
-    console.error("[FORGOT_PASSWORD_ERROR]", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+    return apiSuccess({ message: "If an account exists, a reset link has been sent." });
+  });
 }
