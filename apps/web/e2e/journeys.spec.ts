@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { ownClientIp } from "./helpers";
 
 // Sign-up signs the person straight in and goes to the emailed-code step:
 // no verification link, no second password entry. Needs Cloudflare's
@@ -9,6 +10,7 @@ test.skip(process.env.E2E_SIGNUP !== "1", "creates accounts; set E2E_SIGNUP=1 ag
 
 test("a new patient goes from sign-up straight to the sign-in code", async ({ page }, testInfo) => {
   const id = `${Date.now()}${testInfo.project.name === "mobile" ? 1 : 0}`;
+  await ownClientIp(page); // sign-up is rate-limited per IP
   await page.goto("/signup");
   await page.getByLabel("Full Name").fill("Journey Test");
   await page.getByLabel("Email Address").fill(`journey+${id}@example.com`);
