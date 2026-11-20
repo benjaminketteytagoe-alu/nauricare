@@ -4,8 +4,8 @@ import { Turnstile } from "@marsidev/react-turnstile";
 import { ShieldCheck, Lock } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signIn, getSession } from "next-auth/react";
-import { useState } from "react";
+import { signIn, signOut, getSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { PasswordInput } from "@/components/auth/PasswordInput";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { postAuthDestination, useAuthParams } from "@/lib/authDestination";
+import { SESSION_END_MESSAGE, type SessionEnd } from "@/lib/sessionPolicy";
 import { useTurnstileSize } from "@/lib/useTurnstileSize";
 
 // ─── Trust panel data ─────────────────────────────────────────────────────────
@@ -42,6 +43,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [error, setError] = useState("");
+  // ?ended=idle|expired|revoked: say why, and clear the dead session cookie.
+  const [endedMsg] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const reason = new URLSearchParams(window.location.search).get("ended");
+    return reason && reason in SESSION_END_MESSAGE ? SESSION_END_MESSAGE[reason as SessionEnd] : "";
+  });
+  useEffect(() => {
+    if (endedMsg) void signOut({ redirect: false });
+  }, [endedMsg]);
   const [successMsg, setSuccessMsg] = useState(() => {
     if (typeof window === "undefined") return "";
     const params = window.location.search;
@@ -154,6 +164,14 @@ export default function LoginPage() {
               {error && (
                 <div className="bg-danger-soft text-danger p-3 rounded-md text-sm border border-danger-line">
                   {error}
+                </div>
+              )}
+              {endedMsg && (
+                <div
+                  role="status"
+                  className="bg-warning-soft text-warning p-3 rounded-md text-sm border border-warning-line"
+                >
+                  {endedMsg}
                 </div>
               )}
               {successMsg && (

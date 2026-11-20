@@ -19,6 +19,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import type { ReactNode } from "react";
+import { IdleGuard } from "@/components/auth/IdleGuard";
 import {
   AppSidebar,
   SidebarAction,
@@ -71,6 +72,7 @@ const PATIENT_NAV: NavSection[] = [
 export function PatientShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
+      <IdleGuard />
       <RealtimeProvider>
         <div className="flex min-h-screen bg-canvas">
           {/* Mobile-only top bar */}

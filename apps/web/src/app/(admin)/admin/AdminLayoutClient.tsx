@@ -19,6 +19,7 @@ import {
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { useState } from "react";
+import { IdleGuard } from "@/components/auth/IdleGuard";
 import {
   AppSidebar,
   SidebarAction,
@@ -43,6 +44,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
 
   return (
     <SidebarProvider>
+      <IdleGuard />
       <div className="flex min-h-screen bg-gray-50">
         <AppSidebar
           sections={[{ items: navItems }]}

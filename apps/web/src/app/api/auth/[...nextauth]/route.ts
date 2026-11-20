@@ -9,11 +9,20 @@ import { getClientIp } from "@/lib/getClientIp";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
+import { canRemember, idleLimitMs, REMEMBER_MAX_AGE_MS, sessionEnd } from "@/lib/sessionPolicy";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { recordPatientActivity } from "@/server/activity/activity.service";
 import { consumeVerifiedLogin } from "@/server/auth/loginCode.service";
 import { redeemSignupTicket } from "@/server/auth/signupTicket";
-import { randomToken } from "@/server/security/sealing";
+import { keyedHash, randomToken } from "@/server/security/sealing";
+
+/** A keyed digest of the password hash: it changes whenever the password does. */
+const fingerprint = (passwordHash: string | null) => keyedHash("session-password", passwordHash ?? "").slice(0, 22);
+
+async function passwordFingerprint(userId: string) {
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { passwordHash: true } });
+  return fingerprint(u?.passwordHash ?? null);
+}
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -183,42 +192,65 @@ export const authOptions: AuthOptions = {
       return true;
     },
     async jwt({ token, user, trigger, session }) {
-      // 1. Initial execution on successful login. Every sign-in starts locked
-      // until the emailed 6-digit code is entered (see loginCode.service).
+      const request = session as { loginCode?: string; remember?: boolean; activity?: boolean } | undefined;
+
+      // 1. Sign-in. Every sign-in starts locked until the emailed 6-digit code
+      // is entered (see loginCode.service).
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.mfaVerified = false;
         token.mfaSid = randomToken();
+        token.remember = false;
+        token.ended = undefined;
+        token.pwf = await passwordFingerprint(user.id);
         return token;
       }
+      // An ended session stays ended until the person signs in again.
+      if (token.ended) return token;
       if (!token.mfaSid) token.mfaSid = randomToken(); // sessions from before sign-in codes
 
-      // 1b. Unlock: the client calls update({ loginCode: "verified" }) after
-      // /api/auth/code/verify succeeds. The flag is only set if the database
-      // holds a verified, unused code for this exact session.
-      if (
-        trigger === "update" &&
-        (session as { loginCode?: string } | undefined)?.loginCode === "verified" &&
-        token.id &&
-        !token.mfaVerified
-      ) {
-        if (await consumeVerifiedLogin(token.id, token.mfaSid)) token.mfaVerified = true;
+      // 2. Unlock: the client calls update({ loginCode: "verified", remember })
+      // after /api/auth/code/verify succeeds. The flag is only set if the
+      // database holds a verified, unused code for this exact session.
+      if (trigger === "update" && request?.loginCode === "verified" && token.id && !token.mfaVerified) {
+        if (await consumeVerifiedLogin(token.id, token.mfaSid)) {
+          token.mfaVerified = true;
+          token.authAt = token.lastSeen = Date.now();
+          token.remember = request.remember === true && canRemember(token.role);
+        }
       }
 
-      // 2. Background session syncs safety boundary checks
-      if (!token || !token.email) {
-        return token;
+      // 3. Inactivity and lifetime (lib/sessionPolicy). The browser reports
+      // real input with update({ activity: true }); the check runs first so a
+      // tab left open past the limit can't revive the session.
+      if (token.mfaVerified) {
+        if (!token.lastSeen) token.lastSeen = token.authAt = Date.now(); // sessions from before this policy
+        const end = sessionEnd(token);
+        if (end) {
+          token.ended = end;
+          return token;
+        }
+        if (trigger === "update" && request?.activity === true) token.lastSeen = Date.now();
       }
 
+      // 4. Keep identity in step with the database.
+      if (!token.email) return token;
       try {
         const cleanEmail = token.email.trim().toLowerCase();
         const dbUser = await prisma.user.findUnique({
           where: { email: cleanEmail },
-          select: { id: true, role: true, avatarUrl: true, deletedAt: true },
+          select: { id: true, role: true, avatarUrl: true, deletedAt: true, passwordHash: true },
         });
 
         if (dbUser && !dbUser.deletedAt) {
+          // A changed password (reset, staff rotation) ends every other session.
+          const pwf = fingerprint(dbUser.passwordHash);
+          if (token.pwf && token.pwf !== pwf) {
+            token.ended = "revoked";
+            return token;
+          }
+          token.pwf = pwf;
           token.id = dbUser.id;
           token.role = dbUser.role;
           token.avatarUrl = dbUser.avatarUrl;
@@ -236,13 +268,16 @@ export const authOptions: AuthOptions = {
     },
     async session({ session, token }) {
       if (token && session.user) {
-        // Until the sign-in code is verified the session has no user id, so
-        // every guard (requireRole, getSessionUser, API routes) rejects it.
-        const verified = token.mfaVerified === true;
-        session.user.id = verified ? (token.id as string) : "";
+        // Until the sign-in code is verified, or once the session has ended,
+        // it has no user id, so every guard (requireRole, getSessionUser, API
+        // routes) rejects it.
+        const active = token.mfaVerified === true && !token.ended;
+        session.user.id = active ? (token.id as string) : "";
         session.user.role = token.role;
-        session.user.avatarUrl = verified ? (token.avatarUrl ?? null) : null;
-        session.loginCodePending = !verified && !!token.id;
+        session.user.avatarUrl = active ? (token.avatarUrl ?? null) : null;
+        session.loginCodePending = !token.mfaVerified && !token.ended && !!token.id;
+        session.ended = token.ended;
+        session.idleLimitMs = active ? idleLimitMs(token.role, token.remember) : null;
       }
       return session;
     },
@@ -273,6 +308,8 @@ export const authOptions: AuthOptions = {
   },
   session: {
     strategy: "jwt",
+    // The cookie's ceiling; lib/sessionPolicy ends most sessions far sooner.
+    maxAge: REMEMBER_MAX_AGE_MS / 1000,
   },
   secret: process.env.NEXTAUTH_SECRET || "nauricare_local_development_fallback_secret_key_2026",
 };
