@@ -129,6 +129,8 @@ export async function verifyLoginCode(userId: string, sid: string, code: string)
     data: { verifiedAt: new Date() },
   });
   if (count === 0) throw new ServiceError("This code has already been used.", 410);
+  // The code reached this inbox, so the address is proven.
+  await prisma.user.updateMany({ where: { id: userId, isEmailVerified: false }, data: { isEmailVerified: true } });
 }
 
 /**

@@ -41,20 +41,12 @@ export default function LoginPage() {
   const turnstileSize = useTurnstileSize();
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
-  const [error, setError] = useState(() => {
-    if (typeof window === "undefined") return "";
-    const params = window.location.search;
-    if (params.includes("verified=expired"))
-      return "Your verification link has expired. Please sign up again to receive a new one.";
-    if (params.includes("verified=error")) return "Invalid or already-used verification link.";
-    return "";
-  });
+  const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState(() => {
     if (typeof window === "undefined") return "";
     const params = window.location.search;
     if (params.includes("registered=true"))
-      return "Account created! Check your email for a verification link before logging in.";
-    if (params.includes("verified=true")) return "Email verified successfully! You can now log in.";
+      return "Account created. Log in to continue; we'll email you a sign-in code.";
     return "";
   });
 
@@ -159,20 +151,11 @@ export default function LoginPage() {
 
           {!useMagicLink ? (
             <form onSubmit={handleSubmit} className="space-y-5">
-              {error &&
-                (error.toLowerCase().includes("verify your email") ? (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm space-y-2">
-                    <p className="font-semibold text-amber-800">Email not yet verified</p>
-                    <p className="text-amber-700">
-                      Please check your inbox for the verification link we sent when you signed up.
-                    </p>
-                    <a href="/verify-email" className="inline-block text-brand-ink hover:underline font-medium">
-                      Didn&apos;t get the email? Request a new link →
-                    </a>
-                  </div>
-                ) : (
-                  <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-200">{error}</div>
-                ))}
+              {error && (
+                <div className="bg-danger-soft text-danger p-3 rounded-md text-sm border border-danger-line">
+                  {error}
+                </div>
+              )}
               {successMsg && (
                 <div className="bg-brand-soft text-brand-ink p-3 rounded-md text-sm border border-brand-line font-medium">
                   {successMsg}

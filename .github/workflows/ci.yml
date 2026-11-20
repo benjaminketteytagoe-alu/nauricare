@@ -130,6 +130,9 @@ jobs:
         run: npm run build
       - name: Start the app
         working-directory: apps/web
+        env:
+          # Cloudflare's published always-pass test secret, not a credential.
+          TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA # gitleaks:allow
         run: |
           nohup npx next start -p 3100 > ../../next.log 2>&1 &
           for _ in $(seq 1 60); do curl -fsS "$E2E_BASE_URL/api/health" >/dev/null && exit 0; sleep 1; done
@@ -141,6 +144,7 @@ jobs:
         working-directory: apps/web
         env:
           AXE_ENFORCE: "1" # serious/critical axe violations fail the build
+          E2E_SIGNUP: "1" # the journey test may create accounts in this throwaway database
         run: npx playwright test
       - name: Lighthouse (budgets warn only)
         uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2

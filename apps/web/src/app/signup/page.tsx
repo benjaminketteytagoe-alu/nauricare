@@ -4,6 +4,7 @@ import { Turnstile } from "@marsidev/react-turnstile";
 import { ShieldCheck, Lock, Globe } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { AuthVisualPanel, type AuthVisualSlide } from "@/components/auth/AuthVisualPanel";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
@@ -11,7 +12,7 @@ import { PasswordInput } from "@/components/auth/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuthParams } from "@/lib/authDestination";
+import { postAuthDestination, useAuthParams } from "@/lib/authDestination";
 import { COUNTRIES, PRIORITY_COUNTRY_COUNT, dialCodeForCountry } from "@/lib/countries";
 import { carryAuthParams } from "@/lib/safeRedirect";
 import { useTurnstileSize } from "@/lib/useTurnstileSize";
@@ -108,9 +109,15 @@ export default function SignUpPage() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to register");
-      // Carry ?redirect=&action= so login can resume a landing-page triage.
-      const carry = carryAuthParams(window.location.search);
-      router.push(`/login?registered=true${carry ? `&${carry.slice(1)}` : ""}`);
+      // Sign straight in with the one-time sign-up ticket; the emailed code
+      // on the next screen verifies the address. postAuthDestination keeps
+      // ?redirect=&action= so a landing-page triage resumes afterwards.
+      const signedIn = await signIn("signup", { ticket: data.signupTicket, redirect: false });
+      if (!signedIn || signedIn.error) {
+        router.push(`/login?registered=true${carryAuthParams(window.location.search).replace(/^\?/, "&")}`);
+        return;
+      }
+      router.push(`/verify-code?next=${encodeURIComponent(postAuthDestination(data.user.role))}`);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred.");
     } finally {

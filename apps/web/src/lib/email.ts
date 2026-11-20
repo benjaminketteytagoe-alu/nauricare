@@ -10,7 +10,6 @@ import {
   type ProviderNewAppointmentAlertProps,
 } from "@/emails/ProviderNewAppointmentAlert";
 import { ReminderEmail, type ReminderEmailProps } from "@/emails/Reminder";
-import { VerifyEmail, type VerifyEmailProps } from "@/emails/VerifyEmail";
 import { SUPPORT_EMAIL } from "@/lib/site";
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key_for_build");
@@ -49,17 +48,6 @@ export async function sendPasswordResetEmail({ to, ...props }: PasswordResetProp
   });
 
   if (error) throw new Error(`[RESEND] Password reset email failed: ${error.message}`);
-}
-
-export async function sendVerificationEmail({ to, ...props }: VerifyEmailProps & { to: string }) {
-  const { error } = await resend.emails.send({
-    from: FROM_ADDRESS,
-    to,
-    subject: "Verify your NauriCare email",
-    react: VerifyEmail(props),
-  });
-
-  if (error) throw new Error(`[RESEND] Verification email failed: ${error.message}`);
 }
 
 export async function sendMagicLinkEmail({ to, ...props }: MagicLinkProps & { to: string }) {

@@ -12,6 +12,7 @@ import { rateLimit } from "@/lib/rateLimit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { recordPatientActivity } from "@/server/activity/activity.service";
 import { consumeVerifiedLogin } from "@/server/auth/loginCode.service";
+import { redeemSignupTicket } from "@/server/auth/signupTicket";
 import { randomToken } from "@/server/security/sealing";
 
 export const authOptions: AuthOptions = {
@@ -87,16 +88,27 @@ export const authOptions: AuthOptions = {
           throw new Error("Incorrect password. Please try again.");
         }
 
-        if (!user.isEmailVerified) {
-          throw new Error("Please verify your email address before logging in.");
-        }
-
+        // Unverified emails may sign in: the emailed code that every sign-in
+        // requires proves the address and marks it verified.
         return {
           id: user.id,
           name: user.name,
           email: user.email,
           role: user.role,
         };
+      },
+    }),
+    // Straight after sign-up: the ticket from POST /api/auth/register opens a
+    // pending session without asking for the password again. The emailed code
+    // is still required to unlock it.
+    CredentialsProvider({
+      id: "signup",
+      name: "Sign-up",
+      credentials: { ticket: { label: "Ticket", type: "text" } },
+      async authorize(credentials) {
+        const user = credentials?.ticket ? await redeemSignupTicket(credentials.ticket) : null;
+        if (!user) throw new Error("Your sign-up session expired. Please log in.");
+        return user;
       },
     }),
   ],
@@ -237,8 +249,7 @@ export const authOptions: AuthOptions = {
   },
   events: {
     // Receiving and clicking a Magic Link proves inbox ownership exactly like
-    // our own /verify-email flow does — so a successful passwordless sign-in
-    // doubles as email verification for any account that hasn't completed it yet.
+    // the emailed sign-in code does, so it also verifies the email.
     async signIn({ user, account }) {
       if (user?.id) {
         const role = (await prisma.user.findUnique({ where: { id: user.id }, select: { role: true } }))?.role;

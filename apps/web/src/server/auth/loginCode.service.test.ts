@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const prisma = {
-  user: { findUnique: vi.fn() },
+  user: { findUnique: vi.fn(), updateMany: vi.fn() },
   loginChallenge: { findMany: vi.fn(), findFirst: vi.fn(), update: vi.fn(), updateMany: vi.fn(), create: vi.fn() },
   $transaction: vi.fn(),
 };
@@ -104,6 +104,12 @@ describe("loginCode.service", () => {
       prisma.loginChallenge.findFirst.mockResolvedValue(challenge("654321"));
       prisma.loginChallenge.updateMany.mockResolvedValue({ count: 1 });
       await expect(verifyLoginCode("u1", "sid", "654321")).resolves.toBeUndefined();
+      // the code proves the inbox, so the email becomes verified
+      expect(prisma.user.updateMany).toHaveBeenCalledWith({
+        where: { id: "u1", isEmailVerified: false },
+        data: { isEmailVerified: true },
+      });
+      prisma.user.updateMany.mockClear();
       prisma.loginChallenge.updateMany.mockResolvedValue({ count: 0 });
       await expect(verifyLoginCode("u1", "sid", "654321")).rejects.toThrow(/already been used/);
     });
